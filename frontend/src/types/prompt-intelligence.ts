@@ -34,7 +34,7 @@ export const TIER_CONFIGS: Record<PlatformTier, TierConfig> = {
     platforms: [
       'stability', 'leonardo', 'clipdrop', 'nightcafe', 'dreamstudio',
       'lexica', 'novelai', 'dreamlike', 'getimg', 'openart',
-      'playground', 'artguru', 'jasper-art'
+      'playground', 'artguru', 'tensor-art'
     ]
   },
   2: {
@@ -56,7 +56,7 @@ export const TIER_CONFIGS: Record<PlatformTier, TierConfig> = {
     platforms: [
       'openai', 'adobe-firefly', 'ideogram', 'runway',
       'microsoft-designer', 'bing', 'flux', 'google-imagen',
-      'imagine-meta', 'hotpot'
+      'imagine-meta', 'hotpot', 'recraft', 'kling', 'luma-ai', 'jasper-art'
     ]
   },
   4: {
@@ -69,7 +69,7 @@ export const TIER_CONFIGS: Record<PlatformTier, TierConfig> = {
     platforms: [
       'canva', 'craiyon', 'deepai', 'pixlr', 'picwish', 'fotor',
       'visme', 'vistacreate', 'myedit', 'simplified', 'freepik',
-      'picsart', 'photoleap', 'artbreeder', '123rf', 'remove-bg', 'artistly'
+      'picsart', 'photoleap', 'artbreeder', '123rf', 'artistly'
     ]
   }
 };
@@ -245,50 +245,61 @@ export interface SelectionLimits {
 }
 
 // Standard Promagen limits by tier
+// ============================================================================
+// TIER-GENERIC LIMITS (legacy fallback)
+// ============================================================================
+// These are conservative tier-level defaults used ONLY when a platform is not
+// found in PLATFORM_SPECIFIC_LIMITS (constants.ts). The per-platform system
+// is the source of truth. These reflect typical values for each tier.
+//
+// Authority: docs/authority/optimal-prompt-stacking.md v2.0.0
+// ============================================================================
+
 export const STANDARD_LIMITS: Record<PlatformTier, SelectionLimits> = {
-  1: { // CLIP-Based
-    subject: 1, action: 1, style: 2, environment: 1,
-    composition: 1, camera: 1, lighting: 2, atmosphere: 2,
-    colour: 2, materials: 2, fidelity: 2, negative: 5
-  },
-  2: { // Midjourney
-    subject: 1, action: 1, style: 3, environment: 1,
-    composition: 1, camera: 1, lighting: 3, atmosphere: 2,
-    colour: 2, materials: 2, fidelity: 3, negative: 8
-  },
-  3: { // Natural Language
-    subject: 1, action: 1, style: 2, environment: 1,
-    composition: 1, camera: 1, lighting: 2, atmosphere: 1,
-    colour: 1, materials: 1, fidelity: 2, negative: 3
-  },
-  4: { // Plain Language
+  1: { // CLIP-Based — 75-token budget, moderate stacking
     subject: 1, action: 1, style: 1, environment: 1,
     composition: 1, camera: 1, lighting: 1, atmosphere: 1,
-    colour: 1, materials: 1, fidelity: 1, negative: 2
+    colour: 1, materials: 1, fidelity: 1, negative: 5
+  },
+  2: { // Midjourney — fidelity confirmed ineffective (0/0)
+    subject: 1, action: 1, style: 1, environment: 1,
+    composition: 1, camera: 1, lighting: 1, atmosphere: 1,
+    colour: 1, materials: 1, fidelity: 0, negative: 2
+  },
+  3: { // Natural Language — NLU handles more, but attention dilution limits
+    subject: 1, action: 1, style: 1, environment: 1,
+    composition: 1, camera: 1, lighting: 1, atmosphere: 1,
+    colour: 1, materials: 1, fidelity: 1, negative: 3
+  },
+  4: { // Plain Language — simple prompts work best
+    subject: 1, action: 1, style: 1, environment: 1,
+    composition: 1, camera: 1, lighting: 1, atmosphere: 1,
+    colour: 1, materials: 1, fidelity: 1, negative: 0
   }
 };
 
-// Pro Promagen gets +1 on stackable categories
+// Pro tier-generic limits — conservative per-platform bonuses
+// Real per-platform pro numbers are in PLATFORM_SPECIFIC_LIMITS (constants.ts)
 export const PRO_LIMITS: Record<PlatformTier, SelectionLimits> = {
   1: {
-    subject: 1, action: 1, style: 3, environment: 1,
-    composition: 1, camera: 1, lighting: 3, atmosphere: 3,
-    colour: 3, materials: 3, fidelity: 3, negative: 6
+    subject: 2, action: 1, style: 2, environment: 2,
+    composition: 1, camera: 1, lighting: 2, atmosphere: 2,
+    colour: 1, materials: 2, fidelity: 2, negative: 8
   },
   2: {
-    subject: 1, action: 1, style: 4, environment: 1,
-    composition: 1, camera: 1, lighting: 4, atmosphere: 3,
-    colour: 3, materials: 3, fidelity: 4, negative: 9
+    subject: 3, action: 1, style: 2, environment: 2,
+    composition: 1, camera: 1, lighting: 2, atmosphere: 2,
+    colour: 2, materials: 2, fidelity: 0, negative: 4
   },
   3: {
-    subject: 1, action: 1, style: 3, environment: 1,
-    composition: 1, camera: 1, lighting: 3, atmosphere: 2,
-    colour: 2, materials: 2, fidelity: 3, negative: 4
+    subject: 2, action: 1, style: 2, environment: 2,
+    composition: 1, camera: 1, lighting: 2, atmosphere: 2,
+    colour: 1, materials: 2, fidelity: 1, negative: 5
   },
   4: {
-    subject: 1, action: 1, style: 2, environment: 1,
-    composition: 1, camera: 1, lighting: 2, atmosphere: 2,
-    colour: 2, materials: 2, fidelity: 2, negative: 3
+    subject: 2, action: 1, style: 1, environment: 1,
+    composition: 1, camera: 1, lighting: 1, atmosphere: 1,
+    colour: 1, materials: 1, fidelity: 1, negative: 0
   }
 };
 

@@ -118,6 +118,7 @@ import { useCompositionMode } from '@/hooks/use-composition-mode';
 import { usePromptOptimization } from '@/hooks/use-prompt-optimization';
 import type { PromptCategory, PromptSelections, CategoryState, WeatherCategoryMap } from '@/types/prompt-builder';
 import { hashCategoryMap } from '@/lib/prompt-dna';
+import { isBudgetAwareCategory, isFidelityParametric } from '@/lib/usage/constants';
 import { rewriteWithSynergy } from '@/lib/weather/synergy-rewriter';
 import { postProcessAssembled } from '@/lib/prompt-post-process';
 import { incrementLifetimePrompts } from '@/lib/lifetime-counter';
@@ -252,18 +253,35 @@ function getDynamicTooltipGuidance(
   category: string,
   maxSelections: number,
   _baseGuidance?: string,
+  platformId?: string,
 ): string {
   const guidance = CATEGORY_GUIDANCE[category];
 
+  // Base guidance text
+  let base: string;
   if (!guidance) {
-    return maxSelections === 1 ? 'Pick 1 option.' : `Pick up to ${maxSelections} options.`;
+    base = maxSelections === 1 ? 'Pick 1 option.' : `Pick up to ${maxSelections} options.`;
+  } else if (maxSelections === 1) {
+    base = `Pick 1 ${guidance.singular}`;
+  } else {
+    base = `Pick up to ${maxSelections} ${guidance.plural}`;
   }
 
-  if (maxSelections === 1) {
-    return `Pick 1 ${guidance.singular}`;
+  // Improvement 2: Conversion-aware hint for budget-gated categories
+  if (platformId && isBudgetAwareCategory(category, platformId)) {
+    if (category === 'fidelity' && isFidelityParametric(platformId)) {
+      // MJ family: parametric = always included, no budget concern
+      return `${base}\nConverts to parameters — always included.`;
+    }
+    if (category === 'fidelity') {
+      // NL conversion platforms (Flux, Recraft, Luma)
+      return `${base}\nThe assembler converts and fits as many as your prompt budget allows.`;
+    }
+    // Negatives on none/inline platforms
+    return `${base}\nConverted to positive reinforcement — the assembler decides how many fit.`;
   }
 
-  return `Pick up to ${maxSelections} ${guidance.plural}`;
+  return base;
 }
 
 // ============================================================================
@@ -2393,6 +2411,7 @@ export function PromptBuilder({
                 category,
                 maxSelections,
                 config.tooltipGuidance,
+                platformId,
               );
 
               return (
@@ -2700,6 +2719,8 @@ export function PromptBuilder({
                   originalLength={optimizedResult.originalLength}
                   optimizedLength={optimizedResult.optimizedLength}
                   isPro={userTier === 'paid'}
+                  conversions={assembled.conversions}
+                  conversionBudget={assembled.conversionBudget}
                 />
 
                 {/* Optimized prompt preview box - SAME STYLING as Assembled prompt */}

@@ -145,7 +145,10 @@ export const PROVIDER_WEATHER_MAP: Readonly<Record<string, ProviderWeatherMappin
   'clipdrop':           { weatherId: 'euronext-paris',         vibesCity: 'Paris',         lat: 48.8566, lon: 2.3522    },
 
   // ─── Vienna (wbag-vienna) ──────────────────────────────────────────────
-  'remove-bg':          { weatherId: 'wbag-vienna',            vibesCity: 'Vienna',        lat: 48.2082, lon: 16.3738   },
+  'recraft':            { weatherId: 'wbag-san-francisco',     vibesCity: 'San Francisco', lat: 37.7749, lon: -122.4194 },
+  'kling':              { weatherId: 'wbag-beijing',           vibesCity: 'Beijing',       lat: 39.9042, lon: 116.4074  },
+  'luma-ai':            { weatherId: 'wbag-palo-alto',        vibesCity: 'Palo Alto',     lat: 37.4419, lon: -122.1430 },
+  'tensor-art':         { weatherId: 'wbag-singapore',        vibesCity: 'Singapore',     lat: 1.3521,  lon: 103.8198  },
 
   // ─── Taipei (twse-taipei) ──────────────────────────────────────────────
   'myedit':             { weatherId: 'twse-taipei',            vibesCity: 'Taipei',        lat: 25.033,  lon: 121.5654  },

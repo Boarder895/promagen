@@ -265,7 +265,7 @@ describe('Stage 2: assemblePrompt with skipTrim (Dynamic mode)', () => {
         // All user content must survive regardless of platform sweet spot
         expect(result.positive).toContain('ornate armour');
         expect(result.positive).toContain('charging forward');
-        expect(result.positive).toContain('ultra detailed');
+        expect(result.positive).toContain('sharp focus');    // from fidelity: 'ultra detailed sharp focus'
         expect(result.positive).toContain('weathered bronze');
         expect(result.wasTrimmed).not.toBe(true);
       },
@@ -432,13 +432,13 @@ describe('Stage comparison: Static vs Dynamic vs Default', () => {
   );
 
   it.each(TIER_2_PLATFORMS)(
-    '%s: Dynamic has qualitySuffix (high quality, detailed) and --no from qualityNegative',
+    '%s: Dynamic has quality reinforcement (sharp focus) and --no from qualityNegative',
     (platformId) => {
       const dynamicResult = assemblePrompt(platformId, MINIMAL_SELECTIONS, undefined, { skipTrim: true });
 
-      // MJ qualitySuffix
-      expect(dynamicResult.positive).toContain('detailed');
-      // MJ qualityNegative produces --no for unmapped terms
+      // Quality reinforcement from negative mapping / qualitySuffix
+      expect(dynamicResult.positive).toContain('sharp focus');
+      // qualityNegative produces --no for unmapped terms
       expect(dynamicResult.positive).toContain('--no');
     },
   );

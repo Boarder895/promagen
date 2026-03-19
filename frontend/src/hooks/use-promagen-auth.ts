@@ -381,11 +381,11 @@ export function usePromagenAuth(options: UsePromagenAuthOptions = {}): PromagenA
     return config?.tier ?? DEFAULT_PLATFORM_TIER;
   }, [platformId]);
 
-  // Category selection limits based on platform tier + user tier
-  // Anonymous users get free tier limits
+  // Category selection limits based on platform + user tier
+  // Per-platform lookup preferred, falls back to tier-generic
   const categoryLimits = useMemo(
-    () => getCategoryLimitsForPlatformTier(platformTier, userTier),
-    [platformTier, userTier]
+    () => getCategoryLimitsForPlatformTier(platformTier, userTier, platformId),
+    [platformTier, userTier, platformId]
   );
 
   // ============================================================================

@@ -31,12 +31,34 @@ import type {
   PromptCategory,
   PromptSelections,
   AssembledPrompt,
+  ConversionResultMeta,
   PlatformFormat,
   PlatformFormats,
   PromptOptions,
 } from '@/types/prompt-builder';
 
 import { CATEGORY_ORDER } from '@/types/prompt-builder';
+
+// ── Part 5: Conversion pipeline imports ──
+import {
+  getConversionCost,
+  isFidelityConversionPlatform,
+  NEGATIVE_CONVERSIONS,
+} from '@/lib/prompt-builder/conversion-costs';
+import type { ConversionEntry } from '@/lib/prompt-builder/conversion-costs';
+import {
+  getConversionBudget,
+  countWordsInArray,
+} from '@/lib/prompt-builder/conversion-budget';
+import {
+  scoreConversions,
+  buildTaggedSelections,
+  flattenSelections,
+} from '@/lib/prompt-builder/conversion-scorer';
+import type { ScoredConversion, ScoringContext } from '@/lib/prompt-builder/conversion-scorer';
+import type { CompressionLookup } from '@/lib/learning/compression-lookup';
+import type { PlatformTermQualityLookup } from '@/lib/learning/platform-term-quality-lookup';
+import type { PlatformCoOccurrenceLookup } from '@/lib/learning/platform-co-occurrence-lookup';
 
 // ============================================================================
 // ASSEMBLY OPTIONS — 3-Stage Pipeline Control
@@ -54,6 +76,18 @@ export interface AssemblyOptions {
    * connectors) but leaves the length untouched for the optimizer (Stage 3).
    */
   skipTrim?: boolean;
+
+  // ── Part 5: Learned data for budget-aware conversion pipeline ──
+  // All optional — on cold start (day 1) these are null and the system
+  // uses static fallbacks from Parts 1–3. As telemetry accumulates,
+  // callers pass the pre-built lookup structures for smarter decisions.
+
+  /** Phase 7.9: Compression profiles for budget ceiling (null = static fallback) */
+  compressionLookup?: CompressionLookup | null;
+  /** Phase 7.5: Platform term quality for coherence + impact scoring (null = cold start) */
+  platformTermQualityLookup?: PlatformTermQualityLookup | null;
+  /** Phase 7.5: Platform co-occurrence for coherence scoring (null = cold start) */
+  platformCoOccurrenceLookup?: PlatformCoOccurrenceLookup | null;
 }
 
 import { getPlatformTierId } from '@/data/platform-tiers';
@@ -156,7 +190,7 @@ const PLATFORM_FAMILIES: Record<string, PlatformFamily> = {
   'microsoft-designer': 'natural',
   'imagine-meta': 'natural',
   canva: 'natural',
-  'jasper-art': 'stable-diffusion',
+  'jasper-art': 'natural',
   simplified: 'natural',
   vistacreate: 'natural',
   visme: 'natural',
@@ -173,9 +207,12 @@ const PLATFORM_FAMILIES: Record<string, PlatformFamily> = {
   artguru: 'stable-diffusion',
   artbreeder: 'natural',
   myedit: 'natural',
-  'remove-bg': 'natural',
   'google-imagen': 'natural',
   runway: 'natural',
+  recraft: 'natural',
+  kling: 'natural',
+  'luma-ai': 'natural',
+  'tensor-art': 'stable-diffusion',
 };
 
 function getPlatformFamily(platformId: string): PlatformFamily {
@@ -254,6 +291,74 @@ const NEGATIVE_TO_POSITIVE: Record<string, string> = {
   morbid: 'pleasant mood',
   mutilated: 'intact and whole',
 };
+
+// ============================================================================
+// FIDELITY_TO_NATIVE — Platform-specific fidelity conversion (Option B)
+// ============================================================================
+// For platforms where fidelity terms (8K, masterpiece, highly detailed) are
+// confirmed ineffective, convert to platform-native equivalents rather than
+// injecting dead-weight tokens. Same pattern as NEGATIVE_TO_POSITIVE.
+//
+// Authority: docs/authority/optimal-prompt-stacking.md §Fidelity Conversion
+// ============================================================================
+
+/** Platforms where ALL fidelity terms should be converted or dropped */
+const FIDELITY_CONVERSION_PLATFORMS = new Set([
+  'midjourney', 'bluewillow',  // MJ family: fidelity terms do nothing in V6+
+  'flux',                       // T5 encoder: quality tags redundant
+  'recraft',                    // Proprietary: pre-trained for high aesthetics
+  'luma-ai',                    // Universal Transformer: quality baked in
+]);
+
+/** Fidelity term → natural language equivalent for Flux/NatLang platforms */
+const FIDELITY_TO_NATURAL: Record<string, string> = {
+  '8k': 'captured with extraordinary clarity',
+  '4k': 'high-resolution detail',
+  'masterpiece': 'museum-quality composition',
+  'best quality': 'professional-grade photograph',
+  'highly detailed': 'fine-grained detail in every surface',
+  'ultra detailed': 'hyper-detailed rendering with crystalline clarity',
+  'high resolution': 'crisp high-resolution output',
+  'sharp focus': 'tack-sharp focus throughout',
+  'intricate textures': 'intricate surface textures visible',
+  'intricate details': 'meticulously rendered fine details',
+  'fine details': 'delicate fine details preserved',
+};
+
+/**
+ * Convert fidelity terms to platform-native equivalents.
+ * - Flux/Recraft/Luma: converts to natural language descriptions
+ * - MJ/BW: drops entirely (use --quality/--stylize params instead)
+ *
+ * @returns Modified selections with fidelity terms converted or removed
+ */
+function convertFidelityForPlatform(
+  platformId: string,
+  selections: PromptSelections,
+): PromptSelections {
+  if (!FIDELITY_CONVERSION_PLATFORMS.has(platformId)) return selections;
+  if (!selections.fidelity?.length) return selections;
+
+  const family = PLATFORM_FAMILIES[platformId] ?? 'natural';
+  const isMjFamily = family === 'midjourney';
+
+  if (isMjFamily) {
+    // MJ family: drop fidelity entirely (--quality/--stylize are params, not prompt text)
+    return { ...selections, fidelity: [] };
+  }
+
+  // Flux/Recraft/Luma: convert to natural language equivalents
+  const converted: string[] = [];
+  for (const term of selections.fidelity) {
+    const mapped = FIDELITY_TO_NATURAL[term.toLowerCase().trim()];
+    if (mapped) {
+      converted.push(mapped);
+    }
+    // Unknown fidelity terms are silently dropped — they'd be wasted tokens
+  }
+
+  return { ...selections, fidelity: converted };
+}
 
 /**
  * Convert negative terms to positive equivalents for natural language platforms
@@ -1168,48 +1273,377 @@ function assembleTierAware(
   weightOverrides?: Partial<Record<PromptCategory, number>>,
   options?: AssemblyOptions,
 ): AssembledPrompt {
-  // Upgrade 3: Deduplicate within each category before assembly.
-  // Both the generator and builder UI call assemblePrompt(), so placing
-  // dedup here guarantees identical output — Single Canonical Assembly.
+  // ── Step 1: Dedup (existing, unchanged) ──
   const deduped = deduplicateWithinCategories(selections);
-
-  // Improvement 1: Deduplicate across categories — same term in two
-  // categories → keep only in the first one per effective output order.
   const effectiveOrder = getEffectiveOrder(platformFormat);
   const crossDeduped = deduplicateAcrossCategories(deduped, effectiveOrder);
 
   const tierId: PlatformTierId | undefined = getPlatformTierId(platformId);
+  const isFidelityConversion = isFidelityConversionPlatform(platformId);
 
-  // Improvement 2: Merge weather intelligence weight overrides with platform defaults.
-  // Platform's own weightedCategories take precedence; weather fills the rest.
+  // ── Step 2: Separate conversion pool terms from pass-through terms ──
+  // Fidelity: on conversion platforms → pool. On others → pass through.
+  // Negatives: 'none'/'inline' → known negatives enter pool. 'separate' → pass through.
+  const userFidelity = crossDeduped.fidelity?.filter(Boolean) ?? [];
+  const userNegatives = crossDeduped.negative?.filter(Boolean) ?? [];
+
+  const negativesEnterPool =
+    platformFormat.negativeSupport === 'none' ||
+    platformFormat.negativeSupport === 'inline';
+
+  // Split negatives into known (have conversion entries) and unknown
+  const knownNegatives: string[] = [];
+  const unknownNegatives: string[] = [];
+  if (negativesEnterPool) {
+    for (const neg of userNegatives) {
+      if (NEGATIVE_CONVERSIONS[neg.toLowerCase()]) {
+        knownNegatives.push(neg);
+      } else {
+        unknownNegatives.push(neg);
+      }
+    }
+  }
+
+  // Build selections for sub-assembler (stripped of pooled terms)
+  const selectionsForAssembly: PromptSelections = { ...crossDeduped };
+
+  if (isFidelityConversion) {
+    // Fidelity enters conversion pool — remove from sub-assembler input
+    selectionsForAssembly.fidelity = [];
+  }
+  // Note: non-conversion platforms keep fidelity in selections (pass through as-is)
+
+  if (negativesEnterPool) {
+    // Only UNKNOWN negatives stay for sub-assembler ("without X" / "--no X" handling)
+    selectionsForAssembly.negative = unknownNegatives;
+  }
+  // 'separate' platforms: negatives stay in selections, sub-assembler handles them
+
+  // ── Step 3: Run legacy fidelity conversion for non-pool path ──
+  // Non-conversion platforms still need fidelity pass-through. convertFidelityForPlatform
+  // returns selections unchanged for non-conversion platforms, so this is safe for all.
+  // For conversion platforms this is a no-op since fidelity is already empty.
+  const fidelityHandled = convertFidelityForPlatform(platformId, selectionsForAssembly);
+
+  // ── Step 4: Weather weight merge (existing, unchanged) ──
   const mergedFormat = weightOverrides
     ? {
         ...platformFormat,
         weightedCategories: {
           ...(weightOverrides as Record<string, number>),
-          ...platformFormat.weightedCategories, // platform wins on conflicts
+          ...platformFormat.weightedCategories,
         },
       }
     : platformFormat;
 
-  // Tier 4: Plain language — short comma lists, no frills
+  // ── Step 5: Core assembly (existing sub-assemblers, unchanged) ──
   let result: AssembledPrompt;
   if (tierId === 4) {
-    result = assemblePlainLanguage(crossDeduped, mergedFormat, options);
+    result = assemblePlainLanguage(fidelityHandled, mergedFormat, options);
   } else if (mergedFormat.promptStyle === 'keywords') {
-    // Keyword-mode platforms: Tier 1 (CLIP), Tier 2 (MJ), and keyword-style
-    result = assembleKeywords(crossDeduped, mergedFormat, options);
+    result = assembleKeywords(fidelityHandled, mergedFormat, options);
   } else {
-    // Tier 3 and all other natural-language platforms: flowing sentences
-    result = assembleNaturalSentences(crossDeduped, mergedFormat, options);
+    result = assembleNaturalSentences(fidelityHandled, mergedFormat, options);
   }
 
-  // Improvement 5: Token estimation — helps users know when they're over CLIP limits.
-  // Computed for ALL tiers (useful even for NatLang to show prompt complexity).
+  // ── Step 6: Token estimation (existing, unchanged) ──
   result.estimatedTokens = estimateClipTokens(result.positive);
   result.tokenLimit = mergedFormat.tokenLimit ?? undefined;
 
+  // ── Step 7: Budget-Aware Conversion Pipeline ──
+  // Collect candidates, score, greedily include within budget.
+  // Only runs if there are terms in the conversion pool.
+  const hasFidelityPool = isFidelityConversion && userFidelity.length > 0;
+  const hasNegativePool = negativesEnterPool && knownNegatives.length > 0;
+
+  if (hasFidelityPool || hasNegativePool) {
+    result = applyConversionPipeline(
+      result,
+      platformId,
+      tierId ?? null,
+      userFidelity,
+      knownNegatives,
+      crossDeduped,
+      mergedFormat,
+      isFidelityConversion,
+      negativesEnterPool,
+      options,
+    );
+  }
+
   return result;
+}
+
+// ============================================================================
+// Part 5: Conversion Pipeline
+// ============================================================================
+// Runs after the core sub-assembler produces the base prompt. Collects
+// conversion candidates from Parts 1 (costs), scores them via Part 4
+// (scorer), greedily includes within budget, and appends to the prompt.
+//
+// Converted terms get LOWEST priority — if trimPromptToLimit runs as a
+// safety net later (e.g., in the optimizer), user selections survive.
+// ============================================================================
+
+function applyConversionPipeline(
+  baseResult: AssembledPrompt,
+  platformId: string,
+  tier: number | null,
+  pooledFidelity: string[],
+  pooledNegatives: string[],
+  fullSelections: PromptSelections,
+  platformFormat: PlatformFormat,
+  isFidelityConversion: boolean,
+  negativesEnterPool: boolean,
+  options?: AssemblyOptions,
+): AssembledPrompt {
+  // ── 7a. Collect conversion candidates ──
+  const candidates: ConversionEntry[] = [];
+
+  // Fidelity candidates (only for conversion platforms)
+  if (isFidelityConversion) {
+    for (const term of pooledFidelity) {
+      const entry = getConversionCost(term, 'fidelity', platformId);
+      if (entry) candidates.push(entry);
+    }
+  }
+
+  // Negative candidates (only for none/inline platforms)
+  if (negativesEnterPool) {
+    for (const term of pooledNegatives) {
+      const entry = getConversionCost(term, 'negative', platformId);
+      if (entry) candidates.push(entry);
+    }
+  }
+
+  if (candidates.length === 0) return baseResult;
+
+  // ── 7b. Measure core prompt and calculate budget ──
+  const coreWordCount = countWords(baseResult.positive);
+  const prefixWordCount = countWordsInArray(platformFormat.qualityPrefix);
+  const suffixWordCount = countWordsInArray(platformFormat.qualitySuffix);
+
+  // Pre-compute CLIP tokens for Tier 1 platforms (avoids circular import)
+  const clipTokensConsumed = tier === 1
+    ? estimateClipTokens(baseResult.positive)
+    : null;
+
+  const budget = getConversionBudget(
+    coreWordCount,
+    prefixWordCount,
+    suffixWordCount,
+    platformId,
+    options?.compressionLookup ?? null,
+    clipTokensConsumed,
+  );
+
+  // ── 7c. Score all candidates ──
+  const taggedSelections = buildTaggedSelections(fullSelections);
+  const allSelectionTerms = flattenSelections(fullSelections);
+
+  const scoringContext: ScoringContext = {
+    platformId,
+    tier,
+    taggedSelections,
+    allSelectionTerms,
+    budget,
+    impactPriority: platformFormat.impactPriority,
+    platformTermQualityLookup: options?.platformTermQualityLookup ?? null,
+    platformCoOccurrenceLookup: options?.platformCoOccurrenceLookup ?? null,
+  };
+
+  const scored = scoreConversions(candidates, scoringContext);
+
+  // ── 7d. Greedily include within budget ──
+  const included: ScoredConversion[] = [];
+  const deferred: ScoredConversion[] = [];
+  let remainingBudget = budget.remaining;
+
+  // Parametric conversions first (free, always included)
+  for (const conv of scored) {
+    if (conv.isParametric) {
+      included.push(conv);
+    }
+  }
+
+  // Inline conversions greedily by score (highest first, already sorted)
+  for (const conv of scored) {
+    if (conv.isParametric) continue; // Already handled
+
+    if (conv.cost <= remainingBudget) {
+      included.push(conv);
+      remainingBudget -= conv.cost;
+    } else {
+      deferred.push({ ...conv });
+    }
+  }
+
+  // ── 7e. Append included conversions to prompt ──
+  let positive = baseResult.positive;
+  const separator = platformFormat.separator || ', ';
+
+  // Separate parametric from inline
+  const parametricOutputs: string[] = [];
+  const inlineOutputs: string[] = [];
+
+  for (const conv of included) {
+    if (conv.isParametric) {
+      parametricOutputs.push(conv.to);
+    } else {
+      inlineOutputs.push(conv.to);
+    }
+  }
+
+  // Improvement 1: Build O(1) term set for dedup instead of O(n) string scan.
+  // Split the prompt by separator and normalise each chunk. This catches exact
+  // term matches ("sharp focus" in prompt vs "sharp focus" conversion) without
+  // false positives from substring containment ("sharp focus" matching inside
+  // "tack-sharp focus throughout").
+  const existingTermSet = buildExistingTermSet(positive, separator);
+
+  const dedupedInline = inlineOutputs.filter(
+    (term) => !existingTermSet.has(term.toLowerCase().trim()),
+  );
+
+  // Append inline conversions to prompt body
+  if (dedupedInline.length > 0) {
+    positive += `${separator}${dedupedInline.join(separator)}`;
+  }
+
+  // Deduplicate parametric outputs (e.g., --quality 2 from both 8K and 4K)
+  const seenParams = new Set<string>();
+  const dedupedParams: string[] = [];
+  for (const p of parametricOutputs) {
+    if (!seenParams.has(p)) {
+      seenParams.add(p);
+      dedupedParams.push(p);
+    }
+  }
+
+  // Improvement 2: Parametric conflict detection — skip conversion params
+  // that conflict with user-specified values already in the prompt.
+  // E.g., user typed "--quality 1" manually → skip conversion "--quality 2".
+  const existingParams = parseExistingParams(positive);
+  const safeParams = dedupedParams.filter((param) => {
+    const paramName = extractParamName(param);
+    return paramName === null || !existingParams.has(paramName);
+  });
+
+  // Append parametric params at end of prompt (MJ convention: space-separated)
+  if (safeParams.length > 0) {
+    positive += ` ${safeParams.join(' ')}`;
+  }
+
+  // ── 7f. Build conversion metadata ──
+  const conversionsMeta: ConversionResultMeta[] = [];
+
+  for (const conv of included) {
+    conversionsMeta.push({
+      from: conv.from,
+      to: conv.to,
+      category: conv.category,
+      included: true,
+      score: conv.score,
+      cost: conv.cost,
+      isParametric: conv.isParametric,
+      scoreExplanation: conv.scoreExplanation,
+    });
+  }
+
+  for (const conv of deferred) {
+    conversionsMeta.push({
+      from: conv.from,
+      to: conv.to,
+      category: conv.category,
+      included: false,
+      reason: conv.costEfficiency < 0.2 ? 'budget' : 'low-coherence',
+      score: conv.score,
+      cost: conv.cost,
+      isParametric: conv.isParametric,
+      scoreExplanation: conv.scoreExplanation,
+    });
+  }
+
+  return {
+    ...baseResult,
+    positive,
+    estimatedTokens: estimateClipTokens(positive),
+    conversions: conversionsMeta.length > 0 ? conversionsMeta : undefined,
+    conversionBudget: {
+      ceiling: budget.ceiling,
+      coreLength: coreWordCount,
+      remaining: remainingBudget,
+      unit: 'words',
+      source: budget.source,
+    },
+  };
+}
+
+// ============================================================================
+// Part 5 Improvement 1: O(1) Term Set Dedup
+// ============================================================================
+// Splits the existing prompt by separator, strips weight syntax, and builds
+// a Set<string> for O(1) lookups. Prevents false-positive substring matches
+// (e.g., "sharp focus" wrongly matching inside "tack-sharp focus throughout").
+// ============================================================================
+
+function buildExistingTermSet(
+  promptText: string,
+  separator: string,
+): Set<string> {
+  const termSet = new Set<string>();
+
+  // Split by the platform separator (usually ", ")
+  const parts = promptText.split(separator);
+
+  for (const part of parts) {
+    // Strip weight syntax: (term:1.2) → term, {{{term}}} → term, term::1.2 → term
+    const cleaned = part
+      .replace(/^\({1,2}/, '').replace(/(?::[0-9.]+)?\){1,2}$/, '')
+      .replace(/^\{+/, '').replace(/\}+$/, '')
+      .replace(/::[0-9.]+$/, '')
+      .toLowerCase().trim();
+
+    if (cleaned) {
+      termSet.add(cleaned);
+    }
+  }
+
+  return termSet;
+}
+
+// ============================================================================
+// Part 5 Improvement 2: Parametric Conflict Detection
+// ============================================================================
+// Parses MJ-style "--param value" flags from the existing prompt to detect
+// when a user's custom input already specifies a parameter that the conversion
+// pipeline would also inject. E.g., user typed "--quality 1" → skip
+// conversion "--quality 2" to respect user intent.
+// ============================================================================
+
+/** Extract --param names already present in the prompt text */
+function parseExistingParams(promptText: string): Set<string> {
+  const params = new Set<string>();
+
+  // Match MJ-style params: --name (possibly followed by a value)
+  // Pattern: "--" + word chars (e.g., --quality, --stylize, --ar, --v, --s)
+  const matches = promptText.matchAll(/--([\w]+)/g);
+
+  for (const m of matches) {
+    params.add(`--${m[1]}`);
+  }
+
+  return params;
+}
+
+/**
+ * Extract the param name from a parametric conversion output.
+ * E.g., "--quality 2" → "--quality", "--stylize 300" → "--stylize"
+ * Returns null if the string doesn't look like a param.
+ */
+function extractParamName(param: string): string | null {
+  const match = param.match(/^(--[\w]+)/);
+  return match?.[1] ?? null;
 }
 
 // ============================================================================

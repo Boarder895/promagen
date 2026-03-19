@@ -192,6 +192,44 @@ export interface AssembledPrompt {
   estimatedTokens?: number;
   /** Platform's configured token limit (e.g., 77 for CLIP, 60 for MJ) */
   tokenLimit?: number;
+
+  // ── Part 5/6: Budget-Aware Conversion Metadata ──
+
+  /** Conversion results for transparency panel (fidelity + negative) */
+  conversions?: ConversionResultMeta[];
+  /** Budget state at assembly time */
+  conversionBudget?: {
+    ceiling: number;
+    coreLength: number;
+    remaining: number;
+    unit: 'words';
+    source: 'learned' | 'static';
+  };
+}
+
+/**
+ * Part 6: Metadata for a single conversion (fidelity or negative).
+ * Attached to AssembledPrompt.conversions for the transparency panel.
+ */
+export interface ConversionResultMeta {
+  /** User's original selection: "8K", "blurry" */
+  from: string;
+  /** Converted output: "--quality 2", "sharp focus" */
+  to: string;
+  /** Source category */
+  category: 'fidelity' | 'negative';
+  /** Made it into the prompt? */
+  included: boolean;
+  /** If excluded, why */
+  reason?: 'budget' | 'low-coherence';
+  /** Conversion score (0–1) */
+  score: number;
+  /** Word cost of the conversion */
+  cost: number;
+  /** Parametric = free (doesn't consume prompt budget) */
+  isParametric: boolean;
+  /** Human-readable scoring breakdown */
+  scoreExplanation?: string;
 }
 
 /** State for a single category in the UI */

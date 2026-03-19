@@ -3,7 +3,7 @@
 **Version:** 2.4.0
 **Created:** 2026-02-24
 **Last Updated:** 2026-03-07
-**Status:** ✅ ALL PHASES COMPLETE — Phases 0–7.11 delivered
+**Status:** ✅ ALL PHASES COMPLETE — Phases 0–7.12 delivered
 
 > **Next phase:** The Unified Prompt Brain initiative builds on top of this evolution plan. It consolidates the weather generator's assembly path into the prompt builder's `assemblePrompt()` — one brain for all prompt paths. See `unified-prompt-brain.md` for full architecture, implementation details, and the 10 post-integration fixes shipped.
 > **Authority:** This document is the single source of truth for the prompt builder evolution.
@@ -34,8 +34,9 @@
 | **7.9**  | Prompt Compression Intelligence | ✅ COMPLETE | Compression engine (732 lines) + lookup (349 lines) + overrides (151 lines) + admin dashboard (445 lines)         |
 | **7.10** | User Feedback Invitation        | ✅ COMPLETE | 4-factor credibility scoring, feedback client, streaks, scene enhancer, confidence halos, feedback memory hook    |
 | **7.11** | Admin Command Centre            | ✅ COMPLETE | 12 live dashboard sections, 19 components (8,154 lines), 18 API routes (5,264 lines), 8 lib modules (3,176 lines) |
+| **7.12** | Budget-Aware Conversion System  | ✅ COMPLETE | 4 new engine files (2,255 lines), assembler pipeline rewrite, telemetry integration, 7 test files (~125 tests)    |
 
-**Total LOC delivered:** ~47,400+ across learning engines, prompt intelligence, telemetry, admin UI, scene system, vocab merge, feedback, and crowdsourcing pipeline.
+**Total LOC delivered:** ~60,900+ across learning engines, prompt intelligence, telemetry, admin UI, scene system, vocab merge, feedback, crowdsourcing, and conversion pipeline.
 
 ---
 
@@ -53,14 +54,15 @@
 10. [Self-Improving Scorer (Phase 6)](#10-self-improving-scorer-phase-6)
 11. [Advanced Learning Systems (Phase 7)](#11-advanced-learning-systems-phase-7)
 12. [Admin Command Centre (Phase 7.11)](#12-admin-command-centre-phase-711)
-13. [The 4 Optimizer Tiers — Cross-Feature Matrix](#13-the-4-optimizer-tiers--cross-feature-matrix)
-14. [Data Structures](#14-data-structures)
-15. [Output Files — What the Cron Produces](#15-output-files--what-the-cron-produces)
-16. [File Impact Map](#16-file-impact-map)
-17. [Build Phase Summary](#17-build-phase-summary)
-18. [Risk Register](#18-risk-register)
-19. [Success Metrics](#19-success-metrics)
-20. [Timeline Projection — What Happens Over 6 Months](#20-timeline-projection--what-happens-over-6-months)
+13. [Budget-Aware Conversion System (Phase 7.12)](#13-budget-aware-conversion-system-phase-712)
+14. [The 4 Optimizer Tiers — Cross-Feature Matrix](#14-the-4-optimizer-tiers--cross-feature-matrix)
+15. [Data Structures](#15-data-structures)
+16. [Output Files — What the Cron Produces](#16-output-files--what-the-cron-produces)
+17. [File Impact Map](#17-file-impact-map)
+18. [Build Phase Summary](#18-build-phase-summary)
+19. [Risk Register](#19-risk-register)
+20. [Success Metrics](#20-success-metrics)
+21. [Timeline Projection — What Happens Over 6 Months](#21-timeline-projection--what-happens-over-6-months)
 
 ---
 
@@ -1003,7 +1005,112 @@ Admin layout uses dark theme (bg gradient + white text). Not visible to regular 
 
 ---
 
-## 13. The 4 Optimizer Tiers — Cross-Feature Matrix
+## 13. Budget-Aware Conversion System (Phase 7.12)
+
+**Built:** 19 March 2026
+**Authority:** `budget-aware-conversion-build-plan.md`
+**Principle:** Let the user express their full creative intent. The assembler makes it fit.
+
+### 13.1 Architecture
+
+Users select fidelity and negative terms on every platform. They don't know about token limits, conversion maps, or prompt budgets. The One Brain assembler takes their full intent and produces the optimal prompt for the specific platform, respecting every constraint invisibly.
+
+**10-Part Build:**
+
+| Part | Name                      | File                                    | Lines | What It Does                                                           |
+| ---- | ------------------------- | --------------------------------------- | ----- | ---------------------------------------------------------------------- |
+| 1    | Conversion Cost Registry  | `conversion-costs.ts`                   | 358   | Pre-computed cost of every conversion output (word count + parametric)  |
+| 2    | Budget Calculator         | `conversion-budget.ts`                  | 371   | `remaining = ceiling - core - prefix - suffix` with learned fallback   |
+| 3    | Cold-Start Affinity Map   | `conversion-affinities.ts`              | 886   | 47 outputs × 329 curated affinity pairs for day-1 coherence scoring    |
+| 4    | Conversion Scorer         | `conversion-scorer.ts`                  | 640   | 3-dimension scoring: coherence(0.4) + costEfficiency(0.35) + impact(0.25) |
+| 5    | Assembly Integration      | `prompt-builder.ts`                     | +272  | Pipeline: strip pool → sub-assemble → score → greedily include → append |
+| 6    | Type Extension            | `types/prompt-builder.ts`               | +48   | `ConversionResultMeta` + `AssembledPrompt.conversions`                 |
+| 7    | Limits Update             | `lib/usage/constants.ts`                | +55   | 23 platforms get conversion-aware fidelity/negative UI limits          |
+| 8    | Telemetry Integration     | 4 files                                 | +40   | `conversionMeta` JSONB through Zod → client → DB → SELECT             |
+| 9    | Learning Feedback Loop    | 2 files                                 | +75   | Term quality + co-occurrence index conversion output terms             |
+| 10   | Transparency + Tests      | panel + 7 test files                    | +1500 | Conversions section in panel + ~125 tests across all parts             |
+
+### 13.2 Assembly Pipeline (inside `assembleTierAware()`)
+
+```
+1. Dedup within + across categories (existing)
+2. Separate conversion pool: fidelity on conversion platforms, negatives on none/inline
+3. Sub-assemblers get stripped selections (never see pooled terms)
+4. Weather weight merge (existing)
+5. Core assembly: assembleKeywords / assembleNaturalSentences / assemblePlainLanguage
+6. Token estimation (existing)
+7. Conversion pipeline (new):
+   7a. Collect candidates → ConversionEntry[] from cost registry
+   7b. Budget = ceiling - core - prefix - suffix (learned or static)
+   7c. Score all candidates (coherence + costEfficiency + impact)
+   7d. Greedy include: parametric first (free), inline by score descending
+   7e. Append: inline deduped against prompt, parametric as suffix params
+   7f. Build ConversionResultMeta[] (included ✅ / deferred ⏸ with reason)
+```
+
+### 13.3 Conversion Routing
+
+| negativeSupport | Fidelity pool?                     | Negative pool?                           |
+| --------------- | ---------------------------------- | ---------------------------------------- |
+| `'separate'`    | Only on conversion platforms       | **No** — separate field (Gap 3)          |
+| `'none'`        | Only on conversion platforms       | **Yes** — known terms enter pool         |
+| `'inline'`      | Only on conversion platforms       | **Yes** — known convert, unknown → --no  |
+
+### 13.4 Cold-Start → Learned Data Progression
+
+Day 1: Static ceilings + curated affinities (329 pairs) + static impact map.
+Day 7+: `lookupBestOptimalChars()` starts returning learned ceilings.
+Day 14+: `lookupPlatformTermQuality()` returns quality scores for conversion outputs.
+Day 30+: `lookupPlatformCoOccurrence()` returns real affinity data, progressively replacing cold-start via `blendAffinity()` confidence ramp.
+
+### 13.5 Telemetry Flow
+
+```
+UI copy → sendPromptTelemetry({ conversionMeta }) → POST /api/prompt-telemetry
+→ Zod validates → INSERT conversion_meta JSONB → nightly cron reads
+→ term-quality-scoring indexes both original + converted terms
+→ platform-co-occurrence records conversion output pairs
+→ scorer uses learned data next time (confidence-blended)
+```
+
+### 13.6 Files
+
+| File                                              | Lines | New/Modified |
+| ------------------------------------------------- | ----- | ------------ |
+| `src/lib/prompt-builder/conversion-costs.ts`      | 358   | NEW          |
+| `src/lib/prompt-builder/conversion-budget.ts`     | 371   | NEW          |
+| `src/lib/prompt-builder/conversion-affinities.ts` | 886   | NEW          |
+| `src/lib/prompt-builder/conversion-scorer.ts`     | 640   | NEW          |
+| `src/lib/prompt-builder.ts`                       | 2,190 | Modified     |
+| `src/types/prompt-builder.ts`                     | 387   | Modified     |
+| `src/types/prompt-telemetry.ts`                   | 302   | Modified     |
+| `src/lib/usage/constants.ts`                      | 447   | Modified     |
+| `src/lib/telemetry/prompt-telemetry-client.ts`    | 434   | Modified     |
+| `src/lib/learning/database.ts`                    | 1,250 | Modified     |
+| `src/lib/learning/term-quality-scoring.ts`        | 461   | Modified     |
+| `src/lib/learning/platform-co-occurrence.ts`      | 476   | Modified     |
+| `src/app/api/prompt-telemetry/route.ts`           | 268   | Modified     |
+| `src/components/providers/prompt-builder.tsx`      | 3,125 | Modified     |
+| `optimization-transparency-panel.tsx`              | 610   | Modified     |
+| 7 test files in `src/__tests__/`                   | 1,321 | NEW          |
+
+### 13.7 Tests
+
+7 test files, ~125 tests:
+
+| Test File                                   | Tests | Covers                                              |
+| ------------------------------------------- | ----- | --------------------------------------------------- |
+| `conversion-costs.test.ts`                  | ~15   | Registry structure, MJ parametric, lookups           |
+| `conversion-budget.test.ts`                 | ~20   | Gap 2 formula, floor, per-platform, CLIP tokens      |
+| `conversion-affinities.test.ts`             | ~15   | Coverage, high/low pairs, blending, inheritance       |
+| `conversion-scorer.test.ts`                 | ~25   | Weighted sum, parametric, dedup, explanations         |
+| `conversion-assembly-integration.test.ts`   | ~30   | MJ params, Flux NL, DALL-E neg, Gap 3, metadata      |
+| `conversion-telemetry.test.ts`              | ~10   | Zod accept/reject, backward compat                    |
+| `conversion-learning.test.ts`               | ~10   | Term indexing, source tagging, neg conversion outputs  |
+
+---
+
+## 14. The 4 Optimizer Tiers — Cross-Feature Matrix
 
 | Feature                    | Tier 1 (CLIP, 13 platforms)                                            | Tier 2 (MJ, 2 platforms)                                | Tier 3 (NL, 10 platforms)                         | Tier 4 (Plain, 17 platforms)                                 |
 | -------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------ |
@@ -1015,21 +1122,22 @@ Admin layout uses dark theme (bg gradient + white text). Not visible to regular 
 | **Scoring Model**          | keywordDensity HIGH, fidelityTerms HIGH, negativePresent HIGH.         | coherence HIGH, tierFormatting HIGH, fidelityTerms LOW. | coherence HIGHEST, categoryCount LOW.             | promptLength HIGH INVERTED, fidelityTerms ZERO.              |
 | **Term Quality**           | Per Tier 1 scores.                                                     | Per Tier 2 scores.                                      | Per Tier 3 scores.                                | Per Tier 4 scores.                                           |
 | **Compression**            | Gentle. 15+ terms OK.                                                  | Medium. 8–12 + params.                                  | 2–3 sentences.                                    | Brutal. 5–8 words max.                                       |
+| **Conversions (7.12)**     | Pass-through (fidelity kept verbatim). Negatives via separate field.   | Parametric (--quality/--stylize, free). Neg via --no.   | Budget-gated NL clauses. Neg → positive convert.  | Neg → positive convert (tight budget). Fidelity pass-through.|
 
-### Tier Platform Lists
+### Tier Platform Lists (45 platforms)
 
-| Tier | Name              | Platforms                                                                                                                                                  |
-| ---- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1    | CLIP-Based        | artguru, clipdrop, dreamlike, dreamstudio, getimg, jasper-art, leonardo, lexica, nightcafe, novelai, openart, playground, stability                        |
-| 2    | Midjourney Family | bluewillow, midjourney                                                                                                                                     |
-| 3    | Natural Language  | adobe-firefly, bing, flux, google-imagen, hotpot, ideogram, imagine-meta, microsoft-designer, openai, runway                                               |
-| 4    | Plain Language    | artbreeder, artistly, canva, craiyon, deepai, fotor, freepik, myedit, photoleap, picsart, picwish, pixlr, remove-bg, simplified, visme, vistacreate, 123rf |
+| Tier | Name              | Count | Platforms                                                                                                                                                  |
+| ---- | ----------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | CLIP-Based        | 13    | artguru, clipdrop, dreamlike, dreamstudio, getimg, leonardo, lexica, nightcafe, novelai, openart, playground, stability, tensor-art                        |
+| 2    | Midjourney Family | 2     | bluewillow, midjourney                                                                                                                                     |
+| 3    | Natural Language  | 14    | adobe-firefly, bing, flux, google-imagen, hotpot, ideogram, imagine-meta, jasper-art, kling, luma-ai, microsoft-designer, openai, recraft, runway          |
+| 4    | Plain Language    | 16    | 123rf, artbreeder, artistly, canva, craiyon, deepai, fotor, freepik, myedit, photoleap, picsart, picwish, pixlr, simplified, visme, vistacreate            |
 
 ---
 
-## 14. Data Structures
+## 15. Data Structures
 
-### 14.1 Scene Starter Entry
+### 15.1 Scene Starter Entry
 
 ```json
 {
@@ -1080,7 +1188,7 @@ Admin layout uses dark theme (bg gradient + white text). Not visible to regular 
 }
 ```
 
-### 14.2 Vocabulary Submission Entry (Phase 7.7)
+### 15.2 Vocabulary Submission Entry (Phase 7.7)
 
 ```json
 {
@@ -1104,7 +1212,7 @@ Admin layout uses dark theme (bg gradient + white text). Not visible to regular 
 }
 ```
 
-### 14.3 Telemetry Event (~500 bytes)
+### 15.3 Telemetry Event (~500 bytes)
 
 ```json
 {
@@ -1143,7 +1251,7 @@ Admin layout uses dark theme (bg gradient + white text). Not visible to regular 
 }
 ```
 
-### 14.4 Feedback Event (Phase 7.10)
+### 15.4 Feedback Event (Phase 7.10)
 
 ```json
 {
@@ -1164,7 +1272,7 @@ Admin layout uses dark theme (bg gradient + white text). Not visible to regular 
 }
 ```
 
-### 14.5 A/B Test Assignment
+### 15.5 A/B Test Assignment
 
 ```json
 {
@@ -1179,7 +1287,7 @@ Admin layout uses dark theme (bg gradient + white text). Not visible to regular 
 
 ---
 
-## 15. Output Files — What the Cron Produces
+## 16. Output Files — What the Cron Produces
 
 Every file is JSON. Code reads them. Code never changes. Data gets smarter nightly.
 
@@ -1205,7 +1313,7 @@ Every file is JSON. Code reads them. Code never changes. Data gets smarter night
 
 ---
 
-## 16. File Impact Map
+## 17. File Impact Map
 
 ### New Files — Actually Installed
 
@@ -1344,7 +1452,7 @@ Every file is JSON. Code reads them. Code never changes. Data gets smarter night
 
 ---
 
-## 17. Build Phase Summary
+## 18. Build Phase Summary
 
 | Phase       | Feature                         | Effort (Planned)              | Effort (Actual)        | Status        | Dependencies |
 | ----------- | ------------------------------- | ----------------------------- | ---------------------- | ------------- | ------------ |
@@ -1392,7 +1500,7 @@ See `test-gap-analysis.md` for the full 6-phase build order with specific file n
 
 ---
 
-## 18. Risk Register
+## 19. Risk Register
 
 | Risk                                                      | Likelihood | Impact | Mitigation                                                                                  |
 | --------------------------------------------------------- | ---------- | ------ | ------------------------------------------------------------------------------------------- |
@@ -1411,7 +1519,7 @@ See `test-gap-analysis.md` for the full 6-phase build order with specific file n
 
 ---
 
-## 19. Success Metrics
+## 20. Success Metrics
 
 | Metric                           | Current              | Target                       | How to Measure                               |
 | -------------------------------- | -------------------- | ---------------------------- | -------------------------------------------- |
@@ -1429,7 +1537,7 @@ See `test-gap-analysis.md` for the full 6-phase build order with specific file n
 
 ---
 
-## 20. Timeline Projection — What Happens Over 6 Months
+## 21. Timeline Projection — What Happens Over 6 Months
 
 | Month       | Prompts Logged | What's Different                                                                                                                                                                                                                                                                                          |
 | ----------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

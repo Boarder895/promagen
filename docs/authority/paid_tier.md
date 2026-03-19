@@ -963,7 +963,9 @@ When Clerk data arrives (async hydration), it overwrites localStorage to ensure 
 
 **12 categories total.** Tier 2 (Midjourney) has the highest caps — MJ handles style stacking, multiple light sources, and long `--no` lists well. Tier 4 (Plain Language) is capped at 1 per category because simple platforms work best with short prompts.
 
-**Stackable categories** (bold above) get **+1 selection for Pro Promagen users** via `generatePaidLimits()` in `constants.ts`. The 7 stackable categories are: style, lighting, colour, atmosphere, materials, fidelity, negative.
+**Stackable categories** (bold above) get **platform-specific Pro bonuses** via `PLATFORM_SPECIFIC_LIMITS` in `constants.ts`. The legacy flat `+1` via `generatePaidLimits()` is used as tier-generic fallback when a platform has no per-platform entry.
+
+> **Budget-aware conversions (v3.0.0):** Fidelity and negative selections on conversion platforms (Midjourney, Flux, Recraft, Luma, DALL-E, Firefly, etc.) represent UI slots, not guaranteed output slots. The assembler's budget-aware conversion pipeline converts user selections into platform-native equivalents and fits as many as the prompt budget allows. Parametric conversions (MJ `--quality 2`, `--stylize 300`) are always included (cost=0). Inline conversions are budget-gated — the highest-scoring conversions are included first. Deferred conversions appear in the Transparency Panel with their reason. Source: `conversion-costs.ts`, `conversion-budget.ts`, `conversion-scorer.ts`, `conversion-affinities.ts` in `src/lib/prompt-builder/`.
 
 #### Platform Assignments
 

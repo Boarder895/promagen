@@ -107,6 +107,10 @@ const PLATFORM_COLORS: Readonly<Record<string, string>> = {
   'imagine-meta': '#0668E1',
   dreamlike: '#D946EF',
   'remove-bg': '#22C55E',
+  'recraft': '#FF6B35',
+  'kling': '#6366F1',
+  'luma-ai': '#8B5CF6',
+  'tensor-art': '#EC4899',
 };
 const DEFAULT_BRAND_COLOR = '#3B82F6';
 

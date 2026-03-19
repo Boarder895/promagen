@@ -96,6 +96,11 @@ export async function ensurePromptEventsTable(): Promise<void> {
   // the dedicated feedback_events table.
   await sql`ALTER TABLE prompt_events ADD COLUMN IF NOT EXISTS feedback_rating TEXT`;
   await sql`ALTER TABLE prompt_events ADD COLUMN IF NOT EXISTS feedback_credibility REAL`;
+
+  // ── Conversion telemetry (Part 8) ──────────────────────────────────
+  // JSONB column storing budget-aware conversion outcome summary.
+  // Nullable — old events and events without conversions have null.
+  await sql`ALTER TABLE prompt_events ADD COLUMN IF NOT EXISTS conversion_meta JSONB`;
 }
 
 /**
@@ -302,6 +307,16 @@ export interface PromptEventRow {
   feedback_rating?: string | null;
   /** Credibility-weighted trust score for this feedback (0.40–1.80) (Phase 7.10) */
   feedback_credibility?: number | null;
+  /** Budget-aware conversion outcome summary (Part 8) */
+  conversion_meta?: {
+    fidelityConverted: number;
+    fidelityDeferred: number;
+    negativesConverted: number;
+    negativesDeferred: number;
+    budgetCeiling: number;
+    budgetRemaining: number;
+    parametricCount: number;
+  } | null;
   created_at: Date | string;
 }
 
@@ -343,7 +358,7 @@ export async function fetchQualifyingEvents(
         id, session_id, attempt_number, selections, category_count,
         char_length, score, score_factors, platform, tier,
         scene_used, outcome, user_tier, account_age_days,
-        feedback_rating, feedback_credibility, created_at
+        feedback_rating, feedback_credibility, conversion_meta, created_at
       FROM prompt_events
       WHERE score >= ${LEARNING_CONSTANTS.SCORE_THRESHOLD}
         AND category_count >= ${LEARNING_CONSTANTS.MIN_CATEGORIES}
@@ -381,7 +396,7 @@ export async function fetchAllEventsForAntiPatterns(
         id, session_id, attempt_number, selections, category_count,
         char_length, score, score_factors, platform, tier,
         scene_used, outcome, user_tier, account_age_days,
-        feedback_rating, feedback_credibility, created_at
+        feedback_rating, feedback_credibility, conversion_meta, created_at
       FROM prompt_events
       WHERE category_count >= ${LEARNING_CONSTANTS.ANTI_PATTERN_MIN_CATEGORIES}
         AND created_at >= NOW() - (${windowDays} || ' days')::interval
@@ -1032,6 +1047,204 @@ export async function fetchPlatformSatisfaction(
     return results.sort((a, b) => b.eventCount - a.eventCount);
   } catch (error) {
     console.error('[Learning] Error fetching platform satisfaction:', error);
+    return [];
+  }
+}
+
+// ============================================================================
+// Part 8 Improvement 1: Conversion Success Rate Dashboard Query
+// ============================================================================
+
+/** Aggregated conversion stats per platform */
+export interface ConversionDashboardRow {
+  platform: string;
+  tier: number;
+  eventCount: number;
+  avgFidelityConverted: number;
+  avgFidelityDeferred: number;
+  avgNegativesConverted: number;
+  avgNegativesDeferred: number;
+  avgBudgetCeiling: number;
+  avgBudgetRemaining: number;
+  avgParametricCount: number;
+  /** Conversion success rate: converted / (converted + deferred), 0–1 */
+  successRate: number;
+}
+
+/**
+ * Fetch aggregated conversion stats grouped by platform + tier.
+ * Powers the admin dashboard showing which platforms have the tightest
+ * conversion budgets and where deferrals are most common.
+ *
+ * @param windowDays — How far back to look (default: 90 days)
+ * @returns Sorted by eventCount descending (busiest platforms first)
+ */
+export async function fetchConversionDashboard(
+  windowDays: number = 90,
+): Promise<ConversionDashboardRow[]> {
+  try {
+    const result = await db()<Array<{
+      platform: string;
+      tier: number;
+      event_count: string;
+      avg_fidelity_converted: string;
+      avg_fidelity_deferred: string;
+      avg_negatives_converted: string;
+      avg_negatives_deferred: string;
+      avg_budget_ceiling: string;
+      avg_budget_remaining: string;
+      avg_parametric_count: string;
+    }>>`
+      SELECT
+        platform,
+        tier,
+        COUNT(*)::text AS event_count,
+        ROUND(AVG((conversion_meta->>'fidelityConverted')::numeric), 2)::text AS avg_fidelity_converted,
+        ROUND(AVG((conversion_meta->>'fidelityDeferred')::numeric), 2)::text AS avg_fidelity_deferred,
+        ROUND(AVG((conversion_meta->>'negativesConverted')::numeric), 2)::text AS avg_negatives_converted,
+        ROUND(AVG((conversion_meta->>'negativesDeferred')::numeric), 2)::text AS avg_negatives_deferred,
+        ROUND(AVG((conversion_meta->>'budgetCeiling')::numeric), 1)::text AS avg_budget_ceiling,
+        ROUND(AVG((conversion_meta->>'budgetRemaining')::numeric), 1)::text AS avg_budget_remaining,
+        ROUND(AVG((conversion_meta->>'parametricCount')::numeric), 2)::text AS avg_parametric_count
+      FROM prompt_events
+      WHERE conversion_meta IS NOT NULL
+        AND created_at >= NOW() - (${windowDays} || ' days')::interval
+      GROUP BY platform, tier
+      ORDER BY COUNT(*) DESC
+    `;
+
+    return result.map((row) => {
+      const fc = parseFloat(row.avg_fidelity_converted) || 0;
+      const fd = parseFloat(row.avg_fidelity_deferred) || 0;
+      const nc = parseFloat(row.avg_negatives_converted) || 0;
+      const nd = parseFloat(row.avg_negatives_deferred) || 0;
+      const totalConverted = fc + nc;
+      const totalDeferred = fd + nd;
+      const total = totalConverted + totalDeferred;
+
+      return {
+        platform: row.platform,
+        tier: row.tier,
+        eventCount: parseInt(row.event_count, 10),
+        avgFidelityConverted: fc,
+        avgFidelityDeferred: fd,
+        avgNegativesConverted: nc,
+        avgNegativesDeferred: nd,
+        avgBudgetCeiling: parseFloat(row.avg_budget_ceiling) || 0,
+        avgBudgetRemaining: parseFloat(row.avg_budget_remaining) || 0,
+        avgParametricCount: parseFloat(row.avg_parametric_count) || 0,
+        successRate: total > 0 ? Math.round((totalConverted / total) * 100) / 100 : 1,
+      };
+    });
+  } catch (error) {
+    console.error('[Learning] Error fetching conversion dashboard:', error);
+    return [];
+  }
+}
+
+// ============================================================================
+// Part 8 Improvement 2: Conversion-Outcome Correlation
+// ============================================================================
+
+/** Correlation between conversion success and feedback quality */
+export interface ConversionOutcomeCorrelation {
+  platform: string;
+  /** Events where all conversions were included (no deferrals) */
+  fullConversionCount: number;
+  /** Average feedback score (0–1) for full-conversion events */
+  fullConversionFeedbackScore: number;
+  /** Events where some conversions were deferred */
+  partialConversionCount: number;
+  /** Average feedback score (0–1) for partial-conversion events */
+  partialConversionFeedbackScore: number;
+  /** Delta: full - partial (positive = full conversions produce better feedback) */
+  delta: number;
+}
+
+/**
+ * Correlate conversion success rates with user feedback.
+ * Events where all conversions were included vs events with deferrals.
+ * Requires both conversion_meta AND feedback_rating to be present.
+ *
+ * @param windowDays — How far back to look (default: 90 days)
+ * @returns Per-platform correlation data sorted by event count
+ */
+export async function fetchConversionOutcomeCorrelation(
+  windowDays: number = 90,
+): Promise<ConversionOutcomeCorrelation[]> {
+  try {
+    const rows = await db()<PromptEventRow[]>`
+      SELECT
+        id, session_id, attempt_number, selections, category_count,
+        char_length, score, score_factors, platform, tier,
+        scene_used, outcome, user_tier, account_age_days,
+        feedback_rating, feedback_credibility, conversion_meta, created_at
+      FROM prompt_events
+      WHERE conversion_meta IS NOT NULL
+        AND feedback_rating IS NOT NULL
+        AND created_at >= NOW() - (${windowDays} || ' days')::interval
+    `;
+
+    // Group by platform
+    const platformGroups = new Map<string, {
+      full: { feedbackSum: number; count: number };
+      partial: { feedbackSum: number; count: number };
+    }>();
+
+    for (const row of rows) {
+      const cm = row.conversion_meta;
+      if (!cm) continue;
+
+      const totalDeferred = (cm.fidelityDeferred ?? 0) + (cm.negativesDeferred ?? 0);
+      const isFullConversion = totalDeferred === 0;
+
+      // Convert feedback rating to numeric score
+      const feedbackScore =
+        row.feedback_rating === 'positive' ? 1.0 :
+        row.feedback_rating === 'neutral' ? 0.5 : 0.0;
+
+      // Weight by credibility
+      const weight = row.feedback_credibility ?? 1.0;
+
+      if (!platformGroups.has(row.platform)) {
+        platformGroups.set(row.platform, {
+          full: { feedbackSum: 0, count: 0 },
+          partial: { feedbackSum: 0, count: 0 },
+        });
+      }
+
+      const group = platformGroups.get(row.platform)!;
+      const bucket = isFullConversion ? group.full : group.partial;
+      bucket.feedbackSum += feedbackScore * weight;
+      bucket.count++;
+    }
+
+    const results: ConversionOutcomeCorrelation[] = [];
+
+    for (const [platform, group] of platformGroups) {
+      const fullScore = group.full.count > 0
+        ? Math.round((group.full.feedbackSum / group.full.count) * 100) / 100
+        : 0;
+      const partialScore = group.partial.count > 0
+        ? Math.round((group.partial.feedbackSum / group.partial.count) * 100) / 100
+        : 0;
+
+      results.push({
+        platform,
+        fullConversionCount: group.full.count,
+        fullConversionFeedbackScore: fullScore,
+        partialConversionCount: group.partial.count,
+        partialConversionFeedbackScore: partialScore,
+        delta: Math.round((fullScore - partialScore) * 100) / 100,
+      });
+    }
+
+    return results.sort((a, b) =>
+      (b.fullConversionCount + b.partialConversionCount) -
+      (a.fullConversionCount + a.partialConversionCount),
+    );
+  } catch (error) {
+    console.error('[Learning] Error fetching conversion-outcome correlation:', error);
     return [];
   }
 }

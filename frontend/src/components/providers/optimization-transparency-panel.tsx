@@ -1,6 +1,6 @@
 // src/components/providers/optimization-transparency-panel.tsx
 // ============================================================================
-// OPTIMIZATION TRANSPARENCY PANEL v1.0.0
+// OPTIMIZATION TRANSPARENCY PANEL v2.0.0
 // ============================================================================
 // Pro-only collapsible panel that shows users exactly why the optimizer
 // made each decision. Grouped by optimization phase:
@@ -8,16 +8,19 @@
 //   Phase 1: CLIP token overflow (invisible terms past 77-token limit)
 //   Phase 2/3: Scored term removal (category weight × position decay)
 //   Phase 4: Prompt compression (verbose → concise rewrites)
+//   Phase C: Budget-aware conversions (fidelity + negative → platform-native)
 //
 // No competitor shows optimization reasoning — this builds trust,
 // teaches prompt engineering, and differentiates Pro tier.
 //
 // Authority: docs/authority/prompt-builder-page.md
+// v2.0.0: Added Conversions section (Part 10a)
 // ============================================================================
 
 'use client';
 
 import React, { useState } from 'react';
+import type { ConversionResultMeta } from '@/types/prompt-builder';
 
 // ============================================================================
 // TYPES
@@ -41,6 +44,18 @@ export interface OptimizationTransparencyPanelProps {
   optimizedLength: number;
   /** Whether user is on paid tier */
   isPro: boolean;
+
+  // ── Part 10a: Conversion metadata ──
+  /** Budget-aware conversion results from AssembledPrompt.conversions */
+  conversions?: ConversionResultMeta[];
+  /** Budget state at assembly time */
+  conversionBudget?: {
+    ceiling: number;
+    coreLength: number;
+    remaining: number;
+    unit: 'words';
+    source: 'learned' | 'static';
+  };
 }
 
 // ============================================================================
@@ -109,11 +124,20 @@ export function OptimizationTransparencyPanel({
   originalLength,
   optimizedLength,
   isPro,
+  conversions,
+  conversionBudget,
 }: OptimizationTransparencyPanelProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Don't render for free users or if nothing happened
-  if (!isPro || removedTerms.length === 0) return null;
+  const hasOptimizations = removedTerms.length > 0;
+  const hasConversions = conversions && conversions.length > 0;
+  if (!isPro || (!hasOptimizations && !hasConversions)) return null;
+
+  // Conversion stats
+  const includedConversions = conversions?.filter((c) => c.included) ?? [];
+  const deferredConversions = conversions?.filter((c) => !c.included) ?? [];
+  const totalConversions = conversions?.length ?? 0;
 
   // Group terms by reason
   const grouped = PHASE_ORDER.reduce(
@@ -183,9 +207,18 @@ export function OptimizationTransparencyPanel({
               className="text-slate-400 tabular-nums"
               style={{ fontSize: 'clamp(8px, 0.6vw, 10px)' }}
             >
-              {activePhases.length} phase{activePhases.length !== 1 ? 's' : ''} ·{' '}
-              {removedTerms.length} action
-              {removedTerms.length !== 1 ? 's' : ''} · −{charsSaved} chars
+              {hasOptimizations && (
+                <>
+                  {activePhases.length} phase{activePhases.length !== 1 ? 's' : ''} ·{' '}
+                  {removedTerms.length} action{removedTerms.length !== 1 ? 's' : ''} · −{charsSaved} chars
+                </>
+              )}
+              {hasOptimizations && hasConversions && ' · '}
+              {hasConversions && (
+                <span className="text-amber-400">
+                  {includedConversions.length}/{totalConversions} converted
+                </span>
+              )}
             </span>
           )}
         </div>
@@ -393,6 +426,154 @@ export function OptimizationTransparencyPanel({
             })}
           </div>
 
+          {/* ── Part 10a: Conversions Section ────────────────────── */}
+          {hasConversions && (
+            <div
+              className="rounded-lg border border-amber-800/40 bg-amber-950/20"
+              style={{
+                padding: 'clamp(6px, 0.5vw, 10px)',
+                marginTop: 'clamp(6px, 0.5vw, 10px)',
+              }}
+            >
+              {/* Conversions header */}
+              <div
+                className="flex items-center justify-between"
+                style={{ marginBottom: 'clamp(4px, 0.3vw, 6px)' }}
+              >
+                <div className="flex items-center" style={{ gap: 'clamp(4px, 0.3vw, 6px)' }}>
+                  <span style={{ fontSize: 'clamp(10px, 0.7vw, 13px)' }}>🔄</span>
+                  <span
+                    className="font-medium text-amber-300"
+                    style={{ fontSize: 'clamp(0.6rem, 0.7vw, 0.75rem)' }}
+                  >
+                    Conversions
+                  </span>
+                  <span
+                    className="text-amber-400 tabular-nums"
+                    style={{ fontSize: 'clamp(8px, 0.55vw, 10px)' }}
+                  >
+                    ({includedConversions.length} included
+                    {deferredConversions.length > 0 && ` · ${deferredConversions.length} deferred`})
+                  </span>
+                </div>
+                {conversionBudget && (
+                  <span
+                    className="text-amber-400 tabular-nums"
+                    style={{ fontSize: 'clamp(8px, 0.55vw, 10px)' }}
+                  >
+                    Budget: {conversionBudget.remaining}w / {conversionBudget.ceiling}w
+                    {conversionBudget.source === 'learned' && (
+                      <span className="text-emerald-400"> (learned)</span>
+                    )}
+                  </span>
+                )}
+              </div>
+
+              {/* Description */}
+              <p
+                className="text-amber-200"
+                style={{
+                  fontSize: 'clamp(8px, 0.55vw, 10px)',
+                  marginBottom: 'clamp(6px, 0.4vw, 8px)',
+                  lineHeight: 1.4,
+                }}
+              >
+                Fidelity and negative terms converted to platform-native equivalents within prompt budget.
+              </p>
+
+              {/* Conversion items */}
+              <div className="flex flex-col" style={{ gap: 'clamp(2px, 0.15vw, 3px)' }}>
+                {/* Included conversions first */}
+                {includedConversions.map((c, i) => (
+                  <div
+                    key={`inc-${i}`}
+                    className="flex items-center justify-between rounded-md bg-emerald-950/30 border border-emerald-800/30"
+                    style={{
+                      padding: 'clamp(3px, 0.2vw, 5px) clamp(6px, 0.4vw, 8px)',
+                    }}
+                  >
+                    <div className="flex items-center" style={{ gap: 'clamp(4px, 0.3vw, 6px)' }}>
+                      <span
+                        className="text-emerald-400"
+                        style={{ fontSize: 'clamp(10px, 0.65vw, 12px)' }}
+                      >
+                        ✅
+                      </span>
+                      <span
+                        className="text-amber-200 font-mono"
+                        style={{ fontSize: 'clamp(8px, 0.55vw, 10px)' }}
+                      >
+                        {c.from}
+                      </span>
+                      <span
+                        className="text-slate-500"
+                        style={{ fontSize: 'clamp(8px, 0.55vw, 10px)' }}
+                      >
+                        →
+                      </span>
+                      <span
+                        className="text-emerald-300 font-mono"
+                        style={{ fontSize: 'clamp(8px, 0.55vw, 10px)' }}
+                      >
+                        {c.to}
+                      </span>
+                    </div>
+                    <span
+                      className="text-emerald-400 tabular-nums"
+                      style={{ fontSize: 'clamp(7px, 0.5vw, 9px)' }}
+                    >
+                      {c.isParametric ? 'parametric — free' : `${c.cost}w · ${c.score.toFixed(2)}`}
+                    </span>
+                  </div>
+                ))}
+
+                {/* Deferred conversions */}
+                {deferredConversions.map((c, i) => (
+                  <div
+                    key={`def-${i}`}
+                    className="flex items-center justify-between rounded-md bg-slate-800/30 border border-slate-700/30"
+                    style={{
+                      padding: 'clamp(3px, 0.2vw, 5px) clamp(6px, 0.4vw, 8px)',
+                    }}
+                  >
+                    <div className="flex items-center" style={{ gap: 'clamp(4px, 0.3vw, 6px)' }}>
+                      <span
+                        className="text-slate-400"
+                        style={{ fontSize: 'clamp(10px, 0.65vw, 12px)' }}
+                      >
+                        ⏸
+                      </span>
+                      <span
+                        className="text-slate-300 font-mono"
+                        style={{ fontSize: 'clamp(8px, 0.55vw, 10px)' }}
+                      >
+                        {c.from}
+                      </span>
+                      <span
+                        className="text-slate-500"
+                        style={{ fontSize: 'clamp(8px, 0.55vw, 10px)' }}
+                      >
+                        →
+                      </span>
+                      <span
+                        className="text-slate-400 font-mono"
+                        style={{ fontSize: 'clamp(8px, 0.55vw, 10px)' }}
+                      >
+                        {c.to}
+                      </span>
+                    </div>
+                    <span
+                      className="text-amber-400 tabular-nums"
+                      style={{ fontSize: 'clamp(7px, 0.5vw, 9px)' }}
+                    >
+                      deferred — {c.reason ?? 'budget'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Summary footer */}
           <div
             className="flex items-center justify-between border-t border-slate-700/30"
@@ -402,8 +583,18 @@ export function OptimizationTransparencyPanel({
             }}
           >
             <span className="text-slate-500" style={{ fontSize: 'clamp(8px, 0.55vw, 10px)' }}>
-              {removedTerms.length} optimization{removedTerms.length !== 1 ? 's' : ''} across{' '}
-              {activePhases.length} phase{activePhases.length !== 1 ? 's' : ''}
+              {hasOptimizations && (
+                <>
+                  {removedTerms.length} optimization{removedTerms.length !== 1 ? 's' : ''} across{' '}
+                  {activePhases.length} phase{activePhases.length !== 1 ? 's' : ''}
+                </>
+              )}
+              {hasOptimizations && hasConversions && ' · '}
+              {hasConversions && (
+                <span className="text-amber-400">
+                  {includedConversions.length}/{totalConversions} conversions included
+                </span>
+              )}
             </span>
             <span
               className="text-emerald-400 tabular-nums font-medium"

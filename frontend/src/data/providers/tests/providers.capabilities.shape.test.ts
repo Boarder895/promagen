@@ -7,11 +7,29 @@ import { DEFAULT_CAPABILITIES, PROVIDER_CAPABILITIES, getProviderCapabilities } 
 
 type CapabilitiesFile = typeof capabilitiesJson;
 
-const allowedCapabilityKeys = [
+/** The 4 flags that live in _defaults */
+const defaultCapabilityKeys = [
   'supportsNegative',
   'supportsPrefill',
   'supportsSeed',
   'supportsSteps',
+] as const;
+
+/** All flags that may appear in per-provider overrides (defaults + extended) */
+const allowedCapabilityKeys = [
+  ...defaultCapabilityKeys,
+  'textToImage',
+  'imageToImage',
+  'inpainting',
+  'outpainting',
+  'negativePrompt',
+  'aspectRatio',
+  'upscaling',
+  'variations',
+  'seeds',
+  'schedulers',
+  'guidanceScale',
+  'batchGeneration',
 ] as const;
 
 describe('providers.capabilities.json shape', () => {
@@ -19,7 +37,7 @@ describe('providers.capabilities.json shape', () => {
     const defaults = capabilitiesJson._defaults;
 
     expect(defaults).toBeDefined();
-    allowedCapabilityKeys.forEach((key) => {
+    defaultCapabilityKeys.forEach((key) => {
       expect(Object.prototype.hasOwnProperty.call(defaults, key)).toBe(true);
       expect(typeof defaults[key]).toBe('boolean');
     });

@@ -333,6 +333,10 @@ function formatPlatformName(platformId: string): string {
     myedit: 'MyEdit',
     picwish: 'PicWish',
     'remove-bg': 'remove.bg',
+    recraft: 'Recraft',
+    kling: 'Kling AI',
+    'luma-ai': 'Luma AI',
+    'tensor-art': 'Tensor.Art',
     simplified: 'Simplified',
     freepik: 'Freepik',
   };

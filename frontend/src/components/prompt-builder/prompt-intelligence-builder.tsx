@@ -648,7 +648,7 @@ export function PromptIntelligenceBuilder({
                 <CategoryDropdown
                   category={category}
                   selections={selections[category]}
-                  limit={limits[category]}
+                  limit={limits[category] ?? 1}
                   disabled={isLocked}
                   conflicts={getCategoryConflicts(category)}
                   onAdd={(value) => addToSelection(category, value)}

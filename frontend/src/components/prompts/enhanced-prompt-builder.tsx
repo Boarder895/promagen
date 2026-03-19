@@ -93,7 +93,7 @@ const PLATFORM_TIER_MAP: Record<string, PlatformTier> = {
   openart: 1,
   playground: 1,
   artguru: 1,
-  'jasper-art': 1,
+  'jasper-art': 3,
   // Tier 2: Midjourney family
   midjourney: 2,
   bluewillow: 2,
@@ -125,8 +125,12 @@ const PLATFORM_TIER_MAP: Record<string, PlatformTier> = {
   photoleap: 4,
   artbreeder: 4,
   '123rf': 4,
-  'remove-bg': 4,
   artistly: 4,
+  // New platforms
+  'tensor-art': 1,
+  recraft: 3,
+  kling: 3,
+  'luma-ai': 3,
 };
 
 const getTierForPlatform = (platformId: string): PlatformTier => {

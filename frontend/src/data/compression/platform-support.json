@@ -219,7 +219,6 @@
         "photoleap",
         "artbreeder",
         "123rf",
-        "remove-bg",
         "artistly"
       ]
     }
@@ -493,13 +492,6 @@
       "negativeSupport": "separate",
       "tokenLimit": 77,
       "notes": "SD-based architecture"
-    },
-    "remove-bg": {
-      "tier": 4,
-      "architecture": "proprietary",
-      "shorthandLevel": "MINIMAL",
-      "negativeSupport": "none",
-      "notes": "Background removal utility"
     },
     "runway": {
       "tier": 3,

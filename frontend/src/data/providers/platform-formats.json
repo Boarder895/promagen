@@ -71,10 +71,7 @@
         "action",
         "colour"
       ],
-      "qualitySuffix": [
-        "high quality",
-        "detailed"
-      ],
+      "qualitySuffix": [],
       "qualityNegative": [
         "blurry",
         "watermark",
@@ -650,9 +647,9 @@
       ]
     },
     "jasper-art": {
-      "promptStyle": "keywords",
+      "promptStyle": "natural",
       "separator": ", ",
-      "negativeSupport": "separate",
+      "negativeSupport": "none",
       "negativeSyntax": null,
       "categoryOrder": [
         "subject",
@@ -670,11 +667,7 @@
       "wrapNegativeInPrompt": false,
       "tokenLimit": 150,
       "sweetSpot": 80,
-      "qualityPrefix": [
-        "masterpiece",
-        "best quality",
-        "highly detailed"
-      ],
+      "qualityPrefix": [],
       "qualityNegative": [
         "worst quality",
         "low quality",
@@ -693,12 +686,6 @@
         "username",
         "blurry"
       ],
-      "weightedCategories": {
-        "subject": 1.2,
-        "style": 1.15,
-        "lighting": 1.1,
-        "environment": 1.05
-      },
       "tips": "Jasper Art uses SD-based generation. Quality tags and negative prompts help.",
       "exampleOutput": "masterpiece, best quality, portrait of a samurai, fighting, cinematic lighting, dramatic",
       "impactPriority": [
@@ -707,12 +694,7 @@
         "lighting",
         "environment"
       ],
-      "weightingSyntax": "({term}:{weight})",
-      "qualitySuffix": [
-        "sharp focus",
-        "8K",
-        "intricate textures"
-      ]
+      "qualitySuffix": []
     },
     "artguru": {
       "promptStyle": "keywords",
@@ -867,11 +849,7 @@
       "wrapNegativeInPrompt": false,
       "tokenLimit": 256,
       "sweetSpot": 120,
-      "qualitySuffix": [
-        "sharp focus",
-        "highly detailed",
-        "professional quality"
-      ],
+      "qualitySuffix": [],
       "qualityNegative": [
         "worst quality",
         "low quality",
@@ -1695,35 +1673,6 @@
       "tokenLimit": 150,
       "tips": "Pixlr AI responds to concise natural language descriptions."
     },
-    "remove-bg": {
-      "promptStyle": "natural",
-      "separator": ", ",
-      "negativeSupport": "none",
-      "negativeSyntax": null,
-      "categoryOrder": [
-        "subject",
-        "action",
-        "style",
-        "lighting",
-        "colour",
-        "environment",
-        "atmosphere",
-        "composition",
-        "fidelity"
-      ],
-      "wrapNegativeInPrompt": false,
-      "impactPriority": [
-        "subject",
-        "action",
-        "environment",
-        "style",
-        "lighting"
-      ],
-      "exampleOutput": "atmospheric cityscape, warm tones, dramatic lighting",
-      "sweetSpot": 30,
-      "tokenLimit": 75,
-      "tips": "Remove.bg AI generation uses very short prompts. Focus on the main subject."
-    },
     "simplified": {
       "promptStyle": "natural",
       "separator": ", ",
@@ -1839,6 +1788,160 @@
       "sweetSpot": 60,
       "tokenLimit": 150,
       "tips": "123RF AI works best with stock-photo-style descriptions. Be specific about subject and setting."
+    },
+    "recraft": {
+      "promptStyle": "natural",
+      "separator": ", ",
+      "negativeSupport": "separate",
+      "negativeSyntax": null,
+      "categoryOrder": [
+        "subject",
+        "action",
+        "style",
+        "atmosphere",
+        "lighting",
+        "environment",
+        "colour",
+        "composition",
+        "camera",
+        "materials",
+        "fidelity"
+      ],
+      "wrapNegativeInPrompt": false,
+      "impactPriority": [
+        "subject",
+        "style",
+        "environment",
+        "lighting",
+        "composition"
+      ],
+      "exampleOutput": "A clean vector illustration of a lighthouse on a rocky coast, flat design, warm sunset tones, minimal background",
+      "sweetSpot": 100,
+      "tokenLimit": 200,
+      "tips": "Recraft excels at vector art, design, and text in images. Use structured prompts: style + subject + detail + background."
+    },
+    "kling": {
+      "promptStyle": "natural",
+      "separator": ", ",
+      "negativeSupport": "none",
+      "negativeSyntax": null,
+      "categoryOrder": [
+        "subject",
+        "action",
+        "style",
+        "atmosphere",
+        "lighting",
+        "environment",
+        "colour",
+        "composition",
+        "camera",
+        "materials",
+        "fidelity"
+      ],
+      "wrapNegativeInPrompt": false,
+      "impactPriority": [
+        "subject",
+        "action",
+        "environment",
+        "style",
+        "lighting",
+        "atmosphere"
+      ],
+      "exampleOutput": "A samurai warrior standing in a bamboo forest, cinematic lighting, mist rising from the ground, photorealistic",
+      "sweetSpot": 100,
+      "tokenLimit": 200,
+      "tips": "Kling excels at cinematic compositions and character consistency. Keep prompts descriptive with subject + action + context + style."
+    },
+    "luma-ai": {
+      "promptStyle": "natural",
+      "separator": ", ",
+      "negativeSupport": "none",
+      "negativeSyntax": null,
+      "categoryOrder": [
+        "subject",
+        "action",
+        "style",
+        "atmosphere",
+        "lighting",
+        "environment",
+        "colour",
+        "composition",
+        "camera",
+        "materials",
+        "fidelity"
+      ],
+      "wrapNegativeInPrompt": false,
+      "impactPriority": [
+        "subject",
+        "action",
+        "environment",
+        "style",
+        "lighting",
+        "atmosphere"
+      ],
+      "exampleOutput": "A close-up portrait in natural light, shallow depth of field, soft bokeh background, photorealistic skin texture",
+      "sweetSpot": 150,
+      "tokenLimit": 300,
+      "tips": "Luma Photon excels at photorealism. Natural language descriptions outperform keyword lists. Specify lighting and camera details."
+    },
+    "tensor-art": {
+      "promptStyle": "keywords",
+      "separator": ", ",
+      "negativeSupport": "separate",
+      "negativeSyntax": null,
+      "weightingSyntax": "({term}:{weight})",
+      "categoryOrder": [
+        "subject",
+        "action",
+        "style",
+        "atmosphere",
+        "lighting",
+        "environment",
+        "colour",
+        "composition",
+        "camera",
+        "materials",
+        "fidelity"
+      ],
+      "wrapNegativeInPrompt": false,
+      "impactPriority": [
+        "subject",
+        "style",
+        "atmosphere",
+        "lighting"
+      ],
+      "qualityPrefix": [
+        "masterpiece",
+        "best quality",
+        "highly detailed"
+      ],
+      "qualitySuffix": [
+        "sharp focus",
+        "8K",
+        "intricate textures"
+      ],
+      "qualityNegative": [
+        "worst quality",
+        "low quality",
+        "normal quality",
+        "lowres",
+        "bad anatomy",
+        "bad hands",
+        "error",
+        "missing fingers",
+        "extra digit",
+        "fewer digits",
+        "cropped",
+        "jpeg artifacts",
+        "signature",
+        "watermark",
+        "username",
+        "blurry"
+      ],
+      "exampleOutput": "masterpiece, best quality, highly detailed, cyberpunk city street, neon lights, rain-slicked asphalt, cinematic, sharp focus, 8K",
+      "sweetSpot": 80,
+      "tokenLimit": 150,
+      "tips": "Multi-model platform running SD, SDXL, and Flux. Use keyword syntax with CLIP weighting for SD/SDXL models."
     }
   }
 }

@@ -33,6 +33,7 @@
 import { LEARNING_CONSTANTS } from '@/lib/learning/constants';
 import { flattenSelections } from '@/lib/learning/decay';
 import type { PromptEventRow } from '@/lib/learning/database';
+import { getConversionCost } from '@/lib/prompt-builder/conversion-costs';
 
 // ============================================================================
 // CONSTANTS
@@ -243,7 +244,59 @@ function computePlatformCoOccurrenceSlice(
 
   for (const evt of events) {
     const terms = flattenSelections(evt.selections);
+
+    // Part 9: Add conversion output terms to the pair pool.
+    // When an event has conversion_meta with included conversions,
+    // reconstruct the output terms and add them alongside the user's
+    // selections. This teaches the co-occurrence engine that e.g.
+    // "captured with extraordinary clarity" pairs well with
+    // "mountain landscape" + "golden hour" on Flux.
+    const cm = evt.conversion_meta;
+    if (cm) {
+      const selections = evt.selections;
+      if (cm.fidelityConverted > 0 && Array.isArray(selections?.fidelity)) {
+        for (const term of selections.fidelity) {
+          if (typeof term !== 'string') continue;
+          const entry = getConversionCost(term, 'fidelity', platformId);
+          if (entry && !entry.isParametric) {
+            const normalised = entry.output.trim().toLowerCase();
+            if (normalised && !terms.includes(normalised)) {
+              terms.push(normalised);
+            }
+          }
+        }
+      }
+      if (cm.negativesConverted > 0 && Array.isArray(selections?.negative)) {
+        for (const term of selections.negative) {
+          if (typeof term !== 'string') continue;
+          const entry = getConversionCost(term, 'negative', platformId);
+          if (entry) {
+            const normalised = entry.output.trim().toLowerCase();
+            if (normalised && !terms.includes(normalised)) {
+              terms.push(normalised);
+            }
+          }
+        }
+      }
+    }
+
     if (terms.length < 2) continue;
+
+    // Part 9 Improvement 2: Deferral decay multiplier.
+    // Events with high conversion deferral rates get reduced pair weight.
+    // Rationale: if the budget was too tight to include all conversions,
+    // the remaining term combinations are less representative of quality.
+    let pairWeight = 1.0;
+    if (cm) {
+      const totalDeferred = (cm.fidelityDeferred ?? 0) + (cm.negativesDeferred ?? 0);
+      const totalAttempted = totalDeferred +
+        (cm.fidelityConverted ?? 0) + (cm.negativesConverted ?? 0);
+      if (totalAttempted > 0 && totalDeferred > 0) {
+        const deferralRate = totalDeferred / totalAttempted;
+        // 0 deferrals → 1.0×, 50% deferrals → 0.85×, 100% deferrals → 0.7×
+        pairWeight = 1.0 - (deferralRate * 0.3);
+      }
+    }
 
     // Sort for consistent pairing (alphabetical)
     const sorted = [...terms].sort();
@@ -255,7 +308,7 @@ function computePlatformCoOccurrenceSlice(
         if (termA === termB) continue;
 
         const pairKey = `${termA}|${termB}`;
-        pairCounts.set(pairKey, (pairCounts.get(pairKey) ?? 0) + 1);
+        pairCounts.set(pairKey, (pairCounts.get(pairKey) ?? 0) + pairWeight);
       }
     }
   }

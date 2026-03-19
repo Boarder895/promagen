@@ -105,9 +105,9 @@ describe('Platform Support Matrix Integrity', () => {
     expect(platformSupport.version).toMatch(/^\d+\.\d+\.\d+$/);
   });
 
-  it('should have 42 platforms', () => {
+  it('should have 41 platforms', () => {
     const platformCount = Object.keys(platformSupport.platforms).length;
-    expect(platformCount).toBe(42);
+    expect(platformCount).toBe(41);
   });
 
   it('should have all 4 tiers defined', () => {
@@ -546,7 +546,7 @@ describe('Utility Functions', () => {
   it('getSupportedPlatforms should return array of platforms', () => {
     const platforms = getSupportedPlatforms();
     expect(Array.isArray(platforms)).toBe(true);
-    expect(platforms.length).toBe(42);
+    expect(platforms.length).toBe(41);
     expect(platforms.some((p) => p.id === 'stability')).toBe(true);
     expect(platforms.some((p) => p.id === 'midjourney')).toBe(true);
   });
@@ -554,15 +554,15 @@ describe('Utility Functions', () => {
   it('getCompressionStats should return valid stats', () => {
     const stats = getCompressionStats();
     expect(stats.totalMappings).toBeGreaterThan(4000);
-    expect(stats.platforms).toBe(42);
+    expect(stats.platforms).toBe(41);
     expect(stats.tiers).toBe(4);
     expect(stats.fillerTerms).toBe(150);
     expect(stats.redundancyPatterns).toBeGreaterThanOrEqual(100);
   });
 
-  it('getAllPlatformIds should return 42 IDs', () => {
+  it('getAllPlatformIds should return 41 IDs', () => {
     const ids = getAllPlatformIds();
-    expect(ids.length).toBe(42);
+    expect(ids.length).toBe(41);
   });
 
   it('getPlatformsByTier should return correct platforms', () => {

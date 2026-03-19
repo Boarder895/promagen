@@ -141,7 +141,7 @@
     "score": 94,
     "countryCode": "CO",
     "likeCount": 24,
-    "locationName": "Bogotá"
+    "locationName": "Bogot\u00e1"
   },
   {
     "platformId": "craiyon",
@@ -321,7 +321,7 @@
     "score": 93,
     "countryCode": "PL",
     "likeCount": 24,
-    "locationName": "Kraków"
+    "locationName": "Krak\u00f3w"
   },
   {
     "platformId": "pixlr",
@@ -405,7 +405,7 @@
     "score": 92,
     "countryCode": "CL",
     "likeCount": 1,
-    "locationName": "Valparaíso"
+    "locationName": "Valpara\u00edso"
   },
   {
     "platformId": "getimg",
@@ -477,7 +477,7 @@
     "score": 92,
     "countryCode": "BR",
     "likeCount": 2,
-    "locationName": "São Paulo"
+    "locationName": "S\u00e3o Paulo"
   },
   {
     "platformId": "ideogram",
@@ -513,7 +513,7 @@
     "score": 92,
     "countryCode": "CL",
     "likeCount": 0,
-    "locationName": "Concepción"
+    "locationName": "Concepci\u00f3n"
   },
   {
     "platformId": "deepai",
@@ -525,7 +525,7 @@
     "score": 92,
     "countryCode": "CH",
     "likeCount": 31,
-    "locationName": "Zürich"
+    "locationName": "Z\u00fcrich"
   },
   {
     "platformId": "deepai",
@@ -636,9 +636,9 @@
     "locationName": "Al Ain"
   },
   {
-    "platformId": "remove-bg",
-    "platformName": "Remove.bg (Kaleido AI)",
-    "platformIcon": "/icons/providers/remove-bg.png",
+    "platformId": "recraft",
+    "platformName": "Recraft",
+    "platformIcon": "/icons/providers/recraft.png",
     "brandColor": "#22C55E",
     "description": "white Persian cat sitting gracefully, photoreal...",
     "optimisedPrompt": "white Persian cat sitting gracefully, photorealistic, vibrant colours, velvet dark sky with pin-sharp stars",
@@ -648,9 +648,9 @@
     "locationName": "Paris"
   },
   {
-    "platformId": "remove-bg",
-    "platformName": "Remove.bg (Kaleido AI)",
-    "platformIcon": "/icons/providers/remove-bg.png",
+    "platformId": "recraft",
+    "platformName": "Recraft",
+    "platformIcon": "/icons/providers/recraft.png",
     "brandColor": "#22C55E",
     "description": "red fox standing alert in fresh snow, photoreal...",
     "optimisedPrompt": "red fox standing alert in fresh snow, photorealistic, vibrant colours, cool midnight clarity after rainfall",
@@ -660,9 +660,9 @@
     "locationName": "Copenhagen"
   },
   {
-    "platformId": "remove-bg",
-    "platformName": "Remove.bg (Kaleido AI)",
-    "platformIcon": "/icons/providers/remove-bg.png",
+    "platformId": "recraft",
+    "platformName": "Recraft",
+    "platformIcon": "/icons/providers/recraft.png",
     "brandColor": "#22C55E",
     "description": "green tree frog clinging to wet leaf, photoreal...",
     "optimisedPrompt": "green tree frog clinging to wet leaf, photorealistic, vibrant colours, still night with crystalline atmosphere",
@@ -717,7 +717,7 @@
     "score": 92,
     "countryCode": "CO",
     "likeCount": 0,
-    "locationName": "Medellín"
+    "locationName": "Medell\u00edn"
   },
   {
     "platformId": "picsart",
@@ -957,7 +957,7 @@
     "score": 90,
     "countryCode": "PL",
     "likeCount": 0,
-    "locationName": "Wrocław"
+    "locationName": "Wroc\u0142aw"
   },
   {
     "platformId": "clipdrop",
@@ -1009,7 +1009,7 @@
   },
   {
     "platformId": "openai",
-    "platformName": "DALL·E 3",
+    "platformName": "DALL\u00b7E 3",
     "platformIcon": "/icons/providers/openai.png",
     "brandColor": "#10B981",
     "description": "jazz musician playing saxophone under streetlam...",
@@ -1021,7 +1021,7 @@
   },
   {
     "platformId": "openai",
-    "platformName": "DALL·E 3",
+    "platformName": "DALL\u00b7E 3",
     "platformIcon": "/icons/providers/openai.png",
     "brandColor": "#10B981",
     "description": "saxophone player performing in smoky basement c...",
@@ -1305,7 +1305,7 @@
     "score": 90,
     "countryCode": "BE",
     "likeCount": 3,
-    "locationName": "Liège"
+    "locationName": "Li\u00e8ge"
   },
   {
     "platformId": "artguru",
@@ -1413,7 +1413,7 @@
     "score": 89,
     "countryCode": "RO",
     "likeCount": 1,
-    "locationName": "Timișoara"
+    "locationName": "Timi\u0219oara"
   },
   {
     "platformId": "flux",
@@ -1461,7 +1461,7 @@
     "score": 89,
     "countryCode": "BR",
     "likeCount": 0,
-    "locationName": "Brasília"
+    "locationName": "Bras\u00edlia"
   },
   {
     "platformId": "canva",
@@ -1521,7 +1521,7 @@
     "score": 89,
     "countryCode": "MX",
     "likeCount": 2,
-    "locationName": "Cancún"
+    "locationName": "Canc\u00fan"
   },
   {
     "platformId": "simplified",
@@ -1569,7 +1569,7 @@
     "score": 89,
     "countryCode": "AR",
     "likeCount": 2,
-    "locationName": "Córdoba"
+    "locationName": "C\u00f3rdoba"
   },
   {
     "platformId": "pixlr",
@@ -1581,7 +1581,7 @@
     "score": 89,
     "countryCode": "CZ",
     "likeCount": 47,
-    "locationName": "Plzeň"
+    "locationName": "Plze\u0148"
   },
   {
     "platformId": "jasper-art",
@@ -1701,7 +1701,7 @@
     "score": 88,
     "countryCode": "NO",
     "likeCount": 31,
-    "locationName": "Tromsø"
+    "locationName": "Troms\u00f8"
   },
   {
     "platformId": "ideogram",
@@ -1729,7 +1729,7 @@
   },
   {
     "platformId": "openai",
-    "platformName": "DALL·E 3",
+    "platformName": "DALL\u00b7E 3",
     "platformIcon": "/icons/providers/openai.png",
     "brandColor": "#10B981",
     "description": "trumpet soloist silhouetted on midnight rooftop...",
@@ -1741,7 +1741,7 @@
   },
   {
     "platformId": "openai",
-    "platformName": "DALL·E 3",
+    "platformName": "DALL\u00b7E 3",
     "platformIcon": "/icons/providers/openai.png",
     "brandColor": "#10B981",
     "description": "drummer lost in rhythm under single spotlight, ...",
@@ -1821,7 +1821,7 @@
     "score": 88,
     "countryCode": "PL",
     "likeCount": 47,
-    "locationName": "Gdańsk"
+    "locationName": "Gda\u0144sk"
   },
   {
     "platformId": "photoleap",
@@ -1929,7 +1929,7 @@
     "score": 88,
     "countryCode": "RO",
     "likeCount": 2,
-    "locationName": "Iași"
+    "locationName": "Ia\u0219i"
   },
   {
     "platformId": "pixlr",
@@ -2053,7 +2053,7 @@
   },
   {
     "platformId": "openai",
-    "platformName": "DALL·E 3",
+    "platformName": "DALL\u00b7E 3",
     "platformIcon": "/icons/providers/openai.png",
     "brandColor": "#10B981",
     "description": "piano virtuoso commanding concert hall stage, c...",
@@ -2088,9 +2088,9 @@
     "locationName": "Sasolburg"
   },
   {
-    "platformId": "remove-bg",
-    "platformName": "Remove.bg (Kaleido AI)",
-    "platformIcon": "/icons/providers/remove-bg.png",
+    "platformId": "recraft",
+    "platformName": "Recraft",
+    "platformIcon": "/icons/providers/recraft.png",
     "brandColor": "#22C55E",
     "description": "blue morpho butterfly resting on leaf, photorea...",
     "optimisedPrompt": "blue morpho butterfly resting on leaf, photorealistic, saturated, velvet dark sky with pin-sharp stars",
@@ -2385,7 +2385,7 @@
     "score": 86,
     "countryCode": "PL",
     "likeCount": 12,
-    "locationName": "Poznań"
+    "locationName": "Pozna\u0144"
   },
   {
     "platformId": "picwish",
@@ -2400,9 +2400,9 @@
     "locationName": "Ajman"
   },
   {
-    "platformId": "remove-bg",
-    "platformName": "Remove.bg (Kaleido AI)",
-    "platformIcon": "/icons/providers/remove-bg.png",
+    "platformId": "recraft",
+    "platformName": "Recraft",
+    "platformIcon": "/icons/providers/recraft.png",
     "brandColor": "#22C55E",
     "description": "golden retriever looking into camera, photoreal...",
     "optimisedPrompt": "golden retriever looking into camera, photorealistic, saturated, deep indigo sky with electric clarity",
@@ -2505,7 +2505,7 @@
     "score": 85,
     "countryCode": "RO",
     "likeCount": 17,
-    "locationName": "Brașov"
+    "locationName": "Bra\u0219ov"
   },
   {
     "platformId": "canva",

@@ -32,6 +32,7 @@
 
 import { computeOutcomeScore, outcomeWithFeedback } from '@/lib/learning/outcome-score';
 import type { PromptEventRow } from '@/lib/learning/database';
+import { getConversionCost } from '@/lib/prompt-builder/conversion-costs';
 
 // ============================================================================
 // CONSTANTS
@@ -78,6 +79,17 @@ export interface TermQuality {
 
   /** Change vs last run: score delta, clamped [-1, +1] for trend indicator */
   trend: number;
+
+  /**
+   * Part 9 Improvement 1: Where this term originates.
+   * - 'user': selected by users in dropdowns (high signal)
+   * - 'conversion': injected by the budget-aware conversion system (lower signal)
+   * - undefined: legacy data before conversion tracking was added
+   *
+   * The scorer can use this to separate quality distributions for
+   * converted vs user-selected terms in future calibration.
+   */
+  source?: 'user' | 'conversion';
 }
 
 /** Per-tier term quality data */
@@ -196,8 +208,8 @@ function computeTierTermQuality(
   const globalMean = mean(outcomeScores);
   const globalStddev = stddev(outcomeScores, globalMean);
 
-  // Build term → event indices mapping
-  const termEventIndices = buildTermIndex(events);
+  // Build term → event indices mapping (+ conversion terms set)
+  const { index: termEventIndices, conversionTerms } = buildTermIndex(events);
 
   // Score each term
   const terms: Record<string, TermQuality> = {};
@@ -229,10 +241,14 @@ function computeTierTermQuality(
     const previousScore = previousTier?.terms[term]?.score ?? null;
     const trend = computeTrend(score, previousScore);
 
+    // Part 9 Improvement 1: Tag source
+    const source = conversionTerms.has(term) ? 'conversion' as const : 'user' as const;
+
     terms[term] = {
       score,
       eventCount: indices.length,
       trend,
+      source,
     };
 
     totalScore += score;
@@ -255,33 +271,78 @@ function computeTierTermQuality(
  *
  * Extracts terms from all categories in each event's selections.
  * Terms are normalised to lowercase + trimmed for consistent matching.
+ *
+ * Part 9: Also indexes conversion output terms when conversion_meta is
+ * present. This lets the learning system score both the user's original
+ * fidelity/negative selections AND the converted equivalents that
+ * actually appeared in the prompt (e.g., "8K" → scores alongside
+ * "captured with extraordinary clarity" on Flux).
+ *
+ * Part 9 Improvement 1: Returns a conversionTerms set so the scorer can
+ * tag terms with source: 'user' | 'conversion'.
  */
 function buildTermIndex(
   events: PromptEventRow[],
-): Map<string, number[]> {
+): { index: Map<string, number[]>; conversionTerms: Set<string> } {
   const index = new Map<string, number[]>();
+  const conversionTerms = new Set<string>();
+
+  /** Helper: add a term to the index for event i */
+  const addTerm = (term: string, i: number, isConversion: boolean = false) => {
+    const normalised = term.trim().toLowerCase();
+    if (normalised.length === 0) return;
+    if (!index.has(normalised)) {
+      index.set(normalised, []);
+    }
+    index.get(normalised)!.push(i);
+    if (isConversion) {
+      conversionTerms.add(normalised);
+    }
+  };
 
   for (let i = 0; i < events.length; i++) {
-    const selections = events[i]!.selections;
+    const event = events[i]!;
+    const selections = event.selections;
     if (!selections || typeof selections !== 'object') continue;
 
+    // Index all user-selected terms (existing behaviour)
     for (const values of Object.values(selections)) {
       if (!Array.isArray(values)) continue;
-
       for (const raw of values) {
         if (typeof raw !== 'string') continue;
-        const term = raw.trim().toLowerCase();
-        if (term.length === 0) continue;
+        addTerm(raw, i, false);
+      }
+    }
 
-        if (!index.has(term)) {
-          index.set(term, []);
+    // Part 9: Index conversion output terms
+    const cm = event.conversion_meta;
+    if (!cm) continue;
+    const platform = event.platform;
+
+    // Fidelity conversion outputs
+    if (cm.fidelityConverted > 0 && Array.isArray(selections.fidelity)) {
+      for (const term of selections.fidelity) {
+        if (typeof term !== 'string') continue;
+        const entry = getConversionCost(term, 'fidelity', platform);
+        if (entry) {
+          addTerm(entry.output, i, true);
         }
-        index.get(term)!.push(i);
+      }
+    }
+
+    // Negative conversion outputs
+    if (cm.negativesConverted > 0 && Array.isArray(selections.negative)) {
+      for (const term of selections.negative) {
+        if (typeof term !== 'string') continue;
+        const entry = getConversionCost(term, 'negative', platform);
+        if (entry) {
+          addTerm(entry.output, i, true);
+        }
       }
     }
   }
 
-  return index;
+  return { index, conversionTerms };
 }
 
 // ============================================================================

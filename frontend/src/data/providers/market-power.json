@@ -617,21 +617,26 @@
       },
       "estimatedUsers": 500000,
       "notes": "Founded 2022 UK. Stable Diffusion web interface. User-friendly for SD exploration."
-    },
-    "remove-bg": {
-      "foundingYear": 2018,
-      "socialReach": {
-        "youtube": 25000,
-        "x": 20000,
-        "instagram": 30000,
-        "facebook": 100000,
-        "linkedin": 15000,
-        "tiktok": 50000,
-        "discord": 0,
-        "reddit": 0
-      },
-      "estimatedUsers": 10000000,
-      "notes": "Founded 2018 Vienna (Kaleido AI). Specialized background removal. Acquired by Canva 2021. Utility tool, not generative."
     }
+  },
+  "recraft": {
+    "score": 50,
+    "trend": "up",
+    "notes": "New addition \u2014 awaiting market data"
+  },
+  "kling": {
+    "score": 50,
+    "trend": "up",
+    "notes": "New addition \u2014 awaiting market data"
+  },
+  "luma-ai": {
+    "score": 50,
+    "trend": "up",
+    "notes": "New addition \u2014 awaiting market data"
+  },
+  "tensor-art": {
+    "score": 50,
+    "trend": "up",
+    "notes": "New addition \u2014 awaiting market data"
   }
 }

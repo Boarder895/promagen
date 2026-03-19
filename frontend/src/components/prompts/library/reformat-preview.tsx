@@ -92,6 +92,10 @@ const PLATFORM_NAMES: Record<string, string> = {
   'imagine-meta': 'Imagine (Meta)',
   'dreamlike': 'Dreamlike',
   'remove-bg': 'Remove.bg',
+  'recraft': 'Recraft',
+  'kling': 'Kling AI',
+  'luma-ai': 'Luma AI',
+  'tensor-art': 'Tensor.Art',
 };
 
 function getPlatformDisplayName(platformId: string): string {

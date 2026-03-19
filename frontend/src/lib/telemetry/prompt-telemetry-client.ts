@@ -87,6 +87,18 @@ export interface TelemetryInput {
   activeTestId?: string | null;
   /** Assigned variant: 'A' (control) or 'B' (variant) */
   activeVariant?: 'A' | 'B' | null;
+
+  // ── Part 8: Conversion telemetry ─────────────────────────────────────
+  /** Budget-aware conversion summary from AssembledPrompt.conversions */
+  conversionMeta?: {
+    fidelityConverted: number;
+    fidelityDeferred: number;
+    negativesConverted: number;
+    negativesDeferred: number;
+    budgetCeiling: number;
+    budgetRemaining: number;
+    parametricCount: number;
+  } | null;
 }
 
 // ============================================================================
@@ -279,6 +291,8 @@ export async function sendPromptTelemetry(input: TelemetryInput): Promise<string
       ...(input.abHash ? { abHash: input.abHash } : {}),
       ...(input.activeTestId ? { activeTestId: input.activeTestId } : {}),
       ...(input.activeVariant ? { activeVariant: input.activeVariant } : {}),
+      // Part 8: Conversion telemetry (optional — only present when conversions occurred)
+      ...(input.conversionMeta ? { conversionMeta: input.conversionMeta } : {}),
     };
 
     // --- Record copy timestamp for return-within-60s detection ---

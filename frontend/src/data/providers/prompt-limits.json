@@ -5,7 +5,7 @@
   "meta": {
     "description": "Platform-specific prompt length limits and optimization data for AI image generators",
     "authorityDoc": "docs/authority/prompt-builder-page.md",
-    "researchNotes": "Limits derived from official docs, API specs, community research, and model architecture (CLIP ~77 tokens ≈ 280-350 chars)"
+    "researchNotes": "Limits derived from official docs, API specs, community research, and model architecture (CLIP ~77 tokens \u2248 280-350 chars)"
   },
   "providers": {
     "123rf": {
@@ -19,7 +19,10 @@
       "qualityImpact": "8-12%",
       "impactCategory": "moderate",
       "architecture": "proprietary",
-      "sources": ["community-testing", "platform-observation"]
+      "sources": [
+        "community-testing",
+        "platform-observation"
+      ]
     },
     "adobe-firefly": {
       "maxChars": 1000,
@@ -32,7 +35,10 @@
       "qualityImpact": "5-8%",
       "impactCategory": "low",
       "architecture": "proprietary",
-      "sources": ["adobe-docs", "creative-cloud-community"]
+      "sources": [
+        "adobe-docs",
+        "creative-cloud-community"
+      ]
     },
     "artbreeder": {
       "maxChars": 500,
@@ -45,7 +51,10 @@
       "qualityImpact": "3-5%",
       "impactCategory": "low",
       "architecture": "proprietary",
-      "sources": ["artbreeder-community", "platform-testing"]
+      "sources": [
+        "artbreeder-community",
+        "platform-testing"
+      ]
     },
     "artguru": {
       "maxChars": 500,
@@ -58,7 +67,10 @@
       "qualityImpact": "12-18%",
       "impactCategory": "high",
       "architecture": "clip-based",
-      "sources": ["sd-architecture-docs", "community-research"]
+      "sources": [
+        "sd-architecture-docs",
+        "community-research"
+      ]
     },
     "artistly": {
       "maxChars": 500,
@@ -71,7 +83,9 @@
       "qualityImpact": "8-12%",
       "impactCategory": "moderate",
       "architecture": "proprietary",
-      "sources": ["platform-testing"]
+      "sources": [
+        "platform-testing"
+      ]
     },
     "bing": {
       "maxChars": 480,
@@ -84,7 +98,10 @@
       "qualityImpact": "5-8%",
       "impactCategory": "low",
       "architecture": "transformer",
-      "sources": ["microsoft-docs", "bing-creator-faq"]
+      "sources": [
+        "microsoft-docs",
+        "bing-creator-faq"
+      ]
     },
     "bluewillow": {
       "maxChars": 6000,
@@ -97,7 +114,10 @@
       "qualityImpact": "5-10%",
       "impactCategory": "moderate",
       "architecture": "proprietary",
-      "sources": ["bluewillow-discord", "community-research"]
+      "sources": [
+        "bluewillow-discord",
+        "community-research"
+      ]
     },
     "canva": {
       "maxChars": 500,
@@ -110,7 +130,10 @@
       "qualityImpact": "10-15%",
       "impactCategory": "moderate",
       "architecture": "proprietary",
-      "sources": ["canva-docs", "magic-media-faq"]
+      "sources": [
+        "canva-docs",
+        "magic-media-faq"
+      ]
     },
     "clipdrop": {
       "maxChars": 1000,
@@ -123,7 +146,10 @@
       "qualityImpact": "12-18%",
       "impactCategory": "high",
       "architecture": "clip-based",
-      "sources": ["stability-docs", "clipdrop-api"]
+      "sources": [
+        "stability-docs",
+        "clipdrop-api"
+      ]
     },
     "craiyon": {
       "maxChars": 500,
@@ -136,7 +162,10 @@
       "qualityImpact": "15-20%",
       "impactCategory": "high",
       "architecture": "transformer",
-      "sources": ["craiyon-faq", "community-testing"]
+      "sources": [
+        "craiyon-faq",
+        "community-testing"
+      ]
     },
     "deepai": {
       "maxChars": 500,
@@ -149,7 +178,10 @@
       "qualityImpact": "10-15%",
       "impactCategory": "moderate",
       "architecture": "proprietary",
-      "sources": ["deepai-api-docs", "platform-testing"]
+      "sources": [
+        "deepai-api-docs",
+        "platform-testing"
+      ]
     },
     "dreamlike": {
       "maxChars": 1000,
@@ -162,7 +194,10 @@
       "qualityImpact": "15-20%",
       "impactCategory": "high",
       "architecture": "clip-based",
-      "sources": ["dreamlike-docs", "sd-community"]
+      "sources": [
+        "dreamlike-docs",
+        "sd-community"
+      ]
     },
     "dreamstudio": {
       "maxChars": 2000,
@@ -175,7 +210,10 @@
       "qualityImpact": "15-25%",
       "impactCategory": "high",
       "architecture": "clip-based",
-      "sources": ["stability-docs", "dreamstudio-faq"]
+      "sources": [
+        "stability-docs",
+        "dreamstudio-faq"
+      ]
     },
     "flux": {
       "maxChars": 2000,
@@ -188,7 +226,10 @@
       "qualityImpact": "8-12%",
       "impactCategory": "moderate",
       "architecture": "transformer",
-      "sources": ["black-forest-labs-docs", "flux-community"]
+      "sources": [
+        "black-forest-labs-docs",
+        "flux-community"
+      ]
     },
     "fotor": {
       "maxChars": 500,
@@ -201,7 +242,10 @@
       "qualityImpact": "10-15%",
       "impactCategory": "moderate",
       "architecture": "proprietary",
-      "sources": ["fotor-help", "platform-testing"]
+      "sources": [
+        "fotor-help",
+        "platform-testing"
+      ]
     },
     "freepik": {
       "maxChars": 500,
@@ -214,7 +258,10 @@
       "qualityImpact": "8-12%",
       "impactCategory": "moderate",
       "architecture": "proprietary",
-      "sources": ["freepik-ai-docs", "platform-testing"]
+      "sources": [
+        "freepik-ai-docs",
+        "platform-testing"
+      ]
     },
     "getimg": {
       "maxChars": 1000,
@@ -227,7 +274,10 @@
       "qualityImpact": "15-20%",
       "impactCategory": "high",
       "architecture": "clip-based",
-      "sources": ["getimg-api-docs", "sd-community"]
+      "sources": [
+        "getimg-api-docs",
+        "sd-community"
+      ]
     },
     "google-imagen": {
       "maxChars": 1024,
@@ -240,7 +290,10 @@
       "qualityImpact": "5-10%",
       "impactCategory": "moderate",
       "architecture": "transformer",
-      "sources": ["google-ai-docs", "vertex-ai-docs"]
+      "sources": [
+        "google-ai-docs",
+        "vertex-ai-docs"
+      ]
     },
     "hotpot": {
       "maxChars": 500,
@@ -253,7 +306,10 @@
       "qualityImpact": "10-15%",
       "impactCategory": "moderate",
       "architecture": "proprietary",
-      "sources": ["hotpot-help", "platform-testing"]
+      "sources": [
+        "hotpot-help",
+        "platform-testing"
+      ]
     },
     "ideogram": {
       "maxChars": 1000,
@@ -266,7 +322,10 @@
       "qualityImpact": "10-15%",
       "impactCategory": "moderate",
       "architecture": "proprietary",
-      "sources": ["ideogram-docs", "community-research"]
+      "sources": [
+        "ideogram-docs",
+        "community-research"
+      ]
     },
     "imagine-meta": {
       "maxChars": 1000,
@@ -279,7 +338,10 @@
       "qualityImpact": "8-12%",
       "impactCategory": "moderate",
       "architecture": "transformer",
-      "sources": ["meta-ai-docs", "community-testing"]
+      "sources": [
+        "meta-ai-docs",
+        "community-testing"
+      ]
     },
     "jasper-art": {
       "maxChars": 1000,
@@ -292,7 +354,10 @@
       "qualityImpact": "10-15%",
       "impactCategory": "moderate",
       "architecture": "clip-based",
-      "sources": ["jasper-docs", "sd-community"]
+      "sources": [
+        "jasper-docs",
+        "sd-community"
+      ]
     },
     "leonardo": {
       "maxChars": 1000,
@@ -305,7 +370,10 @@
       "qualityImpact": "15-20%",
       "impactCategory": "high",
       "architecture": "clip-based",
-      "sources": ["leonardo-docs", "leonardo-discord"]
+      "sources": [
+        "leonardo-docs",
+        "leonardo-discord"
+      ]
     },
     "lexica": {
       "maxChars": 1000,
@@ -318,7 +386,10 @@
       "qualityImpact": "15-20%",
       "impactCategory": "high",
       "architecture": "clip-based",
-      "sources": ["lexica-faq", "sd-community"]
+      "sources": [
+        "lexica-faq",
+        "sd-community"
+      ]
     },
     "microsoft-designer": {
       "maxChars": 500,
@@ -331,7 +402,10 @@
       "qualityImpact": "5-8%",
       "impactCategory": "low",
       "architecture": "transformer",
-      "sources": ["microsoft-docs", "designer-help"]
+      "sources": [
+        "microsoft-docs",
+        "designer-help"
+      ]
     },
     "midjourney": {
       "maxChars": 6000,
@@ -344,7 +418,10 @@
       "qualityImpact": "5-10%",
       "impactCategory": "moderate",
       "architecture": "proprietary",
-      "sources": ["midjourney-docs", "midjourney-discord"]
+      "sources": [
+        "midjourney-docs",
+        "midjourney-discord"
+      ]
     },
     "myedit": {
       "maxChars": 500,
@@ -357,7 +434,10 @@
       "qualityImpact": "8-12%",
       "impactCategory": "moderate",
       "architecture": "proprietary",
-      "sources": ["cyberlink-docs", "platform-testing"]
+      "sources": [
+        "cyberlink-docs",
+        "platform-testing"
+      ]
     },
     "nightcafe": {
       "maxChars": 1000,
@@ -370,7 +450,10 @@
       "qualityImpact": "15-20%",
       "impactCategory": "high",
       "architecture": "clip-based",
-      "sources": ["nightcafe-faq", "sd-community"]
+      "sources": [
+        "nightcafe-faq",
+        "sd-community"
+      ]
     },
     "novelai": {
       "maxChars": 2000,
@@ -383,7 +466,10 @@
       "qualityImpact": "15-20%",
       "impactCategory": "high",
       "architecture": "clip-based",
-      "sources": ["novelai-docs", "novelai-community"]
+      "sources": [
+        "novelai-docs",
+        "novelai-community"
+      ]
     },
     "openai": {
       "maxChars": 4000,
@@ -396,7 +482,10 @@
       "qualityImpact": "3-5%",
       "impactCategory": "low",
       "architecture": "transformer",
-      "sources": ["openai-docs", "dalle-api-docs"]
+      "sources": [
+        "openai-docs",
+        "dalle-api-docs"
+      ]
     },
     "openart": {
       "maxChars": 1000,
@@ -409,7 +498,10 @@
       "qualityImpact": "15-20%",
       "impactCategory": "high",
       "architecture": "clip-based",
-      "sources": ["openart-docs", "sd-community"]
+      "sources": [
+        "openart-docs",
+        "sd-community"
+      ]
     },
     "photoleap": {
       "maxChars": 500,
@@ -422,7 +514,10 @@
       "qualityImpact": "8-12%",
       "impactCategory": "moderate",
       "architecture": "proprietary",
-      "sources": ["lightricks-docs", "platform-testing"]
+      "sources": [
+        "lightricks-docs",
+        "platform-testing"
+      ]
     },
     "picsart": {
       "maxChars": 500,
@@ -435,7 +530,10 @@
       "qualityImpact": "8-12%",
       "impactCategory": "moderate",
       "architecture": "proprietary",
-      "sources": ["picsart-help", "platform-testing"]
+      "sources": [
+        "picsart-help",
+        "platform-testing"
+      ]
     },
     "picwish": {
       "maxChars": 500,
@@ -448,7 +546,10 @@
       "qualityImpact": "3-5%",
       "impactCategory": "low",
       "architecture": "proprietary",
-      "sources": ["picwish-help", "platform-testing"]
+      "sources": [
+        "picwish-help",
+        "platform-testing"
+      ]
     },
     "pixlr": {
       "maxChars": 500,
@@ -461,7 +562,10 @@
       "qualityImpact": "10-12%",
       "impactCategory": "moderate",
       "architecture": "proprietary",
-      "sources": ["pixlr-help", "platform-testing"]
+      "sources": [
+        "pixlr-help",
+        "platform-testing"
+      ]
     },
     "playground": {
       "maxChars": 1000,
@@ -474,20 +578,10 @@
       "qualityImpact": "15-20%",
       "impactCategory": "high",
       "architecture": "clip-based",
-      "sources": ["playground-docs", "sd-community"]
-    },
-    "remove-bg": {
-      "maxChars": 200,
-      "idealMin": 20,
-      "idealMax": 100,
-      "idealWords": 15,
-      "tokenLimit": null,
-      "platformNote": "Background removal utility; minimal prompting if any.",
-      "optimizationBenefit": "Not applicable for primary use case.",
-      "qualityImpact": "1-2%",
-      "impactCategory": "low",
-      "architecture": "proprietary",
-      "sources": ["remove-bg-api", "platform-testing"]
+      "sources": [
+        "playground-docs",
+        "sd-community"
+      ]
     },
     "runway": {
       "maxChars": 1000,
@@ -500,7 +594,10 @@
       "qualityImpact": "8-12%",
       "impactCategory": "moderate",
       "architecture": "proprietary",
-      "sources": ["runway-docs", "runway-community"]
+      "sources": [
+        "runway-docs",
+        "runway-community"
+      ]
     },
     "simplified": {
       "maxChars": 500,
@@ -513,7 +610,10 @@
       "qualityImpact": "8-12%",
       "impactCategory": "moderate",
       "architecture": "proprietary",
-      "sources": ["simplified-help", "platform-testing"]
+      "sources": [
+        "simplified-help",
+        "platform-testing"
+      ]
     },
     "stability": {
       "maxChars": 2000,
@@ -526,7 +626,10 @@
       "qualityImpact": "15-25%",
       "impactCategory": "high",
       "architecture": "clip-based",
-      "sources": ["stability-docs", "sd-research-papers"]
+      "sources": [
+        "stability-docs",
+        "sd-research-papers"
+      ]
     },
     "visme": {
       "maxChars": 500,
@@ -539,7 +642,10 @@
       "qualityImpact": "5-8%",
       "impactCategory": "low",
       "architecture": "proprietary",
-      "sources": ["visme-help", "platform-testing"]
+      "sources": [
+        "visme-help",
+        "platform-testing"
+      ]
     },
     "vistacreate": {
       "maxChars": 500,
@@ -552,7 +658,26 @@
       "qualityImpact": "8-12%",
       "impactCategory": "moderate",
       "architecture": "proprietary",
-      "sources": ["vistacreate-help", "platform-testing"]
+      "sources": [
+        "vistacreate-help",
+        "platform-testing"
+      ]
     }
+  },
+  "recraft": {
+    "maxLength": 200,
+    "unit": "words"
+  },
+  "kling": {
+    "maxLength": 200,
+    "unit": "words"
+  },
+  "luma-ai": {
+    "maxLength": 300,
+    "unit": "words"
+  },
+  "tensor-art": {
+    "maxLength": 150,
+    "unit": "words"
   }
 }

@@ -70,7 +70,7 @@ export type ProviderCellProps = {
 const FALLBACK_ICON = '/icons/providers/fallback.png';
 
 /** Providers that should use 🏠 emoji instead of icon */
-const EMOJI_FALLBACK_PROVIDERS = ['dreamstudio'];
+const EMOJI_FALLBACK_PROVIDERS: string[] = [];
 
 // ============================================================================
 // WEATHER DATA CONVERTER
@@ -483,6 +483,12 @@ export function ProviderCell({
               src={iconPath}
               alt=""
               className="provider-logo-icon"
+              style={{
+                padding: '2px',
+                borderRadius: '5px',
+                background: 'rgba(255, 255, 255, 0.10)',
+                boxShadow: '0 0 0 1px rgba(255, 255, 255, 0.15), 0 0 4px rgba(255, 255, 255, 0.06)',
+              }}
               onError={(e) => {
                 // Fallback if icon fails to load
                 const target = e.currentTarget;

@@ -287,10 +287,31 @@
     "save_as": "dreamlike.png"
   },
   {
-    "id": "remove-bg",
-    "name": "Remove.bg (Kaleido AI)",
-    "domain": "www.remove.bg",
-    "favicon_url": "https://www.google.com/s2/favicons?domain=www.remove.bg&sz=64",
-    "save_as": "remove-bg.png"
+    "id": "recraft",
+    "name": "Recraft",
+    "domain": "www.recraft.ai",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=www.recraft.ai&sz=64",
+    "save_as": "recraft.png"
+  },
+  {
+    "id": "kling",
+    "name": "Kling AI",
+    "domain": "klingai.com",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=klingai.com&sz=64",
+    "save_as": "kling.png"
+  },
+  {
+    "id": "luma-ai",
+    "name": "Luma AI",
+    "domain": "lumalabs.ai",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=lumalabs.ai&sz=64",
+    "save_as": "luma-ai.png"
+  },
+  {
+    "id": "tensor-art",
+    "name": "Tensor.Art",
+    "domain": "tensor.art",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=tensor.art&sz=64",
+    "save_as": "tensor-art.png"
   }
 ]

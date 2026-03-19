@@ -166,6 +166,7 @@ module.exports = {
       testMatch: [
         '<rootDir>/src/__tests__/a11y.*.test.{ts,tsx}',
         '<rootDir>/src/__tests__/compression.test.{ts,tsx}',
+        '<rootDir>/src/__tests__/conversion-*.test.{ts,tsx}',
         '<rootDir>/src/__tests__/finance-ribbon.*.test.{ts,tsx}',
         '<rootDir>/src/__tests__/holiday-detector.test.{ts,tsx}',
         '<rootDir>/src/__tests__/plans.matrix.test.{ts,tsx}',

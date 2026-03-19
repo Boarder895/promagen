@@ -15,8 +15,16 @@
         "Keep prompts under 60 words for best results",
         "Style references work exceptionally well"
       ],
-      "strongCategories": ["style", "lighting", "atmosphere"],
-      "trimPriority": ["materials", "fidelity", "camera"]
+      "strongCategories": [
+        "style",
+        "lighting",
+        "atmosphere"
+      ],
+      "trimPriority": [
+        "materials",
+        "fidelity",
+        "camera"
+      ]
     },
     "openai": {
       "tier": 1,
@@ -25,13 +33,21 @@
       "negativeSyntax": "without",
       "separateNegative": false,
       "hints": [
-        "DALL·E prefers natural, descriptive sentences",
+        "DALL\u00b7E prefers natural, descriptive sentences",
         "Avoid keyword lists; use flowing descriptions",
         "Be specific about what you want, not just style terms",
         "Excellent at following precise instructions"
       ],
-      "strongCategories": ["subject", "environment", "action"],
-      "trimPriority": ["fidelity", "camera", "materials"]
+      "strongCategories": [
+        "subject",
+        "environment",
+        "action"
+      ],
+      "trimPriority": [
+        "fidelity",
+        "camera",
+        "materials"
+      ]
     },
     "google-imagen": {
       "tier": 1,
@@ -44,8 +60,16 @@
         "Strong at faces and human subjects",
         "Good for naturalistic scenes"
       ],
-      "strongCategories": ["subject", "environment", "lighting"],
-      "trimPriority": ["materials", "fidelity", "atmosphere"]
+      "strongCategories": [
+        "subject",
+        "environment",
+        "lighting"
+      ],
+      "trimPriority": [
+        "materials",
+        "fidelity",
+        "atmosphere"
+      ]
     },
     "leonardo": {
       "tier": 1,
@@ -58,8 +82,16 @@
         "Strong for game art and concept art",
         "Negative prompt field is powerful"
       ],
-      "strongCategories": ["style", "subject", "lighting"],
-      "trimPriority": ["atmosphere", "materials", "fidelity"]
+      "strongCategories": [
+        "style",
+        "subject",
+        "lighting"
+      ],
+      "trimPriority": [
+        "atmosphere",
+        "materials",
+        "fidelity"
+      ]
     },
     "flux": {
       "tier": 1,
@@ -72,8 +104,16 @@
         "Great for rapid prototyping",
         "Strong photographic and artistic styles"
       ],
-      "strongCategories": ["style", "lighting", "fidelity"],
-      "trimPriority": ["atmosphere", "materials", "action"]
+      "strongCategories": [
+        "style",
+        "lighting",
+        "fidelity"
+      ],
+      "trimPriority": [
+        "atmosphere",
+        "materials",
+        "action"
+      ]
     },
     "stability": {
       "tier": 1,
@@ -87,8 +127,15 @@
         "Negative prompt is separate and powerful",
         "Great for reproducible results with seeds"
       ],
-      "strongCategories": ["style", "lighting", "fidelity"],
-      "trimPriority": ["atmosphere", "action"]
+      "strongCategories": [
+        "style",
+        "lighting",
+        "fidelity"
+      ],
+      "trimPriority": [
+        "atmosphere",
+        "action"
+      ]
     },
     "adobe-firefly": {
       "tier": 2,
@@ -101,8 +148,16 @@
         "Strong for brand-safe, clean compositions",
         "Good for design-oriented outputs"
       ],
-      "strongCategories": ["style", "composition", "colour"],
-      "trimPriority": ["atmosphere", "materials", "fidelity"]
+      "strongCategories": [
+        "style",
+        "composition",
+        "colour"
+      ],
+      "trimPriority": [
+        "atmosphere",
+        "materials",
+        "fidelity"
+      ]
     },
     "ideogram": {
       "tier": 2,
@@ -116,8 +171,16 @@
         "Strong for logos and typography",
         "Good poster and graphic design output"
       ],
-      "strongCategories": ["style", "subject", "composition"],
-      "trimPriority": ["atmosphere", "materials", "fidelity"]
+      "strongCategories": [
+        "style",
+        "subject",
+        "composition"
+      ],
+      "trimPriority": [
+        "atmosphere",
+        "materials",
+        "fidelity"
+      ]
     },
     "imagine-meta": {
       "tier": 2,
@@ -129,8 +192,16 @@
         "Good for social media content",
         "Simple, clear descriptions work best"
       ],
-      "strongCategories": ["subject", "style", "environment"],
-      "trimPriority": ["fidelity", "materials", "camera"]
+      "strongCategories": [
+        "subject",
+        "style",
+        "environment"
+      ],
+      "trimPriority": [
+        "fidelity",
+        "materials",
+        "camera"
+      ]
     },
     "nightcafe": {
       "tier": 2,
@@ -143,8 +214,16 @@
         "Good community and style presets",
         "Negative prompt available"
       ],
-      "strongCategories": ["style", "lighting", "atmosphere"],
-      "trimPriority": ["materials", "fidelity", "camera"]
+      "strongCategories": [
+        "style",
+        "lighting",
+        "atmosphere"
+      ],
+      "trimPriority": [
+        "materials",
+        "fidelity",
+        "camera"
+      ]
     },
     "playground": {
       "tier": 2,
@@ -157,8 +236,16 @@
         "Good for experimentation",
         "Multiple model options available"
       ],
-      "strongCategories": ["style", "subject", "lighting"],
-      "trimPriority": ["materials", "fidelity", "atmosphere"]
+      "strongCategories": [
+        "style",
+        "subject",
+        "lighting"
+      ],
+      "trimPriority": [
+        "materials",
+        "fidelity",
+        "atmosphere"
+      ]
     },
     "novelai": {
       "tier": 2,
@@ -172,8 +259,16 @@
         "Strong for character art",
         "Separate negative prompt field"
       ],
-      "strongCategories": ["style", "subject", "action"],
-      "trimPriority": ["environment", "materials", "fidelity"]
+      "strongCategories": [
+        "style",
+        "subject",
+        "action"
+      ],
+      "trimPriority": [
+        "environment",
+        "materials",
+        "fidelity"
+      ]
     },
     "lexica": {
       "tier": 2,
@@ -185,8 +280,16 @@
         "Good for finding inspiration",
         "Keyword prompts work well"
       ],
-      "strongCategories": ["style", "subject", "lighting"],
-      "trimPriority": ["materials", "fidelity", "atmosphere"]
+      "strongCategories": [
+        "style",
+        "subject",
+        "lighting"
+      ],
+      "trimPriority": [
+        "materials",
+        "fidelity",
+        "atmosphere"
+      ]
     },
     "openart": {
       "tier": 2,
@@ -198,8 +301,16 @@
         "Keyword-style prompts work best",
         "Good for exploring different styles"
       ],
-      "strongCategories": ["style", "subject", "lighting"],
-      "trimPriority": ["materials", "fidelity", "atmosphere"]
+      "strongCategories": [
+        "style",
+        "subject",
+        "lighting"
+      ],
+      "trimPriority": [
+        "materials",
+        "fidelity",
+        "atmosphere"
+      ]
     },
     "dreamstudio": {
       "tier": 2,
@@ -213,8 +324,16 @@
         "Strong negative prompt support",
         "Good for fine control"
       ],
-      "strongCategories": ["style", "lighting", "fidelity"],
-      "trimPriority": ["atmosphere", "materials", "action"]
+      "strongCategories": [
+        "style",
+        "lighting",
+        "fidelity"
+      ],
+      "trimPriority": [
+        "atmosphere",
+        "materials",
+        "action"
+      ]
     },
     "getimg": {
       "tier": 2,
@@ -226,8 +345,16 @@
         "Keyword prompts work well",
         "Good for batch generation"
       ],
-      "strongCategories": ["style", "subject", "lighting"],
-      "trimPriority": ["materials", "fidelity", "atmosphere"]
+      "strongCategories": [
+        "style",
+        "subject",
+        "lighting"
+      ],
+      "trimPriority": [
+        "materials",
+        "fidelity",
+        "atmosphere"
+      ]
     },
     "dreamlike": {
       "tier": 2,
@@ -239,8 +366,16 @@
         "Keyword prompts work well",
         "Strong for dreamy, surreal styles"
       ],
-      "strongCategories": ["style", "atmosphere", "lighting"],
-      "trimPriority": ["materials", "fidelity", "camera"]
+      "strongCategories": [
+        "style",
+        "atmosphere",
+        "lighting"
+      ],
+      "trimPriority": [
+        "materials",
+        "fidelity",
+        "camera"
+      ]
     },
     "bluewillow": {
       "tier": 3,
@@ -253,8 +388,16 @@
         "Use --no for negatives",
         "Discord-based interface"
       ],
-      "strongCategories": ["style", "subject", "lighting"],
-      "trimPriority": ["materials", "fidelity", "atmosphere"]
+      "strongCategories": [
+        "style",
+        "subject",
+        "lighting"
+      ],
+      "trimPriority": [
+        "materials",
+        "fidelity",
+        "atmosphere"
+      ]
     },
     "canva": {
       "tier": 3,
@@ -266,8 +409,16 @@
         "Simple, clear prompts work best",
         "Good for quick design assets"
       ],
-      "strongCategories": ["subject", "style", "composition"],
-      "trimPriority": ["fidelity", "materials", "atmosphere"]
+      "strongCategories": [
+        "subject",
+        "style",
+        "composition"
+      ],
+      "trimPriority": [
+        "fidelity",
+        "materials",
+        "atmosphere"
+      ]
     },
     "bing": {
       "tier": 3,
@@ -275,12 +426,20 @@
       "prefersEarlierTokens": false,
       "separateNegative": false,
       "hints": [
-        "Bing Image Creator uses DALL·E",
+        "Bing Image Creator uses DALL\u00b7E",
         "Natural language works best",
         "Free tier has daily limits"
       ],
-      "strongCategories": ["subject", "environment", "action"],
-      "trimPriority": ["fidelity", "materials", "camera"]
+      "strongCategories": [
+        "subject",
+        "environment",
+        "action"
+      ],
+      "trimPriority": [
+        "fidelity",
+        "materials",
+        "camera"
+      ]
     },
     "microsoft-designer": {
       "tier": 3,
@@ -292,8 +451,16 @@
         "Simple prompts work well",
         "Good for quick design work"
       ],
-      "strongCategories": ["subject", "style", "composition"],
-      "trimPriority": ["fidelity", "materials", "atmosphere"]
+      "strongCategories": [
+        "subject",
+        "style",
+        "composition"
+      ],
+      "trimPriority": [
+        "fidelity",
+        "materials",
+        "atmosphere"
+      ]
     },
     "picsart": {
       "tier": 3,
@@ -305,8 +472,16 @@
         "Simple prompts work best",
         "Good for social media content"
       ],
-      "strongCategories": ["subject", "style", "colour"],
-      "trimPriority": ["fidelity", "materials", "camera"]
+      "strongCategories": [
+        "subject",
+        "style",
+        "colour"
+      ],
+      "trimPriority": [
+        "fidelity",
+        "materials",
+        "camera"
+      ]
     },
     "pixlr": {
       "tier": 3,
@@ -318,8 +493,16 @@
         "Simple prompts work best",
         "Good for photo enhancement workflow"
       ],
-      "strongCategories": ["subject", "style", "lighting"],
-      "trimPriority": ["fidelity", "materials", "atmosphere"]
+      "strongCategories": [
+        "subject",
+        "style",
+        "lighting"
+      ],
+      "trimPriority": [
+        "fidelity",
+        "materials",
+        "atmosphere"
+      ]
     },
     "fotor": {
       "tier": 3,
@@ -331,8 +514,16 @@
         "Simple prompts work best",
         "Good for quick edits and generation"
       ],
-      "strongCategories": ["subject", "style", "lighting"],
-      "trimPriority": ["fidelity", "materials", "atmosphere"]
+      "strongCategories": [
+        "subject",
+        "style",
+        "lighting"
+      ],
+      "trimPriority": [
+        "fidelity",
+        "materials",
+        "atmosphere"
+      ]
     },
     "deepai": {
       "tier": 3,
@@ -344,8 +535,16 @@
         "Basic prompts work fine",
         "Good for experimentation"
       ],
-      "strongCategories": ["subject", "style"],
-      "trimPriority": ["fidelity", "materials", "atmosphere", "camera"]
+      "strongCategories": [
+        "subject",
+        "style"
+      ],
+      "trimPriority": [
+        "fidelity",
+        "materials",
+        "atmosphere",
+        "camera"
+      ]
     },
     "craiyon": {
       "tier": 4,
@@ -357,8 +556,16 @@
         "Simple prompts work best",
         "Good for quick, fun generations"
       ],
-      "strongCategories": ["subject", "style"],
-      "trimPriority": ["fidelity", "materials", "atmosphere", "camera"]
+      "strongCategories": [
+        "subject",
+        "style"
+      ],
+      "trimPriority": [
+        "fidelity",
+        "materials",
+        "atmosphere",
+        "camera"
+      ]
     },
     "artguru": {
       "tier": 3,
@@ -369,8 +576,15 @@
         "ArtGuru focuses on artistic styles",
         "Simple prompts work well"
       ],
-      "strongCategories": ["style", "subject"],
-      "trimPriority": ["fidelity", "materials", "atmosphere"]
+      "strongCategories": [
+        "style",
+        "subject"
+      ],
+      "trimPriority": [
+        "fidelity",
+        "materials",
+        "atmosphere"
+      ]
     },
     "artistly": {
       "tier": 3,
@@ -381,8 +595,15 @@
         "Artistly focuses on artistic transformations",
         "Simple prompts work well"
       ],
-      "strongCategories": ["style", "subject"],
-      "trimPriority": ["fidelity", "materials", "atmosphere"]
+      "strongCategories": [
+        "style",
+        "subject"
+      ],
+      "trimPriority": [
+        "fidelity",
+        "materials",
+        "atmosphere"
+      ]
     },
     "artbreeder": {
       "tier": 3,
@@ -394,8 +615,16 @@
         "Good for character and portrait creation",
         "Uses sliders more than text prompts"
       ],
-      "strongCategories": ["subject", "style"],
-      "trimPriority": ["fidelity", "materials", "atmosphere", "camera"]
+      "strongCategories": [
+        "subject",
+        "style"
+      ],
+      "trimPriority": [
+        "fidelity",
+        "materials",
+        "atmosphere",
+        "camera"
+      ]
     },
     "hotpot": {
       "tier": 3,
@@ -406,8 +635,15 @@
         "Hotpot offers multiple AI tools",
         "Simple prompts work well"
       ],
-      "strongCategories": ["subject", "style"],
-      "trimPriority": ["fidelity", "materials", "atmosphere"]
+      "strongCategories": [
+        "subject",
+        "style"
+      ],
+      "trimPriority": [
+        "fidelity",
+        "materials",
+        "atmosphere"
+      ]
     },
     "jasper-art": {
       "tier": 3,
@@ -419,8 +655,16 @@
         "Natural language prompts work best",
         "Good for marketing content"
       ],
-      "strongCategories": ["subject", "style", "composition"],
-      "trimPriority": ["fidelity", "materials", "atmosphere"]
+      "strongCategories": [
+        "subject",
+        "style",
+        "composition"
+      ],
+      "trimPriority": [
+        "fidelity",
+        "materials",
+        "atmosphere"
+      ]
     },
     "runway": {
       "tier": 2,
@@ -432,8 +676,16 @@
         "Natural language works well",
         "Strong for creative workflows"
       ],
-      "strongCategories": ["subject", "style", "action"],
-      "trimPriority": ["fidelity", "materials", "atmosphere"]
+      "strongCategories": [
+        "subject",
+        "style",
+        "action"
+      ],
+      "trimPriority": [
+        "fidelity",
+        "materials",
+        "atmosphere"
+      ]
     },
     "clipdrop": {
       "tier": 2,
@@ -445,8 +697,16 @@
         "Natural language prompts work well",
         "Great for product photography"
       ],
-      "strongCategories": ["subject", "lighting", "composition"],
-      "trimPriority": ["fidelity", "materials", "atmosphere"]
+      "strongCategories": [
+        "subject",
+        "lighting",
+        "composition"
+      ],
+      "trimPriority": [
+        "fidelity",
+        "materials",
+        "atmosphere"
+      ]
     },
     "123rf": {
       "tier": 3,
@@ -458,8 +718,16 @@
         "Commercial-friendly outputs",
         "Simple prompts work well"
       ],
-      "strongCategories": ["subject", "style", "composition"],
-      "trimPriority": ["fidelity", "materials", "atmosphere"]
+      "strongCategories": [
+        "subject",
+        "style",
+        "composition"
+      ],
+      "trimPriority": [
+        "fidelity",
+        "materials",
+        "atmosphere"
+      ]
     },
     "freepik": {
       "tier": 3,
@@ -471,8 +739,16 @@
         "Simple prompts work well",
         "Good for graphic design assets"
       ],
-      "strongCategories": ["style", "subject", "composition"],
-      "trimPriority": ["fidelity", "materials", "atmosphere"]
+      "strongCategories": [
+        "style",
+        "subject",
+        "composition"
+      ],
+      "trimPriority": [
+        "fidelity",
+        "materials",
+        "atmosphere"
+      ]
     },
     "simplified": {
       "tier": 3,
@@ -484,8 +760,15 @@
         "Simple prompts work best",
         "Good for marketing content"
       ],
-      "strongCategories": ["subject", "style"],
-      "trimPriority": ["fidelity", "materials", "atmosphere"]
+      "strongCategories": [
+        "subject",
+        "style"
+      ],
+      "trimPriority": [
+        "fidelity",
+        "materials",
+        "atmosphere"
+      ]
     },
     "visme": {
       "tier": 3,
@@ -497,8 +780,16 @@
         "Simple prompts work well",
         "Good for business graphics"
       ],
-      "strongCategories": ["subject", "style", "composition"],
-      "trimPriority": ["fidelity", "materials", "atmosphere"]
+      "strongCategories": [
+        "subject",
+        "style",
+        "composition"
+      ],
+      "trimPriority": [
+        "fidelity",
+        "materials",
+        "atmosphere"
+      ]
     },
     "vistacreate": {
       "tier": 3,
@@ -510,21 +801,15 @@
         "Simple prompts work well",
         "Good for social media content"
       ],
-      "strongCategories": ["subject", "style"],
-      "trimPriority": ["fidelity", "materials", "atmosphere"]
-    },
-    "remove-bg": {
-      "tier": 4,
-      "prefersNaturalLanguage": true,
-      "prefersEarlierTokens": false,
-      "separateNegative": false,
-      "hints": [
-        "Remove.bg specializes in background removal",
-        "Not a text-to-image generator",
-        "Use for editing workflows"
+      "strongCategories": [
+        "subject",
+        "style"
       ],
-      "strongCategories": ["subject"],
-      "trimPriority": ["all"]
+      "trimPriority": [
+        "fidelity",
+        "materials",
+        "atmosphere"
+      ]
     },
     "photoleap": {
       "tier": 3,
@@ -536,8 +821,15 @@
         "Simple prompts work best",
         "Good for quick mobile edits"
       ],
-      "strongCategories": ["subject", "style"],
-      "trimPriority": ["fidelity", "materials", "atmosphere"]
+      "strongCategories": [
+        "subject",
+        "style"
+      ],
+      "trimPriority": [
+        "fidelity",
+        "materials",
+        "atmosphere"
+      ]
     },
     "picwish": {
       "tier": 3,
@@ -548,8 +840,15 @@
         "PicWish focuses on photo enhancement",
         "Simple prompts work well"
       ],
-      "strongCategories": ["subject", "style"],
-      "trimPriority": ["fidelity", "materials", "atmosphere"]
+      "strongCategories": [
+        "subject",
+        "style"
+      ],
+      "trimPriority": [
+        "fidelity",
+        "materials",
+        "atmosphere"
+      ]
     },
     "myedit": {
       "tier": 3,
@@ -560,8 +859,67 @@
         "MyEdit combines editing with AI generation",
         "Simple prompts work well"
       ],
-      "strongCategories": ["subject", "style"],
-      "trimPriority": ["fidelity", "materials", "atmosphere"]
+      "strongCategories": [
+        "subject",
+        "style"
+      ],
+      "trimPriority": [
+        "fidelity",
+        "materials",
+        "atmosphere"
+      ]
     }
+  },
+  "recraft": {
+    "strengths": [
+      "vector art",
+      "text in images",
+      "design layouts",
+      "brand assets"
+    ],
+    "weaknesses": [
+      "abstract surreal concepts",
+      "extreme photorealism"
+    ],
+    "tips": "Use structured prompts: style + subject + detail + background. Excellent for logos and illustrations."
+  },
+  "kling": {
+    "strengths": [
+      "cinematic compositions",
+      "character consistency",
+      "multiple subjects"
+    ],
+    "weaknesses": [
+      "highly complex multi-element scenes",
+      "precise text rendering"
+    ],
+    "tips": "Keep prompts descriptive with subject + action + context + style. Strong for photorealistic and stylised output."
+  },
+  "luma-ai": {
+    "strengths": [
+      "photorealism",
+      "skin texture",
+      "lighting",
+      "depth of field"
+    ],
+    "weaknesses": [
+      "abstract art",
+      "vector graphics",
+      "text rendering"
+    ],
+    "tips": "Natural language descriptions outperform keyword lists. Specify lighting, camera, and composition details."
+  },
+  "tensor-art": {
+    "strengths": [
+      "model variety",
+      "SDXL quality",
+      "LoRA support",
+      "community models"
+    ],
+    "weaknesses": [
+      "consistency across models",
+      "plain language prompts"
+    ],
+    "tips": "Multi-model platform. Use SD/SDXL keyword syntax with CLIP weighting. LoRA and ControlNet supported."
   }
 }

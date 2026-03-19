@@ -105,6 +105,18 @@ export interface PromptTelemetryEvent {
   activeTestId?: string;
   /** Which variant this event belongs to: A=control, B=variant */
   activeVariant?: 'A' | 'B';
+
+  // ── Part 8: Conversion telemetry (budget-aware conversion system) ────
+  /** Summary of budget-aware conversion outcomes for learning pipeline */
+  conversionMeta?: {
+    fidelityConverted: number;
+    fidelityDeferred: number;
+    negativesConverted: number;
+    negativesDeferred: number;
+    budgetCeiling: number;
+    budgetRemaining: number;
+    parametricCount: number;
+  };
 }
 
 /**
@@ -270,6 +282,17 @@ export const PromptTelemetryEventSchema = z.object({
     .max(128, 'deterministicId must be <= 128 chars')
     .regex(/^[a-z0-9:_-]+$/, 'deterministicId must be lowercase alphanumeric with colons/hyphens/underscores')
     .optional(),
+
+  // ── Part 8: Budget-aware conversion telemetry ──
+  conversionMeta: z.object({
+    fidelityConverted: z.number().int().min(0).max(20),
+    fidelityDeferred: z.number().int().min(0).max(20),
+    negativesConverted: z.number().int().min(0).max(20),
+    negativesDeferred: z.number().int().min(0).max(20),
+    budgetCeiling: z.number().int().min(0).max(2000),
+    budgetRemaining: z.number().int().min(-500).max(2000),
+    parametricCount: z.number().int().min(0).max(20),
+  }).optional(),
 });
 
 /**

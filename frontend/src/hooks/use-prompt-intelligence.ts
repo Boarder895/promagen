@@ -26,16 +26,15 @@ import type {
   ConflictWarning,
   StyleSuggestion,
   MarketMoodContext,
-  SelectionLimits
 } from '../types/prompt-intelligence';
 
 import {
   EMPTY_SELECTIONS,
   CATEGORY_ORDER,
   getTierForPlatform,
-  getLimitsForTier,
-  getCategoryLimit
 } from '../types/prompt-intelligence';
+
+import { getCategoryLimitsForPlatformTier } from '../lib/usage/constants';
 
 import { generateAllTierPrompts, generatePromptForTier } from '../lib/prompt-builder/generators';
 import {
@@ -67,7 +66,7 @@ export interface UsePromptIntelligenceReturn {
   // State
   selections: PromptSelections;
   tier: PlatformTier;
-  limits: SelectionLimits;
+  limits: Record<string, number>;
   
   // Generated prompts
   prompts: GeneratedPrompts;
@@ -177,7 +176,11 @@ export function usePromptIntelligence(
   
   // Derived state
   const tier = useMemo(() => getTierForPlatform(currentPlatformId), [currentPlatformId]);
-  const limits = useMemo(() => getLimitsForTier(tier, isPro), [tier, isPro]);
+  const userTier = isPro ? 'paid' as const : 'free' as const;
+  const limits = useMemo(
+    () => getCategoryLimitsForPlatformTier(tier, userTier, currentPlatformId),
+    [tier, userTier, currentPlatformId]
+  );
   
   // Generated prompts (memoized for performance)
   const prompts = useMemo(() => generateAllTierPrompts(selections), [selections]);
@@ -204,20 +207,20 @@ export function usePromptIntelligence(
    * Set entire selection for a category (with limit enforcement)
    */
   const setSelection = useCallback((category: PromptCategory, values: string[]) => {
-    const limit = getCategoryLimit(category, tier, isPro);
+    const limit = limits[category] ?? 1;
     const trimmedValues = values.slice(0, limit);
     
     setSelections(prev => ({
       ...prev,
       [category]: trimmedValues
     }));
-  }, [tier, isPro]);
+  }, [limits]);
   
   /**
    * Add a value to a category (if under limit)
    */
   const addToSelection = useCallback((category: PromptCategory, value: string) => {
-    const limit = getCategoryLimit(category, tier, isPro);
+    const limit = limits[category] ?? 1;
     
     setSelections(prev => {
       const current = prev[category];
@@ -229,7 +232,7 @@ export function usePromptIntelligence(
         [category]: [...current, value]
       };
     });
-  }, [tier, isPro]);
+  }, [limits]);
   
   /**
    * Remove a value from a category
@@ -265,7 +268,7 @@ export function usePromptIntelligence(
     const newSelections: PromptSelections = { ...EMPTY_SELECTIONS };
     
     for (const category of CATEGORY_ORDER) {
-      const limit = getCategoryLimit(category, tier, isPro);
+      const limit = limits[category] ?? 1;
       const options = RANDOM_OPTIONS[category];
       const shuffled = [...options].sort(() => Math.random() - 0.5);
       
@@ -278,21 +281,23 @@ export function usePromptIntelligence(
     }
     
     setSelections(newSelections);
-  }, [tier, isPro]);
+  }, [limits]);
   
   /**
    * Switch platform and auto-trim selections
    */
   const switchPlatform = useCallback((newPlatformId: string) => {
     const newTier = getTierForPlatform(newPlatformId);
-    const newLimits = getLimitsForTier(newTier, isPro);
+    const newLimits = getCategoryLimitsForPlatformTier(
+      newTier, isPro ? 'paid' : 'free', newPlatformId
+    );
     
     // Auto-trim selections to new limits
     setSelections(prev => {
       const trimmed: PromptSelections = { ...prev };
       
       for (const category of CATEGORY_ORDER) {
-        const limit = newLimits[category];
+        const limit = newLimits[category] ?? 1;
         if (trimmed[category].length > limit) {
           trimmed[category] = trimmed[category].slice(0, limit);
         }
@@ -312,16 +317,16 @@ export function usePromptIntelligence(
    * Check if more values can be added to a category
    */
   const canAddMore = useCallback((category: PromptCategory): boolean => {
-    const limit = getCategoryLimit(category, tier, isPro);
+    const limit = limits[category] ?? 1;
     return selections[category].length < limit;
-  }, [selections, tier, isPro]);
+  }, [selections, limits]);
   
   /**
    * Get limit for a category
    */
   const getLimit = useCallback((category: PromptCategory): number => {
-    return getCategoryLimit(category, tier, isPro);
-  }, [tier, isPro]);
+    return limits[category] ?? 1;
+  }, [limits]);
   
   /**
    * Get conflicting terms for a specific category
@@ -393,16 +398,14 @@ export function usePromptIntelligence(
   // EFFECTS
   // =========================================================================
   
-  // Auto-trim on tier change (from isPro change)
+  // Auto-trim on tier/platform change (from isPro change or platform switch)
   useEffect(() => {
-    const newLimits = getLimitsForTier(tier, isPro);
-    
     setSelections(prev => {
       let changed = false;
       const trimmed: PromptSelections = { ...prev };
       
       for (const category of CATEGORY_ORDER) {
-        const limit = newLimits[category];
+        const limit = limits[category] ?? 1;
         if (trimmed[category].length > limit) {
           trimmed[category] = trimmed[category].slice(0, limit);
           changed = true;
@@ -411,7 +414,7 @@ export function usePromptIntelligence(
       
       return changed ? trimmed : prev;
     });
-  }, [tier, isPro]);
+  }, [limits]);
   
   // =========================================================================
   // RETURN
