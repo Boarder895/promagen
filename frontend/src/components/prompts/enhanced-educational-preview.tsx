@@ -30,6 +30,7 @@ import { Combobox } from '@/components/ui/combobox';
 import { FourTierPromptPreview } from '@/components/prompt-builder/four-tier-prompt-preview';
 import { IntelligencePanel } from '@/components/prompt-builder/intelligence-panel';
 import { SceneSelector } from '@/components/providers/scene-selector';
+import { DescribeYourImage } from '@/components/providers/describe-your-image';
 import { CompositionModeToggle } from '@/components/composition-mode-toggle';
 import { AspectRatioSelector } from '@/components/providers/aspect-ratio-selector';
 import { ExploreDrawer } from '@/components/providers/explore-drawer';
@@ -1297,6 +1298,18 @@ export default function EnhancedEducationalPreview({
           isLocked={false}
           onActiveSceneChange={handleActiveSceneChange}
           platformTier={activeTier}
+        />
+
+        {/* ════════════════════════════════════════════════════════ */}
+        {/* Describe Your Image — Human Sentence Conversion         */}
+        {/* Same component as in PromptBuilder. Always shown in     */}
+        {/* Prompt Lab (both provider-selected and no-provider).    */}
+        {/* Authority: human-sentence-conversion.md                  */}
+        {/* ════════════════════════════════════════════════════════ */}
+        <DescribeYourImage
+          categoryState={categoryStateForScene}
+          setCategoryState={setCategoryStateAdapter}
+          isLocked={false}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

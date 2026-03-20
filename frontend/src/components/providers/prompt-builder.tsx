@@ -81,22 +81,31 @@
 // Authority: docs/authority/paid_tier.md, docs/authority/prompt-builder-page.md
 // ============================================================================
 
-'use client';
+"use client";
 
-import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { SignInButton } from '@clerk/nextjs';
-import { trackPromptBuilderOpen, trackPromptCopy } from '@/lib/analytics/providers';
-import { sendPromptTelemetry } from '@/lib/telemetry/prompt-telemetry-client';
-import FeedbackInvitation from '@/components/ux/feedback-invitation';
-import FeedbackMemoryBanner from '@/components/ux/feedback-memory-banner';
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  useEffect,
+  useRef,
+} from "react";
+import { SignInButton } from "@clerk/nextjs";
+import {
+  trackPromptBuilderOpen,
+  trackPromptCopy,
+} from "@/lib/analytics/providers";
+import { sendPromptTelemetry } from "@/lib/telemetry/prompt-telemetry-client";
+import FeedbackInvitation from "@/components/ux/feedback-invitation";
+import FeedbackMemoryBanner from "@/components/ux/feedback-memory-banner";
 import {
   storeFeedbackPending,
   readFeedbackPending,
   isDismissedRecently,
-} from '@/lib/feedback/feedback-client';
-import type { FeedbackPendingData } from '@/lib/feedback/feedback-client';
-import { useFeedbackMemory } from '@/hooks/use-feedback-memory';
-import type { FeedbackRating } from '@/types/feedback';
+} from "@/lib/feedback/feedback-client";
+import type { FeedbackPendingData } from "@/lib/feedback/feedback-client";
+import { useFeedbackMemory } from "@/hooks/use-feedback-memory";
+import type { FeedbackRating } from "@/types/feedback";
 import {
   assemblePrompt,
   assembleStatic,
@@ -105,58 +114,84 @@ import {
   getAllCategories,
   supportsNativeNegative,
   getCategoryChips,
-} from '@/lib/prompt-builder';
-import { assembleCompositionPack, platformSupportsAR } from '@/lib/composition-engine';
-import { Combobox } from '@/components/ui/combobox';
-import { AspectRatioSelector } from '@/components/providers/aspect-ratio-selector';
-import { CompositionModeToggle } from '@/components/composition-mode-toggle';
-import { TextLengthOptimizer } from '@/components/providers/text-length-optimizer';
-import { LengthIndicator } from '@/components/providers/length-indicator';
-import { OptimizationTransparencyPanel } from '@/components/providers/optimization-transparency-panel';
-import { usePromagenAuth, type PromptLockState } from '@/hooks/use-promagen-auth';
-import { useCompositionMode } from '@/hooks/use-composition-mode';
-import { usePromptOptimization } from '@/hooks/use-prompt-optimization';
-import type { PromptCategory, PromptSelections, CategoryState, WeatherCategoryMap } from '@/types/prompt-builder';
-import { hashCategoryMap } from '@/lib/prompt-dna';
-import { isBudgetAwareCategory, isFidelityParametric } from '@/lib/usage/constants';
-import { rewriteWithSynergy } from '@/lib/weather/synergy-rewriter';
-import { postProcessAssembled } from '@/lib/prompt-post-process';
-import { incrementLifetimePrompts } from '@/lib/lifetime-counter';
-import { CATEGORY_ORDER } from '@/types/prompt-builder';
-import { VALID_ASPECT_RATIOS } from '@/types/composition';
+} from "@/lib/prompt-builder";
+import {
+  assembleCompositionPack,
+  platformSupportsAR,
+} from "@/lib/composition-engine";
+import { Combobox } from "@/components/ui/combobox";
+import { AspectRatioSelector } from "@/components/providers/aspect-ratio-selector";
+import { CompositionModeToggle } from "@/components/composition-mode-toggle";
+import { TextLengthOptimizer } from "@/components/providers/text-length-optimizer";
+import { LengthIndicator } from "@/components/providers/length-indicator";
+import { OptimizationTransparencyPanel } from "@/components/providers/optimization-transparency-panel";
+import {
+  usePromagenAuth,
+  type PromptLockState,
+} from "@/hooks/use-promagen-auth";
+import { useCompositionMode } from "@/hooks/use-composition-mode";
+import { usePromptOptimization } from "@/hooks/use-prompt-optimization";
+import type {
+  PromptCategory,
+  PromptSelections,
+  CategoryState,
+  WeatherCategoryMap,
+} from "@/types/prompt-builder";
+import { hashCategoryMap } from "@/lib/prompt-dna";
+import {
+  isBudgetAwareCategory,
+  isFidelityParametric,
+} from "@/lib/usage/constants";
+import { rewriteWithSynergy } from "@/lib/weather/synergy-rewriter";
+import { postProcessAssembled } from "@/lib/prompt-post-process";
+import { incrementLifetimePrompts } from "@/lib/lifetime-counter";
+import { CATEGORY_ORDER } from "@/types/prompt-builder";
+import { VALID_ASPECT_RATIOS } from "@/types/composition";
 import {
   CATEGORY_COLOURS,
   CATEGORY_LABELS as COLOUR_LEGEND_LABELS,
   CATEGORY_EMOJIS as COLOUR_LEGEND_EMOJIS,
   buildTermIndexFromSelections,
   parsePromptIntoSegments,
-} from '@/lib/prompt-colours';
+} from "@/lib/prompt-colours";
 
 // Prompt Intelligence imports
-import { usePromptAnalysis } from '@/hooks/prompt-intelligence';
-import { useIntelligencePreferences } from '@/hooks/use-intelligence-preferences';
-import { useLearningData } from '@/hooks/use-learning-data';
-import { useVocabSubmission } from '@/hooks/use-vocab-submission';
+import { usePromptAnalysis } from "@/hooks/prompt-intelligence";
+import { useIntelligencePreferences } from "@/hooks/use-intelligence-preferences";
+import { useLearningData } from "@/hooks/use-learning-data";
+import { useVocabSubmission } from "@/hooks/use-vocab-submission";
 import {
   DNABar,
   ConflictWarning,
   SuggestionChips,
   HealthBadge,
-} from '@/components/prompt-intelligence';
-import type { SuggestedOption, ScoredOption } from '@/lib/prompt-intelligence/types';
-import { reorderByRelevance, generateCoherentPrompt } from '@/lib/prompt-intelligence';
+} from "@/components/prompt-intelligence";
+import type {
+  SuggestedOption,
+  ScoredOption,
+} from "@/lib/prompt-intelligence/types";
+import {
+  reorderByRelevance,
+  generateCoherentPrompt,
+} from "@/lib/prompt-intelligence";
 
 // Save to Library imports
-import { useSavedPrompts } from '@/hooks/use-saved-prompts';
-import { SavePromptModal, type SavePromptData } from '@/components/prompts/save-prompt-modal';
+import { useSavedPrompts } from "@/hooks/use-saved-prompts";
+import {
+  SavePromptModal,
+  type SavePromptData,
+} from "@/components/prompts/save-prompt-modal";
 
 // Scene Starters import (Phase 2)
-import { SceneSelector } from '@/components/providers/scene-selector';
-import { DescribeYourImage } from '@/components/providers/describe-your-image';
-import { ExploreDrawer, type CascadeScoreMap } from '@/components/providers/explore-drawer';
-import { getSceneById } from '@/data/scenes';
-import { trackEvent } from '@/lib/analytics/events';
-import { SaveIcon } from '@/components/prompts/library/save-icon';
+import { SceneSelector } from "@/components/providers/scene-selector";
+import { DescribeYourImage } from "@/components/providers/describe-your-image";
+import {
+  ExploreDrawer,
+  type CascadeScoreMap,
+} from "@/components/providers/explore-drawer";
+import { getSceneById } from "@/data/scenes";
+import { trackEvent } from "@/lib/analytics/events";
+import { SaveIcon } from "@/components/prompts/library/save-icon";
 
 // ============================================================================
 // Types
@@ -180,14 +215,14 @@ export interface PromptBuilderProps {
 }
 
 // Platforms that use --no inline for negatives
-const MIDJOURNEY_FAMILY = ['midjourney', 'bluewillow', 'nijijourney'];
+const MIDJOURNEY_FAMILY = ["midjourney", "bluewillow", "nijijourney"];
 
 // Initial state for all categories (12 total)
 const createInitialState = (): Record<PromptCategory, CategoryState> => {
   const categories = getAllCategories();
   const state: Partial<Record<PromptCategory, CategoryState>> = {};
   for (const cat of categories) {
-    state[cat] = { selected: [], customValue: '' };
+    state[cat] = { selected: [], customValue: "" };
   }
   return state as Record<PromptCategory, CategoryState>;
 };
@@ -205,41 +240,57 @@ const pickRandom = <T,>(arr: T[]): T | undefined => {
 /**
  * Category-specific guidance - separate singular and plural forms
  */
-const CATEGORY_GUIDANCE: Record<string, { singular: string; plural: string }> = {
-  subject: { singular: 'subject as your focal point.', plural: 'subjects as focal points.' },
-  action: { singular: 'action for dynamic energy.', plural: 'actions for dynamic energy.' },
-  style: {
-    singular: 'style. Keep it focused.',
-    plural: 'complementary styles. Avoid conflicting aesthetics.',
-  },
-  environment: { singular: 'setting for context.', plural: 'settings for context.' },
-  composition: {
-    singular: 'technique for visual structure.',
-    plural: 'techniques for visual structure.',
-  },
-  camera: { singular: 'camera setting for precision.', plural: 'camera settings for precision.' },
-  lighting: {
-    singular: 'lighting setup for mood.',
-    plural: 'lighting setups for mood and dimension.',
-  },
-  colour: {
-    singular: 'colour treatment for harmony.',
-    plural: 'colour treatments for visual harmony.',
-  },
-  atmosphere: {
-    singular: 'atmospheric effect for mood.',
-    plural: 'atmospheric effects for depth and mood.',
-  },
-  materials: {
-    singular: 'material texture for realism.',
-    plural: 'material textures for tactile realism.',
-  },
-  fidelity: {
-    singular: 'quality booster for detail.',
-    plural: 'quality boosters for maximum detail.',
-  },
-  negative: { singular: 'term to exclude.', plural: 'terms to exclude from your image.' },
-};
+const CATEGORY_GUIDANCE: Record<string, { singular: string; plural: string }> =
+  {
+    subject: {
+      singular: "subject as your focal point.",
+      plural: "subjects as focal points.",
+    },
+    action: {
+      singular: "action for dynamic energy.",
+      plural: "actions for dynamic energy.",
+    },
+    style: {
+      singular: "style. Keep it focused.",
+      plural: "complementary styles. Avoid conflicting aesthetics.",
+    },
+    environment: {
+      singular: "setting for context.",
+      plural: "settings for context.",
+    },
+    composition: {
+      singular: "technique for visual structure.",
+      plural: "techniques for visual structure.",
+    },
+    camera: {
+      singular: "camera setting for precision.",
+      plural: "camera settings for precision.",
+    },
+    lighting: {
+      singular: "lighting setup for mood.",
+      plural: "lighting setups for mood and dimension.",
+    },
+    colour: {
+      singular: "colour treatment for harmony.",
+      plural: "colour treatments for visual harmony.",
+    },
+    atmosphere: {
+      singular: "atmospheric effect for mood.",
+      plural: "atmospheric effects for depth and mood.",
+    },
+    materials: {
+      singular: "material texture for realism.",
+      plural: "material textures for tactile realism.",
+    },
+    fidelity: {
+      singular: "quality booster for detail.",
+      plural: "quality boosters for maximum detail.",
+    },
+    negative: {
+      singular: "term to exclude.",
+      plural: "terms to exclude from your image.",
+    },
+  };
 
 /**
  * Generate dynamic tooltip guidance based on actual maxSelections.
@@ -261,7 +312,10 @@ function getDynamicTooltipGuidance(
   // Base guidance text
   let base: string;
   if (!guidance) {
-    base = maxSelections === 1 ? 'Pick 1 option.' : `Pick up to ${maxSelections} options.`;
+    base =
+      maxSelections === 1
+        ? "Pick 1 option."
+        : `Pick up to ${maxSelections} options.`;
   } else if (maxSelections === 1) {
     base = `Pick 1 ${guidance.singular}`;
   } else {
@@ -270,11 +324,11 @@ function getDynamicTooltipGuidance(
 
   // Improvement 2: Conversion-aware hint for budget-gated categories
   if (platformId && isBudgetAwareCategory(category, platformId)) {
-    if (category === 'fidelity' && isFidelityParametric(platformId)) {
+    if (category === "fidelity" && isFidelityParametric(platformId)) {
       // MJ family: parametric = always included, no budget concern
       return `${base}\nConverts to parameters — always included.`;
     }
-    if (category === 'fidelity') {
+    if (category === "fidelity") {
       // NL conversion platforms (Flux, Recraft, Luma)
       return `${base}\nThe assembler converts and fits as many as your prompt budget allows.`;
     }
@@ -302,12 +356,14 @@ function injectCompositionText(
   if (!compositionText.trim()) return basePrompt;
   if (!basePrompt.trim()) return compositionText;
 
-  const isMidjourneyFamily = MIDJOURNEY_FAMILY.includes(platformId.toLowerCase());
+  const isMidjourneyFamily = MIDJOURNEY_FAMILY.includes(
+    platformId.toLowerCase(),
+  );
 
-  if (isMidjourneyFamily && basePrompt.includes(' --no ')) {
-    const parts = basePrompt.split(' --no ');
-    const positiveSection = parts[0] ?? '';
-    const negativeSection = parts[1] ?? '';
+  if (isMidjourneyFamily && basePrompt.includes(" --no ")) {
+    const parts = basePrompt.split(" --no ");
+    const positiveSection = parts[0] ?? "";
+    const negativeSection = parts[1] ?? "";
     return `${positiveSection.trim()}, ${compositionText} --no ${negativeSection}`;
   }
 
@@ -336,28 +392,34 @@ function appendARParameter(prompt: string, arParameter: string): string {
 /** Normalise term for comparison — strip CLIP weight syntax, lowercase, trim */
 function normaliseTerm(term: string): string {
   return term
-    .replace(/\({1,2}([^)]+?)(?::[0-9.]+)?\){1,2}/g, '$1') // (term:1.2) → term
-    .replace(/\{+([^}]+?)\}+/g, '$1')                        // {{{term}}} → term
-    .replace(/::[0-9.]+/g, '')                                 // term::1.2 → term
+    .replace(/\({1,2}([^)]+?)(?::[0-9.]+)?\){1,2}/g, "$1") // (term:1.2) → term
+    .replace(/\{+([^}]+?)\}+/g, "$1") // {{{term}}} → term
+    .replace(/::[0-9.]+/g, "") // term::1.2 → term
     .toLowerCase()
     .trim();
 }
 
 interface DiffResult {
   index: number;
-  type: 'added' | 'modified';
+  type: "added" | "modified";
 }
 
 /** Compute term-level diff between old and new prompt text */
 function computePromptDiff(
   oldText: string,
   newText: string,
-  separator: string = ', ',
+  separator: string = ", ",
 ): DiffResult[] {
   if (!oldText.trim() || !newText.trim()) return [];
 
-  const oldTerms = oldText.split(separator).map((t) => t.trim()).filter(Boolean);
-  const newTerms = newText.split(separator).map((t) => t.trim()).filter(Boolean);
+  const oldTerms = oldText
+    .split(separator)
+    .map((t) => t.trim())
+    .filter(Boolean);
+  const newTerms = newText
+    .split(separator)
+    .map((t) => t.trim())
+    .filter(Boolean);
 
   const oldNormalised = new Set(oldTerms.map(normaliseTerm));
   const oldExact = new Set(oldTerms);
@@ -368,9 +430,9 @@ function computePromptDiff(
     const norm = normaliseTerm(term);
 
     if (!oldNormalised.has(norm)) {
-      diffs.push({ index: i, type: 'added' });
+      diffs.push({ index: i, type: "added" });
     } else if (!oldExact.has(term)) {
-      diffs.push({ index: i, type: 'modified' });
+      diffs.push({ index: i, type: "modified" });
     }
   }
   return diffs;
@@ -380,7 +442,7 @@ function computePromptDiff(
 function DiffHighlightedText({
   text,
   diffs,
-  separator = ', ',
+  separator = ", ",
   fadingOut,
 }: {
   text: string;
@@ -388,7 +450,10 @@ function DiffHighlightedText({
   separator?: string;
   fadingOut: boolean;
 }) {
-  const terms = text.split(separator).map((t) => t.trim()).filter(Boolean);
+  const terms = text
+    .split(separator)
+    .map((t) => t.trim())
+    .filter(Boolean);
   const diffMap = new Map(diffs.map((d) => [d.index, d.type]));
 
   return (
@@ -396,25 +461,27 @@ function DiffHighlightedText({
       {terms.map((term, i) => {
         const diffType = diffMap.get(i);
         const isLast = i === terms.length - 1;
-        const suffix = !isLast ? `${separator}` : '';
+        const suffix = !isLast ? `${separator}` : "";
 
         if (!diffType) {
           return (
             <React.Fragment key={i}>
-              {term}{suffix}
+              {term}
+              {suffix}
             </React.Fragment>
           );
         }
 
-        const baseClass = diffType === 'added'
-          ? 'bg-emerald-500/25 text-emerald-200 rounded px-0.5 -mx-0.5'
-          : 'bg-purple-500/20 text-purple-200 rounded px-0.5 -mx-0.5';
+        const baseClass =
+          diffType === "added"
+            ? "bg-emerald-500/25 text-emerald-200 rounded px-0.5 -mx-0.5"
+            : "bg-purple-500/20 text-purple-200 rounded px-0.5 -mx-0.5";
 
         return (
           <React.Fragment key={i}>
             <span
               className={`${baseClass} transition-all duration-1000 ease-out ${
-                fadingOut ? 'bg-transparent !text-inherit' : ''
+                fadingOut ? "bg-transparent !text-inherit" : ""
               }`}
             >
               {term}
@@ -439,11 +506,11 @@ function StageBadge({
   isOptimizerEnabled,
   wasOptimized,
 }: {
-  compositionMode: 'static' | 'dynamic';
+  compositionMode: "static" | "dynamic";
   isOptimizerEnabled: boolean;
   wasOptimized: boolean;
 }) {
-  if (compositionMode === 'static') {
+  if (compositionMode === "static") {
     return (
       <span
         className="inline-flex items-center gap-1 rounded-md border border-slate-600/50 bg-slate-800/60 px-1.5 py-0.5 text-[10px] font-medium text-slate-200"
@@ -501,7 +568,7 @@ function ColourCodedPromptText({
   text,
   termIndex,
   isPro,
-  fallbackClass = 'text-slate-100',
+  fallbackClass = "text-slate-100",
 }: {
   text: string;
   termIndex: Map<string, PromptCategory>;
@@ -513,7 +580,7 @@ function ColourCodedPromptText({
   }
 
   const segments = parsePromptIntoSegments(text, termIndex);
-  const hasAnatomy = segments.some((s) => s.category !== 'structural');
+  const hasAnatomy = segments.some((s) => s.category !== "structural");
 
   if (!hasAnatomy) {
     return <span className={fallbackClass}>{text}</span>;
@@ -522,7 +589,8 @@ function ColourCodedPromptText({
   return (
     <>
       {segments.map((seg, i) => {
-        const segColour = CATEGORY_COLOURS[seg.category] ?? CATEGORY_COLOURS.structural;
+        const segColour =
+          CATEGORY_COLOURS[seg.category] ?? CATEGORY_COLOURS.structural;
         const isWeighted = seg.weight >= 1.05;
         return (
           <span
@@ -561,14 +629,26 @@ function CategoryColourLegend({ isPro }: { isPro: boolean }) {
   }, []);
 
   React.useEffect(() => {
-    return () => { if (closeTimerRef.current) clearTimeout(closeTimerRef.current); };
+    return () => {
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    };
   }, []);
 
   if (!isPro) return null;
 
   const categories: PromptCategory[] = [
-    'subject', 'action', 'style', 'environment', 'composition', 'camera',
-    'lighting', 'colour', 'atmosphere', 'materials', 'fidelity', 'negative',
+    "subject",
+    "action",
+    "style",
+    "environment",
+    "composition",
+    "camera",
+    "lighting",
+    "colour",
+    "atmosphere",
+    "materials",
+    "fidelity",
+    "negative",
   ];
 
   return (
@@ -576,8 +656,11 @@ function CategoryColourLegend({ isPro }: { isPro: boolean }) {
       <button
         type="button"
         className="inline-flex items-center justify-center rounded-lg px-1.5 py-1 transition-all cursor-pointer bg-white/5 hover:bg-white/10"
-        style={{ fontSize: 'clamp(18px, 1.4vw, 22px)' }}
-        onMouseEnter={() => { cancelCloseDelay(); setIsOpen(true); }}
+        style={{ fontSize: "clamp(18px, 1.4vw, 22px)" }}
+        onMouseEnter={() => {
+          cancelCloseDelay();
+          setIsOpen(true);
+        }}
         onMouseLeave={startCloseDelay}
         onClick={() => setIsOpen((o) => !o)}
         title="Prompt colour key — Pro Promagen"
@@ -589,9 +672,9 @@ function CategoryColourLegend({ isPro }: { isPro: boolean }) {
         <div
           className="absolute left-1/2 -translate-x-1/2 top-full z-[9999] mt-2 rounded-xl border border-slate-700 shadow-2xl"
           style={{
-            width: 'clamp(280px, 22vw, 340px)',
-            background: 'rgba(15, 23, 42, 0.97)',
-            backdropFilter: 'blur(16px)',
+            width: "clamp(280px, 22vw, 340px)",
+            background: "rgba(15, 23, 42, 0.97)",
+            backdropFilter: "blur(16px)",
           }}
           onMouseEnter={cancelCloseDelay}
           onMouseLeave={startCloseDelay}
@@ -601,19 +684,20 @@ function CategoryColourLegend({ isPro }: { isPro: boolean }) {
             <div
               className="absolute inset-0"
               style={{
-                background: 'radial-gradient(ellipse 80% 40% at 50% 0%, rgba(56,189,248,0.06), transparent)',
+                background:
+                  "radial-gradient(ellipse 80% 40% at 50% 0%, rgba(56,189,248,0.06), transparent)",
               }}
             />
           </div>
           {/* Arrow */}
           <div
             className="absolute -top-1.5 left-1/2 -translate-x-1/2 h-3 w-3 rotate-45 border-l border-t border-slate-700"
-            style={{ background: 'rgba(15, 23, 42, 0.97)' }}
+            style={{ background: "rgba(15, 23, 42, 0.97)" }}
           />
           <div className="relative px-4 py-3">
             <p
               className="font-semibold text-white mb-3"
-              style={{ fontSize: 'clamp(12px, 0.85vw, 14px)' }}
+              style={{ fontSize: "clamp(12px, 0.85vw, 14px)" }}
             >
               Category Colour Key
             </p>
@@ -623,15 +707,15 @@ function CategoryColourLegend({ isPro }: { isPro: boolean }) {
                   <span
                     className="inline-block rounded-full flex-shrink-0"
                     style={{
-                      width: 'clamp(8px, 0.6vw, 10px)',
-                      height: 'clamp(8px, 0.6vw, 10px)',
+                      width: "clamp(8px, 0.6vw, 10px)",
+                      height: "clamp(8px, 0.6vw, 10px)",
                       backgroundColor: CATEGORY_COLOURS[cat],
                     }}
                   />
                   <span
                     className="truncate"
                     style={{
-                      fontSize: 'clamp(11px, 0.75vw, 13px)',
+                      fontSize: "clamp(11px, 0.75vw, 13px)",
                       color: CATEGORY_COLOURS[cat],
                     }}
                   >
@@ -644,15 +728,15 @@ function CategoryColourLegend({ isPro }: { isPro: boolean }) {
                 <span
                   className="inline-block rounded-full flex-shrink-0"
                   style={{
-                    width: 'clamp(8px, 0.6vw, 10px)',
-                    height: 'clamp(8px, 0.6vw, 10px)',
+                    width: "clamp(8px, 0.6vw, 10px)",
+                    height: "clamp(8px, 0.6vw, 10px)",
                     backgroundColor: CATEGORY_COLOURS.structural,
                   }}
                 />
                 <span
                   className="truncate"
                   style={{
-                    fontSize: 'clamp(11px, 0.75vw, 13px)',
+                    fontSize: "clamp(11px, 0.75vw, 13px)",
                     color: CATEGORY_COLOURS.structural,
                   }}
                 >
@@ -679,7 +763,7 @@ interface LockOverlayProps {
 }
 
 function LockOverlay({ lockState, dailyResetTime }: LockOverlayProps) {
-  if (lockState === 'unlocked') return null;
+  if (lockState === "unlocked") return null;
 
   const getTimeUntilReset = () => {
     if (!dailyResetTime) return null;
@@ -693,8 +777,8 @@ function LockOverlay({ lockState, dailyResetTime }: LockOverlayProps) {
     return `${minutes}m`;
   };
 
-  const isAnonymousLimit = lockState === 'anonymous_limit';
-  const isQuotaReached = lockState === 'quota_reached';
+  const isAnonymousLimit = lockState === "anonymous_limit";
+  const isQuotaReached = lockState === "quota_reached";
 
   return (
     <div className="prompt-builder-lock-overlay w-full flex justify-center">
@@ -725,7 +809,8 @@ function LockOverlay({ lockState, dailyResetTime }: LockOverlayProps) {
                 You&apos;ve used your 3 free prompts
               </h3>
               <p className="text-sm text-purple-200">
-                Sign in to unlock 5 prompts per day and the prompt optimizer — free forever.
+                Sign in to unlock 5 prompts per day and the prompt optimizer —
+                free forever.
               </p>
               <ul className="mt-0.1 text-left text-xs text-purple-300 space-y-1">
                 <li className="flex items-center gap-2">
@@ -795,11 +880,13 @@ function LockOverlay({ lockState, dailyResetTime }: LockOverlayProps) {
               Upgrade to Pro
             </button>
             <div className="flex flex-col gap-2">
-              <h3 className="text-lg font-semibold text-white">Daily limit reached</h3>
+              <h3 className="text-lg font-semibold text-white">
+                Daily limit reached
+              </h3>
               <p className="text-sm text-purple-200">
                 {getTimeUntilReset()
                   ? `Resets in ${getTimeUntilReset()}`
-                  : 'Resets at midnight in your timezone'}
+                  : "Resets at midnight in your timezone"}
               </p>
               <p className="text-xs text-slate-200">
                 Upgrade to Pro Promagen for unlimited prompts.
@@ -838,7 +925,7 @@ function DailyCounter({ count, limit }: { count: number; limit: number }) {
 // ============================================================================
 
 export function PromptBuilder({
-  id = 'prompt-builder',
+  id = "prompt-builder",
   provider,
   onDone,
   providerSelector,
@@ -847,7 +934,7 @@ export function PromptBuilder({
   // Platform ID (computed first for hook dependency)
   // ============================================================================
 
-  const platformId = provider.id ?? 'default';
+  const platformId = provider.id ?? "default";
 
   // ============================================================================
   // Hooks
@@ -866,14 +953,14 @@ export function PromptBuilder({
     locationInfo,
   } = usePromagenAuth({ platformId });
 
-  const { compositionMode, setCompositionMode, aspectRatio, setAspectRatio } = useCompositionMode();
+  const { compositionMode, setCompositionMode, aspectRatio, setAspectRatio } =
+    useCompositionMode();
 
   // Vocabulary crowdsourcing — silently captures custom terms (Phase 7.7)
   const submitCustomTerm = useVocabSubmission(platformId, platformTier);
 
   // Prompt Intelligence Preferences
-  const { preferences: intelligencePrefs } =
-    useIntelligencePreferences();
+  const { preferences: intelligencePrefs } = useIntelligencePreferences();
 
   // ============================================================================
   // Local State
@@ -890,8 +977,13 @@ export function PromptBuilder({
 
   // §4.5: "Inspired by" badge — weather context from homepage "Try in" click
   const [inspiredByData, setInspiredByData] = useState<{
-    city: string; venue: string; conditions: string; emoji: string;
-    tempC: number | null; localTime: string; mood: string;
+    city: string;
+    venue: string;
+    conditions: string;
+    emoji: string;
+    tempC: number | null;
+    localTime: string;
+    mood: string;
     categoryMapHash?: string; // Upgrade 5: original hash for fingerprint verification
   } | null>(null);
 
@@ -902,26 +994,33 @@ export function PromptBuilder({
   >(undefined);
 
   // Phase 7.10d: Feedback invitation state
-  const [feedbackPending, setFeedbackPending] = useState<FeedbackPendingData | null>(null);
+  const [feedbackPending, setFeedbackPending] =
+    useState<FeedbackPendingData | null>(null);
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Phase 7.10g: Contextual feedback memory + autopilot
   const { recordRatedPrompt, getOverlap, getTermHints } = useFeedbackMemory();
 
   // Step 2.6: Scene origin tracking — which values came from a Scene Starter
-  const [scenePrefills, setScenePrefills] = useState<Record<string, string[]> | undefined>();
+  const [scenePrefills, setScenePrefills] = useState<
+    Record<string, string[]> | undefined
+  >();
   // Phase 4: Track active scene ID for flavour phrases lookup
   const [activeSceneId, setActiveSceneId] = useState<string | undefined>();
   // Homepage pre-loaded scene: passed to SceneSelector to auto-expand
-  const [preloadedSceneId, setPreloadedSceneId] = useState<string | undefined>();
+  const [preloadedSceneId, setPreloadedSceneId] = useState<
+    string | undefined
+  >();
 
   // Phase 3: Explore Drawer accordion — only one drawer open at a time
-  const [expandedExploreCategory, setExpandedExploreCategory] = useState<PromptCategory | null>(
-    null,
-  );
+  const [expandedExploreCategory, setExpandedExploreCategory] =
+    useState<PromptCategory | null>(null);
 
   const handleActiveSceneChange = useCallback(
-    (sceneId: string | undefined, prefills: Record<string, string[]> | undefined) => {
+    (
+      sceneId: string | undefined,
+      prefills: Record<string, string[]> | undefined,
+    ) => {
       setScenePrefills(prefills);
       setActiveSceneId(sceneId);
     },
@@ -976,7 +1075,7 @@ export function PromptBuilder({
     if (!isMounted) return;
 
     try {
-      const storedTerms = sessionStorage.getItem('promagen_explore_terms');
+      const storedTerms = sessionStorage.getItem("promagen_explore_terms");
       if (storedTerms) {
         const terms: string[] = JSON.parse(storedTerms);
 
@@ -991,7 +1090,10 @@ export function PromptBuilder({
               const limit = categoryLimits.colour ?? 1;
               const current = [...prev.colour.selected];
               if (!current.includes(terms[0]) && current.length < limit) {
-                newState.colour = { ...prev.colour, selected: [...current, terms[0]] };
+                newState.colour = {
+                  ...prev.colour,
+                  selected: [...current, terms[0]],
+                };
               }
             }
 
@@ -1000,7 +1102,10 @@ export function PromptBuilder({
               const limit = categoryLimits.lighting ?? 1;
               const current = [...prev.lighting.selected];
               if (!current.includes(terms[1]) && current.length < limit) {
-                newState.lighting = { ...prev.lighting, selected: [...current, terms[1]] };
+                newState.lighting = {
+                  ...prev.lighting,
+                  selected: [...current, terms[1]],
+                };
               }
             }
 
@@ -1009,7 +1114,10 @@ export function PromptBuilder({
               const limit = categoryLimits.atmosphere ?? 1;
               const current = [...prev.atmosphere.selected];
               if (!current.includes(terms[2]) && current.length < limit) {
-                newState.atmosphere = { ...prev.atmosphere, selected: [...current, terms[2]] };
+                newState.atmosphere = {
+                  ...prev.atmosphere,
+                  selected: [...current, terms[2]],
+                };
               }
             }
 
@@ -1018,7 +1126,7 @@ export function PromptBuilder({
         }
 
         // Clear after reading so it doesn't persist across navigations
-        sessionStorage.removeItem('promagen_explore_terms');
+        sessionStorage.removeItem("promagen_explore_terms");
       }
     } catch {
       // Silently ignore parse errors
@@ -1033,8 +1141,13 @@ export function PromptBuilder({
     if (!isMounted) return;
 
     try {
-      const storedPrompt = sessionStorage.getItem('promagen_load_prompt');
-      console.debug('[PromptBuilder] Load check — isMounted:', isMounted, 'hasData:', !!storedPrompt);
+      const storedPrompt = sessionStorage.getItem("promagen_load_prompt");
+      console.debug(
+        "[PromptBuilder] Load check — isMounted:",
+        isMounted,
+        "hasData:",
+        !!storedPrompt,
+      );
 
       if (storedPrompt) {
         const prompt = JSON.parse(storedPrompt) as {
@@ -1045,20 +1158,28 @@ export function PromptBuilder({
         };
 
         // Check if there are actual structured selections (non-empty)
-        const hasSelections = prompt.selections &&
-          Object.values(prompt.selections).some((arr) => Array.isArray(arr) && arr.length > 0);
-        const hasCustomValues = prompt.customValues &&
-          Object.values(prompt.customValues).some((v) => typeof v === 'string' && v.length > 0);
+        const hasSelections =
+          prompt.selections &&
+          Object.values(prompt.selections).some(
+            (arr) => Array.isArray(arr) && arr.length > 0,
+          );
+        const hasCustomValues =
+          prompt.customValues &&
+          Object.values(prompt.customValues).some(
+            (v) => typeof v === "string" && v.length > 0,
+          );
 
-        console.debug('[PromptBuilder] Load data:', {
+        console.debug("[PromptBuilder] Load data:", {
           hasSelections,
           hasCustomValues,
           hasRawText: !!prompt._rawPositivePrompt,
           rawTextLength: prompt._rawPositivePrompt?.length ?? 0,
-          selectionKeys: prompt.selections ? Object.keys(prompt.selections).filter(k => {
-            const v = prompt.selections?.[k as PromptCategory];
-            return Array.isArray(v) && v.length > 0;
-          }) : [],
+          selectionKeys: prompt.selections
+            ? Object.keys(prompt.selections).filter((k) => {
+                const v = prompt.selections?.[k as PromptCategory];
+                return Array.isArray(v) && v.length > 0;
+              })
+            : [],
         });
 
         if (hasSelections || hasCustomValues) {
@@ -1084,35 +1205,39 @@ export function PromptBuilder({
                 if (newState[category]) {
                   newState[category] = {
                     ...newState[category],
-                    customValue: value || '',
+                    customValue: value || "",
                   };
                 }
               }
             }
 
-            console.debug('[PromptBuilder] Structured load applied');
+            console.debug("[PromptBuilder] Structured load applied");
             return newState;
           });
         } else if (prompt._rawPositivePrompt) {
           // Fallback for tooltip-origin prompts: paste raw text into subject custom field
-          console.debug('[PromptBuilder] Raw text fallback — pasting into subject.customValue');
+          console.debug(
+            "[PromptBuilder] Raw text fallback — pasting into subject.customValue",
+          );
           setCategoryState((prev) => ({
             ...prev,
             subject: {
               ...prev.subject,
-              customValue: prompt._rawPositivePrompt ?? '',
+              customValue: prompt._rawPositivePrompt ?? "",
             },
           }));
         } else {
-          console.debug('[PromptBuilder] No usable data found in stored prompt');
+          console.debug(
+            "[PromptBuilder] No usable data found in stored prompt",
+          );
         }
 
         // Clear after reading
-        sessionStorage.removeItem('promagen_load_prompt');
-        console.debug('[PromptBuilder] Cleared sessionStorage');
+        sessionStorage.removeItem("promagen_load_prompt");
+        console.debug("[PromptBuilder] Cleared sessionStorage");
       }
     } catch (err) {
-      console.error('[PromptBuilder] Load error:', err);
+      console.error("[PromptBuilder] Load error:", err);
     }
   }, [isMounted]);
 
@@ -1127,18 +1252,18 @@ export function PromptBuilder({
     if (!isMounted) return;
 
     try {
-      const sceneId = sessionStorage.getItem('promagen:preloaded-scene');
+      const sceneId = sessionStorage.getItem("promagen:preloaded-scene");
       if (!sceneId) return;
 
       // Clear immediately so it doesn't persist across navigations
-      sessionStorage.removeItem('promagen:preloaded-scene');
+      sessionStorage.removeItem("promagen:preloaded-scene");
 
       const scene = getSceneById(sceneId);
       if (!scene) return;
 
       // Build prefill map (same pattern as scene-selector.tsx handleSceneSelection)
       // Tier 4 gets reduced prefills; tiers 1–3 get full prefills
-      const tier4Guidance = scene.tierGuidance['4'];
+      const tier4Guidance = scene.tierGuidance["4"];
       const reducedCats =
         platformTier === 4 && tier4Guidance?.reducedPrefills
           ? new Set<string>(tier4Guidance.reducedPrefills)
@@ -1159,7 +1284,7 @@ export function PromptBuilder({
             next[category] = {
               ...next[category],
               selected: [...(values ?? [])],
-              customValue: next[category].customValue ?? '',
+              customValue: next[category].customValue ?? "",
             };
           }
         }
@@ -1195,18 +1320,22 @@ export function PromptBuilder({
     if (!isMounted) return;
 
     try {
-      const payloadRaw = sessionStorage.getItem('promagen:preloaded-payload');
-      const inspiredByRaw = sessionStorage.getItem('promagen:preloaded-inspiredBy');
+      const payloadRaw = sessionStorage.getItem("promagen:preloaded-payload");
+      const inspiredByRaw = sessionStorage.getItem(
+        "promagen:preloaded-inspiredBy",
+      );
 
       // Also check legacy keys for backward compatibility
-      const legacySelectionsRaw = sessionStorage.getItem('promagen:preloaded-selections');
+      const legacySelectionsRaw = sessionStorage.getItem(
+        "promagen:preloaded-selections",
+      );
 
       // Clear ALL preload keys immediately so they don't persist
-      sessionStorage.removeItem('promagen:preloaded-payload');
-      sessionStorage.removeItem('promagen:preloaded-inspiredBy');
-      sessionStorage.removeItem('promagen:preloaded-selections');
-      sessionStorage.removeItem('promagen:preloaded-prompt');
-      sessionStorage.removeItem('promagen:preloaded-tier');
+      sessionStorage.removeItem("promagen:preloaded-payload");
+      sessionStorage.removeItem("promagen:preloaded-inspiredBy");
+      sessionStorage.removeItem("promagen:preloaded-selections");
+      sessionStorage.removeItem("promagen:preloaded-prompt");
+      sessionStorage.removeItem("promagen:preloaded-tier");
 
       // Apply "Inspired by" badge data
       if (inspiredByRaw) {
@@ -1250,7 +1379,12 @@ export function PromptBuilder({
             // Apply dropdown selections per category
             for (const [cat, values] of Object.entries(mapSelections)) {
               const category = cat as PromptCategory;
-              if (!next[category] || !Array.isArray(values) || values.length === 0) continue;
+              if (
+                !next[category] ||
+                !Array.isArray(values) ||
+                values.length === 0
+              )
+                continue;
               const limit = categoryLimits[category] ?? 1;
               const shown = values.slice(0, limit);
               const overflow = values.slice(limit);
@@ -1261,16 +1395,18 @@ export function PromptBuilder({
                 // still includes them — same pattern as negative overflow.
                 // If a real customValue exists (weather-intelligence phrase),
                 // the next loop overwrites this with the richer content.
-                customValue: overflow.length > 0
-                  ? overflow.join(', ')
-                  : next[category]!.customValue,
+                customValue:
+                  overflow.length > 0
+                    ? overflow.join(", ")
+                    : next[category]!.customValue,
               };
             }
 
             // Apply customValues (rich physics phrases) per category
             for (const [cat, value] of Object.entries(mapCustomValues)) {
               const category = cat as PromptCategory;
-              if (!next[category] || typeof value !== 'string' || !value.trim()) continue;
+              if (!next[category] || typeof value !== "string" || !value.trim())
+                continue;
               next[category] = {
                 ...next[category],
                 customValue: value.trim(),
@@ -1288,7 +1424,7 @@ export function PromptBuilder({
                 ...next.negative,
                 selected: shown,
                 // Overflow terms join into customValue so assembler picks them up
-                customValue: overflow.length > 0 ? overflow.join(', ') : '',
+                customValue: overflow.length > 0 ? overflow.join(", ") : "",
               };
             }
 
@@ -1307,7 +1443,7 @@ export function PromptBuilder({
         }
 
         // ── Legacy path: promptText + mood selections (pre-Phase D) ──
-        const rawPromptText = payload.promptText ?? '';
+        const rawPromptText = payload.promptText ?? "";
         const moodSelections = payload.selections ?? {};
 
         if (rawPromptText) {
@@ -1316,14 +1452,18 @@ export function PromptBuilder({
 
             // ── Parse Tier 1 CLIP positive/negative split ──────────
             let positiveText = rawPromptText;
-            let negativeText = '';
+            let negativeText = "";
 
-            const posMatch = rawPromptText.match(/Positive prompt:\s*([\s\S]*?)(?:\nNegative prompt:|$)/i);
-            const negMatch = rawPromptText.match(/Negative prompt:\s*([\s\S]*?)$/i);
+            const posMatch = rawPromptText.match(
+              /Positive prompt:\s*([\s\S]*?)(?:\nNegative prompt:|$)/i,
+            );
+            const negMatch = rawPromptText.match(
+              /Negative prompt:\s*([\s\S]*?)$/i,
+            );
 
             if (posMatch?.[1]) {
               positiveText = posMatch[1].trim();
-              negativeText = negMatch?.[1]?.trim() ?? '';
+              negativeText = negMatch?.[1]?.trim() ?? "";
             }
 
             // ── Subject: the ACTUAL prompt text (the good stuff) ───
@@ -1344,8 +1484,17 @@ export function PromptBuilder({
             for (const [cat, values] of Object.entries(moodSelections)) {
               const category = cat as PromptCategory;
               // Only apply metadata categories — not scene descriptors
-              if (category === 'subject' || category === 'environment' || category === 'lighting') continue;
-              if (next[category] && Array.isArray(values) && values.length > 0) {
+              if (
+                category === "subject" ||
+                category === "environment" ||
+                category === "lighting"
+              )
+                continue;
+              if (
+                next[category] &&
+                Array.isArray(values) &&
+                values.length > 0
+              ) {
                 const limit = categoryLimits[category] ?? 1;
                 const trimmed = values.slice(0, limit);
                 next[category] = {
@@ -1367,25 +1516,31 @@ export function PromptBuilder({
         try {
           const parsed = JSON.parse(legacySelectionsRaw);
           // Support both { selections, customValues } and flat Record shapes
-          const selectionsMap = parsed.selections ?? (Array.isArray(Object.values(parsed)[0]) ? parsed : {});
+          const selectionsMap =
+            parsed.selections ??
+            (Array.isArray(Object.values(parsed)[0]) ? parsed : {});
           const customValuesMap = parsed.customValues ?? {};
 
           setCategoryState((prev) => {
             const next = { ...prev };
             for (const [cat, values] of Object.entries(selectionsMap)) {
               const category = cat as PromptCategory;
-              if (next[category] && Array.isArray(values) && (values as string[]).length > 0) {
+              if (
+                next[category] &&
+                Array.isArray(values) &&
+                (values as string[]).length > 0
+              ) {
                 const limit = categoryLimits[category] ?? 1;
                 next[category] = {
                   ...next[category],
                   selected: (values as string[]).slice(0, limit),
-                  customValue: next[category].customValue ?? '',
+                  customValue: next[category].customValue ?? "",
                 };
               }
             }
             for (const [cat, value] of Object.entries(customValuesMap)) {
               const category = cat as PromptCategory;
-              if (next[category] && typeof value === 'string' && value.trim()) {
+              if (next[category] && typeof value === "string" && value.trim()) {
                 next[category] = {
                   ...next[category],
                   customValue: value.trim(),
@@ -1413,7 +1568,10 @@ export function PromptBuilder({
       let hasChanges = false;
       const newState = { ...prev };
 
-      for (const [category, state] of Object.entries(prev) as [PromptCategory, CategoryState][]) {
+      for (const [category, state] of Object.entries(prev) as [
+        PromptCategory,
+        CategoryState,
+      ][]) {
         const limit = categoryLimits[category] ?? 1;
         if (state.selected.length > limit) {
           // Trim to new limit (keep first N selections)
@@ -1433,37 +1591,37 @@ export function PromptBuilder({
   // Computed Values
   // ============================================================================
 
-  const isLocked = promptLockState !== 'unlocked';
+  const isLocked = promptLockState !== "unlocked";
   const allowNegativeFreeText = supportsNativeNegative(platformId);
-  const _hasNativeAR = platformSupportsAR(platformId, aspectRatio ?? '1:1');
+  const _hasNativeAR = platformSupportsAR(platformId, aspectRatio ?? "1:1");
   const isMjFamily = MIDJOURNEY_FAMILY.includes(platformId.toLowerCase());
 
   // Tier badge config — tells users what prompt style this platform expects
   const tierBadge =
     {
       1: {
-        label: 'CLIP-Based',
-        bg: 'bg-blue-500/15',
-        text: 'text-blue-400',
-        ring: 'ring-blue-500/30',
+        label: "CLIP-Based",
+        bg: "bg-blue-500/15",
+        text: "text-blue-400",
+        ring: "ring-blue-500/30",
       },
       2: {
-        label: 'Midjourney',
-        bg: 'bg-purple-500/15',
-        text: 'text-purple-400',
-        ring: 'ring-purple-500/30',
+        label: "Midjourney",
+        bg: "bg-purple-500/15",
+        text: "text-purple-400",
+        ring: "ring-purple-500/30",
       },
       3: {
-        label: 'Natural Language',
-        bg: 'bg-emerald-500/15',
-        text: 'text-emerald-400',
-        ring: 'ring-emerald-500/30',
+        label: "Natural Language",
+        bg: "bg-emerald-500/15",
+        text: "text-emerald-400",
+        ring: "ring-emerald-500/30",
       },
       4: {
-        label: 'Plain Language',
-        bg: 'bg-orange-500/15',
-        text: 'text-orange-400',
-        ring: 'ring-orange-500/30',
+        label: "Plain Language",
+        bg: "bg-orange-500/15",
+        text: "text-orange-400",
+        ring: "ring-orange-500/30",
       },
     }[platformTier] ?? null;
 
@@ -1473,13 +1631,16 @@ export function PromptBuilder({
     for (const [cat, state] of Object.entries(categoryState)) {
       const allValues = [...state.selected];
       if (state.customValue.trim()) {
-        if (cat === 'negative') {
+        if (cat === "negative") {
           // Negative overflow was joined with ', ' when it exceeded the
           // category limit — split back to individual terms so each one
           // can be matched by NEGATIVE_TO_POSITIVE conversion and inline
           // negation ("without X or Y") in the assembler.
           allValues.push(
-            ...state.customValue.split(',').map((t) => t.trim()).filter(Boolean),
+            ...state.customValue
+              .split(",")
+              .map((t) => t.trim())
+              .filter(Boolean),
           );
         } else {
           allValues.push(state.customValue.trim());
@@ -1493,7 +1654,7 @@ export function PromptBuilder({
   }, [categoryState]);
 
   // ── Pro Promagen: Colour-coded prompt anatomy ──────────────────────────
-  const isPro = userTier === 'paid';
+  const isPro = userTier === "paid";
 
   // NOTE: colourTermIndex is declared AFTER rewrittenSelections (below)
   // to avoid temporal dead zone. See "Build term → category index" comment.
@@ -1501,7 +1662,7 @@ export function PromptBuilder({
   // ── Upgrade 5: Prompt Fingerprint Verification ──────────────────────────
   // Computes hash of current builder state, compares with original hash
   // from homepage generator. Shows badge: match → green, modified → amber.
-  const fingerprintStatus = useMemo<'match' | 'modified' | null>(() => {
+  const fingerprintStatus = useMemo<"match" | "modified" | null>(() => {
     if (!inspiredByData?.categoryMapHash) return null;
 
     // Build a minimal WeatherCategoryMap from current builder state
@@ -1510,7 +1671,7 @@ export function PromptBuilder({
 
     for (const [cat, state] of Object.entries(categoryState)) {
       const category = cat as PromptCategory;
-      if (category === 'negative') continue; // hash ignores negatives
+      if (category === "negative") continue; // hash ignores negatives
 
       if (state.selected.length > 0) {
         currentSelections[category] = [...state.selected];
@@ -1524,11 +1685,23 @@ export function PromptBuilder({
       selections: currentSelections,
       customValues: currentCustomValues,
       negative: [], // ignored by hash
-      meta: { city: '', venue: '', venueSetting: '', mood: '', conditions: '', emoji: '', tempC: null, localTime: '', source: 'weather-intelligence' },
+      meta: {
+        city: "",
+        venue: "",
+        venueSetting: "",
+        mood: "",
+        conditions: "",
+        emoji: "",
+        tempC: null,
+        localTime: "",
+        source: "weather-intelligence",
+      },
     };
 
     const currentHash = hashCategoryMap(currentMap);
-    return currentHash === inspiredByData.categoryMapHash ? 'match' : 'modified';
+    return currentHash === inspiredByData.categoryMapHash
+      ? "match"
+      : "modified";
   }, [categoryState, inspiredByData?.categoryMapHash]);
 
   // Phase 7.10g: Contextual feedback overlap detection
@@ -1541,7 +1714,7 @@ export function PromptBuilder({
   const feedbackHintTerms = useMemo(() => {
     const hints = getTermHints(platformId);
     if (hints.length === 0) return undefined;
-    const map: Record<string, 'positive' | 'negative'> = {};
+    const map: Record<string, "positive" | "negative"> = {};
     for (const h of hints) {
       map[h.term] = h.type;
     }
@@ -1561,7 +1734,7 @@ export function PromptBuilder({
   // Matches the same step the homepage generator runs via rewriteWithSynergy().
   // ONLY applies in Dynamic mode — Static mode is raw user input, no intelligence.
   const rewrittenSelections = useMemo(() => {
-    if (compositionMode === 'static') return selections;
+    if (compositionMode === "static") return selections;
     const { selections: rewritten } = rewriteWithSynergy(selections);
     return rewritten;
   }, [selections, compositionMode]);
@@ -1596,29 +1769,47 @@ export function PromptBuilder({
   // removal, MJ phenomenon trim (Tier 2), and grammar cleanup.
   // Static mode skips post-processing to preserve raw user input.
   const assembled = useMemo(() => {
-    if (compositionMode === 'static') {
+    if (compositionMode === "static") {
       // Stage 1: Raw user selections, no intelligence
       return assembleStatic(platformId, selections);
     }
 
     // Stage 2: Full platform-specific formatting, skipTrim for optimizer (Stage 3)
-    const raw = assemblePrompt(platformId, rewrittenSelections, weatherWeightOverrides, { skipTrim: true });
+    const raw = assemblePrompt(
+      platformId,
+      rewrittenSelections,
+      weatherWeightOverrides,
+      { skipTrim: true },
+    );
 
     // Derive atmosphere hint from category state for phenomenon dedup.
     // In the generator this comes from lighting.atmosphereModifier; in the
     // builder we derive it from the atmosphere category selections + customValue.
     const atmosHint = [
       ...(categoryState.atmosphere?.selected ?? []),
-      categoryState.atmosphere?.customValue ?? '',
-    ].join(' ');
+      categoryState.atmosphere?.customValue ?? "",
+    ].join(" ");
 
     return postProcessAssembled(raw, platformTier as 1 | 2 | 3 | 4, atmosHint);
-  }, [platformId, rewrittenSelections, weatherWeightOverrides, platformTier, categoryState.atmosphere, compositionMode, selections]);
+  }, [
+    platformId,
+    rewrittenSelections,
+    weatherWeightOverrides,
+    platformTier,
+    categoryState.atmosphere,
+    compositionMode,
+    selections,
+  ]);
 
   // Assemble composition pack if AR selected
   const compositionPack = useMemo(() => {
     if (!aspectRatio) return null;
-    return assembleCompositionPack(platformId, aspectRatio, compositionMode, selections);
+    return assembleCompositionPack(
+      platformId,
+      aspectRatio,
+      compositionMode,
+      selections,
+    );
   }, [platformId, aspectRatio, compositionMode, selections]);
 
   // Build final prompt text
@@ -1627,7 +1818,11 @@ export function PromptBuilder({
 
     if (compositionPack) {
       if (compositionPack.text) {
-        basePrompt = injectCompositionText(basePrompt, compositionPack.text, platformId);
+        basePrompt = injectCompositionText(
+          basePrompt,
+          compositionPack.text,
+          platformId,
+        );
       }
       if (compositionPack.useNativeAR && compositionPack.arParameter) {
         basePrompt = appendARParameter(basePrompt, compositionPack.arParameter);
@@ -1690,7 +1885,10 @@ export function PromptBuilder({
     if (!compositionPack?.terms?.length) return selections;
     return {
       ...selections,
-      composition: [...(selections.composition ?? []), ...compositionPack.terms],
+      composition: [
+        ...(selections.composition ?? []),
+        ...compositionPack.terms,
+      ],
     };
   }, [selections, compositionPack]);
 
@@ -1713,7 +1911,10 @@ export function PromptBuilder({
     compositionMode,
   });
 
-  const optimizedResult = useMemo(() => getOptimizedPrompt(), [getOptimizedPrompt]);
+  const optimizedResult = useMemo(
+    () => getOptimizedPrompt(),
+    [getOptimizedPrompt],
+  );
 
   // ============================================================================
   // Prompt Intelligence Hook
@@ -1721,7 +1922,7 @@ export function PromptBuilder({
 
   // Build negatives array from category state
   const negativesArray = useMemo(() => {
-    const negState = categoryState['negative'];
+    const negState = categoryState["negative"];
     const arr = [...(negState?.selected ?? [])];
     if (negState?.customValue?.trim()) {
       arr.push(negState.customValue.trim());
@@ -1737,7 +1938,7 @@ export function PromptBuilder({
     conflictCount,
   } = usePromptAnalysis(
     {
-      subject: categoryState['subject']?.customValue ?? '',
+      subject: categoryState["subject"]?.customValue ?? "",
       selections,
       negatives: negativesArray,
       platformId,
@@ -1777,7 +1978,9 @@ export function PromptBuilder({
     if (!promptAnalysis?.suggestions?.suggestions) return [];
 
     const all: SuggestedOption[] = [];
-    for (const categorySuggestions of Object.values(promptAnalysis.suggestions.suggestions)) {
+    for (const categorySuggestions of Object.values(
+      promptAnalysis.suggestions.suggestions,
+    )) {
       if (categorySuggestions) {
         all.push(...categorySuggestions);
       }
@@ -1799,11 +2002,11 @@ export function PromptBuilder({
     if (!hasContent) return map;
 
     // Performance measurement (Phase 1.7) — target: <16ms (one frame)
-    const start = typeof performance !== 'undefined' ? performance.now() : 0;
+    const start = typeof performance !== "undefined" ? performance.now() : 0;
 
     const categories = getAllCategories();
     for (const category of categories) {
-      if (category === 'negative') continue; // Skip negative, doesn't benefit from reorder
+      if (category === "negative") continue; // Skip negative, doesn't benefit from reorder
 
       const config = getEnhancedCategoryConfig(category);
       if (!config || config.options.length === 0) continue;
@@ -1833,8 +2036,12 @@ export function PromptBuilder({
     }
 
     // Log warning if reorder exceeds one frame budget
-    const elapsed = typeof performance !== 'undefined' ? performance.now() - start : 0;
-    if (typeof performance !== 'undefined' && process.env.NODE_ENV === 'development') {
+    const elapsed =
+      typeof performance !== "undefined" ? performance.now() - start : 0;
+    if (
+      typeof performance !== "undefined" &&
+      process.env.NODE_ENV === "development"
+    ) {
       if (elapsed > 16) {
         console.warn(
           `[Cascade] Reorder took ${elapsed.toFixed(1)}ms (target: <16ms) — ${map.size} categories`,
@@ -1864,7 +2071,7 @@ export function PromptBuilder({
   // Step 4.2: Track cascade reorder events (useEffect for purity)
   useEffect(() => {
     if (reorderedOptionsMap.size > 0) {
-      trackEvent('cascade_reorder_triggered', {
+      trackEvent("cascade_reorder_triggered", {
         categories_reordered: reorderedOptionsMap.size,
         elapsed_ms: 0, // elapsed only available inside memo scope
       });
@@ -1885,9 +2092,13 @@ export function PromptBuilder({
   );
 
   // Computed: did optimization change the prompt? (compression OR trimming)
-  const wasOptimized = optimizedResult.originalLength !== optimizedResult.optimizedLength;
+  const wasOptimized =
+    optimizedResult.originalLength !== optimizedResult.optimizedLength;
 
-  const displayCategories = useMemo(() => CATEGORY_ORDER as PromptCategory[], []);
+  const displayCategories = useMemo(
+    () => CATEGORY_ORDER as PromptCategory[],
+    [],
+  );
 
   // Step 2.6: Get scene-origin values for a category (for combobox chip tinting)
   const getSceneOriginValues = useCallback(
@@ -1916,17 +2127,20 @@ export function PromptBuilder({
   const getSceneFlavourPhrases = useCallback(
     (category: PromptCategory): string[] | undefined => {
       if (!activeSceneFlavour) return undefined;
-      const phrases = activeSceneFlavour[category as keyof typeof activeSceneFlavour];
+      const phrases =
+        activeSceneFlavour[category as keyof typeof activeSceneFlavour];
       return phrases && phrases.length > 0 ? phrases : undefined;
     },
     [activeSceneFlavour],
   );
 
-  const outboundHref = provider.id ? `/go/${provider.id}?src=prompt_builder` : null;
+  const outboundHref = provider.id
+    ? `/go/${provider.id}?src=prompt_builder`
+    : null;
 
   const _getLockMessage = () => {
-    if (promptLockState === 'anonymous_limit') return 'Sign in to continue';
-    if (promptLockState === 'quota_reached') return 'Daily limit reached';
+    if (promptLockState === "anonymous_limit") return "Sign in to continue";
+    if (promptLockState === "quota_reached") return "Daily limit reached";
     return undefined;
   };
 
@@ -1936,26 +2150,35 @@ export function PromptBuilder({
 
   React.useEffect(() => {
     if (!provider.id) return;
-    trackPromptBuilderOpen({ providerId: provider.id, location: 'providers_page' });
+    trackPromptBuilderOpen({
+      providerId: provider.id,
+      location: "providers_page",
+    });
   }, [provider.id]);
 
   // ============================================================================
   // Handlers
   // ============================================================================
 
-  const handleSelectChange = useCallback((category: PromptCategory, selected: string[]) => {
-    setCategoryState((prev) => ({
-      ...prev,
-      [category]: { ...prev[category], selected },
-    }));
-  }, []);
+  const handleSelectChange = useCallback(
+    (category: PromptCategory, selected: string[]) => {
+      setCategoryState((prev) => ({
+        ...prev,
+        [category]: { ...prev[category], selected },
+      }));
+    },
+    [],
+  );
 
-  const handleCustomChange = useCallback((category: PromptCategory, value: string) => {
-    setCategoryState((prev) => ({
-      ...prev,
-      [category]: { ...prev[category], customValue: value },
-    }));
-  }, []);
+  const handleCustomChange = useCallback(
+    (category: PromptCategory, value: string) => {
+      setCategoryState((prev) => ({
+        ...prev,
+        [category]: { ...prev[category], customValue: value },
+      }));
+    },
+    [],
+  );
 
   const handleRandomise = useCallback(() => {
     if (isLocked) return;
@@ -1976,7 +2199,7 @@ export function PromptBuilder({
       const category = cat as PromptCategory;
       newState[category] = {
         selected: selected || [],
-        customValue: result.customValues[category] || '',
+        customValue: result.customValues[category] || "",
       };
     }
 
@@ -1989,7 +2212,12 @@ export function PromptBuilder({
     } else {
       setAspectRatio(null);
     }
-  }, [isLocked, setAspectRatio, categoryState.subject?.customValue, categoryLimits]);
+  }, [
+    isLocked,
+    setAspectRatio,
+    categoryState.subject?.customValue,
+    categoryLimits,
+  ]);
 
   const handleClear = useCallback(() => {
     if (isLocked) return;
@@ -2012,7 +2240,10 @@ export function PromptBuilder({
       setTimeout(() => setCopied(false), 2000);
 
       if (provider.id) {
-        trackPromptCopy({ providerId: provider.id, promptLength: textToCopy.length });
+        trackPromptCopy({
+          providerId: provider.id,
+          promptLength: textToCopy.length,
+        });
       }
 
       // Phase 5: Fire telemetry for the learning pipeline
@@ -2032,7 +2263,7 @@ export function PromptBuilder({
         copied: true,
         saved: false,
         reusedFromLibrary: false,
-        userTier: userTier as 'free' | 'paid',
+        userTier: userTier as "free" | "paid",
         accountAgeDays,
         abHash,
         activeTestId: abTestId,
@@ -2058,10 +2289,14 @@ export function PromptBuilder({
       // Derives description from subject + style selections
       const subjectTerms = selections.subject ?? [];
       const styleTerms = selections.style ?? [];
-      const pulseDesc = [subjectTerms[0], styleTerms[0]].filter(Boolean).join(', ').slice(0, 60) || 'Custom prompt';
-      void fetch('/api/homepage/community-pulse', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const pulseDesc =
+        [subjectTerms[0], styleTerms[0]]
+          .filter(Boolean)
+          .join(", ")
+          .slice(0, 60) || "Custom prompt";
+      void fetch("/api/homepage/community-pulse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           platformId,
           platformName: provider.name,
@@ -2069,13 +2304,34 @@ export function PromptBuilder({
           promptText: textToCopy,
           description: pulseDesc,
           score: healthScore,
-          countryCode: locationInfo.countryCode ?? '',
+          countryCode: locationInfo.countryCode ?? "",
         }),
-      }).catch(() => { /* fire-and-forget — never block copy */ });
+      }).catch(() => {
+        /* fire-and-forget — never block copy */
+      });
     } catch (err) {
-      console.error('Failed to copy prompt:', err);
+      console.error("Failed to copy prompt:", err);
     }
-  }, [hasContent, isLocked, trackUsageCallback, provider.id, provider.name, optimizedResult, selections, healthScore, promptAnalysis, platformTier, platformId, activeSceneId, userTier, accountAgeDays, abHash, abTestId, abVariant, locationInfo]);
+  }, [
+    hasContent,
+    isLocked,
+    trackUsageCallback,
+    provider.id,
+    provider.name,
+    optimizedResult,
+    selections,
+    healthScore,
+    promptAnalysis,
+    platformTier,
+    platformId,
+    activeSceneId,
+    userTier,
+    accountAgeDays,
+    abHash,
+    abTestId,
+    abVariant,
+    locationInfo,
+  ]);
 
   // Inline copy: Assembled prompt box (bottom-right icon)
   const handleCopyAssembled = useCallback(async () => {
@@ -2088,10 +2344,13 @@ export function PromptBuilder({
       incrementLifetimePrompts();
       setTimeout(() => setCopiedAssembled(false), 2000);
       if (provider.id) {
-        trackPromptCopy({ providerId: provider.id, promptLength: promptText.length });
+        trackPromptCopy({
+          providerId: provider.id,
+          promptLength: promptText.length,
+        });
       }
     } catch (err) {
-      console.error('Failed to copy assembled prompt:', err);
+      console.error("Failed to copy assembled prompt:", err);
     }
   }, [hasContent, isLocked, trackUsageCallback, provider.id, promptText]);
 
@@ -2107,10 +2366,13 @@ export function PromptBuilder({
       incrementLifetimePrompts();
       setTimeout(() => setCopiedOptimized(false), 2000);
       if (provider.id) {
-        trackPromptCopy({ providerId: provider.id, promptLength: textToCopy.length });
+        trackPromptCopy({
+          providerId: provider.id,
+          promptLength: textToCopy.length,
+        });
       }
     } catch (err) {
-      console.error('Failed to copy optimized prompt:', err);
+      console.error("Failed to copy optimized prompt:", err);
     }
   }, [hasContent, isLocked, trackUsageCallback, provider.id, optimizedResult]);
 
@@ -2126,7 +2388,7 @@ export function PromptBuilder({
       // Get analysis data for the saved prompt
       const coherenceScore = promptAnalysis?.dna?.coherenceScore ?? 75;
       const dominantFamily = promptAnalysis?.dna?.dominantFamily ?? null;
-      const dominantMood = promptAnalysis?.dna?.dominantMood ?? 'neutral';
+      const dominantMood = promptAnalysis?.dna?.dominantMood ?? "neutral";
 
       // Extract families from selections
       const families: string[] = [];
@@ -2145,11 +2407,12 @@ export function PromptBuilder({
         platformId,
         platformName: provider.name,
         positivePrompt: optimizedResult.optimized,
-        negativePrompt: negativesArray.length > 0 ? negativesArray.join(', ') : undefined,
+        negativePrompt:
+          negativesArray.length > 0 ? negativesArray.join(", ") : undefined,
         selections,
         customValues,
         families,
-        mood: dominantMood as 'calm' | 'intense' | 'neutral',
+        mood: dominantMood as "calm" | "intense" | "neutral",
         coherenceScore,
         characterCount: optimizedResult.optimizedLength,
         notes: data.notes,
@@ -2177,7 +2440,7 @@ export function PromptBuilder({
           copied: false,
           saved: true,
           reusedFromLibrary: false,
-          userTier: userTier as 'free' | 'paid',
+          userTier: userTier as "free" | "paid",
           accountAgeDays,
           abHash,
           activeTestId: abTestId,
@@ -2225,10 +2488,10 @@ export function PromptBuilder({
     if (atmosphere && parts.length < 2) parts.push(atmosphere);
 
     if (parts.length > 0) {
-      return parts.join(' · ');
+      return parts.join(" · ");
     }
 
-    return '';
+    return "";
   }, [categoryState]);
 
   // ============================================================================
@@ -2260,7 +2523,9 @@ export function PromptBuilder({
               {providerSelector ? (
                 <div className="flex items-center gap-2">
                   {providerSelector}
-                  <span className="text-sm text-slate-200">· Prompt builder</span>
+                  <span className="text-sm text-slate-200">
+                    · Prompt builder
+                  </span>
                 </div>
               ) : (
                 <h2 className="text-lg font-semibold text-slate-50">
@@ -2272,7 +2537,7 @@ export function PromptBuilder({
               {tierBadge && (
                 <span
                   className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${tierBadge.bg} ${tierBadge.text} ${tierBadge.ring}`}
-                  title={`Tier ${platformTier}: ${tierBadge.label} — this platform works best with ${platformTier <= 2 ? 'keyword-based' : 'natural language'} prompts`}
+                  title={`Tier ${platformTier}: ${tierBadge.label} — this platform works best with ${platformTier <= 2 ? "keyword-based" : "natural language"} prompts`}
                 >
                   {tierBadge.label}
                 </span>
@@ -2315,13 +2580,14 @@ export function PromptBuilder({
               {hasContent && promptAnalysis && (
                 <div className="flex items-center gap-2">
                   {/* Conflict warning - only if enabled in preferences */}
-                  {intelligencePrefs.conflictWarningsEnabled && conflictCount > 0 && (
-                    <ConflictWarning
-                      conflicts={promptAnalysis.conflicts.conflicts}
-                      hasHardConflicts={hasHardConflicts}
-                      variant="badge"
-                    />
-                  )}
+                  {intelligencePrefs.conflictWarningsEnabled &&
+                    conflictCount > 0 && (
+                      <ConflictWarning
+                        conflicts={promptAnalysis.conflicts.conflicts}
+                        hasHardConflicts={hasHardConflicts}
+                        variant="badge"
+                      />
+                    )}
                   {/* Health badge - only if enabled in preferences */}
                   {intelligencePrefs.showCoherenceScore && (
                     <HealthBadge
@@ -2335,24 +2601,39 @@ export function PromptBuilder({
               )}
 
               {isMounted && !isAuthenticated && anonymousUsage && (
-                <AnonymousCounter count={anonymousUsage.count} limit={anonymousUsage.limit} />
+                <AnonymousCounter
+                  count={anonymousUsage.count}
+                  limit={anonymousUsage.limit}
+                />
               )}
-              {isMounted && isAuthenticated && dailyUsage && dailyUsage.limit !== null && (
-                <DailyCounter count={dailyUsage.count} limit={dailyUsage.limit} />
-              )}
+              {isMounted &&
+                isAuthenticated &&
+                dailyUsage &&
+                dailyUsage.limit !== null && (
+                  <DailyCounter
+                    count={dailyUsage.count}
+                    limit={dailyUsage.limit}
+                  />
+                )}
             </div>
           </div>
 
           {/* Subtitle */}
           <p className="text-sm bg-gradient-to-r from-cyan-400 via-sky-400 to-purple-400 bg-clip-text text-transparent">
-            Build your prompt by selecting from the criteria below. Not every field is required, but
-            the more detail you provide, the better your results will be. Custom entries accepted.
+            Build your prompt by selecting from the criteria below. Not every
+            field is required, but the more detail you provide, the better your
+            results will be. Custom entries accepted.
           </p>
 
           {/* Paid user badge */}
-          {userTier === 'paid' && (
+          {userTier === "paid" && (
             <span className="inline-flex items-center gap-1 self-start rounded-full bg-purple-600/20 px-2 py-0.5 text-xs font-medium text-purple-300 ring-1 ring-purple-500/30">
-              <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+              <svg
+                className="h-3 w-3"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+                aria-hidden="true"
+              >
                 <path
                   fillRule="evenodd"
                   d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -2369,14 +2650,15 @@ export function PromptBuilder({
       <section
         aria-label="Prompt editor"
         className={`min-h-0 flex-1 overflow-y-auto p-4 pr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30 md:px-6 md:pr-3 ${
-          isLocked ? 'pointer-events-none opacity-50' : ''
+          isLocked ? "pointer-events-none opacity-50" : ""
         }`}
       >
         <div className="flex flex-col gap-4">
           {/* Instruction text - green style */}
           <p className="text-xs text-emerald-400">
             <span className="text-emerald-400">
-              Click Done or click away to close dropdowns. Type in any field to add custom entries.
+              Click Done or click away to close dropdowns. Type in any field to
+              add custom entries.
             </span>
           </p>
 
@@ -2398,15 +2680,17 @@ export function PromptBuilder({
 
           {/* ════════════════════════════════════════════════════════ */}
           {/* Describe Your Image — Human Sentence Conversion         */}
-          {/* Sits below Scene Starters, above category grid.         */}
+          {/* Prompt Lab only (providerSelector is the differentiator) */}
           {/* Collapsed by default. Expands to textarea + Generate.   */}
           {/* Authority: human-sentence-conversion.md                  */}
           {/* ════════════════════════════════════════════════════════ */}
-          <DescribeYourImage
-            categoryState={categoryState}
-            setCategoryState={setCategoryState}
-            isLocked={isLocked}
-          />
+          {providerSelector && (
+            <DescribeYourImage
+              categoryState={categoryState}
+              setCategoryState={setCategoryState}
+              isLocked={isLocked}
+            />
+          )}
 
           {/* Category dropdowns grid */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -2415,7 +2699,7 @@ export function PromptBuilder({
               if (!config) return null;
 
               const state = categoryState[category];
-              const isNegative = category === 'negative';
+              const isNegative = category === "negative";
               const maxSelections = categoryLimits[category] ?? 1;
               const allowFreeText = isNegative ? allowNegativeFreeText : true;
 
@@ -2428,7 +2712,10 @@ export function PromptBuilder({
               );
 
               return (
-                <div key={category} className={isNegative ? 'sm:col-span-2 lg:col-span-4' : ''}>
+                <div
+                  key={category}
+                  className={isNegative ? "sm:col-span-2 lg:col-span-4" : ""}
+                >
                   <Combobox
                     id={`${id}-${category}`}
                     label={config.label}
@@ -2437,27 +2724,52 @@ export function PromptBuilder({
                     options={getOptionsForCategory(category, config.options)}
                     selected={state.selected}
                     customValue={state.customValue}
-                    onSelectChange={(selected) => handleSelectChange(category, selected)}
-                    onCustomChange={(value) => handleCustomChange(category, value)}
+                    onSelectChange={(selected) =>
+                      handleSelectChange(category, selected)
+                    }
+                    onCustomChange={(value) =>
+                      handleCustomChange(category, value)
+                    }
                     placeholder={`Select ${config.label.toLowerCase()}...`}
                     maxSelections={maxSelections}
                     maxCustomChars={50}
                     allowFreeText={allowFreeText}
                     isLocked={isLocked}
-                    chipOptions={getCategoryChips(category, state.selected, state.customValue)}
+                    chipOptions={getCategoryChips(
+                      category,
+                      state.selected,
+                      state.customValue,
+                    )}
                     chipSectionLabel="More options"
                     sceneOriginValues={getSceneOriginValues(category)}
-                    onCustomTermSubmitted={(term) => submitCustomTerm(term, category)}
+                    onCustomTermSubmitted={(term) =>
+                      submitCustomTerm(term, category)
+                    }
                     feedbackHintTerms={feedbackHintTerms}
                     labelColour={isPro ? CATEGORY_COLOURS[category] : undefined}
                   />
                   {/* Improvement 3: Negative overflow badge — shows when "Try in" carried more negatives than the dropdown limit */}
-                  {isNegative && state.customValue && state.selected.length >= maxSelections && (
-                    <div className="mt-1 flex items-center gap-1.5 text-[10px] text-slate-200">
-                      <svg className="h-3 w-3 text-sky-400" viewBox="0 0 16 16" fill="currentColor"><path fillRule="evenodd" d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm6.5-.25A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" /></svg>
-                      <span>{state.selected.length} shown + {state.customValue.split(',').filter(Boolean).length} overflow — all included in prompt</span>
-                    </div>
-                  )}
+                  {isNegative &&
+                    state.customValue &&
+                    state.selected.length >= maxSelections && (
+                      <div className="mt-1 flex items-center gap-1.5 text-[10px] text-slate-200">
+                        <svg
+                          className="h-3 w-3 text-sky-400"
+                          viewBox="0 0 16 16"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm6.5-.25A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+                          />
+                        </svg>
+                        <span>
+                          {state.selected.length} shown +{" "}
+                          {state.customValue.split(",").filter(Boolean).length}{" "}
+                          overflow — all included in prompt
+                        </span>
+                      </div>
+                    )}
                   {/* Phase 3: Explore Drawer — expandable vocabulary panel */}
                   <ExploreDrawer
                     category={category}
@@ -2484,17 +2796,19 @@ export function PromptBuilder({
           </div>
 
           {/* Prompt Intelligence Suggestions - only if enabled in preferences */}
-          {intelligencePrefs.suggestionsEnabled && hasContent && topSuggestions.length > 0 && (
-            <div className="rounded-lg border border-slate-800/50 bg-slate-900/30 px-3 py-2">
-              <SuggestionChips
-                suggestions={topSuggestions}
-                onSelect={handleSuggestionClick}
-                maxChips={intelligencePrefs.compactSuggestions ? 4 : 6}
-                showScore={!intelligencePrefs.compactSuggestions}
-                size="sm"
-              />
-            </div>
-          )}
+          {intelligencePrefs.suggestionsEnabled &&
+            hasContent &&
+            topSuggestions.length > 0 && (
+              <div className="rounded-lg border border-slate-800/50 bg-slate-900/30 px-3 py-2">
+                <SuggestionChips
+                  suggestions={topSuggestions}
+                  onSelect={handleSuggestionClick}
+                  maxChips={intelligencePrefs.compactSuggestions ? 4 : 6}
+                  showScore={!intelligencePrefs.compactSuggestions}
+                  size="sm"
+                />
+              </div>
+            )}
 
           {/* Aspect Ratio Selector - 13th row */}
           <div className="border-t border-slate-800/50 pt-4">
@@ -2512,14 +2826,17 @@ export function PromptBuilder({
           {assembled.tips && (
             <div className="rounded-lg border border-sky-900/50 bg-sky-950/30 px-3 py-2">
               <p className="text-xs text-sky-200">
-                <span className="font-medium">💡 {provider.name}:</span> {assembled.tips}
+                <span className="font-medium">💡 {provider.name}:</span>{" "}
+                {assembled.tips}
               </p>
             </div>
           )}
 
           {/* Sparse input warning */}
           {hasContent && Object.keys(selections).length < 3 && (
-            <p className="text-xs text-slate-200">💡 Tip: Add more detail for better results</p>
+            <p className="text-xs text-slate-200">
+              💡 Tip: Add more detail for better results
+            </p>
           )}
 
           {/* ============================================================ */}
@@ -2529,7 +2846,9 @@ export function PromptBuilder({
             {/* Header row: "Assembled prompt" + char count + Clear all */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="text-xs font-medium text-white">Assembled prompt</span>
+                <span className="text-xs font-medium text-white">
+                  Assembled prompt
+                </span>
                 {/* Improvement 2: Stage indicator badge */}
                 {hasContent && (
                   <StageBadge
@@ -2539,37 +2858,57 @@ export function PromptBuilder({
                   />
                 )}
                 {/* DNA Bar - shows category fill status (only if enabled in preferences) */}
-                {intelligencePrefs.showDNABar && hasContent && promptAnalysis && (
-                  <DNABar
-                    dna={promptAnalysis.dna}
-                    showCoherence={intelligencePrefs.showCoherenceScore}
-                    showTooltips={intelligencePrefs.showWhyThisTooltips}
-                    size="sm"
-                  />
-                )}
+                {intelligencePrefs.showDNABar &&
+                  hasContent &&
+                  promptAnalysis && (
+                    <DNABar
+                      dna={promptAnalysis.dna}
+                      showCoherence={intelligencePrefs.showCoherenceScore}
+                      showTooltips={intelligencePrefs.showWhyThisTooltips}
+                      size="sm"
+                    />
+                  )}
               </div>
               <div className="flex items-center gap-3">
                 {/* Char count + token estimate inline */}
                 {hasContent && (
                   <span className="flex items-center gap-2 text-xs tabular-nums">
-                    <span className="text-slate-200">{promptText.length} chars</span>
+                    <span className="text-slate-200">
+                      {promptText.length} chars
+                    </span>
                     {assembled.estimatedTokens != null && (
                       <span
                         className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 ${
-                          assembled.tokenLimit && assembled.estimatedTokens > assembled.tokenLimit
-                            ? 'bg-amber-500/10 text-amber-400'
-                            : 'text-slate-200'
+                          assembled.tokenLimit &&
+                          assembled.estimatedTokens > assembled.tokenLimit
+                            ? "bg-amber-500/10 text-amber-400"
+                            : "text-slate-200"
                         }`}
                         title={
-                          assembled.tokenLimit && assembled.estimatedTokens > assembled.tokenLimit
+                          assembled.tokenLimit &&
+                          assembled.estimatedTokens > assembled.tokenLimit
                             ? `Estimated ${assembled.estimatedTokens} tokens exceeds this platform's ${assembled.tokenLimit}-token encoding window. Tail terms may receive weaker attention.`
                             : `Estimated CLIP tokens (approximate)`
                         }
                       >
-                        {assembled.tokenLimit && assembled.estimatedTokens > assembled.tokenLimit && (
-                          <svg className="h-3 w-3 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor"><path fillRule="evenodd" d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575L6.457 1.047ZM8 5a.75.75 0 0 1 .75.75v2.5a.75.75 0 0 1-1.5 0v-2.5A.75.75 0 0 1 8 5Zm0 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" /></svg>
-                        )}
-                        ~{assembled.estimatedTokens}{assembled.tokenLimit ? `/${assembled.tokenLimit}` : ''} tokens
+                        {assembled.tokenLimit &&
+                          assembled.estimatedTokens > assembled.tokenLimit && (
+                            <svg
+                              className="h-3 w-3 flex-shrink-0"
+                              viewBox="0 0 16 16"
+                              fill="currentColor"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575L6.457 1.047ZM8 5a.75.75 0 0 1 .75.75v2.5a.75.75 0 0 1-1.5 0v-2.5A.75.75 0 0 1 8 5Zm0 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+                              />
+                            </svg>
+                          )}
+                        ~{assembled.estimatedTokens}
+                        {assembled.tokenLimit
+                          ? `/${assembled.tokenLimit}`
+                          : ""}{" "}
+                        tokens
                       </span>
                     )}
                   </span>
@@ -2577,7 +2916,11 @@ export function PromptBuilder({
                 {hasContent && !isLocked && (
                   <button
                     type="button"
-                    onClick={() => { handleClear(); setInspiredByData(null); setWeatherWeightOverrides(undefined); }}
+                    onClick={() => {
+                      handleClear();
+                      setInspiredByData(null);
+                      setWeatherWeightOverrides(undefined);
+                    }}
                     className="text-xs font-medium bg-gradient-to-r from-sky-400 via-emerald-300 to-indigo-400 bg-clip-text text-transparent hover:from-sky-300 hover:via-emerald-200 hover:to-indigo-300 transition-all cursor-pointer"
                   >
                     Clear all
@@ -2594,29 +2937,54 @@ export function PromptBuilder({
                   className="group flex items-center gap-2 rounded-lg border border-sky-500/20 bg-sky-500/5 px-3 py-1.5 transition-colors hover:border-sky-500/30 hover:bg-sky-500/8"
                 >
                   <span className="text-xs text-sky-300/90">
-                    {inspiredByData.emoji} Inspired by live weather in {inspiredByData.city}, {inspiredByData.venue}
-                    {' · '}{inspiredByData.localTime}
-                    {inspiredByData.tempC !== null ? ` · ${inspiredByData.tempC}°C` : ''}
-                    {' · '}{inspiredByData.conditions}
+                    {inspiredByData.emoji} Inspired by live weather in{" "}
+                    {inspiredByData.city}, {inspiredByData.venue}
+                    {" · "}
+                    {inspiredByData.localTime}
+                    {inspiredByData.tempC !== null
+                      ? ` · ${inspiredByData.tempC}°C`
+                      : ""}
+                    {" · "}
+                    {inspiredByData.conditions}
                   </span>
-                  <span className="text-xs text-sky-400 opacity-0 transition-opacity group-hover:opacity-100">← back</span>
+                  <span className="text-xs text-sky-400 opacity-0 transition-opacity group-hover:opacity-100">
+                    ← back
+                  </span>
                 </a>
                 {/* Upgrade 5: Prompt Fingerprint Verification badge */}
-                {fingerprintStatus === 'match' && (
+                {fingerprintStatus === "match" && (
                   <span
                     className="inline-flex items-center gap-1 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400"
                     title="Builder selections match the original weather-generated prompt exactly"
                   >
-                    <svg className="h-3 w-3" viewBox="0 0 16 16" fill="currentColor"><path fillRule="evenodd" d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z" /></svg>
+                    <svg
+                      className="h-3 w-3"
+                      viewBox="0 0 16 16"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"
+                      />
+                    </svg>
                     Matches original
                   </span>
                 )}
-                {fingerprintStatus === 'modified' && (
+                {fingerprintStatus === "modified" && (
                   <span
                     className="inline-flex items-center gap-1 rounded-md border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-400"
                     title="You've edited selections — prompt differs from the original weather-generated version"
                   >
-                    <svg className="h-3 w-3" viewBox="0 0 16 16" fill="currentColor"><path fillRule="evenodd" d="M11.013 1.427a1.75 1.75 0 0 1 2.474 0l1.086 1.086a1.75 1.75 0 0 1 0 2.474l-8.61 8.61c-.21.21-.47.364-.756.445l-3.251.93a.75.75 0 0 1-.927-.928l.929-3.25c.081-.286.235-.547.445-.758l8.61-8.61Zm1.414 1.06a.25.25 0 0 0-.354 0L3.463 11.098l-.47 1.643 1.643-.47 8.61-8.61a.25.25 0 0 0 0-.354l-1.086-1.086Z" /></svg>
+                    <svg
+                      className="h-3 w-3"
+                      viewBox="0 0 16 16"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M11.013 1.427a1.75 1.75 0 0 1 2.474 0l1.086 1.086a1.75 1.75 0 0 1 0 2.474l-8.61 8.61c-.21.21-.47.364-.756.445l-3.251.93a.75.75 0 0 1-.927-.928l.929-3.25c.081-.286.235-.547.445-.758l8.61-8.61Zm1.414 1.06a.25.25 0 0 0-.354 0L3.463 11.098l-.47 1.643 1.643-.47 8.61-8.61a.25.25 0 0 0 0-.354l-1.086-1.086Z"
+                      />
+                    </svg>
                     Modified from original
                   </span>
                 )}
@@ -2627,7 +2995,7 @@ export function PromptBuilder({
             <div
               className={`
                 min-h-[80px] max-h-[200px] overflow-y-auto rounded-xl border bg-slate-950/80 p-3 text-sm scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30
-                ${hasContent ? 'border-slate-600 text-slate-100' : 'border-slate-800 text-slate-500'}
+                ${hasContent ? "border-slate-600 text-slate-100" : "border-slate-800 text-slate-500"}
               `}
             >
               {hasContent ? (
@@ -2652,7 +3020,7 @@ export function PromptBuilder({
                     <span className="ml-1 inline-flex float-right gap-1">
                       <SaveIcon
                         positivePrompt={promptText}
-                        platformId={provider.id ?? ''}
+                        platformId={provider.id ?? ""}
                         platformName={provider.name}
                         source="builder"
                         tier={platformTier}
@@ -2664,19 +3032,45 @@ export function PromptBuilder({
                         onClick={handleCopyAssembled}
                         className={`inline-flex items-center justify-center rounded-md p-1 transition-all cursor-pointer ${
                           copiedAssembled
-                            ? 'bg-emerald-500/20 text-emerald-400'
-                            : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'
+                            ? "bg-emerald-500/20 text-emerald-400"
+                            : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200"
                         }`}
-                        title={copiedAssembled ? 'Copied!' : 'Copy assembled prompt'}
-                        aria-label={copiedAssembled ? 'Copied to clipboard' : 'Copy assembled prompt to clipboard'}
+                        title={
+                          copiedAssembled ? "Copied!" : "Copy assembled prompt"
+                        }
+                        aria-label={
+                          copiedAssembled
+                            ? "Copied to clipboard"
+                            : "Copy assembled prompt to clipboard"
+                        }
                       >
                         {copiedAssembled ? (
-                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          <svg
+                            className="h-3.5 w-3.5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2.5}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M5 13l4 4L19 7"
+                            />
                           </svg>
                         ) : (
-                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          <svg
+                            className="h-3.5 w-3.5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                            />
                           </svg>
                         )}
                       </button>
@@ -2685,7 +3079,8 @@ export function PromptBuilder({
                 </pre>
               ) : (
                 <span className="italic text-xs">
-                  Start selecting options above to build your {provider.name} prompt...
+                  Start selecting options above to build your {provider.name}{" "}
+                  prompt...
                 </span>
               )}
             </div>
@@ -2702,10 +3097,14 @@ export function PromptBuilder({
                   <div className="flex items-center gap-2">
                     <span className="text-amber-400">↓</span>
                     <span className="text-xs text-amber-200">
-                      <span className="font-medium">Optimized:</span>{' '}
-                      {optimizedResult.originalLength} → {optimizedResult.optimizedLength} chars{' '}
+                      <span className="font-medium">Optimized:</span>{" "}
+                      {optimizedResult.originalLength} →{" "}
+                      {optimizedResult.optimizedLength} chars{" "}
                       <span className="text-amber-400/60">
-                        (saved {optimizedResult.originalLength - optimizedResult.optimizedLength})
+                        (saved{" "}
+                        {optimizedResult.originalLength -
+                          optimizedResult.optimizedLength}
+                        )
                       </span>
                     </span>
                   </div>
@@ -2731,14 +3130,16 @@ export function PromptBuilder({
                   achievedAtPhase={optimizedResult.achievedAtPhase ?? -1}
                   originalLength={optimizedResult.originalLength}
                   optimizedLength={optimizedResult.optimizedLength}
-                  isPro={userTier === 'paid'}
+                  isPro={userTier === "paid"}
                   conversions={assembled.conversions}
                   conversionBudget={assembled.conversionBudget}
                 />
 
                 {/* Optimized prompt preview box - SAME STYLING as Assembled prompt */}
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-emerald-300">Optimized prompt</span>
+                  <span className="text-xs font-medium text-emerald-300">
+                    Optimized prompt
+                  </span>
                   <span className="text-xs text-emerald-400/70 tabular-nums">
                     {optimizedResult.optimizedLength} chars
                   </span>
@@ -2758,7 +3159,7 @@ export function PromptBuilder({
                           positivePrompt={promptText}
                           optimisedPrompt={optimizedResult.optimized}
                           isOptimised={true}
-                          platformId={provider.id ?? ''}
+                          platformId={provider.id ?? ""}
                           platformName={provider.name}
                           source="builder"
                           tier={platformTier}
@@ -2770,19 +3171,47 @@ export function PromptBuilder({
                           onClick={handleCopyOptimized}
                           className={`inline-flex items-center justify-center rounded-md p-1 transition-all cursor-pointer ${
                             copiedOptimized
-                              ? 'bg-emerald-500/20 text-emerald-400'
-                              : 'bg-white/5 text-emerald-300 hover:bg-white/10 hover:text-emerald-200 cursor-pointer'
+                              ? "bg-emerald-500/20 text-emerald-400"
+                              : "bg-white/5 text-emerald-300 hover:bg-white/10 hover:text-emerald-200 cursor-pointer"
                           }`}
-                          title={copiedOptimized ? 'Copied!' : 'Copy optimized prompt'}
-                          aria-label={copiedOptimized ? 'Copied to clipboard' : 'Copy optimized prompt to clipboard'}
+                          title={
+                            copiedOptimized
+                              ? "Copied!"
+                              : "Copy optimized prompt"
+                          }
+                          aria-label={
+                            copiedOptimized
+                              ? "Copied to clipboard"
+                              : "Copy optimized prompt to clipboard"
+                          }
                         >
                           {copiedOptimized ? (
-                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            <svg
+                              className="h-3.5 w-3.5"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={2.5}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M5 13l4 4L19 7"
+                              />
                             </svg>
                           ) : (
-                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            <svg
+                              className="h-3.5 w-3.5"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                              />
                             </svg>
                           )}
                         </button>
@@ -2810,17 +3239,23 @@ export function PromptBuilder({
                     <div className="flex items-center gap-2">
                       <span className="text-emerald-400">✓</span>
                       <span className="text-xs text-emerald-200">
-                        <span className="font-medium">Within optimal range</span> —{' '}
-                        {optimizedResult.optimizedLength} chars
+                        <span className="font-medium">
+                          Within optimal range
+                        </span>{" "}
+                        — {optimizedResult.optimizedLength} chars
                       </span>
                     </div>
-                    <span className="text-[0.7rem] text-emerald-400/70">No trimming needed</span>
+                    <span className="text-[0.7rem] text-emerald-400/70">
+                      No trimming needed
+                    </span>
                   </div>
                 </div>
 
                 {/* Optimized prompt preview box */}
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-emerald-300">Optimized prompt</span>
+                  <span className="text-xs font-medium text-emerald-300">
+                    Optimized prompt
+                  </span>
                   <span className="text-xs text-emerald-400/70 tabular-nums">
                     {optimizedResult.optimizedLength} chars
                   </span>
@@ -2840,7 +3275,7 @@ export function PromptBuilder({
                           positivePrompt={promptText}
                           optimisedPrompt={optimizedResult.optimized}
                           isOptimised={true}
-                          platformId={provider.id ?? ''}
+                          platformId={provider.id ?? ""}
                           platformName={provider.name}
                           source="builder"
                           tier={platformTier}
@@ -2852,19 +3287,47 @@ export function PromptBuilder({
                           onClick={handleCopyOptimized}
                           className={`inline-flex items-center justify-center rounded-md p-1 transition-all cursor-pointer ${
                             copiedOptimized
-                              ? 'bg-emerald-500/20 text-emerald-400'
-                              : 'bg-white/5 text-emerald-300 hover:bg-white/10 hover:text-emerald-200 cursor-pointer'
+                              ? "bg-emerald-500/20 text-emerald-400"
+                              : "bg-white/5 text-emerald-300 hover:bg-white/10 hover:text-emerald-200 cursor-pointer"
                           }`}
-                          title={copiedOptimized ? 'Copied!' : 'Copy optimized prompt'}
-                          aria-label={copiedOptimized ? 'Copied to clipboard' : 'Copy optimized prompt to clipboard'}
+                          title={
+                            copiedOptimized
+                              ? "Copied!"
+                              : "Copy optimized prompt"
+                          }
+                          aria-label={
+                            copiedOptimized
+                              ? "Copied to clipboard"
+                              : "Copy optimized prompt to clipboard"
+                          }
                         >
                           {copiedOptimized ? (
-                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            <svg
+                              className="h-3.5 w-3.5"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={2.5}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M5 13l4 4L19 7"
+                              />
                             </svg>
                           ) : (
-                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            <svg
+                              className="h-3.5 w-3.5"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                              />
                             </svg>
                           )}
                         </button>
@@ -2889,7 +3352,7 @@ export function PromptBuilder({
       {/* Fixed Footer with Actions */}
       <footer
         className={`shrink-0 border-t border-slate-800/50 p-4 md:px-6 ${
-          isLocked ? 'pointer-events-none opacity-50' : ''
+          isLocked ? "pointer-events-none opacity-50" : ""
         }`}
       >
         <div className="flex flex-wrap items-center justify-center gap-3">
@@ -2902,8 +3365,8 @@ export function PromptBuilder({
               inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition-all
               ${
                 hasContent && !isLocked
-                  ? 'border-slate-600 bg-slate-900 text-slate-50 hover:border-slate-400 hover:bg-slate-800 cursor-pointer'
-                  : 'cursor-not-allowed border-slate-800 bg-slate-900/50 text-slate-600'
+                  ? "border-slate-600 bg-slate-900 text-slate-50 hover:border-slate-400 hover:bg-slate-800 cursor-pointer"
+                  : "cursor-not-allowed border-slate-800 bg-slate-900/50 text-slate-600"
               }
               focus-visible:outline-none focus-visible:ring focus-visible:ring-sky-400/80
             `}
@@ -2942,7 +3405,9 @@ export function PromptBuilder({
                     d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
                   />
                 </svg>
-                {isOptimizerEnabled && wasOptimized ? 'Copy optimized prompt' : 'Copy prompt'}
+                {isOptimizerEnabled && wasOptimized
+                  ? "Copy optimized prompt"
+                  : "Copy prompt"}
               </>
             )}
           </button>
@@ -2954,8 +3419,8 @@ export function PromptBuilder({
             disabled={isLocked}
             className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition-all focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80 ${
               isLocked
-                ? 'cursor-not-allowed border-slate-700 bg-slate-800/50 text-slate-500'
-                : 'border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-100 hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 cursor-pointer'
+                ? "cursor-not-allowed border-slate-700 bg-slate-800/50 text-slate-500"
+                : "border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-100 hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 cursor-pointer"
             }`}
           >
             <span className="text-base">🎲</span>
@@ -2970,14 +3435,19 @@ export function PromptBuilder({
             className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition-all focus-visible:outline-none focus-visible:ring focus-visible:ring-emerald-400/80 ${
               hasContent && !isLocked
                 ? savedConfirmation
-                  ? 'border-emerald-400 bg-emerald-500/20 text-emerald-300 cursor-pointer'
-                  : 'border-emerald-500/70 bg-gradient-to-r from-emerald-600/20 to-teal-600/20 text-emerald-100 hover:from-emerald-600/30 hover:to-teal-600/30 hover:border-emerald-400 cursor-pointer'
-                : 'cursor-not-allowed border-slate-700 bg-slate-800/50 text-slate-500'
+                  ? "border-emerald-400 bg-emerald-500/20 text-emerald-300 cursor-pointer"
+                  : "border-emerald-500/70 bg-gradient-to-r from-emerald-600/20 to-teal-600/20 text-emerald-100 hover:from-emerald-600/30 hover:to-teal-600/30 hover:border-emerald-400 cursor-pointer"
+                : "cursor-not-allowed border-slate-700 bg-slate-800/50 text-slate-500"
             }`}
           >
             {savedConfirmation ? (
               <>
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -2989,7 +3459,12 @@ export function PromptBuilder({
               </>
             ) : (
               <>
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -3065,8 +3540,8 @@ export function PromptBuilder({
                 stroke="currentColor"
                 aria-hidden="true"
                 style={{
-                  width: 'clamp(14px, 1vw, 18px)',
-                  height: 'clamp(14px, 1vw, 18px)',
+                  width: "clamp(14px, 1vw, 18px)",
+                  height: "clamp(14px, 1vw, 18px)",
                 }}
               >
                 <path
@@ -3084,7 +3559,7 @@ export function PromptBuilder({
 
       {/* Phase 7.10g: Feedback Memory Banner — contextual overlap hint */}
       {feedbackOverlap && !feedbackPending && (
-        <div style={{ marginTop: 'clamp(6px, 0.4vw, 10px)' }}>
+        <div style={{ marginTop: "clamp(6px, 0.4vw, 10px)" }}>
           <FeedbackMemoryBanner
             overlap={feedbackOverlap}
             platformName={provider.name}
@@ -3095,7 +3570,7 @@ export function PromptBuilder({
 
       {/* Phase 7.10d: Feedback Invitation Widget */}
       {feedbackPending && (
-        <div style={{ marginTop: 'clamp(8px, 0.6vw, 12px)' }}>
+        <div style={{ marginTop: "clamp(8px, 0.6vw, 12px)" }}>
           <FeedbackInvitation
             pending={feedbackPending}
             userContext={{
