@@ -57,6 +57,7 @@ const EnvSchema = z.object({
 
   // Provider secrets (server-only)
   TWELVEDATA_API_KEY: z.string().optional(),
+  OPENAI_API_KEY: z.string().optional(),
 });
 
 type ParsedEnv = z.infer<typeof EnvSchema>;
@@ -116,6 +117,7 @@ export const env = Object.freeze({
   // Provider secrets
   providers: {
     twelveDataApiKey: raw.TWELVEDATA_API_KEY?.trim(),
+    openAiApiKey: raw.OPENAI_API_KEY?.trim(),
   },
 });
 

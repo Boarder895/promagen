@@ -2590,6 +2590,643 @@ function ImageGenPreviewPanel() {
 }
 
 // ============================================================================
+// PROMPT INTELLIGENCE PREVIEW PANEL — The Rosetta Stone
+// ============================================================================
+// Shown when Prompt Intelligence card is hovered. Fills the CTA area.
+// Shows how the SAME user selections produce completely different prompts
+// across 3 platforms with different text encoders.
+//
+// 5 showcase scenarios rotate every 10s with 300ms crossfade.
+// Nav dots are clickable — clicking pauses auto-rotation for 20s.
+// Encoder badges: Option 3 — plain English primary + technical subtitle.
+//
+// Human Factor: Curiosity Gap — same input, wildly different output
+// Human Factor: Authority Signal — encoder architecture knowledge = trust
+//
+// Code Standard Compliance:
+// - All clamp() sizing (§6.0), min 10px text (§6.0.1)
+// - No grey text on /pro-promagen (best-working-practice.md)
+// - No opacity dimming (§6.0.3), cursor-pointer on clickables (§6.0.4)
+// - Animations co-located in <style> block
+// - Category colours from SSOT (IG_C / prompt-colours.ts)
+// ============================================================================
+
+const INTELLIGENCE_CSS = `
+  @keyframes intelligenceFade {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  @keyframes statPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .intelligence-fade-in { animation: intelligenceFade 300ms ease-out forwards; }
+`;
+
+// Reuse category colours from SSOT (same as IG_C defined above)
+const PI_C = IG_C;
+
+// Encoder info for badges — Option 3: plain English + technical subtitle
+const ENCODER_BADGES: Record<string, { plain: string; tech: string; tokens: string }> = {
+  'stability':     { plain: 'Keywords',         tech: 'CLIP encoder',   tokens: '75 tokens' },
+  'leonardo':      { plain: 'Keywords',         tech: 'CLIP encoder',   tokens: '75 tokens' },
+  'nightcafe':     { plain: 'Keywords',         tech: 'CLIP encoder',   tokens: '75 tokens' },
+  'tensor-art':    { plain: 'Keywords',         tech: 'Dual CLIP',      tokens: '75 tokens' },
+  'midjourney':    { plain: 'Brief + params',   tech: 'MJ encoder',     tokens: '~30 words' },
+  'flux':          { plain: 'Natural language',  tech: 'T5-XXL encoder', tokens: '512 tokens' },
+  'google-imagen': { plain: 'Natural language',  tech: 'T5-XXL encoder', tokens: '512 tokens' },
+  'openai':        { plain: 'Auto-rewritten',    tech: 'GPT-4 rewrite',  tokens: '~800 chars' },
+  'kling':         { plain: 'Semantic language', tech: 'ChatGLM3-6B',   tokens: '256 tokens' },
+  'recraft':       { plain: 'Structured prose',  tech: 'Proprietary',    tokens: '4,000 chars' },
+  'ideogram':      { plain: 'Natural language',  tech: 'Proprietary',    tokens: '~500 chars' },
+  'canva':         { plain: 'Simple phrases',    tech: 'Proprietary',    tokens: '~200 chars' },
+};
+
+// ── 5 Showcase Scenarios — The Rosetta Stone data bank ──────────────────
+// Each scenario: same user selections, 3 platforms with colour-coded outputs.
+// Trios chosen to maximise encoder architecture contrast.
+
+interface IntelligenceScenario {
+  name: string;
+  selections: Array<{ term: string; color: string }>;
+  platforms: Array<{
+    id: string;
+    name: string;
+    segments: Array<{ text: string; color: string }>;
+  }>;
+}
+
+const INTELLIGENCE_SCENARIOS: IntelligenceScenario[] = [
+  // Scenario 1: Golden Hour Astronaut — CLIP vs MJ vs T5
+  {
+    name: 'Golden Hour Astronaut',
+    selections: [
+      { term: 'lone astronaut', color: PI_C.subject },
+      { term: 'cinematic', color: PI_C.style },
+      { term: 'golden hour', color: PI_C.lighting },
+      { term: 'dusty haze', color: PI_C.atmosphere },
+      { term: 'wide angle', color: PI_C.camera },
+      { term: 'alien desert', color: PI_C.environment },
+    ],
+    platforms: [
+      {
+        id: 'stability',
+        name: 'Stability',
+        segments: [
+          { text: '(', color: PI_C.structural },
+          { text: 'lone astronaut', color: PI_C.subject },
+          { text: ':1.3)', color: PI_C.structural },
+          { text: ', ', color: PI_C.structural },
+          { text: 'alien desert', color: PI_C.environment },
+          { text: ', ', color: PI_C.structural },
+          { text: 'cinematic', color: PI_C.style },
+          { text: ', ', color: PI_C.structural },
+          { text: '(', color: PI_C.structural },
+          { text: 'golden hour', color: PI_C.lighting },
+          { text: ':1.2)', color: PI_C.structural },
+          { text: ', ', color: PI_C.structural },
+          { text: 'wide angle', color: PI_C.camera },
+          { text: ', ', color: PI_C.structural },
+          { text: 'dusty haze', color: PI_C.atmosphere },
+          { text: ', ', color: PI_C.structural },
+          { text: '(', color: PI_C.structural },
+          { text: '8K detailed', color: PI_C.fidelity },
+          { text: ':1.1)', color: PI_C.structural },
+        ],
+      },
+      {
+        id: 'midjourney',
+        name: 'Midjourney',
+        segments: [
+          { text: 'lone astronaut', color: PI_C.subject },
+          { text: ' ', color: PI_C.structural },
+          { text: 'alien desert', color: PI_C.environment },
+          { text: ' ', color: PI_C.structural },
+          { text: 'golden hour', color: PI_C.lighting },
+          { text: ' ', color: PI_C.structural },
+          { text: 'cinematic', color: PI_C.style },
+          { text: ' ', color: PI_C.structural },
+          { text: 'wide angle', color: PI_C.camera },
+          { text: ' ', color: PI_C.structural },
+          { text: 'dusty haze', color: PI_C.atmosphere },
+          { text: ' ', color: PI_C.structural },
+          { text: '--ar 16:9 --s 500 --q 2', color: PI_C.fidelity },
+        ],
+      },
+      {
+        id: 'flux',
+        name: 'Flux',
+        segments: [
+          { text: 'A ', color: PI_C.structural },
+          { text: 'lone astronaut', color: PI_C.subject },
+          { text: ' standing on a vast ', color: PI_C.structural },
+          { text: 'alien desert', color: PI_C.environment },
+          { text: ' at ', color: PI_C.structural },
+          { text: 'golden hour', color: PI_C.lighting },
+          { text: ', ', color: PI_C.structural },
+          { text: 'cinematic', color: PI_C.style },
+          { text: ' composition captured with a ', color: PI_C.structural },
+          { text: 'wide-angle', color: PI_C.camera },
+          { text: ' lens, ', color: PI_C.structural },
+          { text: 'dusty haze', color: PI_C.atmosphere },
+          { text: ' softening the horizon', color: PI_C.structural },
+        ],
+      },
+    ],
+  },
+  // Scenario 2: Neon Alley — CLIP vs GPT-4 rewrite vs ChatGLM3
+  {
+    name: 'Neon Alley',
+    selections: [
+      { term: 'samurai warrior', color: PI_C.subject },
+      { term: 'cyberpunk', color: PI_C.style },
+      { term: 'neon reflections', color: PI_C.lighting },
+      { term: 'wet concrete', color: PI_C.materials },
+      { term: 'electric pink', color: PI_C.colour },
+      { term: 'rising steam', color: PI_C.atmosphere },
+    ],
+    platforms: [
+      {
+        id: 'leonardo',
+        name: 'Leonardo',
+        segments: [
+          { text: '(', color: PI_C.structural },
+          { text: 'samurai warrior', color: PI_C.subject },
+          { text: ':1.3)', color: PI_C.structural },
+          { text: ', ', color: PI_C.structural },
+          { text: 'cyberpunk', color: PI_C.style },
+          { text: ', ', color: PI_C.structural },
+          { text: '(', color: PI_C.structural },
+          { text: 'neon reflections', color: PI_C.lighting },
+          { text: ':1.2)', color: PI_C.structural },
+          { text: ', ', color: PI_C.structural },
+          { text: 'electric pink', color: PI_C.colour },
+          { text: ', ', color: PI_C.structural },
+          { text: 'wet concrete', color: PI_C.materials },
+          { text: ', ', color: PI_C.structural },
+          { text: 'rising steam', color: PI_C.atmosphere },
+          { text: ', ', color: PI_C.structural },
+          { text: '(', color: PI_C.structural },
+          { text: 'masterpiece', color: PI_C.fidelity },
+          { text: ':1.1)', color: PI_C.structural },
+        ],
+      },
+      {
+        id: 'openai',
+        name: 'DALL·E 3',
+        segments: [
+          { text: 'A ', color: PI_C.structural },
+          { text: 'samurai warrior', color: PI_C.subject },
+          { text: ' in a ', color: PI_C.structural },
+          { text: 'cyberpunk', color: PI_C.style },
+          { text: ' alley with ', color: PI_C.structural },
+          { text: 'neon reflections', color: PI_C.lighting },
+          { text: ' in ', color: PI_C.structural },
+          { text: 'electric pink', color: PI_C.colour },
+          { text: ' on ', color: PI_C.structural },
+          { text: 'wet concrete', color: PI_C.materials },
+          { text: ' surfaces, ', color: PI_C.structural },
+          { text: 'steam rising', color: PI_C.atmosphere },
+          { text: ' from vents', color: PI_C.structural },
+        ],
+      },
+      {
+        id: 'kling',
+        name: 'Kling AI',
+        segments: [
+          { text: 'samurai warrior', color: PI_C.subject },
+          { text: ' in ', color: PI_C.structural },
+          { text: 'cyberpunk', color: PI_C.style },
+          { text: ' setting, ', color: PI_C.structural },
+          { text: 'neon reflections', color: PI_C.lighting },
+          { text: ' in ', color: PI_C.structural },
+          { text: 'electric pink', color: PI_C.colour },
+          { text: ', ', color: PI_C.structural },
+          { text: 'wet concrete', color: PI_C.materials },
+          { text: ' with ', color: PI_C.structural },
+          { text: 'rising steam', color: PI_C.atmosphere },
+          { text: ', ', color: PI_C.structural },
+          { text: 'masterpiece, best quality', color: PI_C.fidelity },
+        ],
+      },
+    ],
+  },
+  // Scenario 3: Enchanted Library — CLIP vs T5 (no fidelity) vs Proprietary (preset style)
+  {
+    name: 'Enchanted Library',
+    selections: [
+      { term: 'ancient library', color: PI_C.subject },
+      { term: 'fantasy art', color: PI_C.style },
+      { term: 'candlelight', color: PI_C.lighting },
+      { term: 'mystical fog', color: PI_C.atmosphere },
+      { term: 'leather and gold', color: PI_C.materials },
+      { term: 'masterpiece', color: PI_C.fidelity },
+    ],
+    platforms: [
+      {
+        id: 'nightcafe',
+        name: 'NightCafe',
+        segments: [
+          { text: '(', color: PI_C.structural },
+          { text: 'ancient library', color: PI_C.subject },
+          { text: ':1.3)', color: PI_C.structural },
+          { text: ', ', color: PI_C.structural },
+          { text: 'fantasy art', color: PI_C.style },
+          { text: ', ', color: PI_C.structural },
+          { text: '(', color: PI_C.structural },
+          { text: 'candlelight', color: PI_C.lighting },
+          { text: ':1.2)', color: PI_C.structural },
+          { text: ', ', color: PI_C.structural },
+          { text: 'mystical fog', color: PI_C.atmosphere },
+          { text: ', ', color: PI_C.structural },
+          { text: 'leather and gold', color: PI_C.materials },
+          { text: ', ', color: PI_C.structural },
+          { text: '(', color: PI_C.structural },
+          { text: 'masterpiece', color: PI_C.fidelity },
+          { text: ':1.1)', color: PI_C.structural },
+        ],
+      },
+      {
+        id: 'flux',
+        name: 'Flux',
+        segments: [
+          { text: 'An ', color: PI_C.structural },
+          { text: 'ancient library', color: PI_C.subject },
+          { text: ' filled with ', color: PI_C.structural },
+          { text: 'mystical fog', color: PI_C.atmosphere },
+          { text: ', illuminated by ', color: PI_C.structural },
+          { text: 'candlelight', color: PI_C.lighting },
+          { text: ' revealing tomes with ', color: PI_C.structural },
+          { text: 'leather and gold', color: PI_C.materials },
+          { text: ' details, ', color: PI_C.structural },
+          { text: 'fantasy art', color: PI_C.style },
+          { text: ' style', color: PI_C.structural },
+        ],
+      },
+      {
+        id: 'recraft',
+        name: 'Recraft V3',
+        segments: [
+          { text: 'An ', color: PI_C.structural },
+          { text: 'ancient library', color: PI_C.subject },
+          { text: '. ', color: PI_C.structural },
+          { text: 'Candlelight', color: PI_C.lighting },
+          { text: ' illumination with ', color: PI_C.structural },
+          { text: 'mystical fog', color: PI_C.atmosphere },
+          { text: '. ', color: PI_C.structural },
+          { text: 'Leather and gold', color: PI_C.materials },
+          { text: ' materials.', color: PI_C.structural },
+        ],
+      },
+    ],
+  },
+  // Scenario 4: Storm Over City — SDXL quality tags vs NL vs Ultra-minimal
+  {
+    name: 'Storm Over the City',
+    selections: [
+      { term: 'lightning strike', color: PI_C.subject },
+      { term: 'Manhattan skyline', color: PI_C.environment },
+      { term: 'storm light', color: PI_C.lighting },
+      { term: 'heavy rain', color: PI_C.atmosphere },
+      { term: 'telephoto', color: PI_C.camera },
+      { term: 'rule of thirds', color: PI_C.composition },
+    ],
+    platforms: [
+      {
+        id: 'tensor-art',
+        name: 'Tensor.Art',
+        segments: [
+          { text: '(', color: PI_C.structural },
+          { text: 'lightning strike', color: PI_C.subject },
+          { text: ':1.3)', color: PI_C.structural },
+          { text: ', ', color: PI_C.structural },
+          { text: 'Manhattan skyline', color: PI_C.environment },
+          { text: ', ', color: PI_C.structural },
+          { text: 'storm light', color: PI_C.lighting },
+          { text: ', ', color: PI_C.structural },
+          { text: 'heavy rain', color: PI_C.atmosphere },
+          { text: ', ', color: PI_C.structural },
+          { text: 'telephoto', color: PI_C.camera },
+          { text: ', ', color: PI_C.structural },
+          { text: 'rule of thirds', color: PI_C.composition },
+          { text: ', ', color: PI_C.structural },
+          { text: 'masterpiece, best quality, score_9', color: PI_C.fidelity },
+        ],
+      },
+      {
+        id: 'ideogram',
+        name: 'Ideogram',
+        segments: [
+          { text: 'A ', color: PI_C.structural },
+          { text: 'lightning strike', color: PI_C.subject },
+          { text: ' over the ', color: PI_C.structural },
+          { text: 'Manhattan skyline', color: PI_C.environment },
+          { text: ' with ', color: PI_C.structural },
+          { text: 'dramatic storm light', color: PI_C.lighting },
+          { text: ' and ', color: PI_C.structural },
+          { text: 'heavy rain', color: PI_C.atmosphere },
+          { text: ', ', color: PI_C.structural },
+          { text: 'telephoto', color: PI_C.camera },
+          { text: ' perspective, ', color: PI_C.structural },
+          { text: 'rule of thirds', color: PI_C.composition },
+        ],
+      },
+      {
+        id: 'canva',
+        name: 'Canva',
+        segments: [
+          { text: 'lightning strike', color: PI_C.subject },
+          { text: ' ', color: PI_C.structural },
+          { text: 'Manhattan skyline', color: PI_C.environment },
+          { text: ' ', color: PI_C.structural },
+          { text: 'storm light', color: PI_C.lighting },
+          { text: ' ', color: PI_C.structural },
+          { text: 'heavy rain', color: PI_C.atmosphere },
+        ],
+      },
+    ],
+  },
+  // Scenario 5: Coral Reef — CLIP vs T5 prose vs MJ brevity
+  {
+    name: 'Coral Reef',
+    selections: [
+      { term: 'sea turtle', color: PI_C.subject },
+      { term: 'coral reef', color: PI_C.environment },
+      { term: 'underwater caustics', color: PI_C.lighting },
+      { term: 'turquoise', color: PI_C.colour },
+      { term: 'gliding', color: PI_C.action },
+      { term: 'crystal clear water', color: PI_C.materials },
+    ],
+    platforms: [
+      {
+        id: 'stability',
+        name: 'Stability',
+        segments: [
+          { text: '(', color: PI_C.structural },
+          { text: 'sea turtle', color: PI_C.subject },
+          { text: ':1.3)', color: PI_C.structural },
+          { text: ', ', color: PI_C.structural },
+          { text: 'gliding', color: PI_C.action },
+          { text: ', ', color: PI_C.structural },
+          { text: 'coral reef', color: PI_C.environment },
+          { text: ', ', color: PI_C.structural },
+          { text: '(', color: PI_C.structural },
+          { text: 'underwater caustics', color: PI_C.lighting },
+          { text: ':1.2)', color: PI_C.structural },
+          { text: ', ', color: PI_C.structural },
+          { text: 'turquoise', color: PI_C.colour },
+          { text: ', ', color: PI_C.structural },
+          { text: 'crystal clear water', color: PI_C.materials },
+        ],
+      },
+      {
+        id: 'google-imagen',
+        name: 'Imagen',
+        segments: [
+          { text: 'A ', color: PI_C.structural },
+          { text: 'sea turtle', color: PI_C.subject },
+          { text: ' ', color: PI_C.structural },
+          { text: 'gliding', color: PI_C.action },
+          { text: ' through a ', color: PI_C.structural },
+          { text: 'coral reef', color: PI_C.environment },
+          { text: ' with ', color: PI_C.structural },
+          { text: 'underwater caustic', color: PI_C.lighting },
+          { text: ' light patterns, ', color: PI_C.structural },
+          { text: 'turquoise', color: PI_C.colour },
+          { text: ' tones in ', color: PI_C.structural },
+          { text: 'crystal clear water', color: PI_C.materials },
+        ],
+      },
+      {
+        id: 'midjourney',
+        name: 'Midjourney',
+        segments: [
+          { text: 'sea turtle', color: PI_C.subject },
+          { text: ' ', color: PI_C.structural },
+          { text: 'gliding', color: PI_C.action },
+          { text: ' ', color: PI_C.structural },
+          { text: 'coral reef', color: PI_C.environment },
+          { text: ' ', color: PI_C.structural },
+          { text: 'underwater caustics', color: PI_C.lighting },
+          { text: ' ', color: PI_C.structural },
+          { text: 'turquoise', color: PI_C.colour },
+          { text: ' ', color: PI_C.structural },
+          { text: '--ar 16:9 --s 400 --q 2', color: PI_C.fidelity },
+        ],
+      },
+    ],
+  },
+];
+
+function IntelligencePreviewPanel() {
+  const [activeIdx, setActiveIdx] = React.useState(0);
+  const [fadeState, setFadeState] = React.useState<'visible' | 'fading-out' | 'fading-in'>('visible');
+  const pauseRef = React.useRef(false);
+  const pauseTimerRef = React.useRef<ReturnType<typeof setTimeout>>();
+
+  // Auto-rotate through scenarios every 10s with 300ms crossfade
+  React.useEffect(() => {
+    const id = setInterval(() => {
+      if (pauseRef.current) return;
+      setFadeState('fading-out');
+      setTimeout(() => {
+        setActiveIdx((prev) => (prev + 1) % INTELLIGENCE_SCENARIOS.length);
+        setFadeState('fading-in');
+        setTimeout(() => setFadeState('visible'), 300);
+      }, 300);
+    }, 10000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Click nav dot — switch immediately, pause auto-rotation for 20s
+  const handleDotClick = React.useCallback((idx: number) => {
+    if (idx === activeIdx) return;
+    pauseRef.current = true;
+    clearTimeout(pauseTimerRef.current);
+    setFadeState('fading-out');
+    setTimeout(() => {
+      setActiveIdx(idx);
+      setFadeState('fading-in');
+      setTimeout(() => setFadeState('visible'), 300);
+    }, 300);
+    pauseTimerRef.current = setTimeout(() => { pauseRef.current = false; }, 20000);
+  }, [activeIdx]);
+
+  React.useEffect(() => () => clearTimeout(pauseTimerRef.current), []);
+
+  const scenario = INTELLIGENCE_SCENARIOS[activeIdx]!;
+  const cardColor = '#fb923c'; // Orange — matches Prompt Intelligence card
+
+  return (
+    <div className="flex flex-col h-full">
+      <style dangerouslySetInnerHTML={{ __html: INTELLIGENCE_CSS }} />
+
+      {/* Animated amber header — matches all other preview panels */}
+      <div style={{ padding: 'clamp(10px, 1vw, 16px) 0' }}>
+        <p
+          className="italic text-amber-400/80 animate-pulse text-center font-semibold"
+          style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.95rem)' }}
+        >
+          Same intent — different platforms
+        </p>
+      </div>
+
+      {/* Selection chips — the user's choices (same across all 3 platforms) */}
+      <div
+        className="flex flex-wrap items-center justify-center shrink-0"
+        style={{ gap: 'clamp(4px, 0.4vw, 6px)', paddingBottom: 'clamp(6px, 0.6vw, 10px)' }}
+      >
+        <span className="text-white font-medium" style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)' }}>
+          Your selections:
+        </span>
+        {scenario.selections.map((sel, i) => (
+          <span
+            key={i}
+            className="inline-flex items-center rounded-full font-medium"
+            style={{
+              fontSize: 'clamp(0.625rem, 0.55vw, 0.7rem)',
+              padding: 'clamp(1px, 0.1vw, 2px) clamp(6px, 0.5vw, 8px)',
+              background: `${sel.color}18`,
+              border: `1px solid ${sel.color}40`,
+              color: sel.color,
+            }}
+          >
+            {sel.term}
+          </span>
+        ))}
+      </div>
+
+      {/* 3 platform cards — the Rosetta Stone */}
+      <div
+        className="flex flex-1 min-h-0"
+        style={{
+          gap: 'clamp(5px, 0.5vw, 8px)',
+          opacity: fadeState === 'fading-out' ? 0 : 1,
+          transition: 'opacity 300ms ease-in-out',
+        }}
+      >
+        {scenario.platforms.map((platform) => {
+          const badge = ENCODER_BADGES[platform.id];
+          const pColor = cardColor;
+          const pGlow = hexToRgbaPanel(pColor, 0.25);
+          const pBorder = hexToRgbaPanel(pColor, 0.4);
+          const pSoft = hexToRgbaPanel(pColor, 0.12);
+
+          return (
+            <div
+              key={platform.id}
+              className="relative flex-1 rounded-xl overflow-hidden flex flex-col"
+              style={{
+                background: 'rgba(15, 23, 42, 0.97)',
+                border: `1px solid ${pBorder}`,
+                boxShadow: `0 0 20px 4px ${pGlow}, 0 0 40px 8px ${pSoft}, inset 0 0 14px 2px ${pGlow}`,
+                padding: 'clamp(8px, 0.8vw, 14px)',
+              }}
+            >
+              {/* Top glow */}
+              <span
+                className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl"
+                style={{ background: `radial-gradient(ellipse at 50% 0%, ${pGlow} 0%, transparent 70%)` }}
+                aria-hidden="true"
+              />
+
+              <div className="relative z-10 flex flex-col h-full" style={{ gap: 'clamp(4px, 0.4vw, 7px)' }}>
+                {/* Platform header — icon + name */}
+                <div className="flex items-center shrink-0" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`/icons/providers/${platform.id}.png`}
+                    alt=""
+                    className="rounded"
+                    style={{ width: 'clamp(14px, 1.2vw, 20px)', height: 'clamp(14px, 1.2vw, 20px)' }}
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                  <span className="font-semibold text-white truncate" style={{ fontSize: 'clamp(0.625rem, 0.7vw, 0.8rem)' }}>
+                    {platform.name}
+                  </span>
+                </div>
+
+                {/* Encoder badge — Option 3: plain English + technical subtitle */}
+                {badge && (
+                  <div
+                    className="flex flex-col shrink-0 rounded-md"
+                    style={{
+                      padding: 'clamp(3px, 0.3vw, 5px) clamp(6px, 0.5vw, 8px)',
+                      background: `${pColor}10`,
+                      border: `1px solid ${pColor}25`,
+                    }}
+                  >
+                    <span className="text-white font-medium" style={{ fontSize: 'clamp(0.625rem, 0.55vw, 0.7rem)' }}>
+                      {badge.plain} · {badge.tokens}
+                    </span>
+                    <span style={{ color: pColor, fontSize: 'clamp(0.625rem, 0.5vw, 0.65rem)' }}>
+                      {badge.tech}
+                    </span>
+                  </div>
+                )}
+
+                {/* Colour-coded assembled prompt — the main content */}
+                <div className="flex-1 overflow-hidden">
+                  <p className="font-mono leading-relaxed" style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.75rem)' }}>
+                    {platform.segments.map((seg, si) => (
+                      <span key={si} style={{ color: seg.color }}>{seg.text}</span>
+                    ))}
+                  </p>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Bottom row — free anchor + Pro benefit + nav dots */}
+      <div
+        className="flex items-center justify-between"
+        style={{ paddingTop: 'clamp(8px, 0.8vw, 12px)' }}
+      >
+        <span
+          className="inline-flex items-center text-emerald-400 font-semibold"
+          style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)', gap: 'clamp(3px, 0.3vw, 5px)' }}
+        >
+          <svg style={{ width: 'clamp(10px, 0.8vw, 14px)', height: 'clamp(10px, 0.8vw, 14px)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          Free: standard assembly
+        </span>
+
+        {/* Clickable nav dots — interactive platform switcher */}
+        <div className="flex items-center" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
+          {INTELLIGENCE_SCENARIOS.map((s, i) => (
+            <span
+              key={i}
+              role="button"
+              tabIndex={0}
+              className="rounded-full cursor-pointer"
+              title={s.name}
+              onClick={() => handleDotClick(i)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleDotClick(i); } }}
+              style={{
+                width: 'clamp(6px, 0.5vw, 8px)',
+                height: 'clamp(6px, 0.5vw, 8px)',
+                background: i === activeIdx ? '#fb923c' : 'rgba(255,255,255,0.25)',
+                transition: 'background 300ms ease',
+              }}
+            />
+          ))}
+        </div>
+
+        <span
+          className="text-amber-400 font-semibold"
+          style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}
+        >
+          Pro: 45-platform adaptive
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
 // EXCHANGES PREVIEW PANEL — 5 windows: CTA + 4 regional mini-cards
 // ============================================================================
 // Shown when Exchanges card is hovered. Same glass/glow pattern as others.
@@ -3013,7 +3650,7 @@ export default function ProPromagenClient({
   // When NO panel is active, first hover switches immediately (no debounce).
   // When cursor enters the SAME card that's already active, do nothing.
   // ============================================================================
-  type PreviewPanel = 'daily' | 'format' | 'scenes' | 'saved' | 'lab' | 'exchanges' | 'frame' | 'imagegen';
+  type PreviewPanel = 'daily' | 'format' | 'scenes' | 'saved' | 'lab' | 'exchanges' | 'frame' | 'imagegen' | 'intelligence';
   const [activePanel, setActivePanel] = useState<PreviewPanel | null>(null);
   const lingerRef = useRef<ReturnType<typeof setTimeout>>();
   const switchDebounceRef = useRef<ReturnType<typeof setTimeout>>();
@@ -3090,6 +3727,7 @@ export default function ProPromagenClient({
   const setExchangesHovered = useCallback((h: boolean) => handleCardHover('exchanges', h), [handleCardHover]);
   const setFrameHovered = useCallback((h: boolean) => handleCardHover('frame', h), [handleCardHover]);
   const setImageGenHovered = useCallback((h: boolean) => handleCardHover('imagegen', h), [handleCardHover]);
+  const setIntelligenceHovered = useCallback((h: boolean) => handleCardHover('intelligence', h), [handleCardHover]);
 
   // Detect changes from initial state (FX no longer tracked — fixed pairs)
   const hasChanges = useMemo(() => {
@@ -3434,6 +4072,7 @@ export default function ProPromagenClient({
           onExchangesHover={setExchangesHovered}
           onFrameHover={setFrameHovered}
           onImageGenHover={setImageGenHovered}
+          onIntelligenceHover={setIntelligenceHovered}
         />
       </div>
 
@@ -3476,6 +4115,9 @@ export default function ProPromagenClient({
         </div>
         <div style={{ display: activePanel === 'imagegen' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <ImageGenPreviewPanel />
+        </div>
+        <div style={{ display: activePanel === 'intelligence' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+          <IntelligencePreviewPanel />
         </div>
         <div data-upgrade-cta style={{ display: activePanel === null ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <UpgradeCta isPaidUser={isPaidUser} onSave={handleSave} hasChanges={hasChanges} />

@@ -152,6 +152,7 @@ import { SavePromptModal, type SavePromptData } from '@/components/prompts/save-
 
 // Scene Starters import (Phase 2)
 import { SceneSelector } from '@/components/providers/scene-selector';
+import { DescribeYourImage } from '@/components/providers/describe-your-image';
 import { ExploreDrawer, type CascadeScoreMap } from '@/components/providers/explore-drawer';
 import { getSceneById } from '@/data/scenes';
 import { trackEvent } from '@/lib/analytics/events';
@@ -2393,6 +2394,18 @@ export function PromptBuilder({
             platformTier={platformTier}
             feedbackTermHints={rawTermHints}
             initialSceneId={preloadedSceneId}
+          />
+
+          {/* ════════════════════════════════════════════════════════ */}
+          {/* Describe Your Image — Human Sentence Conversion         */}
+          {/* Sits below Scene Starters, above category grid.         */}
+          {/* Collapsed by default. Expands to textarea + Generate.   */}
+          {/* Authority: human-sentence-conversion.md                  */}
+          {/* ════════════════════════════════════════════════════════ */}
+          <DescribeYourImage
+            categoryState={categoryState}
+            setCategoryState={setCategoryState}
+            isLocked={isLocked}
           />
 
           {/* Category dropdowns grid */}

@@ -213,6 +213,7 @@ export interface FeatureControlPanelProps {
   onExchangesHover?: (hovering: boolean) => void;
   onFrameHover?: (hovering: boolean) => void;
   onImageGenHover?: (hovering: boolean) => void;
+  onIntelligenceHover?: (hovering: boolean) => void;
 }
 
 export function FeatureControlPanel({
@@ -229,6 +230,7 @@ export function FeatureControlPanel({
   onExchangesHover,
   onFrameHover,
   onImageGenHover,
+  onIntelligenceHover,
 }: FeatureControlPanelProps) {
   const { dailyUsage, anonymousUsage } = usePromagenAuth();
   const { allPrompts } = useSavedPrompts();
@@ -242,6 +244,15 @@ export function FeatureControlPanel({
   }, []);
 
   const tierLabel = TIER_LABELS[selectedPromptTier];
+
+  // Rotating stat for Prompt Intelligence card: 45 platforms ↔ 17 algorithms
+  const [intelligenceStat, setIntelligenceStat] = useState<'45' | '17'>('45');
+  React.useEffect(() => {
+    const id = setInterval(() => {
+      setIntelligenceStat((prev) => (prev === '45' ? '17' : '45'));
+    }, 3000);
+    return () => clearInterval(id);
+  }, []);
 
   return (
     <>
@@ -385,22 +396,24 @@ export function FeatureControlPanel({
           onHoverChange={onFrameHover}
         />
 
-        {/* ── ⚙️ Prompt Stacking ─────────────────────────── */}
+        {/* ── 🧠 Prompt Intelligence ─────────────────────── */}
         <FeatureCard
-          emoji="⚙️"
-          label="Stacking"
+          emoji="🧠"
+          label="Prompt Intelligence"
           color="#fb923c"
-          freeValue="Base limits"
-          proValue="+1 on 7 categories"
+          freeValue="Standard assembly"
+          proValue="45-platform adaptive engine"
           actionLabel={isPaidUser ? 'Active' : 'Pro only'}
           isPro={isPaidUser}
           actionAlwaysColored={true}
+          stat={intelligenceStat}
+          onHoverChange={onIntelligenceHover}
         >
           <span className="text-white" style={{ fontSize: 'clamp(0.625rem, 0.55vw, 0.7rem)' }}>
-            Style, Lighting, Colour, Atmosphere, Materials, Fidelity
+            12 categories · 4 encoder types
           </span>
           <span className="font-medium" style={{ color: '#fb923c', fontSize: 'clamp(0.625rem, 0.6vw, 0.75rem)' }}>
-            {isPaidUser ? '+1 on each' : 'Pro: +1 on each'}
+            {isPaidUser ? 'Per-platform optimised' : 'Pro: Per-platform optimised'}
           </span>
         </FeatureCard>
 
