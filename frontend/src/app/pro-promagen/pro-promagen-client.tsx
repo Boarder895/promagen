@@ -121,8 +121,10 @@ import type { Provider } from '@/types/providers';
 import type { WeatherCategoryMap, PromptCategory } from '@/types/prompt-builder';
 import { getPlatformTierId } from '@/data/platform-tiers';
 import { assemblePrompt, selectionsFromMap } from '@/lib/prompt-builder';
+import { optimizePromptGoldStandard } from '@/lib/prompt-optimizer';
 import type { ExchangeWeatherData, IndexQuoteData } from '@/components/exchanges/types';
 import { CATEGORY_COLOURS as SHARED_CATEGORY_COLOURS, CATEGORY_LABELS as SHARED_CATEGORY_LABELS, CATEGORY_EMOJIS as SHARED_CATEGORY_EMOJIS, parsePromptIntoSegments as sharedParsePrompt } from '@/lib/prompt-colours';
+import allProvidersData from '@/data/providers/providers.json';
 
 // ============================================================================
 // TYPES
@@ -1583,29 +1585,169 @@ function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
 }
 
 // ============================================================================
-// DAILY PROMPTS PREVIEW PANEL — Miniaturised builder mockup with auto-scroll
+// DAILY PROMPTS PREVIEW PANEL — 45-provider rotating showcase (v7.0.0)
 // ============================================================================
-// Shown when Daily Prompts card is hovered. Displays a read-only snapshot of
-// the standard builder with colour-coded category headings, selected chips
-// from PotM data, assembled prompt, and optimized prompt. Auto-scrolls
-// vertically to reveal the full content. Clicking navigates to the standard
-// builder with the PotM provider pre-selected.
+// Rotates through ALL 45 AI providers using live PotM category data.
+// Each rotation: assemblePrompt() + optimizePromptGoldStandard() called live.
+//
+// Visual sell: Assembled prompt = WHITE text (free tier look).
+//              Optimized prompt = COLOUR-CODED text (Pro tier look).
+//              Compression annotation between boxes shows real intelligence.
+//
+// Dynamic timing:
+//   Content fits without overflow → 4s interval, crossfade between providers
+//   Content overflows → one-way scroll to bottom → swap next at top → repeat
 //
 // Human factors:
-// - Show the Tool, Not the Output — users see what Pro looks like to USE
-// - Auto-scroll: Peak-End Rule — the scroll reveals content gradually
-// - Click-to-navigate: Curiosity Gap — "try it yourself"
+// - Von Restorff Effect: colour-coded text jumps out against white text
+// - Curiosity Gap: "I want MY prompts colour-coded"
+// - Social proof through variety: 45 platforms = serious engineering
+// - Click-to-navigate: "try it yourself"
 // ============================================================================
+
+/** Tier label map for annotation line */
+const DAILY_ENCODER_LABELS: Record<number, string> = {
+  1: 'CLIP',
+  2: 'Midjourney',
+  3: 'Natural Language',
+  4: 'Plain Language',
+};
+
+/** Tier colour map for annotation badge */
+const DAILY_ENCODER_COLOURS: Record<number, string> = {
+  1: '#60a5fa',
+  2: '#c084fc',
+  3: '#34d399',
+  4: '#fb923c',
+};
+
+/** One-way scroll CSS + progress bar fill */
+const DAILY_SCROLL_CSS = `
+  @keyframes dailyScrollDown {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(var(--scroll-dist)); }
+  }
+  @keyframes dailyProgressFill {
+    from { width: 0%; }
+    to { width: 100%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .daily-scroll-content { animation: none !important; }
+  }
+`;
 
 function DailyPromptsPreviewPanel() {
   const { data: potmData } = usePromptShowcase();
-  const { containerRef: scrollRef, contentRef, scrollDist } = useAutoScroll();
-
   const categoryMap = potmData?.tierSelections?.tier1?.categoryMap;
-  // Derive provider from tier1 providers (PromptOfTheMoment has no .provider field)
-  const provider = potmData?.tierProviders?.tier1?.[0] ?? null;
 
-  // Build category rows from PotM data
+  // ── Provider rotation state ──
+  const [providerIndex, setProviderIndex] = React.useState(0);
+  const [fading, setFading] = React.useState(false);
+  const currentProvider = allProvidersData[providerIndex] ?? allProvidersData[0];
+
+  // ── Scroll measurement ──
+  const containerRef = React.useRef<HTMLDivElement>(null!);
+  const contentRef = React.useRef<HTMLDivElement>(null!);
+  const [scrollDist, setScrollDist] = React.useState(0);
+  const [scrolling, setScrolling] = React.useState(false);
+  const [visible, setVisible] = React.useState(false);
+
+  // Timers
+  const advanceTimerRef = React.useRef<ReturnType<typeof setTimeout>>();
+  const holdTimerRef = React.useRef<ReturnType<typeof setTimeout>>();
+  const flashTimerRef = React.useRef<ReturnType<typeof setTimeout>>();
+
+  // ── Compression flash — brightness pulse on provider swap ──
+  const [flashActive, setFlashActive] = React.useState(false);
+
+  // ── Progress bar total cycle time (seconds) ──
+  const [cycleDuration, setCycleDuration] = React.useState(4);
+
+  // ── Track container visibility via ResizeObserver + periodic fallback ──
+  React.useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const check = () => {
+      const isVis = container.clientHeight >= 10;
+      setVisible((prev) => (prev !== isVis ? isVis : prev));
+    };
+
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(container);
+    // Periodic fallback — catches display:none → display:flex transitions
+    // that ResizeObserver sometimes misses
+    const tid = setInterval(check, 500);
+    return () => { ro.disconnect(); clearInterval(tid); };
+  }, []);
+
+  // ── Advance to next provider with crossfade + flash ──
+  const advanceProvider = React.useCallback(() => {
+    setFading(true);
+    advanceTimerRef.current = setTimeout(() => {
+      setProviderIndex((prev) => (prev + 1) % allProvidersData.length);
+      setScrolling(false);
+      setFading(false);
+      // Trigger compression flash
+      setFlashActive(true);
+      if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+      flashTimerRef.current = setTimeout(() => setFlashActive(false), 500);
+    }, 300);
+  }, []);
+
+  // ── When visible + providerIndex changes: measure overflow & start timer ──
+  React.useEffect(() => {
+    // Clear any pending timers
+    if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
+    if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+    setScrolling(false);
+
+    if (!visible) return; // Panel is hidden — do nothing until visible
+
+    const container = containerRef.current;
+    const content = contentRef.current;
+    if (!container || !content) return;
+
+    // Give DOM a frame to render new content
+    const measureId = requestAnimationFrame(() => {
+      const overflow = content.scrollHeight - container.clientHeight;
+      const dist = Math.max(0, overflow);
+      setScrollDist(dist);
+
+      if (dist === 0) {
+        // No overflow — 4 second static display then advance
+        setCycleDuration(4);
+        holdTimerRef.current = setTimeout(advanceProvider, 4000);
+      } else {
+        // Overflow — 0.5s hold + scroll + 0.5s hold then advance
+        const dur = Math.max(2, Math.min(8, dist / 40));
+        setCycleDuration(0.5 + dur + 0.5);
+        holdTimerRef.current = setTimeout(() => {
+          setScrolling(true);
+        }, 500);
+      }
+    });
+
+    return () => {
+      cancelAnimationFrame(measureId);
+      if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
+      if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+    };
+  }, [providerIndex, visible, advanceProvider]);
+
+  // ── Handle scroll animation end → hold at bottom → advance ──
+  const handleScrollEnd = React.useCallback(() => {
+    holdTimerRef.current = setTimeout(advanceProvider, 500);
+  }, [advanceProvider]);
+
+  // ── Scroll duration: ~40px/s, min 2s, max 8s ──
+  const scrollDuration = React.useMemo(
+    () => Math.max(2, Math.min(8, scrollDist / 40)),
+    [scrollDist],
+  );
+
+  // ── Build category rows from PotM data ──
   const categoryRows = React.useMemo(() => {
     if (!categoryMap) return [];
     const rows: Array<{ cat: string; emoji: string; label: string; color: string; terms: string[] }> = [];
@@ -1627,18 +1769,33 @@ function DailyPromptsPreviewPanel() {
     return rows;
   }, [categoryMap]);
 
-  // Assemble prompt text from PotM
+  // ── Assemble prompt for CURRENT rotating provider ──
   const assembledText = React.useMemo(() => {
-    if (!categoryMap || !provider) return '';
+    if (!categoryMap || !currentProvider) return '';
     try {
       const sel = selectionsFromMap(categoryMap);
-      return assemblePrompt(provider.id, sel, categoryMap.weightOverrides).positive;
+      return assemblePrompt(currentProvider.id, sel, categoryMap.weightOverrides).positive;
     } catch { return ''; }
-  }, [categoryMap, provider]);
+  }, [categoryMap, currentProvider]);
 
-  // Parse for colour coding
-  const colourSegments = React.useMemo(() => {
-    if (!assembledText || !categoryMap) return null;
+  // ── Optimize prompt for CURRENT rotating provider ──
+  const optimizeResult = React.useMemo(() => {
+    if (!assembledText || !categoryMap || !currentProvider) return null;
+    try {
+      const sel = selectionsFromMap(categoryMap);
+      return optimizePromptGoldStandard({
+        promptText: assembledText,
+        selections: sel,
+        platformId: currentProvider.id,
+      });
+    } catch { return null; }
+  }, [assembledText, categoryMap, currentProvider]);
+
+  const optimizedText = optimizeResult?.optimized ?? assembledText;
+
+  // ── Parse optimized text for colour coding (Pro look) ──
+  const optimizedColourSegments = React.useMemo(() => {
+    if (!optimizedText || !categoryMap) return null;
     const termIndex = new Map<string, PromptCategory>();
     for (const [cat, terms] of Object.entries(categoryMap.selections)) {
       if (!terms) continue;
@@ -1648,19 +1805,33 @@ function DailyPromptsPreviewPanel() {
       }
     }
     if (termIndex.size === 0) return null;
-    return sharedParsePrompt(assembledText, termIndex);
-  }, [assembledText, categoryMap]);
+    return sharedParsePrompt(optimizedText, termIndex);
+  }, [optimizedText, categoryMap]);
+
+  // ── Tier info for annotation ──
+  const tierId = getPlatformTierId(currentProvider?.id ?? '');
+  const encoderLabel = DAILY_ENCODER_LABELS[tierId ?? 4] ?? 'Plain Language';
+  const encoderColour = DAILY_ENCODER_COLOURS[tierId ?? 4] ?? '#fb923c';
+
+  // ── Compression annotation text ──
+  const compressionText = React.useMemo(() => {
+    if (!optimizeResult) return null;
+    if (optimizeResult.wasTrimmed) {
+      return `${optimizeResult.originalLength} → ${optimizeResult.optimizedLength} chars`;
+    }
+    return `${optimizeResult.originalLength} chars · Within range`;
+  }, [optimizeResult]);
 
   // Navigate to builder on click
   const handleClick = React.useCallback(() => {
-    if (!provider) return;
+    if (!currentProvider) return;
     try {
       if (potmData?.tierSelections?.tier1) {
         sessionStorage.setItem('promagen:preloaded-payload', JSON.stringify(potmData.tierSelections.tier1));
       }
     } catch { /* ignore */ }
-    window.location.href = `/providers/${provider.id}`;
-  }, [provider, potmData]);
+    window.location.href = `/providers/${currentProvider.id}`;
+  }, [currentProvider, potmData]);
 
   return (
     <div
@@ -1670,10 +1841,10 @@ function DailyPromptsPreviewPanel() {
       role="button"
       tabIndex={0}
     >
-      <style dangerouslySetInnerHTML={{ __html: PRO_AUTO_SCROLL_CSS }} />
+      <style dangerouslySetInnerHTML={{ __html: DAILY_SCROLL_CSS }} />
 
-      {/* Animated amber header — matches other preview panels */}
-      <div style={{ padding: 'clamp(10px, 1vw, 16px) 0' }}>
+      {/* Animated amber header */}
+      <div style={{ padding: 'clamp(8px, 0.8vw, 14px) 0' }}>
         <p
           className="italic text-amber-400/80 animate-pulse text-center font-semibold"
           style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.95rem)' }}
@@ -1682,9 +1853,9 @@ function DailyPromptsPreviewPanel() {
         </p>
       </div>
 
-      {/* Auto-scrolling content area */}
+      {/* Content area */}
       <div
-        ref={scrollRef}
+        ref={containerRef}
         className="flex-1 min-h-0 overflow-hidden rounded-xl"
         style={{
           background: 'rgba(15, 23, 42, 0.97)',
@@ -1692,35 +1863,67 @@ function DailyPromptsPreviewPanel() {
           boxShadow: '0 0 30px 6px rgba(245,158,11,0.15), 0 0 60px 12px rgba(245,158,11,0.06), inset 0 0 20px 2px rgba(245,158,11,0.1)',
         }}
       >
-        {/* Ethereal glow overlays */}
+        {/* Ethereal glow overlay */}
         <div className="pointer-events-none absolute inset-0 rounded-xl overflow-hidden" style={{ position: 'relative' }}>
           <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 0%, rgba(245,158,11,0.08), transparent 70%)', pointerEvents: 'none' }} />
         </div>
 
         <div
           ref={contentRef}
-          className="pro-auto-scroll"
-          style={{ '--scroll-dist': `-${scrollDist}px`, padding: 'clamp(10px, 1vw, 16px)', animation: scrollDist > 0 ? 'proAutoScroll 17s ease-in-out infinite' : 'none' } as React.CSSProperties}
+          className="daily-scroll-content"
+          style={{
+            '--scroll-dist': `-${scrollDist}px`,
+            padding: 'clamp(10px, 1vw, 16px)',
+            opacity: fading ? 0 : 1,
+            transition: 'opacity 300ms ease-in-out',
+            animation: scrolling && scrollDist > 0
+              ? `dailyScrollDown ${scrollDuration}s ease-in-out forwards`
+              : 'none',
+          } as React.CSSProperties}
+          onAnimationEnd={handleScrollEnd}
         >
-          {/* Provider name badge */}
-          {provider && (
+          {/* Provider name badge + Open button + tier pill + counter */}
+          {currentProvider && (
             <div className="flex items-center gap-2 mb-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={`/icons/providers/${provider.id}.png`}
+                src={`/icons/providers/${currentProvider.id}.png`}
                 alt=""
                 style={{ width: 'clamp(16px, 1.2vw, 20px)', height: 'clamp(16px, 1.2vw, 20px)' }}
                 className="rounded"
                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
               />
               <span className="font-semibold text-white" style={{ fontSize: 'clamp(0.7rem, 0.75vw, 0.85rem)' }}>
-                {provider.name}
+                {currentProvider.name}
               </span>
               <span
                 className="inline-flex items-center gap-1 rounded-full border border-rose-500/70 font-medium shadow-sm transition-all bg-gradient-to-r from-rose-600/20 to-pink-600/20 hover:from-rose-600/30 hover:to-pink-600/30 hover:border-rose-400"
                 style={{ fontSize: 'clamp(0.55rem, 0.55vw, 0.7rem)', color: '#fb7185', padding: 'clamp(2px, 0.2vw, 4px) clamp(6px, 0.6vw, 12px)' }}
               >
                 → Open Prompt Builder
+              </span>
+            </div>
+          )}
+          {/* Tier encoder + counter row */}
+          {currentProvider && (
+            <div className="flex items-center gap-2 mb-2" style={{ marginTop: '-0.25rem' }}>
+              <span
+                className="inline-flex items-center gap-1 rounded-full font-medium"
+                style={{
+                  fontSize: 'clamp(0.5rem, 0.5vw, 0.6rem)',
+                  padding: 'clamp(2px, 0.2vw, 3px) clamp(6px, 0.5vw, 10px)',
+                  background: `${encoderColour}20`,
+                  border: `1px solid ${encoderColour}50`,
+                  color: encoderColour,
+                }}
+              >
+                {encoderLabel}
+              </span>
+              <span
+                className="ml-auto font-medium tabular-nums"
+                style={{ fontSize: 'clamp(0.5rem, 0.45vw, 0.6rem)', color: '#fbbf24' }}
+              >
+                {providerIndex + 1}/{allProvidersData.length}
               </span>
             </div>
           )}
@@ -1786,19 +1989,19 @@ function DailyPromptsPreviewPanel() {
             ))}
           </div>
 
-          {/* Assembled prompt box */}
-          <div style={{ marginBottom: 'clamp(6px, 0.6vw, 10px)' }}>
+          {/* Assembled prompt box — WHITE text (Free tier look) */}
+          <div style={{ marginBottom: 'clamp(4px, 0.4vw, 6px)' }}>
             <div className="flex items-center gap-2 mb-1">
               <span className="font-medium text-white" style={{ fontSize: 'clamp(0.6rem, 0.6vw, 0.7rem)' }}>
                 Assembled prompt
               </span>
               <span
-                className="inline-flex items-center gap-1 rounded-md border border-purple-500/30 bg-purple-500/10 px-1 py-0.5 font-medium text-purple-400"
+                className="inline-flex items-center gap-1 rounded-md border border-white/20 bg-white/5 px-1 py-0.5 font-medium text-white/70"
                 style={{ fontSize: 'clamp(0.45rem, 0.45vw, 0.55rem)' }}
               >
-                ✨ Dynamic
+                Standard
               </span>
-              <span className="ml-auto text-amber-400" style={{ fontSize: 'clamp(0.5rem, 0.45vw, 0.6rem)' }}>
+              <span className="ml-auto text-white/50" style={{ fontSize: 'clamp(0.5rem, 0.45vw, 0.6rem)' }}>
                 {assembledText.length} chars
               </span>
             </div>
@@ -1810,19 +2013,48 @@ function DailyPromptsPreviewPanel() {
                 padding: 'clamp(6px, 0.6vw, 10px)',
               }}
             >
-              <p style={{ fontSize: 'clamp(0.5rem, 0.5vw, 0.6rem)', lineHeight: 1.5, wordBreak: 'break-word' }}>
-                {colourSegments
-                  ? colourSegments.map((seg, i) => {
-                      const c = CATEGORY_COLOURS[seg.category] ?? CATEGORY_COLOURS.structural;
-                      return <span key={i} style={{ color: c }}>{seg.text}</span>;
-                    })
-                  : <span style={{ color: '#cbd5e1' }}>{assembledText}</span>
-                }
+              <p style={{ fontSize: 'clamp(0.5rem, 0.5vw, 0.6rem)', lineHeight: 1.5, wordBreak: 'break-word', color: '#e2e8f0' }}>
+                {assembledText || <span style={{ color: 'rgba(255,255,255,0.3)' }}>Waiting for data…</span>}
               </p>
             </div>
           </div>
 
-          {/* Optimized prompt box */}
+          {/* ⚡ Compression annotation — flashes bright on provider swap */}
+          {compressionText && (
+            <div
+              className="flex items-center justify-center gap-2"
+              style={{
+                padding: 'clamp(3px, 0.3vw, 5px) 0',
+                filter: flashActive ? 'brightness(1.8)' : 'brightness(1)',
+                transition: 'filter 400ms ease-out',
+              }}
+            >
+              <span style={{ fontSize: 'clamp(0.55rem, 0.55vw, 0.65rem)', color: '#fbbf24' }}>⚡</span>
+              <span
+                className="font-medium"
+                style={{
+                  fontSize: 'clamp(0.5rem, 0.5vw, 0.6rem)',
+                  color: optimizeResult?.wasTrimmed ? '#34d399' : '#fbbf24',
+                }}
+              >
+                {compressionText}
+              </span>
+              <span
+                className="rounded-full font-medium"
+                style={{
+                  fontSize: 'clamp(0.45rem, 0.45vw, 0.55rem)',
+                  padding: '1px 6px',
+                  background: `${encoderColour}15`,
+                  border: `1px solid ${encoderColour}30`,
+                  color: encoderColour,
+                }}
+              >
+                {encoderLabel}
+              </span>
+            </div>
+          )}
+
+          {/* Optimized prompt box — COLOUR-CODED text (Pro tier look) */}
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="font-medium text-emerald-300" style={{ fontSize: 'clamp(0.6rem, 0.6vw, 0.7rem)' }}>
@@ -1832,8 +2064,13 @@ function DailyPromptsPreviewPanel() {
                 className="inline-flex items-center gap-1 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-1 py-0.5 font-medium text-emerald-400"
                 style={{ fontSize: 'clamp(0.45rem, 0.45vw, 0.55rem)' }}
               >
-                ⚡ Optimized
+                ⚡ Pro
               </span>
+              {optimizeResult && (
+                <span className="ml-auto text-emerald-400" style={{ fontSize: 'clamp(0.5rem, 0.45vw, 0.6rem)' }}>
+                  {optimizeResult.optimizedLength} chars
+                </span>
+              )}
             </div>
             <div
               className="rounded-lg"
@@ -1843,13 +2080,13 @@ function DailyPromptsPreviewPanel() {
                 padding: 'clamp(6px, 0.6vw, 10px)',
               }}
             >
-              <p style={{ fontSize: 'clamp(0.5rem, 0.5vw, 0.6rem)', lineHeight: 1.5, color: '#a7f3d0', wordBreak: 'break-word' }}>
-                {colourSegments
-                  ? colourSegments.map((seg, i) => {
+              <p style={{ fontSize: 'clamp(0.5rem, 0.5vw, 0.6rem)', lineHeight: 1.5, wordBreak: 'break-word' }}>
+                {optimizedColourSegments
+                  ? optimizedColourSegments.map((seg, i) => {
                       const c = CATEGORY_COLOURS[seg.category] ?? CATEGORY_COLOURS.structural;
                       return <span key={i} style={{ color: c }}>{seg.text}</span>;
                     })
-                  : <span>{assembledText}</span>
+                  : <span style={{ color: '#a7f3d0' }}>{optimizedText}</span>
                 }
               </p>
             </div>
@@ -1875,6 +2112,30 @@ function DailyPromptsPreviewPanel() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* ── Progress bar — fills left-to-right, resets on provider swap ── */}
+      {/* OUTSIDE containerRef — cannot affect scroll measurement */}
+      <div
+        style={{
+          flex: 'none',
+          height: 'clamp(2px, 0.2vw, 3px)',
+          marginTop: 'clamp(2px, 0.2vw, 3px)',
+          background: 'rgba(245, 158, 11, 0.1)',
+          borderRadius: '2px',
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          key={providerIndex}
+          style={{
+            height: '100%',
+            width: '0%',
+            background: 'linear-gradient(90deg, #f59e0b, #fbbf24)',
+            borderRadius: 'inherit',
+            animation: visible ? `dailyProgressFill ${cycleDuration}s linear forwards` : 'none',
+          }}
+        />
       </div>
     </div>
   );

@@ -277,7 +277,7 @@ export function FeatureControlPanel({
           label="Daily Prompts"
           color="#f59e0b"
           freeValue={`${promptCount} / ${promptLimit} today`}
-          proValue="Unlimited"
+          proValue="Unlimited colour coded text prompts"
           actionLabel={isPaidUser ? 'Unlimited' : 'Go unlimited'}
           onAction={isPaidUser ? undefined : () => nav('/upgrade')}
           isPro={isPaidUser}
