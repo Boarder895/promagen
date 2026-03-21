@@ -257,24 +257,24 @@ export interface SelectionLimits {
 
 export const STANDARD_LIMITS: Record<PlatformTier, SelectionLimits> = {
   1: { // CLIP-Based — 75-token budget, moderate stacking
-    subject: 1, action: 1, style: 1, environment: 1,
-    composition: 1, camera: 1, lighting: 1, atmosphere: 1,
-    colour: 1, materials: 1, fidelity: 1, negative: 5
+    subject: 1, action: 1, style: 2, environment: 1,
+    composition: 1, camera: 1, lighting: 2, atmosphere: 2,
+    colour: 2, materials: 2, fidelity: 2, negative: 5
   },
-  2: { // Midjourney — fidelity confirmed ineffective (0/0)
-    subject: 1, action: 1, style: 1, environment: 1,
-    composition: 1, camera: 1, lighting: 1, atmosphere: 1,
-    colour: 1, materials: 1, fidelity: 0, negative: 2
+  2: { // Midjourney — style/lighting stacking, --no handles many terms
+    subject: 1, action: 1, style: 3, environment: 1,
+    composition: 1, camera: 1, lighting: 3, atmosphere: 2,
+    colour: 2, materials: 2, fidelity: 3, negative: 8
   },
   3: { // Natural Language — NLU handles more, but attention dilution limits
-    subject: 1, action: 1, style: 1, environment: 1,
-    composition: 1, camera: 1, lighting: 1, atmosphere: 1,
-    colour: 1, materials: 1, fidelity: 1, negative: 3
+    subject: 1, action: 1, style: 2, environment: 1,
+    composition: 1, camera: 1, lighting: 2, atmosphere: 1,
+    colour: 1, materials: 1, fidelity: 2, negative: 3
   },
   4: { // Plain Language — simple prompts work best
     subject: 1, action: 1, style: 1, environment: 1,
     composition: 1, camera: 1, lighting: 1, atmosphere: 1,
-    colour: 1, materials: 1, fidelity: 1, negative: 0
+    colour: 1, materials: 1, fidelity: 1, negative: 2
   }
 };
 

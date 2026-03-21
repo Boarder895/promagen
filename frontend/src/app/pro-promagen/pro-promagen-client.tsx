@@ -2590,18 +2590,20 @@ function ImageGenPreviewPanel() {
 }
 
 // ============================================================================
-// PROMPT INTELLIGENCE PREVIEW PANEL — The Rosetta Stone
+// PROMPT INTELLIGENCE PREVIEW PANEL — The Universal Translator
 // ============================================================================
 // Shown when Prompt Intelligence card is hovered. Fills the CTA area.
-// Shows how the SAME user selections produce completely different prompts
-// across 3 platforms with different text encoders.
+// Shows how a plain HUMAN SENTENCE gets intelligently converted into
+// platform-native prompt formats across 3 different encoder architectures.
 //
-// 5 showcase scenarios rotate every 10s with 300ms crossfade.
-// Nav dots are clickable — clicking pauses auto-rotation for 20s.
-// Encoder badges: Option 3 — plain English primary + technical subtitle.
+// Typewriter animation types the human sentence character by character.
+// Once complete, 3 platform cards fade in showing colour-coded conversions.
+// 5 scenarios rotate every 12s with 300ms crossfade.
+// Nav dots clickable — clicking pauses auto-rotation for 20s.
 //
-// Human Factor: Curiosity Gap — same input, wildly different output
-// Human Factor: Authority Signal — encoder architecture knowledge = trust
+// Human Factor: Curiosity Gap — "how did it know that?"
+// Human Factor: Authority Signal — encoder knowledge = trust
+// Human Factor: Loss Aversion — free users see monochrome; Pro gets this
 //
 // Code Standard Compliance:
 // - All clamp() sizing (§6.0), min 10px text (§6.0.1)
@@ -2616,39 +2618,65 @@ const INTELLIGENCE_CSS = `
     0% { opacity: 0; }
     100% { opacity: 1; }
   }
-  @keyframes statPulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
+  @keyframes typewriterCursor {
+    0%, 100% { border-color: rgba(251, 146, 60, 0.9); }
+    50% { border-color: transparent; }
   }
   .intelligence-fade-in { animation: intelligenceFade 300ms ease-out forwards; }
+  .typewriter-cursor {
+    border-right: 2px solid rgba(251, 146, 60, 0.9);
+    animation: typewriterCursor 700ms step-end infinite;
+  }
+  @keyframes tickerScroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  .intelligence-ticker {
+    display: flex;
+    animation: tickerScroll 30s linear infinite;
+    will-change: transform;
+  }
+  .intelligence-ticker:hover { animation-play-state: paused; }
 `;
 
 // Reuse category colours from SSOT (same as IG_C defined above)
 const PI_C = IG_C;
 
-// Encoder info for badges — Option 3: plain English + technical subtitle
+// Encoder info for badges
 const ENCODER_BADGES: Record<string, { plain: string; tech: string; tokens: string }> = {
-  'stability':     { plain: 'Keywords',         tech: 'CLIP encoder',   tokens: '75 tokens' },
-  'leonardo':      { plain: 'Keywords',         tech: 'CLIP encoder',   tokens: '75 tokens' },
-  'nightcafe':     { plain: 'Keywords',         tech: 'CLIP encoder',   tokens: '75 tokens' },
-  'tensor-art':    { plain: 'Keywords',         tech: 'Dual CLIP',      tokens: '75 tokens' },
-  'midjourney':    { plain: 'Brief + params',   tech: 'MJ encoder',     tokens: '~30 words' },
-  'flux':          { plain: 'Natural language',  tech: 'T5-XXL encoder', tokens: '512 tokens' },
-  'google-imagen': { plain: 'Natural language',  tech: 'T5-XXL encoder', tokens: '512 tokens' },
-  'openai':        { plain: 'Auto-rewritten',    tech: 'GPT-4 rewrite',  tokens: '~800 chars' },
-  'kling':         { plain: 'Semantic language', tech: 'ChatGLM3-6B',   tokens: '256 tokens' },
-  'recraft':       { plain: 'Structured prose',  tech: 'Proprietary',    tokens: '4,000 chars' },
-  'ideogram':      { plain: 'Natural language',  tech: 'Proprietary',    tokens: '~500 chars' },
-  'canva':         { plain: 'Simple phrases',    tech: 'Proprietary',    tokens: '~200 chars' },
+  'stability':     { plain: 'Keywords · weighted',   tech: 'CLIP encoder',   tokens: '75 tokens' },
+  'leonardo':      { plain: 'Keywords · weighted',   tech: 'CLIP encoder',   tokens: '75 tokens' },
+  'nightcafe':     { plain: 'Keywords · weighted',   tech: 'CLIP encoder',   tokens: '75 tokens' },
+  'tensor-art':    { plain: 'Keywords · weighted',   tech: 'Dual CLIP',      tokens: '75 tokens' },
+  'midjourney':    { plain: 'Brief · with params',   tech: 'MJ encoder',     tokens: '~30 words' },
+  'flux':          { plain: 'Natural language',       tech: 'T5-XXL encoder', tokens: '512 tokens' },
+  'google-imagen': { plain: 'Natural language',       tech: 'T5-XXL encoder', tokens: '512 tokens' },
+  'openai':        { plain: 'Prose · auto-rewritten', tech: 'GPT-4 rewrite',  tokens: '~800 chars' },
+  'kling':         { plain: 'Semantic language',      tech: 'ChatGLM3-6B',   tokens: '256 tokens' },
+  'recraft':       { plain: 'Structured sentences',   tech: 'Proprietary',    tokens: '4,000 chars' },
+  'ideogram':      { plain: 'Natural language',       tech: 'Proprietary',    tokens: '~500 chars' },
+  'canva':         { plain: 'Minimal phrases',        tech: 'Proprietary',    tokens: '~200 chars' },
 };
 
-// ── 5 Showcase Scenarios — The Rosetta Stone data bank ──────────────────
-// Each scenario: same user selections, 3 platforms with colour-coded outputs.
+// ── All 45 platform IDs for the scrolling ticker ribbon ──────────────────
+const ALL_PLATFORM_IDS = [
+  'midjourney', 'openai', 'stability', 'flux', 'leonardo', 'adobe-firefly',
+  'ideogram', 'nightcafe', 'recraft', 'kling', 'luma-ai', 'tensor-art',
+  'google-imagen', 'imagine-meta', 'runway', 'novelai', 'playground',
+  'microsoft-designer', 'bing', 'canva', 'picsart', 'dreamstudio',
+  'artbreeder', 'craiyon', 'deepai', 'clipdrop', 'fotor', 'freepik',
+  'getimg', 'hotpot', 'jasper-art', 'lexica', 'openart', 'photoleap',
+  'pixlr', 'simplified', 'visme', 'vistacreate', '123rf', 'myedit',
+  'picwish', 'dreamlike', 'artguru', 'artistly', 'bluewillow',
+];
+
+// ── 5 Showcase Scenarios — The Universal Translator ──────────────────────
+// Each scenario: one human sentence, 3 platform conversions with colour segments.
 // Trios chosen to maximise encoder architecture contrast.
 
 interface IntelligenceScenario {
   name: string;
-  selections: Array<{ term: string; color: string }>;
+  humanSentence: string;
   platforms: Array<{
     id: string;
     name: string;
@@ -2657,37 +2685,36 @@ interface IntelligenceScenario {
 }
 
 const INTELLIGENCE_SCENARIOS: IntelligenceScenario[] = [
-  // Scenario 1: Golden Hour Astronaut — CLIP vs MJ vs T5
+  // Scenario 1: Dragon over Castle — CLIP (Stability) vs MJ vs T5 (Flux)
   {
-    name: 'Golden Hour Astronaut',
-    selections: [
-      { term: 'lone astronaut', color: PI_C.subject },
-      { term: 'cinematic', color: PI_C.style },
-      { term: 'golden hour', color: PI_C.lighting },
-      { term: 'dusty haze', color: PI_C.atmosphere },
-      { term: 'wide angle', color: PI_C.camera },
-      { term: 'alien desert', color: PI_C.environment },
-    ],
+    name: 'Dragon & Castle',
+    humanSentence: 'Huge dragon flying over a medieval castle at night with fire lighting up the stone walls, smoke everywhere, dramatic and epic',
     platforms: [
       {
         id: 'stability',
         name: 'Stability',
         segments: [
           { text: '(', color: PI_C.structural },
-          { text: 'lone astronaut', color: PI_C.subject },
+          { text: 'huge dragon', color: PI_C.subject },
           { text: ':1.3)', color: PI_C.structural },
           { text: ', ', color: PI_C.structural },
-          { text: 'alien desert', color: PI_C.environment },
+          { text: 'flying', color: PI_C.action },
           { text: ', ', color: PI_C.structural },
-          { text: 'cinematic', color: PI_C.style },
+          { text: 'medieval castle', color: PI_C.environment },
           { text: ', ', color: PI_C.structural },
           { text: '(', color: PI_C.structural },
-          { text: 'golden hour', color: PI_C.lighting },
+          { text: 'night', color: PI_C.lighting },
           { text: ':1.2)', color: PI_C.structural },
           { text: ', ', color: PI_C.structural },
-          { text: 'wide angle', color: PI_C.camera },
+          { text: 'fire', color: PI_C.lighting },
           { text: ', ', color: PI_C.structural },
-          { text: 'dusty haze', color: PI_C.atmosphere },
+          { text: 'stone walls', color: PI_C.materials },
+          { text: ', ', color: PI_C.structural },
+          { text: 'smoke', color: PI_C.atmosphere },
+          { text: ', ', color: PI_C.structural },
+          { text: 'dramatic', color: PI_C.style },
+          { text: ', ', color: PI_C.structural },
+          { text: 'epic', color: PI_C.style },
           { text: ', ', color: PI_C.structural },
           { text: '(', color: PI_C.structural },
           { text: '8K detailed', color: PI_C.fidelity },
@@ -2698,19 +2725,23 @@ const INTELLIGENCE_SCENARIOS: IntelligenceScenario[] = [
         id: 'midjourney',
         name: 'Midjourney',
         segments: [
-          { text: 'lone astronaut', color: PI_C.subject },
+          { text: 'huge dragon', color: PI_C.subject },
           { text: ' ', color: PI_C.structural },
-          { text: 'alien desert', color: PI_C.environment },
+          { text: 'flying', color: PI_C.action },
+          { text: ' over ', color: PI_C.structural },
+          { text: 'medieval castle', color: PI_C.environment },
           { text: ' ', color: PI_C.structural },
-          { text: 'golden hour', color: PI_C.lighting },
+          { text: 'night', color: PI_C.lighting },
           { text: ' ', color: PI_C.structural },
-          { text: 'cinematic', color: PI_C.style },
+          { text: 'fire', color: PI_C.lighting },
           { text: ' ', color: PI_C.structural },
-          { text: 'wide angle', color: PI_C.camera },
+          { text: 'stone walls', color: PI_C.materials },
           { text: ' ', color: PI_C.structural },
-          { text: 'dusty haze', color: PI_C.atmosphere },
+          { text: 'smoke', color: PI_C.atmosphere },
           { text: ' ', color: PI_C.structural },
-          { text: '--ar 16:9 --s 500 --q 2', color: PI_C.fidelity },
+          { text: 'dramatic epic', color: PI_C.style },
+          { text: ' ', color: PI_C.structural },
+          { text: '--ar 16:9 --s 600 --q 2', color: PI_C.fidelity },
         ],
       },
       {
@@ -2718,53 +2749,48 @@ const INTELLIGENCE_SCENARIOS: IntelligenceScenario[] = [
         name: 'Flux',
         segments: [
           { text: 'A ', color: PI_C.structural },
-          { text: 'lone astronaut', color: PI_C.subject },
-          { text: ' standing on a vast ', color: PI_C.structural },
-          { text: 'alien desert', color: PI_C.environment },
+          { text: 'huge dragon', color: PI_C.subject },
+          { text: ' ', color: PI_C.structural },
+          { text: 'flying', color: PI_C.action },
+          { text: ' over a ', color: PI_C.structural },
+          { text: 'medieval castle', color: PI_C.environment },
           { text: ' at ', color: PI_C.structural },
-          { text: 'golden hour', color: PI_C.lighting },
+          { text: 'night', color: PI_C.lighting },
           { text: ', ', color: PI_C.structural },
-          { text: 'cinematic', color: PI_C.style },
-          { text: ' composition captured with a ', color: PI_C.structural },
-          { text: 'wide-angle', color: PI_C.camera },
-          { text: ' lens, ', color: PI_C.structural },
-          { text: 'dusty haze', color: PI_C.atmosphere },
-          { text: ' softening the horizon', color: PI_C.structural },
+          { text: 'fire lighting up the stone walls', color: PI_C.lighting },
+          { text: ', ', color: PI_C.structural },
+          { text: 'smoke billowing everywhere', color: PI_C.atmosphere },
+          { text: ', ', color: PI_C.structural },
+          { text: 'dramatic and epic', color: PI_C.style },
+          { text: ' cinematic composition', color: PI_C.structural },
         ],
       },
     ],
   },
-  // Scenario 2: Neon Alley — CLIP vs GPT-4 rewrite vs ChatGLM3
+  // Scenario 2: Piano on Fire — CLIP (Leonardo) vs GPT-4 (DALL·E 3) vs Proprietary (Recraft)
   {
-    name: 'Neon Alley',
-    selections: [
-      { term: 'samurai warrior', color: PI_C.subject },
-      { term: 'cyberpunk', color: PI_C.style },
-      { term: 'neon reflections', color: PI_C.lighting },
-      { term: 'wet concrete', color: PI_C.materials },
-      { term: 'electric pink', color: PI_C.colour },
-      { term: 'rising steam', color: PI_C.atmosphere },
-    ],
+    name: 'Burning Piano',
+    humanSentence: 'A piano on fire in the middle of an empty ballroom, dark and moody, marble floors reflecting the flames, shot from the doorway',
     platforms: [
       {
         id: 'leonardo',
         name: 'Leonardo',
         segments: [
           { text: '(', color: PI_C.structural },
-          { text: 'samurai warrior', color: PI_C.subject },
+          { text: 'piano on fire', color: PI_C.subject },
           { text: ':1.3)', color: PI_C.structural },
           { text: ', ', color: PI_C.structural },
-          { text: 'cyberpunk', color: PI_C.style },
+          { text: 'empty ballroom', color: PI_C.environment },
           { text: ', ', color: PI_C.structural },
           { text: '(', color: PI_C.structural },
-          { text: 'neon reflections', color: PI_C.lighting },
+          { text: 'dark moody', color: PI_C.atmosphere },
           { text: ':1.2)', color: PI_C.structural },
           { text: ', ', color: PI_C.structural },
-          { text: 'electric pink', color: PI_C.colour },
+          { text: 'marble floors', color: PI_C.materials },
           { text: ', ', color: PI_C.structural },
-          { text: 'wet concrete', color: PI_C.materials },
+          { text: 'reflecting flames', color: PI_C.lighting },
           { text: ', ', color: PI_C.structural },
-          { text: 'rising steam', color: PI_C.atmosphere },
+          { text: 'doorway composition', color: PI_C.composition },
           { text: ', ', color: PI_C.structural },
           { text: '(', color: PI_C.structural },
           { text: 'masterpiece', color: PI_C.fidelity },
@@ -2775,75 +2801,88 @@ const INTELLIGENCE_SCENARIOS: IntelligenceScenario[] = [
         id: 'openai',
         name: 'DALL·E 3',
         segments: [
+          { text: 'A grand ', color: PI_C.structural },
+          { text: 'piano engulfed in flames', color: PI_C.subject },
+          { text: ' at the centre of a vast ', color: PI_C.structural },
+          { text: 'empty ballroom', color: PI_C.environment },
+          { text: ', ', color: PI_C.structural },
+          { text: 'dark and moody', color: PI_C.atmosphere },
+          { text: ' atmosphere, polished ', color: PI_C.structural },
+          { text: 'marble floors', color: PI_C.materials },
+          { text: ' reflecting the warm ', color: PI_C.structural },
+          { text: 'flickering firelight', color: PI_C.lighting },
+          { text: ', framed from the perspective of ', color: PI_C.structural },
+          { text: 'the doorway', color: PI_C.composition },
+        ],
+      },
+      {
+        id: 'recraft',
+        name: 'Recraft V3',
+        segments: [
           { text: 'A ', color: PI_C.structural },
-          { text: 'samurai warrior', color: PI_C.subject },
-          { text: ' in a ', color: PI_C.structural },
-          { text: 'cyberpunk', color: PI_C.style },
-          { text: ' alley with ', color: PI_C.structural },
-          { text: 'neon reflections', color: PI_C.lighting },
-          { text: ' in ', color: PI_C.structural },
-          { text: 'electric pink', color: PI_C.colour },
-          { text: ' on ', color: PI_C.structural },
-          { text: 'wet concrete', color: PI_C.materials },
-          { text: ' surfaces, ', color: PI_C.structural },
-          { text: 'steam rising', color: PI_C.atmosphere },
-          { text: ' from vents', color: PI_C.structural },
+          { text: 'piano on fire', color: PI_C.subject },
+          { text: '. ', color: PI_C.structural },
+          { text: 'Empty ballroom', color: PI_C.environment },
+          { text: ' setting. ', color: PI_C.structural },
+          { text: 'Dark, moody', color: PI_C.atmosphere },
+          { text: ' atmosphere with ', color: PI_C.structural },
+          { text: 'marble floors', color: PI_C.materials },
+          { text: ' ', color: PI_C.structural },
+          { text: 'reflecting the flames', color: PI_C.lighting },
+          { text: '. ', color: PI_C.structural },
+          { text: 'Doorway perspective', color: PI_C.composition },
+          { text: '.', color: PI_C.structural },
+        ],
+      },
+    ],
+  },
+  // Scenario 3: Telephone Box — Dual CLIP (Tensor.Art) vs ChatGLM3 (Kling) vs T5 (Flux)
+  {
+    name: 'Desert Phone Box',
+    humanSentence: 'An old telephone box in the middle of a desert with light pouring out of it and stars everywhere, sand blowing across the ground, mysterious and lonely',
+    platforms: [
+      {
+        id: 'tensor-art',
+        name: 'Tensor.Art',
+        segments: [
+          { text: '(', color: PI_C.structural },
+          { text: 'old telephone box', color: PI_C.subject },
+          { text: ':1.3)', color: PI_C.structural },
+          { text: ', ', color: PI_C.structural },
+          { text: 'desert', color: PI_C.environment },
+          { text: ', ', color: PI_C.structural },
+          { text: '(', color: PI_C.structural },
+          { text: 'light pouring out', color: PI_C.lighting },
+          { text: ':1.2)', color: PI_C.structural },
+          { text: ', ', color: PI_C.structural },
+          { text: 'stars', color: PI_C.environment },
+          { text: ', ', color: PI_C.structural },
+          { text: 'sand blowing', color: PI_C.atmosphere },
+          { text: ', ', color: PI_C.structural },
+          { text: 'mysterious', color: PI_C.atmosphere },
+          { text: ', ', color: PI_C.structural },
+          { text: 'lonely', color: PI_C.atmosphere },
+          { text: ', ', color: PI_C.structural },
+          { text: 'best quality, score_9', color: PI_C.fidelity },
         ],
       },
       {
         id: 'kling',
         name: 'Kling AI',
         segments: [
-          { text: 'samurai warrior', color: PI_C.subject },
+          { text: 'old telephone box', color: PI_C.subject },
           { text: ' in ', color: PI_C.structural },
-          { text: 'cyberpunk', color: PI_C.style },
-          { text: ' setting, ', color: PI_C.structural },
-          { text: 'neon reflections', color: PI_C.lighting },
-          { text: ' in ', color: PI_C.structural },
-          { text: 'electric pink', color: PI_C.colour },
+          { text: 'desert', color: PI_C.environment },
           { text: ', ', color: PI_C.structural },
-          { text: 'wet concrete', color: PI_C.materials },
-          { text: ' with ', color: PI_C.structural },
-          { text: 'rising steam', color: PI_C.atmosphere },
+          { text: 'light pouring out', color: PI_C.lighting },
+          { text: ', ', color: PI_C.structural },
+          { text: 'stars everywhere', color: PI_C.environment },
+          { text: ', ', color: PI_C.structural },
+          { text: 'sand blowing across ground', color: PI_C.atmosphere },
+          { text: ', ', color: PI_C.structural },
+          { text: 'mysterious and lonely', color: PI_C.atmosphere },
           { text: ', ', color: PI_C.structural },
           { text: 'masterpiece, best quality', color: PI_C.fidelity },
-        ],
-      },
-    ],
-  },
-  // Scenario 3: Enchanted Library — CLIP vs T5 (no fidelity) vs Proprietary (preset style)
-  {
-    name: 'Enchanted Library',
-    selections: [
-      { term: 'ancient library', color: PI_C.subject },
-      { term: 'fantasy art', color: PI_C.style },
-      { term: 'candlelight', color: PI_C.lighting },
-      { term: 'mystical fog', color: PI_C.atmosphere },
-      { term: 'leather and gold', color: PI_C.materials },
-      { term: 'masterpiece', color: PI_C.fidelity },
-    ],
-    platforms: [
-      {
-        id: 'nightcafe',
-        name: 'NightCafe',
-        segments: [
-          { text: '(', color: PI_C.structural },
-          { text: 'ancient library', color: PI_C.subject },
-          { text: ':1.3)', color: PI_C.structural },
-          { text: ', ', color: PI_C.structural },
-          { text: 'fantasy art', color: PI_C.style },
-          { text: ', ', color: PI_C.structural },
-          { text: '(', color: PI_C.structural },
-          { text: 'candlelight', color: PI_C.lighting },
-          { text: ':1.2)', color: PI_C.structural },
-          { text: ', ', color: PI_C.structural },
-          { text: 'mystical fog', color: PI_C.atmosphere },
-          { text: ', ', color: PI_C.structural },
-          { text: 'leather and gold', color: PI_C.materials },
-          { text: ', ', color: PI_C.structural },
-          { text: '(', color: PI_C.structural },
-          { text: 'masterpiece', color: PI_C.fidelity },
-          { text: ':1.1)', color: PI_C.structural },
         ],
       },
       {
@@ -2851,66 +2890,54 @@ const INTELLIGENCE_SCENARIOS: IntelligenceScenario[] = [
         name: 'Flux',
         segments: [
           { text: 'An ', color: PI_C.structural },
-          { text: 'ancient library', color: PI_C.subject },
-          { text: ' filled with ', color: PI_C.structural },
-          { text: 'mystical fog', color: PI_C.atmosphere },
-          { text: ', illuminated by ', color: PI_C.structural },
-          { text: 'candlelight', color: PI_C.lighting },
-          { text: ' revealing tomes with ', color: PI_C.structural },
-          { text: 'leather and gold', color: PI_C.materials },
-          { text: ' details, ', color: PI_C.structural },
-          { text: 'fantasy art', color: PI_C.style },
-          { text: ' style', color: PI_C.structural },
-        ],
-      },
-      {
-        id: 'recraft',
-        name: 'Recraft V3',
-        segments: [
-          { text: 'An ', color: PI_C.structural },
-          { text: 'ancient library', color: PI_C.subject },
-          { text: '. ', color: PI_C.structural },
-          { text: 'Candlelight', color: PI_C.lighting },
-          { text: ' illumination with ', color: PI_C.structural },
-          { text: 'mystical fog', color: PI_C.atmosphere },
-          { text: '. ', color: PI_C.structural },
-          { text: 'Leather and gold', color: PI_C.materials },
-          { text: ' materials.', color: PI_C.structural },
+          { text: 'old telephone box', color: PI_C.subject },
+          { text: ' standing alone in the middle of a vast ', color: PI_C.structural },
+          { text: 'desert', color: PI_C.environment },
+          { text: ' with warm ', color: PI_C.structural },
+          { text: 'light pouring out of it', color: PI_C.lighting },
+          { text: ', a sky full of ', color: PI_C.structural },
+          { text: 'stars', color: PI_C.environment },
+          { text: ' above, ', color: PI_C.structural },
+          { text: 'sand blowing gently across the ground', color: PI_C.atmosphere },
+          { text: ', ', color: PI_C.structural },
+          { text: 'mysterious and lonely', color: PI_C.atmosphere },
+          { text: ' atmosphere', color: PI_C.structural },
         ],
       },
     ],
   },
-  // Scenario 4: Storm Over City — SDXL quality tags vs NL vs Ultra-minimal
+  // Scenario 4: Dandelion Girl — CLIP (Stability) vs Proprietary (Ideogram) vs Plain (Canva)
   {
-    name: 'Storm Over the City',
-    selections: [
-      { term: 'lightning strike', color: PI_C.subject },
-      { term: 'Manhattan skyline', color: PI_C.environment },
-      { term: 'storm light', color: PI_C.lighting },
-      { term: 'heavy rain', color: PI_C.atmosphere },
-      { term: 'telephoto', color: PI_C.camera },
-      { term: 'rule of thirds', color: PI_C.composition },
-    ],
+    name: 'Dandelion Field',
+    humanSentence: 'Little girl blowing dandelion seeds in a golden field at sunset, soft and dreamy, warm light catching the seeds as they float away',
     platforms: [
       {
-        id: 'tensor-art',
-        name: 'Tensor.Art',
+        id: 'stability',
+        name: 'Stability',
         segments: [
           { text: '(', color: PI_C.structural },
-          { text: 'lightning strike', color: PI_C.subject },
+          { text: 'little girl', color: PI_C.subject },
           { text: ':1.3)', color: PI_C.structural },
           { text: ', ', color: PI_C.structural },
-          { text: 'Manhattan skyline', color: PI_C.environment },
+          { text: 'blowing dandelion seeds', color: PI_C.action },
           { text: ', ', color: PI_C.structural },
-          { text: 'storm light', color: PI_C.lighting },
+          { text: 'golden field', color: PI_C.environment },
           { text: ', ', color: PI_C.structural },
-          { text: 'heavy rain', color: PI_C.atmosphere },
+          { text: '(', color: PI_C.structural },
+          { text: 'sunset', color: PI_C.lighting },
+          { text: ':1.2)', color: PI_C.structural },
           { text: ', ', color: PI_C.structural },
-          { text: 'telephoto', color: PI_C.camera },
+          { text: 'soft', color: PI_C.atmosphere },
           { text: ', ', color: PI_C.structural },
-          { text: 'rule of thirds', color: PI_C.composition },
+          { text: 'dreamy', color: PI_C.atmosphere },
           { text: ', ', color: PI_C.structural },
-          { text: 'masterpiece, best quality, score_9', color: PI_C.fidelity },
+          { text: 'warm light', color: PI_C.lighting },
+          { text: ', ', color: PI_C.structural },
+          { text: 'floating seeds', color: PI_C.materials },
+          { text: ', ', color: PI_C.structural },
+          { text: '(', color: PI_C.structural },
+          { text: '8K detailed', color: PI_C.fidelity },
+          { text: ':1.1)', color: PI_C.structural },
         ],
       },
       {
@@ -2918,100 +2945,119 @@ const INTELLIGENCE_SCENARIOS: IntelligenceScenario[] = [
         name: 'Ideogram',
         segments: [
           { text: 'A ', color: PI_C.structural },
-          { text: 'lightning strike', color: PI_C.subject },
-          { text: ' over the ', color: PI_C.structural },
-          { text: 'Manhattan skyline', color: PI_C.environment },
-          { text: ' with ', color: PI_C.structural },
-          { text: 'dramatic storm light', color: PI_C.lighting },
-          { text: ' and ', color: PI_C.structural },
-          { text: 'heavy rain', color: PI_C.atmosphere },
+          { text: 'little girl', color: PI_C.subject },
+          { text: ' ', color: PI_C.structural },
+          { text: 'blowing dandelion seeds', color: PI_C.action },
+          { text: ' in a ', color: PI_C.structural },
+          { text: 'golden field', color: PI_C.environment },
+          { text: ' at ', color: PI_C.structural },
+          { text: 'sunset', color: PI_C.lighting },
           { text: ', ', color: PI_C.structural },
-          { text: 'telephoto', color: PI_C.camera },
-          { text: ' perspective, ', color: PI_C.structural },
-          { text: 'rule of thirds', color: PI_C.composition },
+          { text: 'soft and dreamy', color: PI_C.atmosphere },
+          { text: ' mood, ', color: PI_C.structural },
+          { text: 'warm light', color: PI_C.lighting },
+          { text: ' catching the seeds as they float away', color: PI_C.structural },
         ],
       },
       {
         id: 'canva',
         name: 'Canva',
         segments: [
-          { text: 'lightning strike', color: PI_C.subject },
+          { text: 'little girl', color: PI_C.subject },
           { text: ' ', color: PI_C.structural },
-          { text: 'Manhattan skyline', color: PI_C.environment },
+          { text: 'dandelion seeds', color: PI_C.action },
           { text: ' ', color: PI_C.structural },
-          { text: 'storm light', color: PI_C.lighting },
+          { text: 'golden field', color: PI_C.environment },
           { text: ' ', color: PI_C.structural },
-          { text: 'heavy rain', color: PI_C.atmosphere },
+          { text: 'sunset', color: PI_C.lighting },
+          { text: ' ', color: PI_C.structural },
+          { text: 'soft dreamy', color: PI_C.atmosphere },
         ],
       },
     ],
   },
-  // Scenario 5: Coral Reef — CLIP vs T5 prose vs MJ brevity
+  // Scenario 5: Robot in Cyberpunk — CLIP (NightCafe) vs MJ vs GPT-4 (DALL·E 3)
   {
-    name: 'Coral Reef',
-    selections: [
-      { term: 'sea turtle', color: PI_C.subject },
-      { term: 'coral reef', color: PI_C.environment },
-      { term: 'underwater caustics', color: PI_C.lighting },
-      { term: 'turquoise', color: PI_C.colour },
-      { term: 'gliding', color: PI_C.action },
-      { term: 'crystal clear water', color: PI_C.materials },
-    ],
+    name: 'Lonely Robot',
+    humanSentence: 'Robot sitting alone on a bench reading a newspaper in a rainy cyberpunk city at night, neon signs reflecting in the puddles, cinematic and melancholy',
     platforms: [
       {
-        id: 'stability',
-        name: 'Stability',
+        id: 'nightcafe',
+        name: 'NightCafe',
         segments: [
           { text: '(', color: PI_C.structural },
-          { text: 'sea turtle', color: PI_C.subject },
+          { text: 'robot', color: PI_C.subject },
           { text: ':1.3)', color: PI_C.structural },
           { text: ', ', color: PI_C.structural },
-          { text: 'gliding', color: PI_C.action },
+          { text: 'sitting on bench', color: PI_C.action },
           { text: ', ', color: PI_C.structural },
-          { text: 'coral reef', color: PI_C.environment },
+          { text: 'reading newspaper', color: PI_C.action },
           { text: ', ', color: PI_C.structural },
           { text: '(', color: PI_C.structural },
-          { text: 'underwater caustics', color: PI_C.lighting },
+          { text: 'cyberpunk city', color: PI_C.environment },
           { text: ':1.2)', color: PI_C.structural },
           { text: ', ', color: PI_C.structural },
-          { text: 'turquoise', color: PI_C.colour },
+          { text: 'rainy', color: PI_C.atmosphere },
           { text: ', ', color: PI_C.structural },
-          { text: 'crystal clear water', color: PI_C.materials },
-        ],
-      },
-      {
-        id: 'google-imagen',
-        name: 'Imagen',
-        segments: [
-          { text: 'A ', color: PI_C.structural },
-          { text: 'sea turtle', color: PI_C.subject },
-          { text: ' ', color: PI_C.structural },
-          { text: 'gliding', color: PI_C.action },
-          { text: ' through a ', color: PI_C.structural },
-          { text: 'coral reef', color: PI_C.environment },
-          { text: ' with ', color: PI_C.structural },
-          { text: 'underwater caustic', color: PI_C.lighting },
-          { text: ' light patterns, ', color: PI_C.structural },
-          { text: 'turquoise', color: PI_C.colour },
-          { text: ' tones in ', color: PI_C.structural },
-          { text: 'crystal clear water', color: PI_C.materials },
+          { text: 'night', color: PI_C.lighting },
+          { text: ', ', color: PI_C.structural },
+          { text: 'neon signs', color: PI_C.lighting },
+          { text: ', ', color: PI_C.structural },
+          { text: 'puddles', color: PI_C.materials },
+          { text: ', ', color: PI_C.structural },
+          { text: 'cinematic', color: PI_C.style },
+          { text: ', ', color: PI_C.structural },
+          { text: 'melancholy', color: PI_C.atmosphere },
+          { text: ', ', color: PI_C.structural },
+          { text: '(', color: PI_C.structural },
+          { text: 'masterpiece', color: PI_C.fidelity },
+          { text: ':1.1)', color: PI_C.structural },
         ],
       },
       {
         id: 'midjourney',
         name: 'Midjourney',
         segments: [
-          { text: 'sea turtle', color: PI_C.subject },
+          { text: 'robot', color: PI_C.subject },
           { text: ' ', color: PI_C.structural },
-          { text: 'gliding', color: PI_C.action },
+          { text: 'sitting on bench reading newspaper', color: PI_C.action },
           { text: ' ', color: PI_C.structural },
-          { text: 'coral reef', color: PI_C.environment },
+          { text: 'rainy cyberpunk city', color: PI_C.environment },
           { text: ' ', color: PI_C.structural },
-          { text: 'underwater caustics', color: PI_C.lighting },
+          { text: 'night', color: PI_C.lighting },
           { text: ' ', color: PI_C.structural },
-          { text: 'turquoise', color: PI_C.colour },
+          { text: 'neon reflections', color: PI_C.lighting },
           { text: ' ', color: PI_C.structural },
-          { text: '--ar 16:9 --s 400 --q 2', color: PI_C.fidelity },
+          { text: 'puddles', color: PI_C.materials },
+          { text: ' ', color: PI_C.structural },
+          { text: 'cinematic', color: PI_C.style },
+          { text: ' ', color: PI_C.structural },
+          { text: 'melancholy', color: PI_C.atmosphere },
+          { text: ' ', color: PI_C.structural },
+          { text: '--ar 16:9 --s 500 --q 2', color: PI_C.fidelity },
+        ],
+      },
+      {
+        id: 'openai',
+        name: 'DALL·E 3',
+        segments: [
+          { text: 'A lone ', color: PI_C.structural },
+          { text: 'robot', color: PI_C.subject },
+          { text: ' ', color: PI_C.structural },
+          { text: 'sitting on a park bench reading a newspaper', color: PI_C.action },
+          { text: ' in a ', color: PI_C.structural },
+          { text: 'rainy cyberpunk city', color: PI_C.environment },
+          { text: ' at ', color: PI_C.structural },
+          { text: 'night', color: PI_C.lighting },
+          { text: ', ', color: PI_C.structural },
+          { text: 'neon signs', color: PI_C.lighting },
+          { text: ' casting colourful reflections in the ', color: PI_C.structural },
+          { text: 'puddles', color: PI_C.materials },
+          { text: ', ', color: PI_C.structural },
+          { text: 'cinematic', color: PI_C.style },
+          { text: ' and ', color: PI_C.structural },
+          { text: 'melancholy', color: PI_C.atmosphere },
+          { text: ' atmosphere', color: PI_C.structural },
         ],
       },
     ],
@@ -3021,21 +3067,59 @@ const INTELLIGENCE_SCENARIOS: IntelligenceScenario[] = [
 function IntelligencePreviewPanel() {
   const [activeIdx, setActiveIdx] = React.useState(0);
   const [fadeState, setFadeState] = React.useState<'visible' | 'fading-out' | 'fading-in'>('visible');
+  const [typedCount, setTypedCount] = React.useState(0);
+  const [platformsVisible, setPlatformsVisible] = React.useState(false);
   const pauseRef = React.useRef(false);
   const pauseTimerRef = React.useRef<ReturnType<typeof setTimeout>>();
+  const typeTimerRef = React.useRef<ReturnType<typeof setInterval>>();
+  const holdTimerRef = React.useRef<ReturnType<typeof setTimeout>>();
 
-  // Auto-rotate through scenarios every 10s with 300ms crossfade
+  const scenario = INTELLIGENCE_SCENARIOS[activeIdx]!;
+  const cardColor = '#fb923c'; // Orange — matches Prompt Intelligence card
+
+  // Start typing when scenario changes or on mount
+  const startTyping = React.useCallback((idx: number) => {
+    clearInterval(typeTimerRef.current);
+    clearTimeout(holdTimerRef.current);
+    setTypedCount(0);
+    setPlatformsVisible(false);
+    setFadeState('visible');
+    const sentence = INTELLIGENCE_SCENARIOS[idx]!.humanSentence;
+    let count = 0;
+    typeTimerRef.current = setInterval(() => {
+      count++;
+      setTypedCount(count);
+      if (count >= sentence.length) {
+        clearInterval(typeTimerRef.current);
+        // Pause 400ms then show platforms
+        setTimeout(() => setPlatformsVisible(true), 400);
+      }
+    }, 25);
+  }, []);
+
+  // Auto-rotate every 12s after platforms are shown
   React.useEffect(() => {
-    const id = setInterval(() => {
+    if (!platformsVisible) return;
+    holdTimerRef.current = setTimeout(() => {
       if (pauseRef.current) return;
       setFadeState('fading-out');
       setTimeout(() => {
-        setActiveIdx((prev) => (prev + 1) % INTELLIGENCE_SCENARIOS.length);
-        setFadeState('fading-in');
-        setTimeout(() => setFadeState('visible'), 300);
+        const nextIdx = (activeIdx + 1) % INTELLIGENCE_SCENARIOS.length;
+        setActiveIdx(nextIdx);
+        startTyping(nextIdx);
       }, 300);
-    }, 10000);
-    return () => clearInterval(id);
+    }, 8000);
+    return () => clearTimeout(holdTimerRef.current);
+  }, [platformsVisible, activeIdx, startTyping]);
+
+  // Initial typing on mount
+  React.useEffect(() => {
+    startTyping(0);
+    return () => {
+      clearInterval(typeTimerRef.current);
+      clearTimeout(holdTimerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Click nav dot — switch immediately, pause auto-rotation for 20s
@@ -3043,158 +3127,222 @@ function IntelligencePreviewPanel() {
     if (idx === activeIdx) return;
     pauseRef.current = true;
     clearTimeout(pauseTimerRef.current);
+    clearTimeout(holdTimerRef.current);
+    clearInterval(typeTimerRef.current);
     setFadeState('fading-out');
     setTimeout(() => {
       setActiveIdx(idx);
-      setFadeState('fading-in');
-      setTimeout(() => setFadeState('visible'), 300);
+      startTyping(idx);
     }, 300);
     pauseTimerRef.current = setTimeout(() => { pauseRef.current = false; }, 20000);
-  }, [activeIdx]);
+  }, [activeIdx, startTyping]);
 
   React.useEffect(() => () => clearTimeout(pauseTimerRef.current), []);
 
-  const scenario = INTELLIGENCE_SCENARIOS[activeIdx]!;
-  const cardColor = '#fb923c'; // Orange — matches Prompt Intelligence card
+  const pGlow = hexToRgbaPanel(cardColor, 0.25);
+  const pBorder = hexToRgbaPanel(cardColor, 0.4);
+  const pSoft = hexToRgbaPanel(cardColor, 0.12);
 
   return (
     <div className="flex flex-col h-full">
       <style dangerouslySetInnerHTML={{ __html: INTELLIGENCE_CSS }} />
 
       {/* Animated amber header — matches all other preview panels */}
-      <div style={{ padding: 'clamp(10px, 1vw, 16px) 0' }}>
+      <div style={{ padding: 'clamp(8px, 0.8vw, 14px) 0' }}>
         <p
           className="italic text-amber-400/80 animate-pulse text-center font-semibold"
           style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.95rem)' }}
         >
-          Same intent — different platforms
+          Type it once — translated for 45 platforms
         </p>
       </div>
 
-      {/* Selection chips — the user's choices (same across all 3 platforms) */}
+      {/* Main content area — single glass card taking all space */}
       <div
-        className="flex flex-wrap items-center justify-center shrink-0"
-        style={{ gap: 'clamp(4px, 0.4vw, 6px)', paddingBottom: 'clamp(6px, 0.6vw, 10px)' }}
-      >
-        <span className="text-white font-medium" style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)' }}>
-          Your selections:
-        </span>
-        {scenario.selections.map((sel, i) => (
-          <span
-            key={i}
-            className="inline-flex items-center rounded-full font-medium"
-            style={{
-              fontSize: 'clamp(0.625rem, 0.55vw, 0.7rem)',
-              padding: 'clamp(1px, 0.1vw, 2px) clamp(6px, 0.5vw, 8px)',
-              background: `${sel.color}18`,
-              border: `1px solid ${sel.color}40`,
-              color: sel.color,
-            }}
-          >
-            {sel.term}
-          </span>
-        ))}
-      </div>
-
-      {/* 3 platform cards — the Rosetta Stone */}
-      <div
-        className="flex flex-1 min-h-0"
+        className="relative flex-1 min-h-0 rounded-xl overflow-hidden flex flex-col"
         style={{
-          gap: 'clamp(5px, 0.5vw, 8px)',
-          opacity: fadeState === 'fading-out' ? 0 : 1,
-          transition: 'opacity 300ms ease-in-out',
+          background: 'rgba(15, 23, 42, 0.97)',
+          border: `1px solid ${pBorder}`,
+          boxShadow: `0 0 30px 6px ${pGlow}, 0 0 60px 12px ${pSoft}, inset 0 0 20px 2px ${pGlow}`,
+          padding: 'clamp(10px, 1vw, 16px)',
+          gap: 'clamp(6px, 0.6vw, 10px)',
         }}
       >
-        {scenario.platforms.map((platform) => {
-          const badge = ENCODER_BADGES[platform.id];
-          const pColor = cardColor;
-          const pGlow = hexToRgbaPanel(pColor, 0.25);
-          const pBorder = hexToRgbaPanel(pColor, 0.4);
-          const pSoft = hexToRgbaPanel(pColor, 0.12);
+        {/* Top glow */}
+        <span
+          className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl"
+          style={{ background: `radial-gradient(ellipse at 50% 0%, ${pGlow} 0%, transparent 70%)` }}
+          aria-hidden="true"
+        />
 
-          return (
-            <div
-              key={platform.id}
-              className="relative flex-1 rounded-xl overflow-hidden flex flex-col"
-              style={{
-                background: 'rgba(15, 23, 42, 0.97)',
-                border: `1px solid ${pBorder}`,
-                boxShadow: `0 0 20px 4px ${pGlow}, 0 0 40px 8px ${pSoft}, inset 0 0 14px 2px ${pGlow}`,
-                padding: 'clamp(8px, 0.8vw, 14px)',
-              }}
-            >
-              {/* Top glow */}
-              <span
-                className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl"
-                style={{ background: `radial-gradient(ellipse at 50% 0%, ${pGlow} 0%, transparent 70%)` }}
-                aria-hidden="true"
-              />
+        <div className="relative z-10 flex flex-col h-full" style={{ gap: 'clamp(6px, 0.6vw, 10px)' }}>
 
-              <div className="relative z-10 flex flex-col h-full" style={{ gap: 'clamp(4px, 0.4vw, 7px)' }}>
-                {/* Platform header — icon + name */}
-                <div className="flex items-center shrink-0" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={`/icons/providers/${platform.id}.png`}
-                    alt=""
-                    className="rounded"
-                    style={{ width: 'clamp(14px, 1.2vw, 20px)', height: 'clamp(14px, 1.2vw, 20px)' }}
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                  />
-                  <span className="font-semibold text-white truncate" style={{ fontSize: 'clamp(0.625rem, 0.7vw, 0.8rem)' }}>
-                    {platform.name}
-                  </span>
-                </div>
-
-                {/* Encoder badge — Option 3: plain English + technical subtitle */}
-                {badge && (
-                  <div
-                    className="flex flex-col shrink-0 rounded-md"
-                    style={{
-                      padding: 'clamp(3px, 0.3vw, 5px) clamp(6px, 0.5vw, 8px)',
-                      background: `${pColor}10`,
-                      border: `1px solid ${pColor}25`,
-                    }}
-                  >
-                    <span className="text-white font-medium" style={{ fontSize: 'clamp(0.625rem, 0.55vw, 0.7rem)' }}>
-                      {badge.plain} · {badge.tokens}
-                    </span>
-                    <span style={{ color: pColor, fontSize: 'clamp(0.625rem, 0.5vw, 0.65rem)' }}>
-                      {badge.tech}
-                    </span>
-                  </div>
-                )}
-
-                {/* Colour-coded assembled prompt — the main content */}
-                <div className="flex-1 overflow-hidden">
-                  <p className="font-mono leading-relaxed" style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.75rem)' }}>
-                    {platform.segments.map((seg, si) => (
-                      <span key={si} style={{ color: seg.color }}>{seg.text}</span>
-                    ))}
-                  </p>
-                </div>
-              </div>
+          {/* ── Typewriter sentence — the human input ── */}
+          <div
+            className="shrink-0 rounded-lg"
+            style={{
+              padding: 'clamp(8px, 0.8vw, 12px) clamp(10px, 1vw, 14px)',
+              background: 'rgba(255, 255, 255, 0.04)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+            }}
+          >
+            <div className="flex items-center" style={{ gap: 'clamp(6px, 0.6vw, 8px)', marginBottom: 'clamp(4px, 0.3vw, 6px)' }}>
+              <span className="text-white font-semibold" style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)' }}>
+                ✏️ You type:
+              </span>
+              <span className="font-medium" style={{ color: cardColor, fontSize: 'clamp(0.625rem, 0.55vw, 0.65rem)' }}>
+                Human Sentence Conversion
+              </span>
             </div>
-          );
-        })}
+            <p
+              className="font-mono leading-relaxed"
+              style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.8rem)', minHeight: 'clamp(28px, 2.5vw, 40px)' }}
+            >
+              <span className="text-white">
+                {scenario.humanSentence.slice(0, typedCount)}
+              </span>
+              {typedCount < scenario.humanSentence.length && (
+                <span className="typewriter-cursor">&nbsp;</span>
+              )}
+            </p>
+          </div>
+
+          {/* ── Conversion arrow strip ── */}
+          <div
+            className="flex items-center justify-center shrink-0"
+            style={{ gap: 'clamp(6px, 0.5vw, 8px)' }}
+          >
+            <span style={{ color: cardColor, fontSize: 'clamp(0.7rem, 0.75vw, 0.9rem)' }}>↓</span>
+            <span className="font-semibold" style={{ color: cardColor, fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)' }}>
+              Understood · Categorised · Adapted
+            </span>
+            <span style={{ color: cardColor, fontSize: 'clamp(0.7rem, 0.75vw, 0.9rem)' }}>↓</span>
+          </div>
+
+          {/* ── 3 platform cards — colour-coded outputs ── */}
+          <div
+            className="flex flex-1 min-h-0"
+            style={{
+              gap: 'clamp(5px, 0.5vw, 8px)',
+              opacity: platformsVisible ? (fadeState === 'fading-out' ? 0 : 1) : 0,
+              transition: 'opacity 300ms ease-in-out',
+            }}
+          >
+            {scenario.platforms.map((platform) => {
+              const badge = ENCODER_BADGES[platform.id];
+              const plGlow = hexToRgbaPanel(cardColor, 0.15);
+              const plBorder = hexToRgbaPanel(cardColor, 0.25);
+
+              return (
+                <div
+                  key={platform.id}
+                  className="relative flex-1 rounded-lg overflow-hidden flex flex-col"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    border: `1px solid ${plBorder}`,
+                    boxShadow: `inset 0 0 10px 1px ${plGlow}`,
+                    padding: 'clamp(6px, 0.6vw, 10px)',
+                  }}
+                >
+                  {/* Top glow */}
+                  <span
+                    className="pointer-events-none absolute inset-0 overflow-hidden rounded-lg"
+                    style={{ background: `radial-gradient(ellipse at 50% 0%, ${plGlow} 0%, transparent 70%)` }}
+                    aria-hidden="true"
+                  />
+
+                  <div className="relative z-10 flex flex-col h-full" style={{ gap: 'clamp(3px, 0.3vw, 5px)' }}>
+                    {/* Platform header — icon + name */}
+                    <div className="flex items-center shrink-0" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={`/icons/providers/${platform.id}.png`}
+                        alt=""
+                        className="rounded"
+                        style={{ width: 'clamp(14px, 1.2vw, 20px)', height: 'clamp(14px, 1.2vw, 20px)' }}
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                      <span className="font-semibold text-white truncate" style={{ fontSize: 'clamp(0.625rem, 0.7vw, 0.8rem)' }}>
+                        {platform.name}
+                      </span>
+                    </div>
+
+                    {/* Encoder badge */}
+                    {badge && (
+                      <div
+                        className="flex flex-col shrink-0 rounded-md"
+                        style={{
+                          padding: 'clamp(2px, 0.2vw, 4px) clamp(5px, 0.4vw, 7px)',
+                          background: `${cardColor}10`,
+                          border: `1px solid ${cardColor}20`,
+                        }}
+                      >
+                        <span className="text-white font-medium" style={{ fontSize: 'clamp(0.625rem, 0.5vw, 0.65rem)' }}>
+                          {badge.plain} · {badge.tokens}
+                        </span>
+                        <span style={{ color: cardColor, fontSize: 'clamp(0.625rem, 0.45vw, 0.6rem)' }}>
+                          {badge.tech}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Colour-coded converted prompt — main content */}
+                    <div className="flex-1 overflow-hidden">
+                      <p className="font-mono leading-relaxed" style={{ fontSize: 'clamp(0.625rem, 0.55vw, 0.7rem)' }}>
+                        {platform.segments.map((seg, si) => (
+                          <span key={si} style={{ color: seg.color }}>{seg.text}</span>
+                        ))}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
-      {/* Bottom row — free anchor + Pro benefit + nav dots */}
+      {/* ── Scrolling ticker ribbon — all 45 platform icons ── */}
+      <div
+        className="shrink-0 overflow-hidden rounded-lg"
+        style={{
+          marginTop: 'clamp(6px, 0.6vw, 10px)',
+          padding: 'clamp(4px, 0.4vw, 7px) 0',
+          background: 'rgba(255, 255, 255, 0.03)',
+          border: '1px solid rgba(251, 146, 60, 0.12)',
+          maskImage: 'linear-gradient(90deg, transparent 0%, black 8%, black 92%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(90deg, transparent 0%, black 8%, black 92%, transparent 100%)',
+        }}
+      >
+        <div className="intelligence-ticker" style={{ gap: 'clamp(10px, 1vw, 16px)' }}>
+          {/* Double the icons for seamless infinite scroll */}
+          {[...ALL_PLATFORM_IDS, ...ALL_PLATFORM_IDS].map((id, i) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={`${id}-${i}`}
+              src={`/icons/providers/${id}.png`}
+              alt=""
+              className="rounded shrink-0"
+              style={{
+                width: 'clamp(16px, 1.3vw, 22px)',
+                height: 'clamp(16px, 1.3vw, 22px)',
+                opacity: 0.7,
+                transition: 'opacity 200ms ease',
+              }}
+              onMouseEnter={(e) => { (e.target as HTMLImageElement).style.opacity = '1'; }}
+              onMouseLeave={(e) => { (e.target as HTMLImageElement).style.opacity = '0.7'; }}
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Bottom row — nav dots + footer */}
       <div
         className="flex items-center justify-between"
-        style={{ paddingTop: 'clamp(8px, 0.8vw, 12px)' }}
+        style={{ paddingTop: 'clamp(6px, 0.6vw, 10px)' }}
       >
-        <span
-          className="inline-flex items-center text-emerald-400 font-semibold"
-          style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)', gap: 'clamp(3px, 0.3vw, 5px)' }}
-        >
-          <svg style={{ width: 'clamp(10px, 0.8vw, 14px)', height: 'clamp(10px, 0.8vw, 14px)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
-          Free: standard assembly
-        </span>
-
-        {/* Clickable nav dots — interactive platform switcher */}
+        {/* Clickable nav dots */}
         <div className="flex items-center" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
           {INTELLIGENCE_SCENARIOS.map((s, i) => (
             <span
@@ -3219,12 +3367,13 @@ function IntelligencePreviewPanel() {
           className="text-amber-400 font-semibold"
           style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}
         >
-          Pro: 45-platform adaptive
+          1 sentence → 45 platforms · 4 encoders · 17 algorithms
         </span>
       </div>
     </div>
   );
 }
+
 
 // ============================================================================
 // EXCHANGES PREVIEW PANEL — 5 windows: CTA + 4 regional mini-cards

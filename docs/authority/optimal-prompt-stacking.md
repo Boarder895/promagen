@@ -1,7 +1,7 @@
 # Optimal Prompt Stacking Limits — All 45 Platforms
 
 > **Authority document** — Governs per-platform, per-category selection limits for both builders.
-> Version 2.0.0 — 19 Mar 2026
+> Version 3.0.0 — 20 Mar 2026
 > Replaces the flat "+1 on 7 categories" model with research-backed per-platform numbers.
 
 ---
@@ -202,27 +202,27 @@ Automatically expands all prompts before diffusion. User stacking has reduced im
 
 ### Platforms requiring conversion
 
-| Platform       | Fidelity (free/pro) | Negative (free/pro) | Strategy                                                                     |
-| -------------- | ------------------- | ------------------- | ---------------------------------------------------------------------------- |
-| Midjourney V6+ | 2/3                 | 2/4                 | Parametric: `--quality 2`, `--stylize 300`. Always included (cost=0).        |
-| BlueWillow     | 1/2                 | 2/3                 | Same MJ engine, fewer slots.                                                 |
-| Flux           | 2/3                 | 3/5                 | NL clauses: "captured with extraordinary clarity". Budget-gated.             |
-| Recraft V3     | 1/2                 | 3/5                 | NL clauses. Style presets do most quality work.                              |
-| Luma Photon    | 1/2                 | 2/3                 | NL clauses + negatives now convert (was 0/0).                                |
-| DALL-E 3       | 1/1                 | 2/3                 | Negatives convert to positives (negativeSupport: none). Fidelity unchanged.  |
-| Adobe Firefly  | 1/1                 | 2/3                 | Same as DALL-E 3.                                                            |
-| Bling/Designer | 1/1                 | 1/2                 | Short budget, fewer conversions fit.                                         |
-| Kling AI       | 2/3                 | 2/3                 | Negatives forced through conversion despite model-level support.             |
-| Jasper Art     | 1/1                 | 1/2                 | DALL-E 2 backend, negatives convert.                                         |
-| All 'none' T4  | unchanged           | 1/2                 | Gives conversion pool input on platforms that had 0/0 before.                |
+| Platform       | Fidelity (free/pro) | Negative (free/pro) | Strategy                                                                    |
+| -------------- | ------------------- | ------------------- | --------------------------------------------------------------------------- |
+| Midjourney V6+ | 2/3                 | 2/4                 | Parametric: `--quality 2`, `--stylize 300`. Always included (cost=0).       |
+| BlueWillow     | 1/2                 | 2/3                 | Same MJ engine, fewer slots.                                                |
+| Flux           | 2/3                 | 3/5                 | NL clauses: "captured with extraordinary clarity". Budget-gated.            |
+| Recraft V3     | 1/2                 | 3/5                 | NL clauses. Style presets do most quality work.                             |
+| Luma Photon    | 1/2                 | 2/3                 | NL clauses + negatives now convert (was 0/0).                               |
+| DALL-E 3       | 1/1                 | 2/3                 | Negatives convert to positives (negativeSupport: none). Fidelity unchanged. |
+| Adobe Firefly  | 1/1                 | 2/3                 | Same as DALL-E 3.                                                           |
+| Bling/Designer | 1/1                 | 1/2                 | Short budget, fewer conversions fit.                                        |
+| Kling AI       | 2/3                 | 2/3                 | Negatives forced through conversion despite model-level support.            |
+| Jasper Art     | 1/1                 | 1/2                 | DALL-E 2 backend, negatives convert.                                        |
+| All 'none' T4  | unchanged           | 1/2                 | Gives conversion pool input on platforms that had 0/0 before.               |
 
 ### Conversion routing by negativeSupport
 
-| negativeSupport | Behaviour                                                    | Platforms                                              |
-| --------------- | ------------------------------------------------------------ | ------------------------------------------------------ |
-| `'separate'`    | Negatives go to separate field. **Do NOT enter pool.** Gap 3 | Leonardo, Stability, Tensor.Art, Flux, Recraft, etc.   |
+| negativeSupport | Behaviour                                                    | Platforms                                                         |
+| --------------- | ------------------------------------------------------------ | ----------------------------------------------------------------- |
+| `'separate'`    | Negatives go to separate field. **Do NOT enter pool.** Gap 3 | Leonardo, Stability, Tensor.Art, Flux, Recraft, etc.              |
 | `'none'`        | All negatives enter conversion pool → positive reinforcement | DALL-E, Firefly, Bing, Designer, Meta, Canva, Luma, Kling, Jasper |
-| `'inline'`      | Known negatives convert, unknown → `--no X` / `without X`   | Midjourney, BlueWillow                                 |
+| `'inline'`      | Known negatives convert, unknown → `--no X` / `without X`    | Midjourney, BlueWillow                                            |
 
 ### Platforms where fidelity IS effective (pass-through, no conversion)
 
@@ -271,48 +271,48 @@ Format: `category=free/pro`
 - **openart**: subject=1/2, action=1/1, style=1/2, environment=1/2, composition=1/1, camera=1/1, lighting=1/2, atmosphere=1/2, colour=1/1, materials=1/2, fidelity=1/2, negative=5/8
 - **playground**: subject=1/2, action=1/1, style=1/2, environment=1/2, composition=1/1, camera=1/1, lighting=1/2, atmosphere=1/2, colour=1/2, materials=1/2, fidelity=1/2, negative=4/6
 - **artguru**: subject=1/2, action=1/1, style=1/1, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=3/5
-- **jasper-art**: subject=1/2, action=1/1, style=1/2, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=0/0
+- **jasper-art**: subject=1/2, action=1/1, style=1/2, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=1/2
 - **tensor-art**: subject=3/5, action=1/2, style=2/3, environment=2/3, composition=1/2, camera=1/2, lighting=1/2, atmosphere=1/1, colour=1/2, materials=1/2, fidelity=3/4, negative=5/8
 
 ### Tier 2 — Midjourney Family (2)
 
-- **midjourney**: subject=1/3, action=1/1, style=1/2, environment=1/2, composition=1/1, camera=1/1, lighting=1/2, atmosphere=1/2, colour=1/2, materials=1/2, fidelity=0/0, negative=2/4
-- **bluewillow**: subject=1/2, action=1/1, style=1/2, environment=1/1, composition=1/1, camera=1/1, lighting=1/2, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=2/3
+- **midjourney**: subject=1/3, action=1/1, style=1/2, environment=1/2, composition=1/1, camera=1/1, lighting=1/2, atmosphere=1/2, colour=1/2, materials=1/2, fidelity=2/3, negative=2/4
+- **bluewillow**: subject=1/2, action=1/1, style=1/2, environment=1/1, composition=1/1, camera=1/1, lighting=1/2, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/2, negative=2/3
 
 ### Tier 3 — Natural Language (13)
 
-- **openai**: subject=2/3, action=1/2, style=1/2, environment=2/3, composition=1/1, camera=1/1, lighting=1/2, atmosphere=1/2, colour=1/2, materials=1/2, fidelity=1/1, negative=0/0
-- **adobe-firefly**: subject=1/2, action=1/1, style=1/2, environment=1/2, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/2, colour=1/1, materials=1/2, fidelity=1/1, negative=0/0
+- **openai**: subject=2/3, action=1/2, style=1/2, environment=2/3, composition=1/1, camera=1/1, lighting=1/2, atmosphere=1/2, colour=1/2, materials=1/2, fidelity=1/1, negative=2/3
+- **adobe-firefly**: subject=1/2, action=1/1, style=1/2, environment=1/2, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/2, colour=1/1, materials=1/2, fidelity=1/1, negative=2/3
 - **ideogram**: subject=1/2, action=1/1, style=1/1, environment=1/2, composition=1/2, camera=1/1, lighting=1/2, atmosphere=1/2, colour=1/1, materials=1/2, fidelity=1/1, negative=3/5
 - **runway**: subject=1/2, action=1/1, style=1/2, environment=1/1, composition=1/1, camera=1/1, lighting=1/2, atmosphere=1/1, colour=1/2, materials=1/1, fidelity=1/1, negative=0/0
-- **microsoft-designer**: subject=1/2, action=1/1, style=1/2, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=0/0
-- **bing**: subject=1/2, action=1/1, style=1/2, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=0/0
-- **flux**: subject=2/3, action=1/2, style=2/3, environment=2/3, composition=1/2, camera=1/2, lighting=2/3, atmosphere=2/3, colour=1/2, materials=2/3, fidelity=0/0, negative=3/5
+- **microsoft-designer**: subject=1/2, action=1/1, style=1/2, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=1/2
+- **bing**: subject=1/2, action=1/1, style=1/2, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=1/2
+- **flux**: subject=2/3, action=1/2, style=2/3, environment=2/3, composition=1/2, camera=1/2, lighting=2/3, atmosphere=2/3, colour=1/2, materials=2/3, fidelity=2/3, negative=3/5
 - **google-imagen**: subject=2/3, action=1/1, style=2/3, environment=2/3, composition=1/1, camera=1/2, lighting=2/3, atmosphere=2/2, colour=1/2, materials=2/3, fidelity=1/2, negative=0/0
-- **imagine-meta**: subject=1/1, action=1/1, style=1/1, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=0/0
+- **imagine-meta**: subject=1/1, action=1/1, style=1/1, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=1/2
 - **hotpot**: subject=1/2, action=1/1, style=1/1, environment=1/1, composition=1/1, camera=1/1, lighting=1/2, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=3/5
-- **recraft**: subject=3/4, action=1/2, style=1/1, environment=2/3, composition=1/2, camera=1/1, lighting=1/2, atmosphere=1/1, colour=1/2, materials=1/2, fidelity=0/0, negative=3/5
-- **kling**: subject=3/5, action=1/2, style=2/3, environment=2/3, composition=1/2, camera=1/2, lighting=2/3, atmosphere=1/2, colour=1/2, materials=1/1, fidelity=2/3, negative=3/5
+- **recraft**: subject=3/4, action=1/2, style=1/1, environment=2/3, composition=1/2, camera=1/1, lighting=1/2, atmosphere=1/1, colour=1/2, materials=1/2, fidelity=1/2, negative=3/5
+- **kling**: subject=3/5, action=1/2, style=2/3, environment=2/3, composition=1/2, camera=1/2, lighting=2/3, atmosphere=1/2, colour=1/2, materials=1/1, fidelity=2/3, negative=2/3
 
 ### Tier 4 — Plain Language (16)
 
-- **canva**: subject=1/2, action=1/1, style=1/1, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=0/0
+- **canva**: subject=1/2, action=1/1, style=1/1, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=1/2
 - **craiyon**: subject=1/1, action=1/1, style=1/1, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=2/4
 - **deepai**: subject=1/2, action=1/1, style=1/1, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=3/5
-- **pixlr**: subject=1/1, action=1/1, style=1/1, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=0/0
-- **picwish**: subject=1/1, action=1/1, style=1/1, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=0/0
+- **pixlr**: subject=1/1, action=1/1, style=1/1, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=1/2
+- **picwish**: subject=1/1, action=1/1, style=1/1, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=1/2
 - **fotor**: subject=1/2, action=1/1, style=1/2, environment=1/1, composition=1/1, camera=1/1, lighting=1/2, atmosphere=1/1, colour=1/1, materials=1/2, fidelity=1/2, negative=4/7
-- **visme**: subject=1/1, action=1/1, style=1/1, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=0/0
-- **vistacreate**: subject=1/1, action=1/1, style=1/1, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=0/0
-- **myedit**: subject=1/2, action=1/1, style=1/1, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=0/0
+- **visme**: subject=1/1, action=1/1, style=1/1, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=1/2
+- **vistacreate**: subject=1/1, action=1/1, style=1/1, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=1/2
+- **myedit**: subject=1/2, action=1/1, style=1/1, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=1/2
 - **simplified**: subject=1/2, action=1/1, style=1/2, environment=1/1, composition=1/1, camera=1/1, lighting=1/2, atmosphere=1/1, colour=1/1, materials=1/2, fidelity=1/2, negative=4/7
-- **freepik**: subject=1/2, action=1/1, style=1/1, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=0/0
-- **picsart**: subject=1/2, action=1/1, style=1/1, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=0/0
-- **photoleap**: subject=1/2, action=1/1, style=1/1, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=0/0
+- **freepik**: subject=1/2, action=1/1, style=1/1, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=1/2
+- **picsart**: subject=1/2, action=1/1, style=1/1, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=1/2
+- **photoleap**: subject=1/2, action=1/1, style=1/1, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=1/2
 - **artbreeder**: subject=1/2, action=1/1, style=1/1, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=3/5
-- **123rf**: subject=1/1, action=1/1, style=1/1, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=0/0
-- **artistly**: subject=1/1, action=1/1, style=1/1, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=0/0
-- **luma-ai**: subject=3/4, action=1/2, style=2/3, environment=2/3, composition=1/2, camera=1/2, lighting=2/3, atmosphere=1/2, colour=1/2, materials=1/2, fidelity=0/0, negative=0/0
+- **123rf**: subject=1/1, action=1/1, style=1/1, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=1/2
+- **artistly**: subject=1/1, action=1/1, style=1/1, environment=1/1, composition=1/1, camera=1/1, lighting=1/1, atmosphere=1/1, colour=1/1, materials=1/1, fidelity=1/1, negative=1/2
+- **luma-ai**: subject=3/4, action=1/2, style=2/3, environment=2/3, composition=1/2, camera=1/2, lighting=2/3, atmosphere=1/2, colour=1/2, materials=1/2, fidelity=1/2, negative=2/3
 
 ---
 
@@ -324,7 +324,8 @@ Prompts navigate a learned latent space, not instruct a generator. Stacking comp
 
 ## Changelog
 
-| Date        | Version | Change                                                                                                                                                                                                                               |
-| ----------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 19 Mar 2026 | 2.0.0   | Updated to 45 platforms. Added Recraft V3, Kling AI, Luma AI, Tensor.Art. Removed remove-bg. Added ChatGLM3 + proprietary encoder sections. Added Fidelity Conversion Rules (Option B). Updated all tier counts and quick-reference. |
-| 19 Mar 2026 | 1.0.0   | Initial document. Full 42-platform research with per-platform, per-category limits.                                                                                                                                                  |
+| Date        | Version | Change                                                                                                                                                                                                                                                                                                                                       |
+| ----------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 20 Mar 2026 | 3.0.0   | Quick-reference tables updated to match code (PLATFORM_SPECIFIC_LIMITS). 46 values changed: fidelity enabled on 5 conversion platforms (MJ, Flux, Recraft, BlueWillow, Luma), negatives enabled on 18 'none' platforms via conversion pool, Kling negatives reduced to 2/3. Doc now matches code exactly — 0 mismatches across 1,080 values. |
+| 19 Mar 2026 | 2.0.0   | Updated to 45 platforms. Added Recraft V3, Kling AI, Luma AI, Tensor.Art. Removed remove-bg. Added ChatGLM3 + proprietary encoder sections. Added Fidelity Conversion Rules (Option B). Updated all tier counts and quick-reference.                                                                                                         |
+| 19 Mar 2026 | 1.0.0   | Initial document. Full 42-platform research with per-platform, per-category limits.                                                                                                                                                                                                                                                          |
