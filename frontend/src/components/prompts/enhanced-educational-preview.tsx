@@ -242,35 +242,46 @@ function DnaBar({ selections, dominantFamily, healthScore: _healthScore, conflic
   const totalCategories = CATEGORY_ORDER.length;
 
   // ── Realistic DNA score ──────────────────────────────────────────────
-  // The engine's healthScore starts at 50 and is too generous (3 categories
-  // = 76%). This scoring is built from scratch with honest thresholds:
+  // Scoring that rewards *coherence and completeness* without penalising
+  // valid prompt types (landscapes, architecture, abstract) that have no
+  // traditional "subject" (person/animal/object).
   //
-  //   Fill rate:       0–45 points  (each of 12 cats = 3.75 pts)
-  //   Subject:         +15 points   (essential for any prompt)
-  //   Style:           +10 points   (defines the visual language)
-  //   Dominant family:  +8 points   (coherent style detected)
-  //   Lighting:         +5 points   (major quality factor)
-  //   Fidelity:         +5 points   (quality boosters present)
-  //   Conflict penalty: -12 per conflict
-  //   Max theoretical:  88 (without fidelity+lighting), ~98 perfect
+  //   Fill rate:          0–35 points  (each of 12 cats = 2.92 pts)
+  //   Core identity:      +15 points   (Subject OR Environment OR Style present)
+  //   Style defined:       +8 points   (visual language specified)
+  //   Triple anchor:       +7 points   (all 3 of Subject+Env+Style present)
+  //   Dominant family:     +8 points   (coherent style detected)
+  //   Lighting:            +5 points   (major quality factor)
+  //   Fidelity:            +5 points   (quality boosters present)
+  //   Camera/Composition:  +5 points   (technical craft present)
+  //   Depth (3+ in any):   +7 points   (rich descriptions rewarded)
+  //   Conflict penalty:   -12 per conflict
+  //   Max theoretical:     95 (all bonuses, 12/12 filled, 0 conflicts)
   //
-  // A prompt with subject + style + 2 others = 15 + 10 + 15 = 40%
-  // 8/12 categories + subject + style + family = 30 + 15 + 10 + 8 = 63%
-  // 12/12 + all bonuses - 0 conflicts = 45 + 15 + 10 + 8 + 5 + 5 = 88%
+  //   Landscape 7/12 (no subject): 20 +15 +8 +0 +8 +5 +5 +5 +7 = 73%
+  //   Portrait 8/12:               23 +15 +8 +7 +8 +5 +0 +5 +0 = 71%
+  //   Full 12/12 coherent:         35 +15 +8 +7 +8 +5 +5 +5 +7 = 95%
+  //   Sparse 3/12 (S+Sty+Lit):     9 +15 +8 +0 +0 +5 +0 +0 +0 = 37%
   // ─────────────────────────────────────────────────────────────────────
   const score = useMemo(() => {
     if (totalFilled === 0) return 0;
 
     let s = 0;
 
-    // Fill rate: each category = 3.75 points (45 max)
-    s += Math.round(totalFilled * 3.75);
+    // Fill rate: each category = 2.92 points (35 max)
+    s += Math.round(totalFilled * 2.92);
 
-    // Subject bonus
-    if (selections.subject?.length > 0) s += 15;
+    // Core Identity — at least one anchor category present
+    const hasSubject = selections.subject?.length > 0;
+    const hasEnvironment = selections.environment?.length > 0;
+    const hasStyle = selections.style?.length > 0;
+    if (hasSubject || hasEnvironment || hasStyle) s += 15;
 
-    // Style bonus
-    if (selections.style?.length > 0) s += 10;
+    // Style defined — visual language matters
+    if (hasStyle) s += 8;
+
+    // Triple anchor — all three core categories present
+    if (hasSubject && hasEnvironment && hasStyle) s += 7;
 
     // Dominant family bonus (real coherence)
     if (dominantFamily) s += 8;
@@ -280,6 +291,15 @@ function DnaBar({ selections, dominantFamily, healthScore: _healthScore, conflic
 
     // Fidelity present (quality boosters)
     if (selections.fidelity?.length > 0) s += 5;
+
+    // Camera or Composition (technical craft)
+    if (selections.camera?.length > 0 || selections.composition?.length > 0) s += 5;
+
+    // Depth bonus — any category with 3+ terms shows rich description
+    const hasDepth = CATEGORY_ORDER.some(
+      (cat: PromptCategory) => selections[cat]?.length >= 3,
+    );
+    if (hasDepth) s += 7;
 
     // Conflict penalty — harsh, visible
     s -= conflictCount * 12;

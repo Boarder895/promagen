@@ -524,7 +524,7 @@ export function UpgradeCta({
           className="italic text-amber-400/80 animate-pulse text-center font-semibold"
           style={{ fontSize: 'clamp(0.75rem, 0.9vw, 1rem)' }}
         >
-          Unlimited prompts across 42 platforms — 7 days free
+          Unlimited prompts across 45 platforms — 7 days free
         </p>
       </div>
 

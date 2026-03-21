@@ -426,6 +426,7 @@ function TierWindow({
   onTierChange,
   promptText,
   allPrompts,
+  tierCategoryMap,
 }: {
   t: typeof TIER_DISPLAY[number];
   isActive: boolean;
@@ -434,6 +435,8 @@ function TierWindow({
   promptText: string;
   /** All 4 tier prompts so other-tier rows can show preview text */
   allPrompts: Record<string, string>;
+  /** Category map for colour coding prompt text — same as Prompt Lab */
+  tierCategoryMap?: WeatherCategoryMap;
 }) {
   const { containerRef, contentRef, scrollDist } = useAutoScroll();
 
@@ -471,28 +474,10 @@ function TierWindow({
       {/* Bottom glow accent (TooltipContent identical) */}
       <div className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden" style={{ background: `radial-gradient(ellipse at 50% 100%, ${glowSoft} 0%, transparent 60%)` }} />
 
-      {/* Content — TooltipContent uses: relative z-10 flex flex-col gap-3 */}
+      {/* Content */}
       <div className="relative z-10 flex flex-col h-full" style={{ gap: 'clamp(8px, 0.8vw, 12px)' }}>
 
-        {/* Row 1: Tier identity in colour + Save + Copy */}
-        <div className="flex items-center justify-between gap-2">
-          <span
-            className="font-semibold"
-            style={{
-              fontSize: 'clamp(0.7rem, 0.8vw, 0.95rem)',
-              textShadow: `0 0 12px ${glowRgba}`,
-              color: t.color,
-            }}
-          >
-            Tier {t.tier}: {t.label}
-          </span>
-          <div className="flex items-center gap-1 shrink-0">
-            <SaveIcon positivePrompt={promptText} platformId={t.platformId} platformName={t.platformName} source="tooltip" tier={t.tier} size="sm" />
-            <TierWindowCopyButton text={promptText} />
-          </div>
-        </div>
-
-        {/* Row 2: "Image Prompt" + PRO badge — TooltipContent header */}
+        {/* Row 1: "Image Prompt" + PRO badge + Save + Copy */}
         <div className="flex items-center justify-between gap-2" style={{ marginBottom: 'clamp(1px, 0.1vw, 4px)' }}>
           <div className="flex items-center gap-2">
             <span
@@ -516,6 +501,10 @@ function TierWindow({
               </span>
             )}
           </div>
+          <div className="flex items-center gap-1 shrink-0">
+            <SaveIcon positivePrompt={promptText} platformId={t.platformId} platformName={t.platformName} source="tooltip" tier={t.tier} size="sm" />
+            <TierWindowCopyButton text={promptText} />
+          </div>
         </div>
 
         {/* Row 3: Tier badge pill — TierBadge component copy */}
@@ -533,18 +522,28 @@ function TierWindow({
           </span>
         </div>
 
-        {/* Row 4: Prompt text — auto-scroll */}
+        {/* Prompt text — auto-scroll, colour-coded by category (same as Prompt Lab) */}
         <div ref={containerRef} className="flex-1 min-h-0 overflow-hidden">
           <div
             ref={contentRef}
             className="pro-auto-scroll"
             style={{ '--scroll-dist': `-${scrollDist}px`, animation: scrollDist > 0 ? 'proAutoScroll 17s ease-in-out infinite' : 'none' } as React.CSSProperties}
           >
-            <p
-              className="leading-relaxed whitespace-pre-wrap break-words text-slate-200"
-              style={{ fontSize: 'clamp(0.65rem, 0.75vw, 0.875rem)' }}
-            >
-              {promptText}
+            <p className="font-mono leading-relaxed" style={{ fontSize: 'clamp(0.65rem, 0.75vw, 0.875rem)' }}>
+              {(() => {
+                if (!tierCategoryMap) return <span className="text-white">{promptText}</span>;
+                const termIndex = labBuildTermIndex(tierCategoryMap);
+                if (termIndex.size === 0) return <span className="text-white">{promptText}</span>;
+                const segments = labParsePrompt(promptText.replace(/([a-z])([A-Z])/g, '$1 $2'), termIndex);
+                return segments.map((seg, i) => {
+                  const clr = CATEGORY_COLOURS[seg.category] ?? CATEGORY_COLOURS.structural;
+                  return (
+                    <span key={i} style={{ color: clr, textShadow: seg.weight >= 1.05 ? `0 0 10px ${clr}50` : undefined }}>
+                      {seg.text}
+                    </span>
+                  );
+                });
+              })()}
             </p>
           </div>
         </div>
@@ -579,30 +578,15 @@ function TierWindow({
                 >
                   T{other.tier}
                 </span>
-                {/* Blurred preview text — same as real BlurredTierRow */}
+                {/* Preview text — unblurred, visible to all */}
                 <span
                   className="flex-1 text-slate-400 truncate select-none"
                   style={{
-                    filter: 'blur(4px)',
-                    WebkitFilter: 'blur(4px)',
                     fontSize: 'clamp(0.55rem, 0.6vw, 0.7rem)',
                   }}
-                  aria-hidden="true"
                 >
                   {otherPrompt.slice(0, 80)}
                 </span>
-                {/* Lock icon — same as real tooltip */}
-                <svg
-                  className="text-slate-400 shrink-0"
-                  style={{ width: 'clamp(10px, 0.8vw, 12px)', height: 'clamp(10px, 0.8vw, 12px)' }}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
               </button>
             );
           })}
@@ -655,46 +639,19 @@ function TierPreviewPanel({
 }) {
   const { data: potmData } = usePromptShowcase();
 
-  // Active tier colour for dropdown styling
-  const activeTierData = TIER_DISPLAY.find((t) => t.tier === activeTier) ?? TIER_DISPLAY[0]!;
-
   return (
     <div className="flex flex-col h-full">
-      {/* Header — explainer + dropdown */}
+      {/* Header — centred amber text, same as other preview panels */}
       <div
-        className="flex items-center justify-between"
+        className="flex items-center justify-center"
         style={{ padding: 'clamp(10px, 1vw, 16px) 0' }}
       >
         <p
-          className="italic text-amber-400/80 animate-pulse font-semibold"
+          className="italic text-amber-400/80 animate-pulse font-semibold text-center"
           style={{ fontSize: 'clamp(0.65rem, 0.75vw, 0.9rem)' }}
         >
           Pick a format — every prompt on Promagen follows your choice
         </p>
-        {/* Tier dropdown */}
-        <select
-          value={activeTier}
-          onChange={(e) => {
-            const val = Number(e.target.value) as 1 | 2 | 3 | 4;
-            onTierChange?.(val);
-          }}
-          className="cursor-pointer rounded-lg font-medium"
-          style={{
-            fontSize: 'clamp(0.6rem, 0.65vw, 0.75rem)',
-            padding: 'clamp(4px, 0.4vw, 6px) clamp(8px, 0.8vw, 14px)',
-            background: 'rgba(15, 23, 42, 0.9)',
-            border: `1px solid ${hexToRgbaPanel(activeTierData.color, 0.5)}`,
-            color: activeTierData.color,
-            outline: 'none',
-            flexShrink: 0,
-          }}
-        >
-          {TIER_DISPLAY.map((t) => (
-            <option key={t.tier} value={t.tier}>
-              T{t.tier} · {t.label}
-            </option>
-          ))}
-        </select>
       </div>
 
       {/* 4 tier windows — single horizontal row */}
@@ -720,6 +677,7 @@ function TierPreviewPanel({
               onTierChange={onTierChange}
               promptText={promptText}
               allPrompts={allPrompts}
+              tierCategoryMap={potmData?.tierSelections?.[t.promptKey]?.categoryMap}
             />
           );
         })}
@@ -1030,6 +988,110 @@ const SAVED_PLATFORM_COLORS: Readonly<Record<string, string>> = {
   deepai: '#6366F1',
 };
 
+// ── SavedPromptWindow: Single saved prompt with auto-scroll ──────────────
+function SavedPromptWindow({
+  prompt,
+}: {
+  prompt: { id: string; positivePrompt: string; platformId: string; platformName: string; tier?: number };
+}) {
+  const { containerRef, contentRef, scrollDist } = useAutoScroll();
+  const platformColor = SAVED_PLATFORM_COLORS[prompt.platformId] ?? SAVED_DEFAULT_COLOR;
+  const glowRgba = hexToRgbaPanel(platformColor, 0.3);
+  const glowBorder = hexToRgbaPanel(platformColor, 0.5);
+  const glowSoft = hexToRgbaPanel(platformColor, 0.15);
+
+  return (
+    <div
+      className="relative flex-1 rounded-xl overflow-hidden flex flex-col"
+      style={{
+        background: 'rgba(15, 23, 42, 0.97)',
+        border: `1px solid ${glowBorder}`,
+        boxShadow: `0 0 30px 6px ${glowRgba}, 0 0 60px 12px ${glowSoft}, inset 0 0 20px 2px ${glowRgba}`,
+        padding: 'clamp(8px, 0.8vw, 14px)',
+        transition: 'box-shadow 200ms ease-out',
+      }}
+    >
+      {/* Ethereal glow — top radial */}
+      <div
+        className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
+        style={{ background: `radial-gradient(ellipse at 50% 0%, ${glowRgba} 0%, transparent 70%)` }}
+      />
+      <div
+        className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
+        style={{ background: `radial-gradient(ellipse at 50% 100%, ${glowSoft} 0%, transparent 60%)` }}
+      />
+
+      {/* Content */}
+      <div className="relative z-10 flex flex-col h-full" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
+        {/* Platform name + icon */}
+        <div className="flex items-center justify-between">
+          <span
+            className="font-semibold truncate"
+            style={{
+              color: platformColor,
+              fontSize: 'clamp(0.65rem, 0.75vw, 0.85rem)',
+              textShadow: `0 0 12px ${glowRgba}`,
+            }}
+          >
+            {prompt.platformName}
+          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={`/icons/providers/${prompt.platformId}.png`}
+            alt=""
+            className="rounded shrink-0"
+            style={{
+              width: 'clamp(18px, 1.6vw, 24px)',
+              height: 'clamp(18px, 1.6vw, 24px)',
+            }}
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          />
+        </div>
+
+        {/* Tier badge */}
+        {prompt.tier && (
+          <span
+            className="inline-flex items-center self-start rounded-full font-medium ring-1"
+            style={{
+              fontSize: 'clamp(0.625rem, 0.6vw, 0.65rem)',
+              padding: 'clamp(1px, 0.15vw, 2px) clamp(6px, 0.6vw, 8px)',
+              background: hexToRgbaPanel(platformColor, 0.15),
+              borderColor: hexToRgbaPanel(platformColor, 0.3),
+              color: platformColor,
+            }}
+          >
+            Tier {prompt.tier}
+          </span>
+        )}
+
+        {/* Prompt text — auto-scroll + colour-coded (same as Prompt Lab) */}
+        <div ref={containerRef} className="flex-1 min-h-0 overflow-hidden">
+          <div
+            ref={contentRef}
+            className="pro-auto-scroll"
+            style={{ '--scroll-dist': `-${scrollDist}px`, animation: scrollDist > 0 ? 'proAutoScroll 17s ease-in-out infinite' : 'none' } as React.CSSProperties}
+          >
+            <p className="leading-relaxed text-white whitespace-pre-wrap break-words" style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}>
+              {prompt.positivePrompt}
+            </p>
+          </div>
+        </div>
+
+        {/* Browser only warning */}
+        <span
+          className="inline-flex items-center self-start text-amber-400 font-semibold"
+          style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)', gap: 'clamp(2px, 0.2vw, 4px)' }}
+        >
+          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Browser only
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function SavedPreviewPanel() {
   const { allPrompts } = useSavedPrompts();
   const recentPrompts = allPrompts.slice(0, 5);
@@ -1038,6 +1100,8 @@ function SavedPreviewPanel() {
 
   return (
     <div className="flex flex-col h-full">
+      <style dangerouslySetInnerHTML={{ __html: PRO_AUTO_SCROLL_CSS }} />
+
       {/* Animated amber header — personalised with real count */}
       <div style={{ padding: 'clamp(10px, 1vw, 16px) 0' }}>
         <p
@@ -1055,100 +1119,13 @@ function SavedPreviewPanel() {
         className="flex flex-1 min-h-0"
         style={{ gap: 'clamp(5px, 0.5vw, 8px)' }}
       >
-        {/* Filled windows — real saved prompts */}
-        {recentPrompts.map((prompt) => {
-          const platformColor = SAVED_PLATFORM_COLORS[prompt.platformId] ?? SAVED_DEFAULT_COLOR;
-          const glowRgba = hexToRgbaPanel(platformColor, 0.3);
-          const glowBorder = hexToRgbaPanel(platformColor, 0.5);
-          const glowSoft = hexToRgbaPanel(platformColor, 0.15);
-
-          return (
-            <div
+        {/* Filled windows — real saved prompts with auto-scroll + colour coding */}
+        {recentPrompts.map((prompt) => (
+            <SavedPromptWindow
               key={prompt.id}
-              className="relative flex-1 rounded-xl overflow-hidden flex flex-col"
-              style={{
-                background: 'rgba(15, 23, 42, 0.97)',
-                border: `1px solid ${glowBorder}`,
-                boxShadow: `0 0 30px 6px ${glowRgba}, 0 0 60px 12px ${glowSoft}, inset 0 0 20px 2px ${glowRgba}`,
-                padding: 'clamp(8px, 0.8vw, 14px)',
-                transition: 'box-shadow 200ms ease-out',
-              }}
-            >
-              {/* Ethereal glow — top radial */}
-              <div
-                className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
-                style={{ background: `radial-gradient(ellipse at 50% 0%, ${glowRgba} 0%, transparent 70%)` }}
-              />
-              <div
-                className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
-                style={{ background: `radial-gradient(ellipse at 50% 100%, ${glowSoft} 0%, transparent 60%)` }}
-              />
-
-              {/* Content */}
-              <div className="relative z-10 flex flex-col h-full" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
-                {/* Platform name + icon */}
-                <div className="flex items-center justify-between">
-                  <span
-                    className="font-semibold truncate"
-                    style={{
-                      color: platformColor,
-                      fontSize: 'clamp(0.65rem, 0.75vw, 0.85rem)',
-                      textShadow: `0 0 12px ${glowRgba}`,
-                    }}
-                  >
-                    {prompt.platformName}
-                  </span>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={`/icons/providers/${prompt.platformId}.png`}
-                    alt=""
-                    className="rounded shrink-0"
-                    style={{
-                      width: 'clamp(18px, 1.6vw, 24px)',
-                      height: 'clamp(18px, 1.6vw, 24px)',
-                    }}
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                  />
-                </div>
-
-                {/* Tier badge */}
-                {prompt.tier && (
-                  <span
-                    className="inline-flex items-center self-start rounded-full font-medium ring-1"
-                    style={{
-                      fontSize: 'clamp(0.625rem, 0.6vw, 0.65rem)',
-                      padding: 'clamp(1px, 0.15vw, 2px) clamp(6px, 0.6vw, 8px)',
-                      background: hexToRgbaPanel(platformColor, 0.15),
-                      borderColor: hexToRgbaPanel(platformColor, 0.3),
-                      color: platformColor,
-                    }}
-                  >
-                    Tier {prompt.tier}
-                  </span>
-                )}
-
-                {/* Prompt text — fills available space */}
-                <p
-                  className="text-white leading-relaxed flex-1 overflow-hidden whitespace-pre-wrap break-words"
-                  style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}
-                >
-                  {prompt.positivePrompt}
-                </p>
-
-                {/* Browser only warning */}
-                <span
-                  className="inline-flex items-center self-start text-amber-400 font-semibold"
-                  style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)', gap: 'clamp(2px, 0.2vw, 4px)' }}
-                >
-                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Browser only
-                </span>
-              </div>
-            </div>
-          );
-        })}
+              prompt={prompt}
+            />
+        ))}
 
         {/* Empty slots — dashed outlines showing capacity */}
         {Array.from({ length: emptySlots }).map((_, i) => (
@@ -1520,7 +1497,7 @@ function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
           className="italic text-amber-400/80 animate-pulse text-center font-semibold"
           style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.95rem)' }}
         >
-          One workspace — all 42 platforms — instant switching
+          One workspace — all 45 platforms — instant switching
         </p>
       </div>
 
@@ -1665,9 +1642,9 @@ function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
         ))}
       </div>
 
-      {/* ── 42 provider icons row ────────────────────────────────────── */}
+      {/* ── 45 provider icons row ────────────────────────────────────── */}
       <div className="flex items-center justify-center flex-wrap" style={{ gap: 'clamp(2px, 0.25vw, 4px)', paddingTop: 'clamp(6px, 0.6vw, 10px)' }}>
-        {providers.slice(0, 42).map((p) => (
+        {providers.slice(0, 45).map((p) => (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             key={p.id}
@@ -1679,7 +1656,7 @@ function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
           />
         ))}
         <span className="font-semibold" style={{ color: '#fb7185', fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)', marginLeft: 'clamp(4px, 0.4vw, 6px)' }}>
-          42 platforms — switch instantly
+          45 platforms — switch instantly
         </span>
       </div>
     </div>
@@ -2194,25 +2171,6 @@ function DailyPromptsPreviewPanel() {
             </div>
           </div>
 
-          {/* Mini colour key */}
-          <div style={{ marginTop: 'clamp(8px, 0.8vw, 12px)', paddingTop: 'clamp(6px, 0.6vw, 10px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-            <div className="flex items-center gap-1 mb-1">
-              <span style={{ fontSize: 'clamp(0.65rem, 0.6vw, 0.75rem)' }}>🎨</span>
-              <span className="font-medium text-white" style={{ fontSize: 'clamp(0.5rem, 0.5vw, 0.6rem)' }}>
-                Category Colour Key
-              </span>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '2px 8px' }}>
-              {categoryRows.slice(0, 12).map((row) => (
-                <div key={row.cat} className="flex items-center gap-1">
-                  <span className="rounded-full flex-shrink-0" style={{ width: 4, height: 4, background: row.color }} />
-                  <span className="truncate" style={{ fontSize: 'clamp(0.45rem, 0.4vw, 0.55rem)', color: row.color }}>
-                    {row.label}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
 
@@ -3935,7 +3893,7 @@ function ExchangesPreviewPanel({
   const HEADING_SPACE = 32;
   const availableForCards = Math.max(0, containerHeight - HEADING_SPACE - 8);
   const effectiveCardHeight = measuredCardHeight > 0 ? measuredCardHeight : 40;
-  const maxVisibleCards = Math.max(1, Math.floor(
+  const _maxVisibleCards = Math.max(1, Math.floor(
     (availableForCards + computedGap) / (effectiveCardHeight + computedGap),
   ));
 
@@ -3959,9 +3917,9 @@ function ExchangesPreviewPanel({
         const bIdx = region.iso2Codes.indexOf((b.iso2 ?? '').toUpperCase());
         return aIdx - bIdx;
       });
-      return deduped.slice(0, maxVisibleCards);
+      return deduped;
     });
-  }, [exchangeCatalog, maxVisibleCards]);
+  }, [exchangeCatalog]);
 
   const ctaColor = '#22d3ee';
   const ctaGlowRgba = hexToRgbaPanel(ctaColor, 0.3);
@@ -3970,6 +3928,7 @@ function ExchangesPreviewPanel({
 
   return (
     <div className="flex flex-col h-full">
+      <style dangerouslySetInnerHTML={{ __html: PRO_AUTO_SCROLL_CSS }} />
       {/* Animated amber header */}
       <div style={{ padding: 'clamp(10px, 1vw, 16px) 0' }}>
         <p
@@ -4169,6 +4128,17 @@ export default function ProPromagenClient({
   const inPreviewRef = useRef(false);
   const activePanelRef = useRef<PreviewPanel | null>(null);
   const previewPanelRef = useRef<HTMLDivElement>(null!);
+  /** 2-second cooldown after dropdown selection to prevent accidental panel switch */
+  const dropdownCooldownRef = useRef(false);
+  const dropdownCooldownTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  const handleDropdownSelect = useCallback(() => {
+    dropdownCooldownRef.current = true;
+    clearTimeout(dropdownCooldownTimerRef.current);
+    dropdownCooldownTimerRef.current = setTimeout(() => {
+      dropdownCooldownRef.current = false;
+    }, 2000);
+  }, []);
 
   // Keep activePanelRef in sync
   useEffect(() => {
@@ -4179,6 +4149,11 @@ export default function ProPromagenClient({
     clearTimeout(lingerRef.current);
 
     if (hovering) {
+      // During dropdown cooldown, block switching to a different panel
+      if (dropdownCooldownRef.current && activePanelRef.current && activePanelRef.current !== panel) {
+        return;
+      }
+
       // Same card — no action needed
       if (activePanelRef.current === panel) {
         clearTimeout(switchDebounceRef.current);
@@ -4585,6 +4560,7 @@ export default function ProPromagenClient({
           onFrameHover={setFrameHovered}
           onImageGenHover={setImageGenHovered}
           onIntelligenceHover={setIntelligenceHovered}
+          onDropdownSelect={handleDropdownSelect}
         />
       </div>
 
@@ -4602,7 +4578,7 @@ export default function ProPromagenClient({
       >
         {/* All preview panels rendered always — toggled via CSS display.
             This avoids the mount-on-hover spike (PromptLabPreviewPanel starts
-            5 timers + assemblePrompt + 42 icons on mount). With CSS toggle,
+            5 timers + assemblePrompt + 45 icons on mount). With CSS toggle,
             hover just flips display — zero React work, instant paint. */}
         <div style={{ display: activePanel === 'daily' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <DailyPromptsPreviewPanel />

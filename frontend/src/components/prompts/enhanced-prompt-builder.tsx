@@ -740,13 +740,46 @@ export default function EnhancedPromptBuilder({
     return generateAllTierPrompts(selections);
   }, [selections, hasContent]);
 
-  // Coherence score (simplified calculation)
+  // Coherence score — aligned with Prompt Lab DNA formula
+  // Core Identity: rewards Subject OR Environment OR Style (not just Subject)
+  // so landscapes, architecture, and abstract prompts aren't penalised.
   const coherenceScore = useMemo(() => {
     const filledCategories = Object.keys(selections).length;
-    const baseScore = Math.min(100, filledCategories * 8);
-    // Bonus for having subject and style
-    const hasCore = selections.subject?.length && selections.style?.length;
-    return hasCore ? Math.min(100, baseScore + 20) : baseScore;
+    if (filledCategories === 0) return 0;
+
+    let s = 0;
+
+    // Fill rate: each category = 2.92 points (35 max)
+    s += Math.round(filledCategories * 2.92);
+
+    // Core Identity — at least one anchor category present
+    const hasSubject = (selections.subject?.length ?? 0) > 0;
+    const hasEnvironment = (selections.environment?.length ?? 0) > 0;
+    const hasStyle = (selections.style?.length ?? 0) > 0;
+    if (hasSubject || hasEnvironment || hasStyle) s += 15;
+
+    // Style defined — visual language matters
+    if (hasStyle) s += 8;
+
+    // Triple anchor — all three core categories present
+    if (hasSubject && hasEnvironment && hasStyle) s += 7;
+
+    // Lighting present (quality)
+    if ((selections.lighting?.length ?? 0) > 0) s += 5;
+
+    // Fidelity present (quality boosters)
+    if ((selections.fidelity?.length ?? 0) > 0) s += 5;
+
+    // Camera or Composition (technical craft)
+    if ((selections.camera?.length ?? 0) > 0 || (selections.composition?.length ?? 0) > 0) s += 5;
+
+    // Depth bonus — any category with 3+ terms shows rich description
+    const hasDepth = Object.values(selections).some(
+      (terms) => terms && terms.length >= 3,
+    );
+    if (hasDepth) s += 7;
+
+    return Math.max(0, Math.min(100, s));
   }, [selections]);
 
   // Mock conflicts (would come from intelligence engine)

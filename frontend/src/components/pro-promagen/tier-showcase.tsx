@@ -105,7 +105,7 @@ export function TierShowcase() {
           className="text-xs text-white/40 tabular-nums"
           style={{ fontSize: 'clamp(0.55rem, 0.7vw, 0.65rem)' }}
         >
-          42 platforms × 93 cities × 4 tiers
+          45 platforms × 93 cities × 4 tiers
         </span>
       </div>
 

@@ -214,6 +214,7 @@ export interface FeatureControlPanelProps {
   onFrameHover?: (hovering: boolean) => void;
   onImageGenHover?: (hovering: boolean) => void;
   onIntelligenceHover?: (hovering: boolean) => void;
+  onDropdownSelect?: () => void;
 }
 
 export function FeatureControlPanel({
@@ -231,6 +232,7 @@ export function FeatureControlPanel({
   onFrameHover,
   onImageGenHover,
   onIntelligenceHover,
+  onDropdownSelect,
 }: FeatureControlPanelProps) {
   const { dailyUsage, anonymousUsage } = usePromagenAuth();
   const { allPrompts } = useSavedPrompts();
@@ -244,15 +246,6 @@ export function FeatureControlPanel({
   }, []);
 
   const tierLabel = TIER_LABELS[selectedPromptTier];
-
-  // Rotating stat for Prompt Intelligence card: 45 platforms ↔ 17 algorithms
-  const [intelligenceStat, setIntelligenceStat] = useState<'45' | '17'>('45');
-  React.useEffect(() => {
-    const id = setInterval(() => {
-      setIntelligenceStat((prev) => (prev === '45' ? '17' : '45'));
-    }, 3000);
-    return () => clearInterval(id);
-  }, []);
 
   return (
     <>
@@ -297,29 +290,50 @@ export function FeatureControlPanel({
           onHoverChange={onFormatHover}
           actionAlwaysColored={true}
         >
-          {/* Colour-coded tier dropdown — identical for free and paid */}
-          <select
-            value={selectedPromptTier}
-            onChange={(e) => {
-              e.stopPropagation();
-              const val = Number(e.target.value) as 1 | 2 | 3 | 4;
-              onPromptTierChange(val);
-            }}
-            onClick={(e) => e.stopPropagation()}
-            className="cursor-pointer rounded font-medium w-full"
-            style={{
-              fontSize: 'clamp(0.6rem, 0.6vw, 0.7rem)',
-              padding: 'clamp(2px, 0.2vw, 4px) clamp(4px, 0.4vw, 8px)',
-              background: 'rgba(15, 23, 42, 0.9)',
-              border: `1px solid ${hexToRgba(tierLabel?.color ?? '#60a5fa', 0.5)}`,
-              color: tierLabel?.color ?? '#60a5fa',
-              outline: 'none',
-            }}
-          >
-            {Object.entries(TIER_LABELS).map(([k, v]) => (
-              <option key={k} value={k}>{v.short}</option>
-            ))}
-          </select>
+          {isPaidUser ? (
+            <>
+              {/* Paid: colour-coded tier dropdown */}
+              <select
+                value={selectedPromptTier}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  const val = Number(e.target.value) as 1 | 2 | 3 | 4;
+                  onPromptTierChange(val);
+                  onDropdownSelect?.();
+                }}
+                onClick={(e) => e.stopPropagation()}
+                className="cursor-pointer rounded font-medium w-full"
+                style={{
+                  fontSize: 'clamp(0.6rem, 0.6vw, 0.7rem)',
+                  padding: 'clamp(2px, 0.2vw, 4px) clamp(4px, 0.4vw, 8px)',
+                  background: 'rgba(15, 23, 42, 0.9)',
+                  border: `1px solid ${hexToRgba(tierLabel?.color ?? '#60a5fa', 0.5)}`,
+                  color: tierLabel?.color ?? '#60a5fa',
+                  outline: 'none',
+                }}
+              >
+                {Object.entries(TIER_LABELS).map(([k, v]) => (
+                  <option key={k} value={k} style={{ color: v.color, background: '#0f172a' }}>{v.short}</option>
+                ))}
+              </select>
+            </>
+          ) : (
+            <>
+              {/* Unpaid: same pattern as every other feature card */}
+              <span
+                className="text-white"
+                style={{ fontSize: 'clamp(0.625rem, 0.55vw, 0.7rem)' }}
+              >
+                All current prompts are a spread
+              </span>
+              <span
+                className="font-medium"
+                style={{ color: '#60a5fa', fontSize: 'clamp(0.625rem, 0.6vw, 0.75rem)' }}
+              >
+                The choice of Prompt Text is yours
+              </span>
+            </>
+          )}
         </FeatureCard>
 
         {/* ── 🎬 Scene Starters ───────────────────────────── */}
@@ -402,7 +416,6 @@ export function FeatureControlPanel({
           actionLabel={isPaidUser ? 'Active' : 'Pro only'}
           isPro={isPaidUser}
           actionAlwaysColored={true}
-          stat={intelligenceStat}
           onHoverChange={onIntelligenceHover}
         >
           <span className="text-white" style={{ fontSize: 'clamp(0.625rem, 0.55vw, 0.7rem)' }}>

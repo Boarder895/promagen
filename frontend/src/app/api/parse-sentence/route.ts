@@ -31,27 +31,29 @@ const SYSTEM_PROMPT = `You are a prompt categorisation engine for AI image gener
 
 Given a natural English description of an image, extract terms into exactly these 12 categories. Return ONLY valid JSON with no preamble, no markdown, no explanation.
 
-Categories:
-- subject: The main subject(s) of the image (people, animals, objects)
-- action: What the subject is doing
-- style: Artistic style (e.g., cinematic, watercolour, anime, photorealistic)
-- environment: The setting or location
-- composition: Framing and layout (e.g., close-up, wide shot, rule of thirds)
-- camera: Lens and camera specifics (e.g., 35mm, telephoto, shallow depth of field)
-- lighting: Light source and quality (e.g., golden hour, neon, candlelight)
-- colour: Dominant colours or colour palette
-- atmosphere: Mood and atmospheric conditions (e.g., misty, peaceful, dramatic)
-- materials: Textures and surface qualities (e.g., glass, marble, wet concrete)
-- fidelity: Quality descriptors (e.g., highly detailed, 8K, masterpiece)
-- negative: Things to exclude from the image
+Categories (with examples of what belongs in each):
+- subject: The main focus of the image — people, animals, objects, landscapes, architecture, scenes, or abstract concepts. For landscape/cityscape prompts without a person, use the dominant visual element (e.g., "rolling hills", "neon skyline", "windswept meadow").
+- action: What the subject is doing or the scene's motion (e.g., "walking", "swaying in wind", "gently bowing", "cascading down").
+- style: Artistic style or rendering approach (e.g., "cinematic", "photorealistic", "watercolour", "professional photography").
+- environment: The setting, location, or backdrop (e.g., "urban alley", "Japanese garden", "open countryside", "sanctuary grounds").
+- composition: Framing, layout, and depth (e.g., "wide shot", "rule of thirds", "moderate depth of field", "foreground bokeh").
+- camera: Lens, camera model, and technical specs (e.g., "35mm lens", "Sony A7R V", "telephoto", "high angle").
+- lighting: Light source, direction, and quality (e.g., "golden hour", "diffused light", "high-angle light", "neon glow", "candlelight").
+- colour: Dominant colours, palette, or tonal character (e.g., "vibrant colours", "warm amber tones", "muted earth palette", "teal and orange").
+- atmosphere: Mood, weather effects, and atmospheric conditions (e.g., "misty", "dramatic", "humid summer night", "drifting fog").
+- materials: Textures, surfaces, and physical qualities (e.g., "wet gravel", "glistening paths", "glass", "marble", "long grass").
+- fidelity: Quality descriptors, resolution, and technical quality terms (e.g., "highly detailed", "8K", "sharp focus", "high resolution", "masterpiece", "intricate textures").
+- negative: Things to exclude (e.g., "no people", "no text", "no watermark"). Only populate if exclusions are mentioned.
 
 Rules:
-1. Extract only what is explicitly described or strongly implied. Do not invent.
-2. Use short phrases (1-4 words per term), not full sentences.
+1. Be thorough — extract everything described or strongly implied into the correct category. Aim to populate 10–12 categories for rich descriptions.
+2. Use short phrases (1–4 words per term), not full sentences. Break compound descriptions into separate terms.
 3. A category may have multiple terms — return as an array.
-4. If a category has no relevant content, return an empty array.
-5. Do not include fidelity or negative terms unless the user explicitly mentions quality or exclusions.
-6. Preserve the user's creative intent — do not reinterpret or "improve" their words.
+4. If a category genuinely has no relevant content, return an empty array.
+5. Camera specifications (lens, model, focal length, angle) go in "camera" — not composition. Depth of field and framing go in "composition".
+6. Quality terms like "sharp focus", "high resolution", "8K", "detailed" ALWAYS go in "fidelity". Do not skip these.
+7. Physical textures and surface materials (grass, gravel, water, concrete, fabric) go in "materials".
+8. Preserve the user's creative intent — do not reinterpret or "improve" their words.
 
 Return format:
 {
@@ -170,8 +172,8 @@ export async function POST(req: NextRequest): Promise<Response> {
       },
       body: JSON.stringify({
         model: 'gpt-4o-mini',
-        temperature: 0.1, // Low temperature for consistent extraction
-        max_tokens: 500,
+        temperature: 0.15, // Low temperature for consistent extraction, slight flex for creative terms
+        max_tokens: 700,
         response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
