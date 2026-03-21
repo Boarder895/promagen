@@ -219,7 +219,7 @@ export interface FeatureControlPanelProps {
 export function FeatureControlPanel({
   isPaidUser,
   selectedPromptTier,
-  onPromptTierChange: _onPromptTierChange,
+  onPromptTierChange,
   selectedExchangeCount,
   onOpenExchangePicker,
   onDailyHover,
@@ -294,36 +294,32 @@ export function FeatureControlPanel({
           proValue="Your choice"
           actionLabel={isPaidUser ? 'Active' : 'Pro only'}
           isPro={isPaidUser}
-          stat={isPaidUser ? (tierLabel?.short ?? 'T4') : ''}
           onHoverChange={onFormatHover}
           actionAlwaysColored={true}
         >
-          {isPaidUser ? (
-            <span
-              className="inline-flex items-center gap-1 rounded-full font-medium"
-              style={{
-                fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)',
-                padding: 'clamp(2px, 0.2vw, 3px) clamp(6px, 0.6vw, 10px)',
-                background: hexToRgba(tierLabel?.color ?? '#60a5fa', 0.2),
-                border: `1px solid ${hexToRgba(tierLabel?.color ?? '#60a5fa', 0.4)}`,
-                color: tierLabel?.color ?? '#60a5fa',
-              }}
-            >
-              <span
-                className="rounded-full"
-                style={{
-                  width: 'clamp(5px, 0.4vw, 6px)',
-                  height: 'clamp(5px, 0.4vw, 6px)',
-                  background: tierLabel?.color ?? '#60a5fa',
-                }}
-              />
-              {tierLabel?.short ?? 'T4 · Plain'}
-            </span>
-          ) : (
-            <span className="text-white" style={{ fontSize: 'clamp(0.625rem, 0.55vw, 0.7rem)' }}>
-              Varies by surface
-            </span>
-          )}
+          {/* Colour-coded tier dropdown — identical for free and paid */}
+          <select
+            value={selectedPromptTier}
+            onChange={(e) => {
+              e.stopPropagation();
+              const val = Number(e.target.value) as 1 | 2 | 3 | 4;
+              onPromptTierChange(val);
+            }}
+            onClick={(e) => e.stopPropagation()}
+            className="cursor-pointer rounded font-medium w-full"
+            style={{
+              fontSize: 'clamp(0.6rem, 0.6vw, 0.7rem)',
+              padding: 'clamp(2px, 0.2vw, 4px) clamp(4px, 0.4vw, 8px)',
+              background: 'rgba(15, 23, 42, 0.9)',
+              border: `1px solid ${hexToRgba(tierLabel?.color ?? '#60a5fa', 0.5)}`,
+              color: tierLabel?.color ?? '#60a5fa',
+              outline: 'none',
+            }}
+          >
+            {Object.entries(TIER_LABELS).map(([k, v]) => (
+              <option key={k} value={k}>{v.short}</option>
+            ))}
+          </select>
         </FeatureCard>
 
         {/* ── 🎬 Scene Starters ───────────────────────────── */}

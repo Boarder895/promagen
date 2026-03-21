@@ -415,130 +415,229 @@ function TierWindowCopyButton({ text }: { text: string }) {
   );
 }
 
-// ── TierWindow: Individual tier card with auto-scroll on prompt text ──────
+// ── TierWindow: Faithful copy of TooltipContent from weather-prompt-tooltip.tsx
+// Structure, classes, spacing all copied from the real tooltip.
+// Uses BlurredTierRow-style rows for "Other formats" (free users)
+// and ProTierSelector-style rows for paid users.
 function TierWindow({
   t,
   isActive,
-  isBlurred,
-  isFreeVisible,
   isPaidUser,
   onTierChange,
   promptText,
+  allPrompts,
 }: {
   t: typeof TIER_DISPLAY[number];
   isActive: boolean;
-  isBlurred: boolean;
-  isFreeVisible: boolean;
   isPaidUser: boolean;
   onTierChange?: (tier: 1 | 2 | 3 | 4) => void;
   promptText: string;
+  /** All 4 tier prompts so other-tier rows can show preview text */
+  allPrompts: Record<string, string>;
 }) {
   const { containerRef, contentRef, scrollDist } = useAutoScroll();
 
-  const goldHex = '#EAB308';
-  const useGoldGlow = isPaidUser && isActive;
-  const baseRgba = hexToRgbaPanel(t.color, isPaidUser ? (isActive ? 0.35 : 0.2) : (isFreeVisible ? 0.3 : 0.08));
-  const baseBorder = hexToRgbaPanel(t.color, isPaidUser ? (isActive ? 0.6 : 0.35) : (isFreeVisible ? 0.5 : 0.12));
-  const baseSoft = hexToRgbaPanel(t.color, isPaidUser ? (isActive ? 0.15 : 0.08) : (isFreeVisible ? 0.12 : 0.04));
-  const glowRgba = useGoldGlow ? hexToRgbaPanel(goldHex, 0.35) : baseRgba;
-  const glowBorder = useGoldGlow ? hexToRgbaPanel(goldHex, 0.65) : baseBorder;
-  const glowSoft = useGoldGlow ? hexToRgbaPanel(goldHex, 0.15) : baseSoft;
-  const shadow = (isActive && isPaidUser) || isFreeVisible
+  // Glow — identical to TooltipContent using tempColor
+  const glowRgba = hexToRgbaPanel(t.color, isActive ? 0.35 : 0.2);
+  const glowBorder = hexToRgbaPanel(t.color, isActive ? 0.6 : 0.35);
+  const glowSoft = hexToRgbaPanel(t.color, isActive ? 0.15 : 0.08);
+  const shadow = isActive
     ? `0 0 40px 8px ${glowRgba}, 0 0 80px 16px ${glowSoft}, inset 0 0 25px 3px ${glowRgba}`
     : `0 0 20px 4px ${glowRgba}, inset 0 0 15px 2px ${glowSoft}`;
 
+  // Other 3 tiers
+  const otherTiers = TIER_DISPLAY.filter((other) => other.tier !== t.tier);
+
   return (
     <div
-      role={isPaidUser ? 'button' : undefined}
-      tabIndex={isPaidUser ? 0 : undefined}
-      onClick={isPaidUser && onTierChange ? () => onTierChange(t.tier) : undefined}
-      onKeyDown={isPaidUser && onTierChange ? (e) => {
+      role="button"
+      tabIndex={0}
+      onClick={onTierChange ? () => onTierChange(t.tier) : undefined}
+      onKeyDown={onTierChange ? (e) => {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onTierChange(t.tier); }
       } : undefined}
-      className={`relative flex-1 rounded-xl overflow-hidden flex flex-col ${isPaidUser ? 'cursor-pointer' : ''}`}
+      className="relative flex-1 rounded-xl overflow-hidden flex flex-col cursor-pointer"
       style={{
+        // TooltipContent: rounded-xl px-6 py-4, rgba(15,23,42,0.97)
         background: 'rgba(15, 23, 42, 0.97)',
         border: `1px solid ${glowBorder}`,
         boxShadow: shadow,
-        padding: 'clamp(10px, 1vw, 16px)',
+        padding: 'clamp(10px, 1vw, 16px) clamp(14px, 1.4vw, 24px)',
         transition: 'box-shadow 200ms ease-out, border-color 200ms ease-out',
       }}
     >
+      {/* Ethereal glow — top radial (TooltipContent identical) */}
       <div className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden" style={{ background: `radial-gradient(ellipse at 50% 0%, ${glowRgba} 0%, transparent 70%)` }} />
+      {/* Bottom glow accent (TooltipContent identical) */}
       <div className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden" style={{ background: `radial-gradient(ellipse at 50% 100%, ${glowSoft} 0%, transparent 60%)` }} />
 
-      <div className="relative z-10 flex flex-col h-full" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <span className="font-semibold text-white" style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.9rem)', textShadow: `0 0 12px ${hexToRgbaPanel(t.color, 0.4)}` }}>
-            Image Prompt
+      {/* Content — TooltipContent uses: relative z-10 flex flex-col gap-3 */}
+      <div className="relative z-10 flex flex-col h-full" style={{ gap: 'clamp(8px, 0.8vw, 12px)' }}>
+
+        {/* Row 1: Tier identity in colour + Save + Copy */}
+        <div className="flex items-center justify-between gap-2">
+          <span
+            className="font-semibold"
+            style={{
+              fontSize: 'clamp(0.7rem, 0.8vw, 0.95rem)',
+              textShadow: `0 0 12px ${glowRgba}`,
+              color: t.color,
+            }}
+          >
+            Tier {t.tier}: {t.label}
           </span>
-          {!isBlurred && (
-            <div className="flex items-center gap-1">
-              <SaveIcon positivePrompt={promptText} platformId={t.platformId} platformName={t.platformName} source="tooltip" tier={t.tier} size="sm" />
-              <TierWindowCopyButton text={promptText} />
-            </div>
-          )}
+          <div className="flex items-center gap-1 shrink-0">
+            <SaveIcon positivePrompt={promptText} platformId={t.platformId} platformName={t.platformName} source="tooltip" tier={t.tier} size="sm" />
+            <TierWindowCopyButton text={promptText} />
+          </div>
         </div>
 
-        {/* Tier badge */}
-        <span
-          className={`inline-flex items-center self-start rounded-full font-medium ${t.bgClass} ring-1 ${t.ringClass}`}
-          style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.65rem)', padding: 'clamp(1px, 0.15vw, 3px) clamp(6px, 0.6vw, 10px)', gap: 'clamp(4px, 0.4vw, 6px)', color: t.color }}
-        >
-          <span className={`rounded-full ${t.dotClass}`} style={{ width: 'clamp(5px, 0.5vw, 7px)', height: 'clamp(5px, 0.5vw, 7px)' }} />
-          Tier {t.tier}: {t.label}
-        </span>
+        {/* Row 2: "Image Prompt" + PRO badge — TooltipContent header */}
+        <div className="flex items-center justify-between gap-2" style={{ marginBottom: 'clamp(1px, 0.1vw, 4px)' }}>
+          <div className="flex items-center gap-2">
+            <span
+              className="font-semibold text-white"
+              style={{
+                fontSize: 'clamp(0.75rem, 0.85vw, 1rem)',
+                textShadow: `0 0 12px ${glowRgba}`,
+              }}
+            >
+              Image Prompt
+            </span>
+            {isPaidUser && (
+              <span
+                className="font-medium rounded bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30"
+                style={{
+                  fontSize: 'clamp(0.55rem, 0.6vw, 0.75rem)',
+                  padding: 'clamp(1px, 0.15vw, 4px) clamp(4px, 0.4vw, 8px)',
+                }}
+              >
+                PRO
+              </span>
+            )}
+          </div>
+        </div>
 
-        {/* Auto-scrolling prompt text */}
+        {/* Row 3: Tier badge pill — TierBadge component copy */}
+        <div style={{ marginTop: 'clamp(-4px, -0.3vw, -2px)' }}>
+          <span
+            className={`inline-flex items-center gap-1.5 font-medium rounded-full ${t.bgClass} ring-1 ${t.ringClass}`}
+            style={{
+              fontSize: 'clamp(0.6rem, 0.7vw, 0.75rem)',
+              padding: 'clamp(1px, 0.15vw, 2px) clamp(5px, 0.5vw, 8px)',
+              color: t.color,
+            }}
+          >
+            <span className={`rounded-full ${t.dotClass}`} style={{ width: 'clamp(5px, 0.4vw, 6px)', height: 'clamp(5px, 0.4vw, 6px)' }} />
+            Tier {t.tier}: {t.label}
+          </span>
+        </div>
+
+        {/* Row 4: Prompt text — auto-scroll */}
         <div ref={containerRef} className="flex-1 min-h-0 overflow-hidden">
           <div
             ref={contentRef}
             className="pro-auto-scroll"
-            style={{ '--scroll-dist': `-${scrollDist}px`, animation: scrollDist > 0 && !isBlurred ? 'proAutoScroll 17s ease-in-out infinite' : 'none' } as React.CSSProperties}
+            style={{ '--scroll-dist': `-${scrollDist}px`, animation: scrollDist > 0 ? 'proAutoScroll 17s ease-in-out infinite' : 'none' } as React.CSSProperties}
           >
             <p
-              className={`leading-relaxed whitespace-pre-wrap break-words ${isBlurred ? 'text-white select-none' : 'text-white'}`}
-              style={{
-                fontSize: 'clamp(0.65rem, 0.7vw, 0.8rem)',
-                filter: isBlurred ? 'blur(4px)' : undefined,
-                WebkitFilter: isBlurred ? 'blur(4px)' : undefined,
-              }}
-              aria-hidden={isBlurred}
+              className="leading-relaxed whitespace-pre-wrap break-words text-slate-200"
+              style={{ fontSize: 'clamp(0.65rem, 0.75vw, 0.875rem)' }}
             >
               {promptText}
             </p>
           </div>
         </div>
 
-        {/* Lock icon overlay */}
-        {isBlurred && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-            <svg className="text-white" style={{ width: 'clamp(20px, 2vw, 28px)', height: 'clamp(20px, 2vw, 28px)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
-          </div>
-        )}
-
-        {/* Active indicator — gold crown for paid active tier */}
-        {isPaidUser && isActive && (
-          <div className="flex items-center self-start" style={{ gap: 'clamp(3px, 0.3vw, 5px)', marginTop: 'clamp(2px, 0.2vw, 4px)' }}>
-            <span style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.95rem)' }}>👑</span>
-            <span className="font-medium text-amber-400" style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)' }}>Active tier</span>
-          </div>
-        )}
-
-        {/* Upgrade CTA */}
-        {!isPaidUser && !isFreeVisible && (
-          <button
-            type="button"
-            className="mt-auto inline-flex items-center self-start gap-1 cursor-pointer"
-            style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)' }}
-            onClick={(e) => { e.stopPropagation(); document.querySelector('[data-upgrade-cta]')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }}
+        {/* Row 5: Other formats — full rows matching real tooltip BlurredTierRow */}
+        <div className="flex flex-col gap-1 pt-2 border-t border-white/[0.06]">
+          <span
+            className="text-slate-400 font-medium"
+            style={{ fontSize: 'clamp(0.55rem, 0.65vw, 0.7rem)', marginBottom: 'clamp(1px, 0.1vw, 2px)' }}
           >
-            <span className="text-amber-400 font-medium">🔓 Upgrade to unlock</span>
-          </button>
+            Other formats available
+          </span>
+          {otherTiers.map((other) => {
+            const otherPrompt = allPrompts[other.promptKey] ?? '';
+            return (
+              <button
+                key={other.tier}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onTierChange?.(other.tier);
+                }}
+                className={`flex items-center gap-2 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/[0.06] ${other.bgClass.replace('/15', '/5')}`}
+                style={{ padding: 'clamp(3px, 0.3vw, 6px) clamp(6px, 0.6vw, 10px)' }}
+              >
+                {/* Colour dot */}
+                <span className={`rounded-full ${other.dotClass} shrink-0`} style={{ width: 'clamp(5px, 0.4vw, 6px)', height: 'clamp(5px, 0.4vw, 6px)', opacity: 0.5 }} />
+                {/* Tier label */}
+                <span
+                  className="font-semibold shrink-0"
+                  style={{ color: other.color, opacity: 0.6, fontSize: 'clamp(0.55rem, 0.6vw, 0.7rem)' }}
+                >
+                  T{other.tier}
+                </span>
+                {/* Blurred preview text — same as real BlurredTierRow */}
+                <span
+                  className="flex-1 text-slate-400 truncate select-none"
+                  style={{
+                    filter: 'blur(4px)',
+                    WebkitFilter: 'blur(4px)',
+                    fontSize: 'clamp(0.55rem, 0.6vw, 0.7rem)',
+                  }}
+                  aria-hidden="true"
+                >
+                  {otherPrompt.slice(0, 80)}
+                </span>
+                {/* Lock icon — same as real tooltip */}
+                <svg
+                  className="text-slate-400 shrink-0"
+                  style={{ width: 'clamp(10px, 0.8vw, 12px)', height: 'clamp(10px, 0.8vw, 12px)' }}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              </button>
+            );
+          })}
+
+          {/* "Unlock all formats" CTA — free users only, <a> like real tooltip */}
+          {!isPaidUser && (
+            <a
+              href="/pro-promagen"
+              className="flex items-center justify-center gap-1.5 rounded-lg
+                bg-gradient-to-r from-amber-600/20 to-orange-600/20
+                ring-1 ring-amber-500/25
+                text-amber-400 font-medium cursor-pointer
+                hover:from-amber-600/30 hover:to-orange-600/30
+                transition-all duration-200 no-underline"
+              style={{
+                fontSize: 'clamp(0.55rem, 0.65vw, 0.75rem)',
+                padding: 'clamp(4px, 0.4vw, 6px) clamp(8px, 0.8vw, 12px)',
+                marginTop: 'clamp(2px, 0.2vw, 6px)',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <svg style={{ width: 'clamp(10px, 0.8vw, 12px)', height: 'clamp(10px, 0.8vw, 12px)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              Unlock all formats
+            </a>
+          )}
+        </div>
+
+        {/* Active indicator — gold crown */}
+        {isActive && (
+          <div className="flex items-center self-start" style={{ gap: 'clamp(3px, 0.3vw, 5px)' }}>
+            <span style={{ fontSize: 'clamp(0.65rem, 0.75vw, 0.9rem)' }}>👑</span>
+            <span className="font-medium text-amber-400" style={{ fontSize: 'clamp(0.55rem, 0.65vw, 0.7rem)' }}>Active tier</span>
+          </div>
         )}
       </div>
     </div>
@@ -556,19 +655,46 @@ function TierPreviewPanel({
 }) {
   const { data: potmData } = usePromptShowcase();
 
-  // Free users see Tier 3 (Natural Language) — the most universal format
-  const FREE_VISIBLE_TIER = 3;
+  // Active tier colour for dropdown styling
+  const activeTierData = TIER_DISPLAY.find((t) => t.tier === activeTier) ?? TIER_DISPLAY[0]!;
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <div style={{ padding: 'clamp(12px, 1.2vw, 20px) 0' }}>
+      {/* Header — explainer + dropdown */}
+      <div
+        className="flex items-center justify-between"
+        style={{ padding: 'clamp(10px, 1vw, 16px) 0' }}
+      >
         <p
-          className="italic text-amber-400/80 animate-pulse text-center font-semibold"
-          style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.95rem)' }}
+          className="italic text-amber-400/80 animate-pulse font-semibold"
+          style={{ fontSize: 'clamp(0.65rem, 0.75vw, 0.9rem)' }}
         >
-          Select the tier you require for all prompts
+          Pick a format — every prompt on Promagen follows your choice
         </p>
+        {/* Tier dropdown */}
+        <select
+          value={activeTier}
+          onChange={(e) => {
+            const val = Number(e.target.value) as 1 | 2 | 3 | 4;
+            onTierChange?.(val);
+          }}
+          className="cursor-pointer rounded-lg font-medium"
+          style={{
+            fontSize: 'clamp(0.6rem, 0.65vw, 0.75rem)',
+            padding: 'clamp(4px, 0.4vw, 6px) clamp(8px, 0.8vw, 14px)',
+            background: 'rgba(15, 23, 42, 0.9)',
+            border: `1px solid ${hexToRgbaPanel(activeTierData.color, 0.5)}`,
+            color: activeTierData.color,
+            outline: 'none',
+            flexShrink: 0,
+          }}
+        >
+          {TIER_DISPLAY.map((t) => (
+            <option key={t.tier} value={t.tier}>
+              T{t.tier} · {t.label}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* 4 tier windows — single horizontal row */}
@@ -578,52 +704,28 @@ function TierPreviewPanel({
       >
         {TIER_DISPLAY.map((t) => {
           const isActive = t.tier === activeTier;
-          const isFreeVisible = !isPaidUser && t.tier === FREE_VISIBLE_TIER;
-          const isBlurred = !isPaidUser && t.tier !== FREE_VISIBLE_TIER;
           const promptText = potmData?.prompts?.[t.promptKey] ?? FALLBACK_PROMPTS[t.promptKey]!;
+          // Build allPrompts so each window can show blurred previews of other tiers
+          const allPrompts: Record<string, string> = {};
+          for (const td of TIER_DISPLAY) {
+            allPrompts[td.promptKey] = potmData?.prompts?.[td.promptKey] ?? FALLBACK_PROMPTS[td.promptKey]!;
+          }
 
           return (
             <TierWindow
               key={t.tier}
               t={t}
               isActive={isActive}
-              isBlurred={isBlurred}
-              isFreeVisible={isFreeVisible}
               isPaidUser={isPaidUser}
               onTierChange={onTierChange}
               promptText={promptText}
+              allPrompts={allPrompts}
             />
           );
         })}
       </div>
 
-      {/* "Unlock all formats" CTA — free users only */}
-      {!isPaidUser && (
-        <div style={{ padding: 'clamp(8px, 0.8vw, 12px) 0 0' }}>
-          <button
-            type="button"
-            onClick={() => {
-              document.querySelector('[data-upgrade-cta]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }}
-            className="w-full flex items-center justify-center gap-1.5 rounded-lg
-              bg-gradient-to-r from-amber-600/20 to-orange-600/20
-              ring-1 ring-amber-500/25
-              text-amber-400 font-medium cursor-pointer
-              hover:from-amber-600/30 hover:to-orange-600/30
-              hover:ring-amber-400/40
-              transition-all duration-200"
-            style={{
-              fontSize: 'clamp(0.625rem, 0.75vw, 0.8rem)',
-              padding: 'clamp(6px, 0.6vw, 10px) clamp(12px, 1.2vw, 20px)',
-            }}
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-            Unlock all formats
-          </button>
-        </div>
-      )}
+      {/* "Unlock all formats" now lives inside each TierWindow */}
     </div>
   );
 }
