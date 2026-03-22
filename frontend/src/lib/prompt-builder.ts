@@ -373,12 +373,18 @@ function convertNegativesToPositives(negatives: string[]): {
   const withouts: string[] = [];
 
   for (const neg of negatives) {
-    const mapped = NEGATIVE_TO_POSITIVE[neg.toLowerCase()];
+    // Strip leading "no " — user terms like "no people" already carry the negation;
+    // the assembler adds its own prefix ("without X" or "--no X").
+    const cleaned = neg.replace(/^no\s+/i, '');
+    const lookupKey = cleaned.toLowerCase();
+
+    // Try mapping the cleaned term first, then the original
+    const mapped = NEGATIVE_TO_POSITIVE[lookupKey] ?? NEGATIVE_TO_POSITIVE[neg.toLowerCase()];
     if (mapped) {
       positives.push(mapped);
     } else {
-      // Custom/unknown term - use "without" phrasing
-      withouts.push(neg);
+      // Custom/unknown term - use "without" phrasing (already stripped of "no ")
+      withouts.push(cleaned);
     }
   }
 

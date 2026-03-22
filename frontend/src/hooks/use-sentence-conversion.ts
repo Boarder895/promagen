@@ -70,7 +70,10 @@ export function matchTermToVocabulary(term: string, category: PromptCategory): s
   }
 
   // 3. Levenshtein distance ≤ 3 (only for terms 5+ chars to avoid "art"→"cart")
-  if (termLower.length >= 5) {
+  // SKIP fuzzy matching if term contains a digit — numbers are precise specs
+  // (e.g., "90mm lens" must not fuzzy-match to "50mm lens" at distance 1)
+  const containsDigit = /\d/.test(termLower);
+  if (termLower.length >= 5 && !containsDigit) {
     const fuzzyMatch = options.find((opt) => {
       return levenshteinDistance(termLower, opt.toLowerCase()) <= 3;
     });

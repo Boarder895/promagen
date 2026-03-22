@@ -358,12 +358,16 @@ function generateTier2(selections: PromptSelections): string {
 }
 
 function generateTier2Negative(selections: PromptSelections): string {
-  const negatives = selections.negative.length > 0
+  const rawNegatives = selections.negative.length > 0
     ? selections.negative
     : ['blurry', 'low quality', 'bad anatomy', 'watermark', 'ugly', 'deformed', 'mutation', 'disfigured'];
   
+  // Strip leading "no " from user terms — --no already provides the negation
+  // "no people in background" → "people in background" → "--no people in background"
+  const cleaned = rawNegatives.map((t) => t.replace(/^no\s+/i, ''));
+  
   // Midjourney uses --no parameter
-  return `--no ${negatives.join(', ')}`;
+  return `--no ${cleaned.join(', ')}`;
 }
 
 // ============================================================================
