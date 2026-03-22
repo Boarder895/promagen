@@ -1,39 +1,39 @@
 // src/components/prompts/playground-workspace.tsx
 // ============================================================================
-// PLAYGROUND WORKSPACE - Client Component
+// PLAYGROUND WORKSPACE v3.0.0 — AI Disguise Orchestrator
 // ============================================================================
-// Wraps PromptBuilder with a provider selector dropdown.
-// Allows users to switch providers instantly and see how their prompt changes.
+// v3.0.0 (Mar 2026) — AI DISGUISE ORCHESTRATOR:
+// - Lifts useTierGeneration, useDriftDetection hooks HERE so state persists
+//   across provider ↔ no-provider component switches.
+// - Fires Call 2 (AI tier generation) in parallel with Call 1 (extraction).
+// - Auto-re-fires Call 2 when provider changes (if human text exists).
+// - Passes AI data + callbacks down to PromptBuilder and EnhancedEducationalPreview.
 //
-// Key difference from ProviderWorkspace:
-// - ProviderWorkspace: Provider pre-selected from URL, static header
-// - PlaygroundWorkspace: Provider selected via dropdown, dynamic header
-//
-// UPDATE v2.0.0 (Jan 2026):
+// v2.0.0 (Jan 2026):
 // - When no provider selected, show EnhancedEducationalPreview instead of
-//   EmptyState. This gives users a working prompt builder experience while
-//   they explore, with full 4-tier preview, intelligence panel, and vocabulary.
+//   EmptyState.
 //
-// FIX v1.2.0 (Jan 2026):
-// - Fixed TypeScript TS2345: check `name` for undefined directly instead of
-//   relying on array length check (TypeScript doesn't narrow array[0] after
-//   length > 0 check)
-//
-// FIX v1.1.0 (Jan 2026):
-// - Added custom sort to put numeric-prefixed names (like "123RF AI...") at the end
-// - Added singleColumn prop to Combobox for easier alphabetical scanning
-//
-// Authority: docs/authority/prompt-intelligence.md §9
+// Authority: ai-disguise.md §7, §11. prompt-intelligence.md §9
+// Existing features preserved: Yes.
 // ============================================================================
 
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import PromptBuilder from '@/components/providers/prompt-builder';
 import EnhancedEducationalPreview from '@/components/prompts/enhanced-educational-preview';
 import { Combobox } from '@/components/ui/combobox';
 import type { Provider } from '@/types/providers';
 import type { PromptBuilderProvider } from '@/components/providers/prompt-builder';
+
+// AI Disguise hooks (ai-disguise.md §5, Improvement 1)
+import { useTierGeneration } from '@/hooks/use-tier-generation';
+import type { TierGenerationProviderContext } from '@/hooks/use-tier-generation';
+import { useDriftDetection } from '@/hooks/use-drift-detection';
+
+// Platform data for building provider context
+import { getPlatformTierId } from '@/data/platform-tiers';
+import { getPlatformFormat } from '@/lib/prompt-builder';
 
 // ============================================================================
 // TYPES
@@ -50,9 +50,6 @@ export interface PlaygroundWorkspaceProps {
 // HELPERS
 // ============================================================================
 
-/**
- * Maps the canonical Provider type to the shape PromptBuilder expects.
- */
 function toPromptBuilderProvider(provider: Provider): PromptBuilderProvider {
   return {
     id: provider.id,
@@ -64,29 +61,41 @@ function toPromptBuilderProvider(provider: Provider): PromptBuilderProvider {
   };
 }
 
-/**
- * Custom sort comparator that:
- * 1. Puts numeric-prefixed names (like "123RF AI Image Generator") at the END
- * 2. Sorts everything else alphabetically
- *
- * This ensures:
- * - A-Z providers appear first in alphabetical order
- * - Numeric-prefixed names (which sort before 'A' in localeCompare) go last
- */
 function sortProvidersWithNumbersLast(a: string, b: string): number {
   const aStartsWithNumber = /^\d/.test(a);
   const bStartsWithNumber = /^\d/.test(b);
-
-  // If one starts with number and other doesn't, number goes last
   if (aStartsWithNumber && !bStartsWithNumber) return 1;
   if (!aStartsWithNumber && bStartsWithNumber) return -1;
-
-  // Otherwise, standard alphabetical sort
   return a.localeCompare(b);
 }
 
+/**
+ * Build Call 2 provider context from platform data files.
+ */
+function buildProviderContext(
+  providerId: string,
+  providerName: string,
+): TierGenerationProviderContext | null {
+  const tier = getPlatformTierId(providerId);
+  if (!tier) return null;
+
+  const format = getPlatformFormat(providerId);
+
+  return {
+    tier,
+    name: providerName,
+    promptStyle: format.promptStyle,
+    sweetSpot: format.sweetSpot ?? 100,
+    tokenLimit: format.tokenLimit ?? 200,
+    qualityPrefix: format.qualityPrefix,
+    weightingSyntax: format.weightingSyntax,
+    supportsWeighting: format.supportsWeighting,
+    negativeSupport: format.negativeSupport,
+  };
+}
+
 // ============================================================================
-// PROVIDER SELECTOR COMPONENT
+// PROVIDER SELECTOR COMPONENT (unchanged from v2.0.0)
 // ============================================================================
 
 interface ProviderSelectorProps {
@@ -96,59 +105,40 @@ interface ProviderSelectorProps {
 }
 
 function ProviderSelector({ providers, selectedId, onSelect }: ProviderSelectorProps) {
-  // Build name -> id lookup map
   const nameToId = useMemo(() => {
     const map = new Map<string, string>();
-    for (const p of providers) {
-      map.set(p.name, p.id);
-    }
+    for (const p of providers) map.set(p.name, p.id);
     return map;
   }, [providers]);
 
-  // Build id -> name lookup map
   const idToName = useMemo(() => {
     const map = new Map<string, string>();
-    for (const p of providers) {
-      map.set(p.id, p.name);
-    }
+    for (const p of providers) map.set(p.id, p.name);
     return map;
   }, [providers]);
 
-  // Options are provider names - custom sorted:
-  // - Alphabetical A-Z
-  // - Numeric-prefixed names (like "123RF") at the very end
-  const options = useMemo(() => {
-    return providers.map((p) => p.name).sort(sortProvidersWithNumbersLast);
-  }, [providers]);
+  const options = useMemo(
+    () => providers.map((p) => p.name).sort(sortProvidersWithNumbersLast),
+    [providers],
+  );
 
-  // Selected as array of names (single-select so max 1 item)
   const selected = useMemo(() => {
     if (!selectedId) return [];
     const name = idToName.get(selectedId);
     return name ? [name] : [];
   }, [selectedId, idToName]);
 
-  // Handle selection change - map name back to ID
-  // FIX: Access array element first, then check for undefined
-  // This satisfies TypeScript's type narrowing (TS2345)
   const handleSelectChange = useCallback(
     (selectedNames: string[]) => {
       const name = selectedNames[0];
-      // Guard: undefined check satisfies TypeScript
       if (name === undefined) return;
-
       const id = nameToId.get(name);
-      if (id !== undefined) {
-        onSelect(id);
-      }
+      if (id !== undefined) onSelect(id);
     },
     [nameToId, onSelect],
   );
 
-  // No-op for custom value (we don't allow free text for provider selection)
-  const handleCustomChange = useCallback(() => {
-    // Intentionally empty - no free text allowed
-  }, []);
+  const handleCustomChange = useCallback(() => {}, []);
 
   return (
     <div className="w-[220px]">
@@ -176,28 +166,98 @@ function ProviderSelector({ providers, selectedId, onSelect }: ProviderSelectorP
 // ============================================================================
 
 export default function PlaygroundWorkspace({ providers, onProviderChange }: PlaygroundWorkspaceProps) {
-  // Selected provider ID (null = none selected)
+  // ── Provider selection state ──────────────────────────────────────
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
 
-  // Handle provider selection — update state and notify parent
-  const handleProviderSelect = useCallback((providerId: string) => {
-    setSelectedProviderId(providerId);
-    onProviderChange?.(true);
-  }, [onProviderChange]);
+  // ── Human text tracking (persists across provider switches) ───────
+  const [humanText, setHumanText] = useState('');
 
-  // Find the selected provider object
+  // ── AI Disguise: Tier Generation (Call 2) ─────────────────────────
+  const {
+    aiTierPrompts,
+    isGenerating: isTierGenerating,
+    generatedForProvider,
+    generate: generateTiers,
+  } = useTierGeneration();
+
+  // ── AI Disguise: Drift Detection (Improvement 1) ──────────────────
+  const {
+    isDrifted,
+    changeCount: driftChangeCount,
+    markSynced: markDriftSynced,
+  } = useDriftDetection(humanText);
+
+  // Track previous provider for re-fire detection
+  const prevProviderIdRef = useRef<string | null>(null);
+
+  // ── Provider selection handler ────────────────────────────────────
+  const handleProviderSelect = useCallback(
+    (providerId: string) => {
+      setSelectedProviderId(providerId);
+      onProviderChange?.(true);
+    },
+    [onProviderChange],
+  );
+
+  // ── Auto-re-fire Call 2 when provider changes (ai-disguise.md §7) ──
+  useEffect(() => {
+    const prevId = prevProviderIdRef.current;
+    prevProviderIdRef.current = selectedProviderId;
+
+    // Only re-fire if provider actually changed AND human text exists
+    if (
+      prevId !== null &&
+      selectedProviderId !== null &&
+      selectedProviderId !== prevId &&
+      humanText.trim().length > 0
+    ) {
+      const provider = providers.find((p) => p.id === selectedProviderId);
+      if (provider) {
+        const ctx = buildProviderContext(selectedProviderId, provider.name);
+        generateTiers(humanText, selectedProviderId, ctx);
+      }
+    }
+  }, [selectedProviderId, humanText, providers, generateTiers]);
+
+  // ── Callback: DescribeYourImage text changes ──────────────────────
+  const handleDescribeTextChange = useCallback((text: string) => {
+    setHumanText(text);
+  }, []);
+
+  // ── Callback: DescribeYourImage "Generate Prompt" clicked ─────────
+  // Fires Call 2 in parallel with Call 1 (Call 1 fires inside DescribeYourImage)
+  const handleDescribeGenerate = useCallback(
+    (sentence: string) => {
+      const trimmed = sentence.trim();
+      if (!trimmed) return;
+
+      let ctx: TierGenerationProviderContext | null = null;
+      if (selectedProviderId) {
+        const provider = providers.find((p) => p.id === selectedProviderId);
+        if (provider) {
+          ctx = buildProviderContext(selectedProviderId, provider.name);
+        }
+      }
+
+      // Fire Call 2 in parallel
+      generateTiers(trimmed, selectedProviderId, ctx);
+      // Sync drift detection baseline
+      markDriftSynced(trimmed);
+    },
+    [selectedProviderId, providers, generateTiers, markDriftSynced],
+  );
+
+  // ── Derived state ─────────────────────────────────────────────────
   const selectedProvider = useMemo(() => {
     if (!selectedProviderId) return null;
     return providers.find((p) => p.id === selectedProviderId) ?? null;
   }, [providers, selectedProviderId]);
 
-  // Convert to PromptBuilder format
   const builderProvider = useMemo(() => {
     if (!selectedProvider) return null;
     return toPromptBuilderProvider(selectedProvider);
   }, [selectedProvider]);
 
-  // Provider selector element to pass to PromptBuilder
   const providerSelectorElement = useMemo(
     () => (
       <ProviderSelector
@@ -215,14 +275,28 @@ export default function PlaygroundWorkspace({ providers, onProviderChange }: Pla
         <PromptBuilder
           provider={builderProvider}
           providerSelector={providerSelectorElement}
-          // No key prop: state persists when switching providers
-          // The assembled prompt will re-compute with new provider's formatting
+          // AI Disguise callbacks (passed through to DescribeYourImage)
+          onDescribeTextChange={handleDescribeTextChange}
+          onDescribeGenerate={handleDescribeGenerate}
+          isDrifted={isDrifted}
+          driftChangeCount={driftChangeCount}
+          aiTierPrompts={aiTierPrompts}
+          isTierGenerating={isTierGenerating}
+          generatedForProvider={generatedForProvider}
         />
       ) : (
-        // v2.0.0: Show EnhancedEducationalPreview instead of EmptyState
-        // Users can build prompts and see 4-tier preview even without selecting a provider
-        // onProviderChange notifies parent for heroText only — does NOT set selectedProviderId
-        <EnhancedEducationalPreview providers={providers} onProviderChange={onProviderChange} />
+        <EnhancedEducationalPreview
+          providers={providers}
+          onProviderChange={onProviderChange}
+          // AI Disguise callbacks + tier data
+          onDescribeTextChange={handleDescribeTextChange}
+          onDescribeGenerate={handleDescribeGenerate}
+          isDrifted={isDrifted}
+          driftChangeCount={driftChangeCount}
+          aiTierPrompts={aiTierPrompts}
+          isTierGenerating={isTierGenerating}
+          generatedForProvider={generatedForProvider}
+        />
       )}
     </div>
   );

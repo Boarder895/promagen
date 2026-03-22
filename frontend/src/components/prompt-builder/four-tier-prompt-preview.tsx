@@ -58,6 +58,11 @@ interface FourTierPromptPreviewProps {
   isPro?: boolean;
   /** Pro Promagen: term → category lookup for colour coding */
   termIndex?: Map<string, PromptCategory>;
+  // ── AI Disguise (ai-disguise.md §7) ───────────────────────────────
+  /** Whether AI tier generation is in progress (shows shimmer overlay) */
+  isTierGenerating?: boolean;
+  /** Provider name the tiers were generated for (shows badge, null = generic) */
+  generatedForProvider?: string | null;
 }
 
 interface TierCardProps {
@@ -480,6 +485,8 @@ export function FourTierPromptPreview({
   platformId,
   isPro = false,
   termIndex,
+  isTierGenerating = false,
+  generatedForProvider = null,
 }: FourTierPromptPreviewProps) {
   const handleCopy = useCallback((tier: PlatformTier, text: string) => {
     onCopy?.(tier, text);
@@ -532,11 +539,41 @@ export function FourTierPromptPreview({
   
   // Multi-tier mode: show all 4 tiers (playground neutral mode)
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" style={{ position: 'relative' }}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
           🎯 4-Tier Prompt Variants
+          {/* AI Disguise: "Generated for X" badge (ai-disguise.md §7) */}
+          {generatedForProvider && !isTierGenerating && (
+            <span
+              style={{
+                fontSize: 'clamp(0.56rem, 0.58vw, 0.65rem)',
+                padding: 'clamp(1px, 0.15vw, 3px) clamp(6px, 0.5vw, 8px)',
+                borderRadius: 'clamp(3px, 0.3vw, 4px)',
+                border: '1px solid rgba(139, 92, 246, 0.3)',
+                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                color: '#C4B5FD',
+                fontWeight: 500,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Generated for {generatedForProvider}
+            </span>
+          )}
+          {/* Loading indicator during AI tier generation */}
+          {isTierGenerating && (
+            <span
+              style={{
+                fontSize: 'clamp(0.56rem, 0.58vw, 0.65rem)',
+                color: '#FBBF24',
+                fontWeight: 500,
+              }}
+              className="animate-pulse"
+            >
+              Generating...
+            </span>
+          )}
         </h3>
         <p className="text-xs text-slate-500">
           Same scene, different syntaxes

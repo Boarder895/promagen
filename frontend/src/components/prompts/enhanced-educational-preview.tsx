@@ -42,6 +42,9 @@ import { SaveIcon } from '@/components/prompts/library/save-icon';
 import { useSavedPrompts } from '@/hooks/use-saved-prompts';
 import { usePromptAnalysis } from '@/hooks/prompt-intelligence';
 import { usePromptOptimization } from '@/hooks/use-prompt-optimization';
+import { useAiOptimisation } from '@/hooks/use-ai-optimisation';
+import type { OptimisationProviderContext } from '@/hooks/use-ai-optimisation';
+import { AlgorithmCycling } from '@/components/prompt-lab/algorithm-cycling';
 import { useFeedbackMemory } from '@/hooks/use-feedback-memory';
 import FeedbackInvitation from '@/components/ux/feedback-invitation';
 import FeedbackMemoryBanner from '@/components/ux/feedback-memory-banner';
@@ -56,6 +59,7 @@ import {
   assemblePrompt,
   assembleStatic,
   formatPromptForCopy,
+  getPlatformFormat,
 } from '@/lib/prompt-builder';
 import { assembleCompositionPack } from '@/lib/composition-engine';
 import { postProcessAssembled } from '@/lib/prompt-post-process';
@@ -89,6 +93,8 @@ import {
 } from '@/types/prompt-intelligence';
 import type { CategoryState } from '@/types/prompt-builder';
 import type { Provider } from '@/types/providers';
+import { getPlatformTierId } from '@/data/platform-tiers';
+import { getPromptLimit } from '@/lib/prompt-trimmer';
 
 // ============================================================================
 // TYPES
@@ -98,6 +104,21 @@ export interface EnhancedEducationalPreviewProps {
   providers: Provider[];
   /** Notify parent when provider selection changes (for Listen text only — does NOT trigger view switch) */
   onProviderChange?: (hasProvider: boolean) => void;
+  // ── AI Disguise pass-through (lifted from playground-workspace) ────
+  /** Called on every "Describe Your Image" textarea change */
+  onDescribeTextChange?: (text: string) => void;
+  /** Called when "Generate Prompt" clicked — fires Call 2 in parallel */
+  onDescribeGenerate?: (sentence: string) => void;
+  /** Whether the current text has drifted from last generation */
+  isDrifted?: boolean;
+  /** Number of word-level changes detected */
+  driftChangeCount?: number;
+  /** AI-generated tier prompts (overrides template tiers in 4-tier preview) */
+  aiTierPrompts?: GeneratedPrompts | null;
+  /** Whether AI tier generation is in progress */
+  isTierGenerating?: boolean;
+  /** Provider name the AI tiers were generated for */
+  generatedForProvider?: string | null;
 }
 
 // ============================================================================
@@ -784,6 +805,14 @@ function LabCategoryColourLegend({ isPro }: { isPro: boolean }) {
 export default function EnhancedEducationalPreview({
   providers,
   onProviderChange: _onProviderChange,
+  // AI Disguise pass-through (from playground-workspace orchestrator)
+  onDescribeTextChange,
+  onDescribeGenerate,
+  isDrifted,
+  driftChangeCount,
+  aiTierPrompts,
+  isTierGenerating,
+  generatedForProvider,
 }: EnhancedEducationalPreviewProps) {
   // State
   const [selections, setSelections] = useState<PromptSelections>(EMPTY_SELECTIONS);
@@ -1104,6 +1133,69 @@ export default function EnhancedEducationalPreview({
       }
     : optimizerTooltipContent;
 
+  // ============================================================================
+  // AI Disguise: Call 3 — AI Prompt Optimisation (ai-disguise.md §6)
+  // ============================================================================
+  // When optimizer is toggled ON with a provider selected, fires Call 3.
+  // AlgorithmCycling animation plays during the API call (§3 Anticipatory Dopamine).
+  // Client-side optimizer still runs for the length indicator bar.
+  // AI result overrides client-side result in display when available.
+
+  const {
+    result: aiOptimiseResult,
+    isOptimising: isAiOptimising,
+    animationPhase,
+    currentAlgorithm,
+    algorithmCount,
+    optimise: aiOptimise,
+    clear: clearAiOptimise,
+  } = useAiOptimisation();
+
+  // Build OptimisationProviderContext from platform data
+  const aiOptimiseContext = useMemo((): OptimisationProviderContext | null => {
+    if (!selectedProviderId) return null;
+    const tier = getPlatformTierId(selectedProviderId);
+    if (!tier) return null;
+    const format = getPlatformFormat(selectedProviderId);
+    const limits = getPromptLimit(selectedProviderId);
+    return {
+      name: selectedProvider?.name ?? selectedProviderId,
+      tier,
+      promptStyle: format.promptStyle,
+      sweetSpot: format.sweetSpot ?? 100,
+      tokenLimit: format.tokenLimit ?? 200,
+      maxChars: limits.maxChars,
+      idealMin: limits.idealMin,
+      idealMax: limits.idealMax,
+      qualityPrefix: format.qualityPrefix,
+      weightingSyntax: format.weightingSyntax,
+      supportsWeighting: format.supportsWeighting,
+      negativeSupport: format.negativeSupport,
+      categoryOrder: format.categoryOrder,
+    };
+  }, [selectedProviderId, selectedProvider?.name]);
+
+  // Fire Call 3 when optimizer toggled ON + provider selected + has content
+  const prevOptimizerEnabledRef = useRef(false);
+  useEffect(() => {
+    const wasEnabled = prevOptimizerEnabledRef.current;
+    prevOptimizerEnabledRef.current = isOptimizerEnabled;
+
+    if (isOptimizerEnabled && !wasEnabled && selectedProviderId && activeTierPromptText && aiOptimiseContext) {
+      aiOptimise(activeTierPromptText, selectedProviderId, aiOptimiseContext);
+    }
+    if (!isOptimizerEnabled && wasEnabled) {
+      clearAiOptimise();
+    }
+  }, [isOptimizerEnabled, selectedProviderId, activeTierPromptText, aiOptimiseContext, aiOptimise, clearAiOptimise]);
+
+  // Effective optimised values: AI result takes priority over client-side
+  const effectiveOptimisedText = aiOptimiseResult?.optimised ?? optimizedResult.optimized;
+  const effectiveOptimisedLength = aiOptimiseResult?.charCount ?? optimizedResult.optimizedLength;
+  const effectiveWasOptimized = aiOptimiseResult
+    ? effectiveOptimisedLength < optimizedResult.originalLength
+    : wasOptimized;
+
   // Suggested save name
   const suggestedSaveName = useMemo(() => {
     const subject = selections.subject[0];
@@ -1192,8 +1284,8 @@ export default function EnhancedEducationalPreview({
   // Handle copy — uses optimized text when optimizer is on, otherwise activeTierPromptText
   // Also stores feedback pending data for post-copy feedback invitation
   const handleCopy = useCallback(async () => {
-    const text = isOptimizerEnabled && wasOptimized
-      ? optimizedResult.optimized
+    const text = isOptimizerEnabled && effectiveWasOptimized
+      ? effectiveOptimisedText
       : activeTierPromptText;
     if (text) {
       await navigator.clipboard.writeText(text);
@@ -1213,17 +1305,18 @@ export default function EnhancedEducationalPreview({
         setFeedbackPending(pending);
       }
     }
-  }, [activeTierPromptText, isOptimizerEnabled, wasOptimized, optimizedResult, selectedProviderId, activeTier]);
+  }, [activeTierPromptText, isOptimizerEnabled, effectiveWasOptimized, effectiveOptimisedText, selectedProviderId, activeTier]);
 
   // Inline copy: Optimized prompt box (matches standard builder pattern)
   const handleCopyOptimized = useCallback(async () => {
-    if (optimizedResult.optimized) {
-      await navigator.clipboard.writeText(optimizedResult.optimized);
+    const textToCopy = effectiveOptimisedText;
+    if (textToCopy) {
+      await navigator.clipboard.writeText(textToCopy);
       setCopiedOptimized(true);
       incrementLifetimePrompts();
       setTimeout(() => setCopiedOptimized(false), 2000);
     }
-  }, [optimizedResult]);
+  }, [effectiveOptimisedText]);
 
   // Inline copy: Assembled prompt box
   const handleCopyAssembled = useCallback(async () => {
@@ -1352,6 +1445,10 @@ export default function EnhancedEducationalPreview({
           categoryState={categoryStateForScene}
           setCategoryState={setCategoryStateAdapter}
           isLocked={false}
+          onTextChange={onDescribeTextChange}
+          onGenerate={onDescribeGenerate}
+          isDrifted={isDrifted}
+          driftChangeCount={driftChangeCount}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -1500,7 +1597,7 @@ export default function EnhancedEducationalPreview({
                 {/* Header row: dynamic label + stage badge + char count */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    {isOptimizerEnabled && selectedProviderId && !wasOptimized ? (
+                    {isOptimizerEnabled && selectedProviderId && !effectiveWasOptimized ? (
                       /* Optimizer ON but no trimming needed → this IS the optimized output */
                       <span className="text-xs font-medium text-emerald-300 flex items-center gap-1.5">
                         Optimized prompt
@@ -1526,22 +1623,22 @@ export default function EnhancedEducationalPreview({
                     <StageBadge
                       compositionMode={compositionMode}
                       isOptimizerEnabled={isOptimizerEnabled && !!selectedProviderId}
-                      wasOptimized={wasOptimized}
+                      wasOptimized={effectiveWasOptimized}
                     />
                   </div>
-                  <span className={`text-xs tabular-nums ${isOptimizerEnabled && selectedProviderId && !wasOptimized ? 'text-emerald-400/70' : 'text-slate-200'}`}>
+                  <span className={`text-xs tabular-nums ${isOptimizerEnabled && selectedProviderId && !effectiveWasOptimized ? 'text-emerald-400/70' : 'text-slate-200'}`}>
                     {activeTierPromptText.length} chars
                   </span>
                 </div>
 
                 {/* Full-length prompt text box — border shifts emerald only when this IS the optimized output */}
                 <div className={`min-h-[80px] max-h-[200px] overflow-y-auto rounded-xl border p-3 text-sm scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30 ${
-                  isOptimizerEnabled && selectedProviderId && !wasOptimized
+                  isOptimizerEnabled && selectedProviderId && !effectiveWasOptimized
                     ? 'border-emerald-600/50 bg-emerald-950/20'
                     : 'border-slate-600 bg-slate-950/80'
                 }`}>
                   <pre className={`whitespace-pre-wrap font-sans text-[0.8rem] leading-relaxed ${
-                    isOptimizerEnabled && selectedProviderId && !wasOptimized ? 'text-emerald-100' : 'text-slate-100'
+                    isOptimizerEnabled && selectedProviderId && !effectiveWasOptimized ? 'text-emerald-100' : 'text-slate-100'
                   }`}>
                     {isPro && colourTermIndex.size > 0
                       ? (() => {
@@ -1602,7 +1699,7 @@ export default function EnhancedEducationalPreview({
             {/* 4-Tier Prompt Preview */}
             <div className="rounded-xl bg-slate-900/80 border border-white/10 p-4">
               <FourTierPromptPreview
-                prompts={generatedPrompts}
+                prompts={aiTierPrompts ?? generatedPrompts}
                 currentTier={activeTier}
                 onTierSelect={handleTierSelect}
                 compact={false}
@@ -1610,6 +1707,8 @@ export default function EnhancedEducationalPreview({
                 singleTierMode={singleTierMode}
                 isPro={isPro}
                 termIndex={colourTermIndex}
+                isTierGenerating={isTierGenerating}
+                generatedForProvider={generatedForProvider}
               />
             </div>
 
@@ -1626,26 +1725,48 @@ export default function EnhancedEducationalPreview({
                 <LengthIndicator
                   analysis={optimizerAnalysis}
                   isOptimizerEnabled={isOptimizerEnabled}
-                  optimizedLength={isOptimizerEnabled ? optimizedResult.optimizedLength : undefined}
-                  willTrim={isOptimizerEnabled && wasOptimized}
+                  optimizedLength={isOptimizerEnabled ? effectiveOptimisedLength : undefined}
+                  willTrim={isOptimizerEnabled && effectiveWasOptimized}
                   compact
                 />
 
-                {/* Optimization result — shows when optimizer trims */}
-                {isOptimizerEnabled && wasOptimized && (
+                {/* AI Disguise: Algorithm cycling animation (§3 Anticipatory Dopamine) */}
+                {/* Shows during Call 3 processing. Amber→emerald colour shift.          */}
+                {isAiOptimising && (
+                  <AlgorithmCycling
+                    animationPhase={animationPhase}
+                    currentAlgorithm={currentAlgorithm}
+                    algorithmCount={algorithmCount}
+                  />
+                )}
+
+                {/* Optimization result — shows when optimizer produces changes (hidden during AI cycling) */}
+                {isOptimizerEnabled && effectiveWasOptimized && !isAiOptimising && (
                   <>
                     <div className="rounded-lg border border-amber-900/50 bg-amber-950/30 px-3 py-2">
                       <div className="flex items-center gap-2">
                         <span className="text-amber-400">↓</span>
                         <span className="text-xs text-amber-200">
                           <span className="font-medium">Optimized:</span>{' '}
-                          {optimizedResult.originalLength} → {optimizedResult.optimizedLength} chars{' '}
+                          {optimizedResult.originalLength} → {effectiveOptimisedLength} chars{' '}
                           <span className="text-amber-400/60">
-                            (saved {optimizedResult.originalLength - optimizedResult.optimizedLength})
+                            (saved {optimizedResult.originalLength - effectiveOptimisedLength})
                           </span>
                         </span>
                       </div>
-                      {optimizedResult.removedTermNames && optimizedResult.removedTermNames.length > 0 && (
+                      {/* Show AI changes OR client-side removed terms */}
+                      {aiOptimiseResult?.changes && aiOptimiseResult.changes.length > 0 ? (
+                        <div className="mt-1.5 flex flex-wrap gap-1">
+                          {aiOptimiseResult.changes.map((change, i) => (
+                            <span
+                              key={i}
+                              className="inline-flex items-center rounded-md bg-emerald-900/30 px-1.5 py-0.5 text-xs text-emerald-300"
+                            >
+                              ✓ {change}
+                            </span>
+                          ))}
+                        </div>
+                      ) : optimizedResult.removedTermNames && optimizedResult.removedTermNames.length > 0 ? (
                         <div className="mt-1.5 flex flex-wrap gap-1">
                           {optimizedResult.removedTermNames.map((name, i) => (
                             <span
@@ -1656,17 +1777,19 @@ export default function EnhancedEducationalPreview({
                             </span>
                           ))}
                         </div>
-                      )}
+                      ) : null}
                     </div>
 
-                    {/* Transparency Panel — shows which phase achieved the target */}
-                    <OptimizationTransparencyPanel
-                      removedTerms={optimizedResult.removedTerms ?? []}
-                      achievedAtPhase={optimizedResult.achievedAtPhase ?? -1}
-                      originalLength={optimizedResult.originalLength}
-                      optimizedLength={optimizedResult.optimizedLength}
-                      isPro={isPro}
-                    />
+                    {/* Transparency Panel — shows which phase achieved the target (client-side only) */}
+                    {!aiOptimiseResult && (
+                      <OptimizationTransparencyPanel
+                        removedTerms={optimizedResult.removedTerms ?? []}
+                        achievedAtPhase={optimizedResult.achievedAtPhase ?? -1}
+                        originalLength={optimizedResult.originalLength}
+                        optimizedLength={optimizedResult.optimizedLength}
+                        isPro={isPro}
+                      />
+                    )}
 
                     {/* Optimized prompt preview */}
                     <div className="space-y-1">
@@ -1689,16 +1812,16 @@ export default function EnhancedEducationalPreview({
                           )}
                         </span>
                         <span className="text-xs text-emerald-400/70 tabular-nums">
-                          {optimizedResult.optimizedLength} chars
+                          {effectiveOptimisedLength} chars
                         </span>
                       </div>
                       <div className="min-h-[60px] max-h-[150px] overflow-y-auto rounded-xl border border-emerald-600/50 bg-emerald-950/20 p-3 text-sm scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30">
                         <pre className="whitespace-pre-wrap font-sans text-[0.8rem] leading-relaxed text-emerald-100">
                           {isPro && colourTermIndex.size > 0
                             ? (() => {
-                                const segments = parsePromptIntoSegments(optimizedResult.optimized, colourTermIndex);
+                                const segments = parsePromptIntoSegments(effectiveOptimisedText, colourTermIndex);
                                 const hasAnatomy = segments.some((s) => s.category !== 'structural');
-                                if (!hasAnatomy) return optimizedResult.optimized;
+                                if (!hasAnatomy) return effectiveOptimisedText;
                                 return segments.map((seg, i) => {
                                   const c = CATEGORY_COLOURS[seg.category] ?? CATEGORY_COLOURS.structural;
                                   return (
@@ -1708,13 +1831,13 @@ export default function EnhancedEducationalPreview({
                                   );
                                 });
                               })()
-                            : optimizedResult.optimized
+                            : effectiveOptimisedText
                           }
                           {/* Inline copy + save icons — flows after last character, floats right */}
                           <span className="ml-1 inline-flex float-right gap-1">
                             <SaveIcon
                               positivePrompt={activeTierPromptText}
-                              optimisedPrompt={optimizedResult.optimized}
+                              optimisedPrompt={effectiveOptimisedText}
                               isOptimised={true}
                               platformId={selectedProviderId ?? 'playground'}
                               platformName={selectedProvider?.name ?? 'Playground'}
@@ -1752,14 +1875,14 @@ export default function EnhancedEducationalPreview({
                 )}
 
                 {/* Within optimal range — shows when optimizer ON but no trimming needed */}
-                {isOptimizerEnabled && !wasOptimized && selectedProviderId && (
+                {isOptimizerEnabled && !effectiveWasOptimized && selectedProviderId && !isAiOptimising && (
                   <div className="rounded-lg border border-emerald-900/50 bg-emerald-950/30 px-3 py-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="text-emerald-400">✓</span>
                         <span className="text-xs text-emerald-200">
                           <span className="font-medium">Within optimal range</span> —{' '}
-                          {optimizedResult.optimizedLength} chars
+                          {effectiveOptimisedLength} chars
                         </span>
                       </div>
                       <span style={{ fontSize: 'clamp(10px, 0.65vw, 11px)' }} className="text-emerald-400/70">No trimming needed</span>
@@ -1847,7 +1970,7 @@ export default function EnhancedEducationalPreview({
                     d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
                   />
                 </svg>
-                {isOptimizerEnabled && wasOptimized ? 'Copy optimized prompt' : 'Copy prompt'}
+                {isOptimizerEnabled && effectiveWasOptimized ? 'Copy optimized prompt' : 'Copy prompt'}
               </>
             )}
           </button>

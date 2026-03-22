@@ -212,6 +212,21 @@ export interface PromptBuilderProps {
   onDone?: () => void;
   /** Optional: Custom element to replace the static provider title (e.g., dropdown selector) */
   providerSelector?: React.ReactNode;
+  // ── AI Disguise pass-through (lifted from playground-workspace) ────
+  /** Called on every "Describe Your Image" textarea change */
+  onDescribeTextChange?: (text: string) => void;
+  /** Called when "Generate Prompt" clicked — fires Call 2 in parallel */
+  onDescribeGenerate?: (sentence: string) => void;
+  /** Whether the current text has drifted from last generation */
+  isDrifted?: boolean;
+  /** Number of word-level changes detected */
+  driftChangeCount?: number;
+  /** AI-generated tier prompts (overrides template tiers in 4-tier preview) */
+  aiTierPrompts?: import('@/types/prompt-intelligence').GeneratedPrompts | null;
+  /** Whether AI tier generation is in progress */
+  isTierGenerating?: boolean;
+  /** Provider name the AI tiers were generated for */
+  generatedForProvider?: string | null;
 }
 
 // Platforms that use --no inline for negatives
@@ -929,6 +944,14 @@ export function PromptBuilder({
   provider,
   onDone,
   providerSelector,
+  // AI Disguise pass-through (from playground-workspace orchestrator)
+  onDescribeTextChange,
+  onDescribeGenerate,
+  isDrifted,
+  driftChangeCount,
+  aiTierPrompts: _aiTierPrompts,
+  isTierGenerating: _isTierGenerating,
+  generatedForProvider: _generatedForProvider,
 }: PromptBuilderProps) {
   // ============================================================================
   // Platform ID (computed first for hook dependency)
@@ -2689,6 +2712,10 @@ export function PromptBuilder({
               categoryState={categoryState}
               setCategoryState={setCategoryState}
               isLocked={isLocked}
+              onTextChange={onDescribeTextChange}
+              onGenerate={onDescribeGenerate}
+              isDrifted={isDrifted}
+              driftChangeCount={driftChangeCount}
             />
           )}
 

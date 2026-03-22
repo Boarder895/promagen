@@ -185,9 +185,9 @@ describe('POST /api/parse-sentence', () => {
     const fetchFn = global.fetch as jest.Mock;
     expect(fetchFn).toHaveBeenCalledTimes(1);
     const body = JSON.parse(fetchFn.mock.calls[0][1].body as string);
-    expect(body.model).toBe('gpt-4o-mini');
+    expect(body.model).toBe('gpt-5.4-mini');
     expect(body.response_format).toEqual({ type: 'json_object' });
-    expect(body.temperature).toBe(0.1);
+    expect(body.temperature).toBe(0.15);
   });
 
   it('system prompt is hardcoded, never from user input', async () => {

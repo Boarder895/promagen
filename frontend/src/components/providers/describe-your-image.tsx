@@ -31,6 +31,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import type { PromptCategory, CategoryState } from '@/types/prompt-builder';
 import { useSentenceConversion } from '@/hooks/use-sentence-conversion';
+import { DriftIndicator } from '@/components/prompt-lab/drift-indicator';
 
 // ============================================================================
 // CONSTANTS
@@ -89,6 +90,15 @@ export interface DescribeYourImageProps {
   setCategoryState: React.Dispatch<React.SetStateAction<Record<PromptCategory, CategoryState>>>;
   /** Whether the prompt builder is locked (at usage limit) */
   isLocked: boolean;
+  // ── AI Disguise callbacks (lifted to playground-workspace) ─────────
+  /** Called on every textarea change so orchestrator can track human text */
+  onTextChange?: (text: string) => void;
+  /** Called when "Generate Prompt" succeeds — fires Call 2 in parallel */
+  onGenerate?: (sentence: string) => void;
+  /** Whether the current text has drifted from last generation */
+  isDrifted?: boolean;
+  /** Number of word-level changes detected since last generation */
+  driftChangeCount?: number;
 }
 
 // ============================================================================
@@ -153,6 +163,10 @@ export function DescribeYourImage({
   categoryState: _categoryState,
   setCategoryState,
   isLocked,
+  onTextChange,
+  onGenerate,
+  isDrifted = false,
+  driftChangeCount = 0,
 }: DescribeYourImageProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [inputText, setInputText] = useState('');
@@ -188,9 +202,12 @@ export function DescribeYourImage({
   const handleGenerate = useCallback(async () => {
     if (!inputText.trim() || isLoading) return;
     setHasGenerated(false);
+    // Fire Call 2 in parallel via orchestrator callback (ai-disguise.md §5)
+    onGenerate?.(inputText);
+    // Fire Call 1 (category extraction — existing)
     await convert(inputText);
     setHasGenerated(true);
-  }, [inputText, isLoading, convert]);
+  }, [inputText, isLoading, convert, onGenerate]);
 
   // ── Apply parsed categories to builder state ──────────────────────
   useEffect(() => {
@@ -367,6 +384,7 @@ export function DescribeYourImage({
                 onChange={(e) => {
                   if (e.target.value.length <= MAX_CHARS) {
                     setInputText(e.target.value);
+                    onTextChange?.(e.target.value);
                   }
                 }}
                 onKeyDown={handleKeyDown}
@@ -525,6 +543,14 @@ export function DescribeYourImage({
                   >
                     Ctrl+Enter
                   </span>
+                )}
+
+                {/* Drift indicator — §4 Zeigarnik Effect: nags user to regenerate */}
+                {!isLoading && hasGenerated && (
+                  <DriftIndicator
+                    isDrifted={isDrifted}
+                    changeCount={driftChangeCount}
+                  />
                 )}
               </div>
 
