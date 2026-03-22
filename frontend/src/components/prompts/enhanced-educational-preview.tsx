@@ -1500,7 +1500,8 @@ export default function EnhancedEducationalPreview({
                 {/* Header row: dynamic label + stage badge + char count */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    {isOptimizerEnabled && selectedProviderId ? (
+                    {isOptimizerEnabled && selectedProviderId && !wasOptimized ? (
+                      /* Optimizer ON but no trimming needed → this IS the optimized output */
                       <span className="text-xs font-medium text-emerald-300 flex items-center gap-1.5">
                         Optimized prompt
                         {selectedProvider && (
@@ -1519,6 +1520,7 @@ export default function EnhancedEducationalPreview({
                         )}
                       </span>
                     ) : (
+                      /* Optimizer OFF, or optimizer ON but trimming occurred (bottom box has the optimized version) */
                       <span className="text-xs font-medium text-white">Assembled prompt</span>
                     )}
                     <StageBadge
@@ -1527,19 +1529,19 @@ export default function EnhancedEducationalPreview({
                       wasOptimized={wasOptimized}
                     />
                   </div>
-                  <span className={`text-xs tabular-nums ${isOptimizerEnabled && selectedProviderId ? 'text-emerald-400/70' : 'text-slate-200'}`}>
+                  <span className={`text-xs tabular-nums ${isOptimizerEnabled && selectedProviderId && !wasOptimized ? 'text-emerald-400/70' : 'text-slate-200'}`}>
                     {activeTierPromptText.length} chars
                   </span>
                 </div>
 
-                {/* Full-length prompt text box — border shifts emerald when optimized */}
+                {/* Full-length prompt text box — border shifts emerald only when this IS the optimized output */}
                 <div className={`min-h-[80px] max-h-[200px] overflow-y-auto rounded-xl border p-3 text-sm scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30 ${
-                  isOptimizerEnabled && selectedProviderId
+                  isOptimizerEnabled && selectedProviderId && !wasOptimized
                     ? 'border-emerald-600/50 bg-emerald-950/20'
                     : 'border-slate-600 bg-slate-950/80'
                 }`}>
                   <pre className={`whitespace-pre-wrap font-sans text-[0.8rem] leading-relaxed ${
-                    isOptimizerEnabled && selectedProviderId ? 'text-emerald-100' : 'text-slate-100'
+                    isOptimizerEnabled && selectedProviderId && !wasOptimized ? 'text-emerald-100' : 'text-slate-100'
                   }`}>
                     {isPro && colourTermIndex.size > 0
                       ? (() => {

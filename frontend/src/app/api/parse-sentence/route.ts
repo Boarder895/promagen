@@ -173,7 +173,7 @@ export async function POST(req: NextRequest): Promise<Response> {
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-5.4-mini',
         temperature: 0.15, // Low temperature for consistent extraction, slight flex for creative terms
         max_tokens: 700,
         response_format: { type: 'json_object' },
