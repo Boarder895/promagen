@@ -164,7 +164,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     );
   }
 
-  // ── Call OpenAI GPT-4o-mini ─────────────────────────────────────────
+  // ── Call OpenAI GPT-5.4-mini ────────────────────────────────────────
   try {
     const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -175,7 +175,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       body: JSON.stringify({
         model: 'gpt-5.4-mini',
         temperature: 0.15, // Low temperature for consistent extraction, slight flex for creative terms
-        max_tokens: 700,
+        max_completion_tokens: 700,
         response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
