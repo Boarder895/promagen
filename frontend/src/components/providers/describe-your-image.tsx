@@ -92,6 +92,60 @@ export interface DescribeYourImageProps {
 }
 
 // ============================================================================
+// FORMAT DETECTION — warn users pasting pre-formatted AI prompts
+// ============================================================================
+
+type FormatDetection = { detected: false } | { detected: true; format: string; hint: string };
+
+/**
+ * Detect if input text is a pre-formatted AI prompt (Tier 1/2) rather than
+ * a natural language description. T3/T4 are natural language and pass through.
+ *
+ * Patterns detected:
+ *   T1 CLIP-Based:  (term::1.3)  or  (term:1.2)  or  term::1.5
+ *   T2 Midjourney:  --ar  --stylize  --v  --s  --q  --no (at word boundary)
+ *   Generic weights: multiple terms with ::number patterns
+ */
+function detectPromptFormat(text: string): FormatDetection {
+  const trimmed = text.trim();
+  if (!trimmed) return { detected: false };
+
+  // T1 — CLIP weight syntax: (term::1.3) or term::1.3 or (term:1.2)
+  const clipWeightPattern = /\([^)]+::\d+\.?\d*\)|\b\w+::\d+\.?\d*|\([^)]+:\d+\.?\d*\)/g;
+  const clipMatches = trimmed.match(clipWeightPattern);
+  if (clipMatches && clipMatches.length >= 2) {
+    return {
+      detected: true,
+      format: 'CLIP-Based (Tier 1)',
+      hint: 'This looks like a pre-formatted CLIP prompt with weight syntax. The generator works best with plain English descriptions.',
+    };
+  }
+
+  // T2 — Midjourney flags: --ar, --stylize, --v, --s, --q, --no
+  const mjFlagPattern = /--(?:ar|stylize|style|v|s|q|no|chaos|weird|tile|repeat|seed|stop|iw|niji)\b/gi;
+  const mjMatches = trimmed.match(mjFlagPattern);
+  if (mjMatches && mjMatches.length >= 1) {
+    return {
+      detected: true,
+      format: 'Midjourney (Tier 2)',
+      hint: 'This looks like a Midjourney prompt with parameter flags. The generator works best with plain English descriptions.',
+    };
+  }
+
+  // Catch-all: excessive double-colon syntax (3+)
+  const doubleColonCount = (trimmed.match(/::/g) || []).length;
+  if (doubleColonCount >= 3) {
+    return {
+      detected: true,
+      format: 'Weighted prompt format',
+      hint: 'This looks like a weighted AI prompt. The generator works best with plain English descriptions — try describing what you want to see.',
+    };
+  }
+
+  return { detected: false };
+}
+
+// ============================================================================
 // COMPONENT
 // ============================================================================
 
@@ -103,6 +157,7 @@ export function DescribeYourImage({
   const [isExpanded, setIsExpanded] = useState(false);
   const [inputText, setInputText] = useState('');
   const [hasGenerated, setHasGenerated] = useState(false);
+  const [formatWarning, setFormatWarning] = useState<FormatDetection>({ detected: false });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const { categories, isLoading, error, populatingCategory, convert } = useSentenceConversion();
@@ -119,6 +174,15 @@ export function DescribeYourImage({
       setTimeout(() => textareaRef.current?.focus(), 300);
     }
   }, [isExpanded]);
+
+  // ── Format detection on input change ──────────────────────────────
+  useEffect(() => {
+    if (inputText.trim().length > 10) {
+      setFormatWarning(detectPromptFormat(inputText));
+    } else {
+      setFormatWarning({ detected: false });
+    }
+  }, [inputText]);
 
   // ── Generate prompt ───────────────────────────────────────────────
   const handleGenerate = useCallback(async () => {
@@ -322,6 +386,42 @@ export function DescribeYourImage({
                 {charCount}/{MAX_CHARS}
               </span>
             </div>
+
+            {/* ── Format detection warning ──────────────────────────── */}
+            {formatWarning.detected && (
+              <div
+                className="flex items-start rounded-lg border border-amber-500/30 bg-amber-950/30"
+                style={{
+                  marginTop: 'clamp(6px, 0.6vw, 8px)',
+                  padding: 'clamp(6px, 0.6vw, 10px) clamp(8px, 0.8vw, 12px)',
+                  gap: 'clamp(6px, 0.5vw, 8px)',
+                }}
+              >
+                <span
+                  className="shrink-0"
+                  style={{ fontSize: 'clamp(0.8rem, 0.85vw, 0.95rem)' }}
+                  aria-hidden="true"
+                >⚠️</span>
+                <div>
+                  <span
+                    className="font-semibold text-amber-300"
+                    style={{ fontSize: 'clamp(0.625rem, 0.68vw, 0.75rem)' }}
+                  >
+                    Detected: {formatWarning.format}
+                  </span>
+                  <p
+                    className="text-amber-200/70"
+                    style={{
+                      fontSize: 'clamp(0.6rem, 0.62vw, 0.7rem)',
+                      marginTop: 'clamp(1px, 0.1vw, 2px)',
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {formatWarning.hint}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* ── Action row: Generate button + status + close ──────── */}
             <div

@@ -740,48 +740,6 @@ export default function EnhancedPromptBuilder({
     return generateAllTierPrompts(selections);
   }, [selections, hasContent]);
 
-  // Coherence score — aligned with Prompt Lab DNA formula
-  // Core Identity: rewards Subject OR Environment OR Style (not just Subject)
-  // so landscapes, architecture, and abstract prompts aren't penalised.
-  const coherenceScore = useMemo(() => {
-    const filledCategories = Object.keys(selections).length;
-    if (filledCategories === 0) return 0;
-
-    let s = 0;
-
-    // Fill rate: each category = 2.92 points (35 max)
-    s += Math.round(filledCategories * 2.92);
-
-    // Core Identity — at least one anchor category present
-    const hasSubject = (selections.subject?.length ?? 0) > 0;
-    const hasEnvironment = (selections.environment?.length ?? 0) > 0;
-    const hasStyle = (selections.style?.length ?? 0) > 0;
-    if (hasSubject || hasEnvironment || hasStyle) s += 15;
-
-    // Style defined — visual language matters
-    if (hasStyle) s += 8;
-
-    // Triple anchor — all three core categories present
-    if (hasSubject && hasEnvironment && hasStyle) s += 7;
-
-    // Lighting present (quality)
-    if ((selections.lighting?.length ?? 0) > 0) s += 5;
-
-    // Fidelity present (quality boosters)
-    if ((selections.fidelity?.length ?? 0) > 0) s += 5;
-
-    // Camera or Composition (technical craft)
-    if ((selections.camera?.length ?? 0) > 0 || (selections.composition?.length ?? 0) > 0) s += 5;
-
-    // Depth bonus — any category with 3+ terms shows rich description
-    const hasDepth = Object.values(selections).some(
-      (terms) => terms && terms.length >= 3,
-    );
-    if (hasDepth) s += 7;
-
-    return Math.max(0, Math.min(100, s));
-  }, [selections]);
-
   // Mock conflicts (would come from intelligence engine)
   const conflicts = useMemo(() => {
     // Simple conflict detection example
@@ -803,6 +761,52 @@ export default function EnhancedPromptBuilder({
 
     return result;
   }, [selections]);
+
+  // Coherence score — DNA v3.0 aligned with Prompt Lab formula
+  // 7-dimension continuous model. Since the standard builder uses mock
+  // conflicts (not the real intelligence engine), all conflicts treated as soft.
+  const coherenceScore = useMemo(() => {
+    const filledCategories = Object.keys(selections).length;
+    if (filledCategories === 0) return 0;
+
+    // 1. Fill rate — diminishing returns curve (0–42)
+    const fillScore = Math.round(42 * Math.pow(filledCategories / 12, 0.55));
+
+    // 2. Core Identity — graduated (0–16)
+    const hasSubject = (selections.subject?.length ?? 0) > 0;
+    const hasEnvironment = (selections.environment?.length ?? 0) > 0;
+    const hasStyle = (selections.style?.length ?? 0) > 0;
+    const coreCount = (hasSubject ? 1 : 0) + (hasEnvironment ? 1 : 0) + (hasStyle ? 1 : 0);
+    const identityScore = coreCount === 3 ? 16 : coreCount === 2 ? 13 : coreCount === 1 ? 8 : 0;
+
+    // 3. Visual Craft — Camera, Composition, Lighting, Fidelity (0–12)
+    const craftCategories = [
+      (selections.camera?.length ?? 0) > 0,
+      (selections.composition?.length ?? 0) > 0,
+      (selections.lighting?.length ?? 0) > 0,
+      (selections.fidelity?.length ?? 0) > 0,
+    ];
+    const craftCount = craftCategories.filter(Boolean).length;
+    const craftScore = craftCount === 4 ? 12 : craftCount === 3 ? 9 : craftCount === 2 ? 6 : craftCount === 1 ? 3 : 0;
+
+    // 4. Style Signal (0–5)
+    const styleScore = hasStyle ? 5 : 0;
+
+    // 5. Coherence — no real family detection in standard builder (0–3 fallback)
+    const familyScore = conflicts.length === 0 && filledCategories >= 3 ? 3 : 0;
+
+    // 6. Richness — total terms across all categories (0–7)
+    const totalTerms = Object.values(selections).reduce(
+      (sum: number, terms) => sum + (terms?.length ?? 0), 0,
+    );
+    const richnessScore = totalTerms >= 15 ? 7 : totalTerms >= 10 ? 5 : totalTerms >= 5 ? 3 : 0;
+
+    // 7. Harmony — mock conflicts all treated as soft (-2 each), clean = +7
+    const harmonyScore = Math.max(-15, 7 - (conflicts.length * 2));
+
+    const total = fillScore + identityScore + craftScore + styleScore + familyScore + richnessScore + harmonyScore;
+    return Math.max(0, Math.min(100, total));
+  }, [selections, conflicts]);
 
   // Mock suggestions (would come from intelligence engine)
   const suggestions = useMemo(() => {

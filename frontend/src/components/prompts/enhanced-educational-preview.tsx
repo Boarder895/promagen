@@ -230,9 +230,11 @@ interface DnaBarProps {
   healthScore: number;
   /** Number of detected conflicts */
   conflictCount: number;
+  /** Whether any hard conflicts exist */
+  hasHardConflicts: boolean;
 }
 
-function DnaBar({ selections, dominantFamily, healthScore: _healthScore, conflictCount }: DnaBarProps) {
+function DnaBar({ selections, dominantFamily, healthScore: _healthScore, conflictCount, hasHardConflicts }: DnaBarProps) {
   // Calculate which categories have selections
   const filledCategories = useMemo(() => {
     return CATEGORY_ORDER.filter((cat: PromptCategory) => selections[cat].length > 0);
@@ -241,71 +243,81 @@ function DnaBar({ selections, dominantFamily, healthScore: _healthScore, conflic
   const totalFilled = filledCategories.length;
   const totalCategories = CATEGORY_ORDER.length;
 
-  // ── Realistic DNA score ──────────────────────────────────────────────
-  // Scoring that rewards *coherence and completeness* without penalising
-  // valid prompt types (landscapes, architecture, abstract) that have no
-  // traditional "subject" (person/animal/object).
+  // ── DNA Score v3.0 — Continuous Weighted Model ───────────────────────
+  // 7 scoring dimensions that reward what users actually create:
   //
-  //   Fill rate:          0–35 points  (each of 12 cats = 2.92 pts)
-  //   Core identity:      +15 points   (Subject OR Environment OR Style present)
-  //   Style defined:       +8 points   (visual language specified)
-  //   Triple anchor:       +7 points   (all 3 of Subject+Env+Style present)
-  //   Dominant family:     +8 points   (coherent style detected)
-  //   Lighting:            +5 points   (major quality factor)
-  //   Fidelity:            +5 points   (quality boosters present)
-  //   Camera/Composition:  +5 points   (technical craft present)
-  //   Depth (3+ in any):   +7 points   (rich descriptions rewarded)
-  //   Conflict penalty:   -12 per conflict
-  //   Max theoretical:     95 (all bonuses, 12/12 filled, 0 conflicts)
+  //   1. Fill rate (diminishing returns)     0–42 pts
+  //   2. Core Identity (graduated S/E/Sty)   0–16 pts
+  //   3. Visual Craft (Cam/Comp/Light/Fid)   0–12 pts
+  //   4. Style Signal (visual language)      0–5  pts
+  //   5. Coherence (family + harmony)        0–6  pts
+  //   6. Richness (total term count)         0–7  pts
+  //   7. Harmony (conflicts: soft=-2, hard=-6, clean=+7)
   //
-  //   Landscape 7/12 (no subject): 20 +15 +8 +0 +8 +5 +5 +5 +7 = 73%
-  //   Portrait 8/12:               23 +15 +8 +7 +8 +5 +0 +5 +0 = 71%
-  //   Full 12/12 coherent:         35 +15 +8 +7 +8 +5 +5 +5 +7 = 95%
-  //   Sparse 3/12 (S+Sty+Lit):     9 +15 +8 +0 +0 +5 +0 +0 +0 = 37%
+  //   Max theoretical: 42+16+12+5+6+7+7 = 95%
+  //
+  //   Rich photography 11/12: 40+16+12+5+6+7+7  = 93%
+  //   Landscape 9/12:         36+13+9+5+6+5+7   = 81%
+  //   Decent 6/12:            27+8+3+5+0+3+7    = 53%
+  //   Sparse 3/12:            18+8+0+0+0+0+7    = 33%
+  //   12/12 with 2 hard:      42+16+12+5+6+7-5  = 83%
   // ─────────────────────────────────────────────────────────────────────
   const score = useMemo(() => {
     if (totalFilled === 0) return 0;
 
-    let s = 0;
+    // ── 1. Fill rate — diminishing returns curve (0–42) ──────────────
+    // Power curve: rewards getting to 9+ categories generously,
+    // but first 3 categories still earn meaningful points.
+    const fillScore = Math.round(42 * Math.pow(totalFilled / 12, 0.55));
 
-    // Fill rate: each category = 2.92 points (35 max)
-    s += Math.round(totalFilled * 2.92);
+    // ── 2. Core Identity — graduated (0–16) ─────────────────────────
+    const hasSubject = (selections.subject?.length ?? 0) > 0;
+    const hasEnvironment = (selections.environment?.length ?? 0) > 0;
+    const hasStyle = (selections.style?.length ?? 0) > 0;
+    const coreCount = (hasSubject ? 1 : 0) + (hasEnvironment ? 1 : 0) + (hasStyle ? 1 : 0);
+    const identityScore = coreCount === 3 ? 16 : coreCount === 2 ? 13 : coreCount === 1 ? 8 : 0;
 
-    // Core Identity — at least one anchor category present
-    const hasSubject = selections.subject?.length > 0;
-    const hasEnvironment = selections.environment?.length > 0;
-    const hasStyle = selections.style?.length > 0;
-    if (hasSubject || hasEnvironment || hasStyle) s += 15;
+    // ── 3. Visual Craft — Camera, Composition, Lighting, Fidelity (0–12) ─
+    const craftCategories = [
+      (selections.camera?.length ?? 0) > 0,
+      (selections.composition?.length ?? 0) > 0,
+      (selections.lighting?.length ?? 0) > 0,
+      (selections.fidelity?.length ?? 0) > 0,
+    ];
+    const craftCount = craftCategories.filter(Boolean).length;
+    const craftScore = craftCount === 4 ? 12 : craftCount === 3 ? 9 : craftCount === 2 ? 6 : craftCount === 1 ? 3 : 0;
 
-    // Style defined — visual language matters
-    if (hasStyle) s += 8;
+    // ── 4. Style Signal (0–5) ────────────────────────────────────────
+    const styleScore = hasStyle ? 5 : 0;
 
-    // Triple anchor — all three core categories present
-    if (hasSubject && hasEnvironment && hasStyle) s += 7;
+    // ── 5. Coherence — family detection (0–6) ────────────────────────
+    // Family detected = strong signal. No family but clean = implicit coherence.
+    const familyScore = dominantFamily ? 6 : (conflictCount === 0 && totalFilled >= 3 ? 3 : 0);
 
-    // Dominant family bonus (real coherence)
-    if (dominantFamily) s += 8;
-
-    // Lighting present (quality)
-    if (selections.lighting?.length > 0) s += 5;
-
-    // Fidelity present (quality boosters)
-    if (selections.fidelity?.length > 0) s += 5;
-
-    // Camera or Composition (technical craft)
-    if (selections.camera?.length > 0 || selections.composition?.length > 0) s += 5;
-
-    // Depth bonus — any category with 3+ terms shows rich description
-    const hasDepth = CATEGORY_ORDER.some(
-      (cat: PromptCategory) => selections[cat]?.length >= 3,
+    // ── 6. Richness — total terms across all categories (0–7) ────────
+    const totalTerms = CATEGORY_ORDER.reduce(
+      (sum: number, cat: PromptCategory) => sum + (selections[cat]?.length ?? 0), 0,
     );
-    if (hasDepth) s += 7;
+    const richnessScore = totalTerms >= 15 ? 7 : totalTerms >= 10 ? 5 : totalTerms >= 5 ? 3 : 0;
 
-    // Conflict penalty — harsh, visible
-    s -= conflictCount * 12;
+    // ── 7. Harmony — conflicts with soft/hard distinction ────────────
+    // Clean prompt: +7 bonus. Soft conflicts: -2 each. Hard: -6 each.
+    // Floor at -15 so conflicts can't nuke the entire score.
+    let harmonyScore = 7; // start with clean bonus
+    if (conflictCount > 0) {
+      if (hasHardConflicts) {
+        // Assume at least 1 hard; remaining are soft
+        harmonyScore = 7 - 6 - ((conflictCount - 1) * 2);
+      } else {
+        // All soft
+        harmonyScore = 7 - (conflictCount * 2);
+      }
+      harmonyScore = Math.max(-15, harmonyScore);
+    }
 
-    return Math.max(0, Math.min(100, s));
-  }, [totalFilled, selections, dominantFamily, conflictCount]);
+    const total = fillScore + identityScore + craftScore + styleScore + familyScore + richnessScore + harmonyScore;
+    return Math.max(0, Math.min(100, total));
+  }, [totalFilled, selections, dominantFamily, conflictCount, hasHardConflicts]);
 
   // Color based on score
   const scoreColor =
@@ -866,10 +878,20 @@ export default function EnhancedEducationalPreview({
         // Apply the action (function or value)
         const nextCatState =
           typeof action === 'function' ? action(currentCatState) : action;
-        // Convert back to PromptSelections
+        // Convert back to PromptSelections — merge customValue into selected
+        // so terms that didn't match vocabulary aren't silently dropped.
+        // The Combobox will display them as custom chips.
         const nextSelections: PromptSelections = { ...prev };
         for (const cat of CATEGORY_ORDER) {
-          nextSelections[cat] = nextCatState[cat]?.selected ?? [];
+          const catState = nextCatState[cat];
+          const selected = catState?.selected ?? [];
+          const customTerms = catState?.customValue?.trim()
+            ? catState.customValue
+                .split(',')
+                .map((t: string) => t.trim())
+                .filter((t: string) => t.length > 0 && !selected.includes(t))
+            : [];
+          nextSelections[cat] = [...selected, ...customTerms];
         }
         return nextSelections;
       });
@@ -1044,7 +1066,7 @@ export default function EnhancedEducationalPreview({
   }, [selections]);
 
   // Get intelligence data — real engine (85 conflict groups, DNA scoring, suggestions)
-  const { conflicts, suggestions, platformHints, weatherSuggestions, healthScore: realHealthScore, conflictCount: realConflictCount } =
+  const { conflicts, suggestions, platformHints, weatherSuggestions, healthScore: realHealthScore, hasHardConflicts: realHasHardConflicts, conflictCount: realConflictCount } =
     useRealIntelligence(selections, selectedProviderId, hasContent);
 
   // ============================================================================
@@ -1287,7 +1309,7 @@ export default function EnhancedEducationalPreview({
           />
 
           {/* DNA Bar - flex-1 makes it stretch to fill available space */}
-          <DnaBar selections={selections} dominantFamily={dominantFamily} healthScore={realHealthScore} conflictCount={realConflictCount} />
+          <DnaBar selections={selections} dominantFamily={dominantFamily} healthScore={realHealthScore} conflictCount={realConflictCount} hasHardConflicts={realHasHardConflicts} />
         </div>
 
         {/* Show selected provider tier info */}
