@@ -54,6 +54,8 @@ Rules:
 6. Quality terms like "sharp focus", "high resolution", "8K", "detailed" ALWAYS go in "fidelity". Do not skip these.
 7. Physical textures and surface materials (grass, gravel, water, concrete, fabric) go in "materials".
 8. Preserve the user's creative intent — do not reinterpret or "improve" their words.
+9. Do NOT invent or infer terms that are not in the input. If the user says "Courtenay Place", do not add "suburban street" unless those exact words appear. Only extract what is explicitly written.
+10. Do NOT embellish terms. "shot on Leica" stays as "shot on Leica", not "vintage Leica look". "natural light" stays as "natural light", not "soft natural ambient lighting".
 
 Return format:
 {

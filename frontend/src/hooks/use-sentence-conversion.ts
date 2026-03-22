@@ -42,7 +42,7 @@ export interface SentenceConversionResult {
 
 /**
  * Match a term from the API response to existing vocabulary.
- * Priority: exact match → substring containment → fuzzy (Levenshtein ≤ 3) → no match.
+ * Priority: exact match → substring containment (shortest preferred) → fuzzy (Levenshtein ≤ 3) → no match.
  *
  * Returns the matched vocabulary term, or null if no match found.
  * Exported for testing.
@@ -57,21 +57,67 @@ export function matchTermToVocabulary(term: string, category: PromptCategory): s
   const exact = options.find((opt) => opt.toLowerCase() === termLower);
   if (exact) return exact;
 
-  // 2. Substring containment — term contains an option or option contains term
-  const substringMatch = options.find((opt) => {
+  // 2. Substring containment — prefer shortest matching option to avoid
+  //    embellishment (e.g., "shot on Leica" should NOT match "vintage Leica look")
+  const substringMatches = options.filter((opt) => {
     const optLower = opt.toLowerCase();
     return termLower.includes(optLower) || optLower.includes(termLower);
   });
-  if (substringMatch) return substringMatch;
+  if (substringMatches.length > 0) {
+    // Sort by length ascending — shortest match is closest to the user's intent
+    substringMatches.sort((a, b) => a.length - b.length);
+    return substringMatches[0]!;
+  }
 
-  // 3. Levenshtein distance ≤ 3
-  const fuzzyMatch = options.find((opt) => {
-    return levenshteinDistance(termLower, opt.toLowerCase()) <= 3;
-  });
-  if (fuzzyMatch) return fuzzyMatch;
+  // 3. Levenshtein distance ≤ 3 (only for terms 5+ chars to avoid "art"→"cart")
+  if (termLower.length >= 5) {
+    const fuzzyMatch = options.find((opt) => {
+      return levenshteinDistance(termLower, opt.toLowerCase()) <= 3;
+    });
+    if (fuzzyMatch) return fuzzyMatch;
+  }
 
   // No match — will go into custom entry
   return null;
+}
+
+// ============================================================================
+// POST-PARSE TERM CLEANERS
+// ============================================================================
+
+/** Light-related nouns — if a Lighting term lacks one, it's a contextless fragment */
+const LIGHT_NOUNS = /\b(light|lighting|glow|sunlight|moonlight|illumination|shadow|shadows|backlit|backlight|lamp|candle|neon|flash|spotlight|ray|rays|beam)\b/i;
+
+/**
+ * Clean up parsed terms per category. Applied after GPT extraction, before
+ * vocabulary matching. Fixes contextless fragments and known issues.
+ *
+ * Fix 1: Lighting terms missing a light-noun get " light" appended.
+ * Fix 8: Strips orphaned fragments like "one in the" (time-of-day leakage).
+ */
+function cleanParsedTerms(category: PromptCategory, terms: string[]): string[] {
+  if (terms.length === 0) return terms;
+
+  return terms
+    .map((term) => {
+      const trimmed = term.trim();
+      if (!trimmed) return '';
+
+      // Fix 1: Lighting terms without a light-noun → append " light"
+      if (category === 'lighting' && !LIGHT_NOUNS.test(trimmed)) {
+        return `${trimmed} light`;
+      }
+
+      return trimmed;
+    })
+    .filter((term) => {
+      if (!term) return false;
+      // Fix 8: Strip orphan time-of-day fragments that leak from weather generator
+      if (/^one in the\b/i.test(term) && term.length < 20) return false;
+      // Strip very short fragments (1-2 chars) that are noise
+      if (term.length < 3) return false;
+      return true;
+    });
 }
 
 /**
@@ -163,7 +209,8 @@ export function useSentenceConversion(): SentenceConversionResult {
       // Process each category with staggered animation
       for (let i = 0; i < CATEGORY_ORDER.length; i++) {
         const cat = CATEGORY_ORDER[i]!;
-        const apiTerms = parsed[cat] ?? [];
+        const rawTerms = parsed[cat] ?? [];
+        const apiTerms = cleanParsedTerms(cat, rawTerms);
 
         if (apiTerms.length === 0) continue;
 

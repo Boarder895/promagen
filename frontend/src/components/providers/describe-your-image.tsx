@@ -236,6 +236,16 @@ export function DescribeYourImage({
       )
     : [];
 
+  // ── Empty categories for suggestion (Fix 5) ────────────────────────
+  const emptyCatLabels = categories
+    ? Object.entries(CATEGORY_DISPLAY)
+        .filter(([cat]) => {
+          const state = (categories as Record<string, { selected: string[]; customValue: string }>)[cat];
+          return !state || (state.selected.length === 0 && !state.customValue);
+        })
+        .map(([, display]) => display.label)
+    : [];
+
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: DESCRIBE_STYLES }} />
@@ -531,6 +541,31 @@ export function DescribeYourImage({
                 Close
               </button>
             </div>
+
+            {/* ── Empty categories suggestion (Fix 5) ──────────────── */}
+            {hasGenerated && emptyCatLabels.length > 0 && emptyCatLabels.length <= 5 && (
+              <div
+                className="flex items-start rounded-lg border border-sky-500/20 bg-sky-950/20"
+                style={{
+                  marginTop: 'clamp(6px, 0.6vw, 8px)',
+                  padding: 'clamp(5px, 0.5vw, 8px) clamp(8px, 0.8vw, 12px)',
+                  gap: 'clamp(5px, 0.4vw, 7px)',
+                }}
+              >
+                <span
+                  className="shrink-0"
+                  style={{ fontSize: 'clamp(0.75rem, 0.8vw, 0.9rem)' }}
+                  aria-hidden="true"
+                >💡</span>
+                <span
+                  className="text-sky-300/80"
+                  style={{ fontSize: 'clamp(0.58rem, 0.62vw, 0.7rem)', lineHeight: 1.4 }}
+                >
+                  {emptyCatLabels.length} empty: {emptyCatLabels.join(', ')}
+                  <span className="text-sky-400/50"> — add detail to these to boost your DNA score</span>
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>

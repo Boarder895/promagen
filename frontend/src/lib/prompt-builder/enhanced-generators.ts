@@ -120,65 +120,72 @@ const SENTENCE_TEMPLATES = {
   subject: (terms: string[]) => {
     if (terms.length === 0) return '';
     const subject = terms[0] ?? 'scene';
+    // Proper nouns (capitalised, place names) don't get articles
+    const isProperNoun = /^[A-Z]/.test(subject) && !/^(A |An |The )/.test(subject);
+    if (isProperNoun) return subject;
     const article = /^[aeiou]/i.test(subject) ? 'An' : 'A';
     return `${article} ${subject}`;
   },
   
   action: (terms: string[], hasSubject: boolean) => {
     if (terms.length === 0) return '';
-    return hasSubject ? ` ${terms[0]}` : `Someone ${terms[0]}`;
+    return hasSubject ? `, ${terms[0]}` : `Someone ${terms[0]}`;
   },
   
   environment: (terms: string[]) => {
     if (terms.length === 0) return '';
-    const connectors = ['set in', 'located in', 'within', 'surrounded by'];
-    const connector = connectors[Math.floor(Math.random() * connectors.length)];
-    return `, ${connector} ${terms[0]}`;
+    const env = terms[0]!;
+    // Use "at" for specific places, "in" for general settings
+    const isSpecificPlace = /^[A-Z]/.test(env) || /street|square|park|bridge|market|station|plaza|district/i.test(env);
+    const connector = isSpecificPlace ? 'at' : 'in';
+    return `, ${connector} ${env}`;
   },
   
   style: (terms: string[]) => {
     if (terms.length === 0) return '';
     if (terms.length === 1) {
-      return `Rendered in ${terms[0]} style.`;
+      // "photorealistic" → "In photorealistic style." / "professional photography" → "Captured as professional photography."
+      const isPhotography = /photograph/i.test(terms[0] ?? '');
+      return isPhotography ? `Captured as ${terms[0]}.` : `Rendered in ${terms[0]} style.`;
     }
-    return `The style blends ${terms.slice(0, -1).join(', ')} and ${terms[terms.length - 1]}.`;
+    // Multiple styles: "Blending photorealistic and cinematic styles."
+    return `Blending ${terms.slice(0, -1).join(', ')} and ${terms[terms.length - 1]} styles.`;
   },
   
   lighting: (terms: string[]) => {
     if (terms.length === 0) return '';
-    const connectors = ['illuminated by', 'bathed in', 'lit by'];
-    const connector = connectors[Math.floor(Math.random() * connectors.length)];
-    return `The scene is ${connector} ${terms.join(' and ')}.`;
+    return `The scene is illuminated by ${terms.join(' and ')}.`;
   },
   
   atmosphere: (terms: string[]) => {
     if (terms.length === 0) return '';
-    return `The atmosphere is ${terms.join(', ')}.`;
+    return `The atmosphere is ${terms.join(' and ')}.`;
   },
   
   colour: (terms: string[]) => {
     if (terms.length === 0) return '';
-    return `Features ${terms.join(' and ')} color palette.`;
+    return `Featuring a ${terms.join(' and ')} color palette.`;
   },
   
   composition: (terms: string[]) => {
     if (terms.length === 0) return '';
-    return `Composed with ${terms[0]}.`;
+    return `Framed with ${terms[0]}.`;
   },
   
   camera: (terms: string[]) => {
     if (terms.length === 0) return '';
-    return `Shot with ${terms[0]}.`;
+    return `Shot on ${terms[0]}.`;
   },
   
   materials: (terms: string[]) => {
     if (terms.length === 0) return '';
-    return `Rich ${terms.join(' and ')} textures throughout.`;
+    if (terms.length === 1) return `Featuring ${terms[0]} textures.`;
+    return `Rich textures of ${terms.join(' and ')}.`;
   },
   
   fidelity: (terms: string[]) => {
     if (terms.length === 0) return '';
-    return `${terms.join(', ')} quality.`;
+    return `Rendered in ${terms.join(', ')} quality.`;
   }
 };
 
