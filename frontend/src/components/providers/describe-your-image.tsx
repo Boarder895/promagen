@@ -65,8 +65,37 @@ const DESCRIBE_STYLES = `
 
   .dyi-panel { will-change: max-height, opacity; }
 
+  @keyframes dyi-generate-pulse {
+    0%, 100% {
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.3), 0 0 40px rgba(52, 211, 153, 0.2);
+    }
+    50% {
+      box-shadow: 0 0 30px rgba(56, 189, 248, 0.5), 0 0 60px rgba(52, 211, 153, 0.4);
+    }
+  }
+  .dyi-generate-active {
+    animation: dyi-generate-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes dyi-generate-shimmer-sweep {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+  .dyi-generate-shimmer {
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%);
+    animation: dyi-generate-shimmer-sweep 1.5s ease-in-out infinite;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .dyi-generating, .dyi-regen { animation: none; }
+    .dyi-generate-active {
+      animation: none;
+      box-shadow: 0 0 25px rgba(56, 189, 248, 0.4), 0 0 50px rgba(52, 211, 153, 0.3);
+    }
+    .dyi-generate-shimmer {
+      animation: none;
+      opacity: 0 !important;
+    }
   }
 `;
 
@@ -111,6 +140,8 @@ export interface DescribeYourImageProps {
   isDrifted?: boolean;
   /** Number of word-level changes detected since last generation */
   driftChangeCount?: number;
+  /** Increment to trigger external clear (e.g., from footer Clear All) */
+  clearSignal?: number;
 }
 
 // ============================================================================
@@ -180,6 +211,7 @@ export function DescribeYourImage({
   onClear,
   isDrifted = false,
   driftChangeCount = 0,
+  clearSignal = 0,
 }: DescribeYourImageProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [inputText, setInputText] = useState('');
@@ -189,6 +221,25 @@ export function DescribeYourImage({
 
   const { categories, isLoading, error, populatingCategory, convert } = useSentenceConversion();
 
+  // ── External clear trigger (footer Clear All) ─────────────────────
+  const clearSignalRef = useRef(clearSignal);
+  useEffect(() => {
+    if (clearSignal > 0 && clearSignal !== clearSignalRef.current) {
+      clearSignalRef.current = clearSignal;
+      setInputText('');
+      setHasGenerated(false);
+      setFormatWarning({ detected: false });
+      setCategoryState(() => {
+        const empty: Record<string, CategoryState> = {};
+        for (const cat of ['subject','action','style','environment','composition','camera','lighting','colour','atmosphere','materials','fidelity','negative']) {
+          empty[cat] = { selected: [], customValue: '' };
+        }
+        return empty as Record<PromptCategory, CategoryState>;
+      });
+      onTextChange?.('');
+      onClear?.();
+    }
+  }, [clearSignal, setCategoryState, onTextChange, onClear]);
   // ── Toggle expand/collapse ────────────────────────────────────────
   const handleToggle = useCallback(() => {
     if (isLocked) return;
@@ -488,24 +539,21 @@ export function DescribeYourImage({
               style={{ marginTop: 'clamp(8px, 0.8vw, 12px)' }}
             >
               <div className="flex items-center" style={{ gap: 'clamp(8px, 0.8vw, 12px)' }}>
-                {/* Generate / Regenerate Prompt button */}
-                {/* Fix 5: Amber pulse + "Regenerate" when drift >= 3 */}
+                {/* Generate / Regenerate Prompt button — engine bay styling when text present */}
                 <button
                   type="button"
                   onClick={handleGenerate}
                   disabled={isLoading || !inputText.trim()}
                   className={`
-                    inline-flex items-center rounded-lg font-semibold text-white
+                    group relative inline-flex items-center overflow-hidden rounded-lg font-semibold text-white
                     transition-all duration-200
-                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400/60
+                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/80
                     ${
                       isLoading
-                        ? 'dyi-generating bg-orange-600/30 border-orange-500/40'
-                        : isDrifted && driftChangeCount >= 3 && hasGenerated
-                          ? 'dyi-regen bg-amber-600/20 border-amber-500/40 hover:bg-amber-600/30 hover:border-amber-400/60 cursor-pointer'
-                          : inputText.trim()
-                            ? 'bg-orange-600/20 border-orange-500/40 hover:bg-orange-600/30 hover:border-orange-500/60 cursor-pointer'
-                            : 'bg-slate-800/40 border-slate-700/30 cursor-not-allowed'
+                        ? 'dyi-generating border-sky-400/40 bg-gradient-to-r from-sky-400/30 via-emerald-300/30 to-indigo-400/30'
+                        : inputText.trim()
+                          ? 'dyi-generate-active border-sky-400/60 bg-gradient-to-r from-sky-400/40 via-emerald-300/40 to-indigo-400/40 cursor-pointer'
+                          : 'bg-slate-800/40 border-slate-700/30 cursor-not-allowed'
                     }
                   `}
                   style={{
@@ -515,8 +563,15 @@ export function DescribeYourImage({
                     gap: 'clamp(4px, 0.4vw, 6px)',
                   }}
                 >
+                  {/* Shimmer overlay — identical to engine bay */}
+                  {inputText.trim() && !isLoading && (
+                    <div
+                      className="dyi-generate-shimmer pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                      aria-hidden="true"
+                    />
+                  )}
                   {isLoading ? (
-                    <>
+                    <span className="relative z-10 inline-flex items-center" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
                       <svg
                         className="animate-spin"
                         fill="none"
@@ -527,9 +582,9 @@ export function DescribeYourImage({
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                       </svg>
                       Parsing...
-                    </>
+                    </span>
                   ) : (
-                    <>
+                    <span className="relative z-10 inline-flex items-center" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
                       <svg
                         fill="none"
                         viewBox="0 0 24 24"
@@ -540,16 +595,16 @@ export function DescribeYourImage({
                         <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                       </svg>
                       {isDrifted && driftChangeCount >= 3 && hasGenerated ? 'Regenerate' : 'Generate Prompt'}
-                    </>
+                    </span>
                   )}
                 </button>
 
-                {/* Clear button — Core Colours gradient matching footer Clear All */}
+                {/* Clear All button — purple gradient matching Dynamic/Randomise, white text */}
                 {hasGenerated && !isLoading && (
                   <button
                     type="button"
                     onClick={handleClear}
-                    className="inline-flex items-center rounded-lg font-semibold text-black bg-gradient-to-r from-sky-400 via-emerald-300 to-indigo-400 hover:from-sky-300 hover:via-emerald-200 hover:to-indigo-300 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
+                    className="inline-flex items-center rounded-full border border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 font-semibold text-white hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/80 shadow-sm"
                     style={{
                       padding: 'clamp(5px, 0.5vw, 8px) clamp(10px, 1vw, 16px)',
                       fontSize: 'clamp(0.65rem, 0.72vw, 0.8rem)',
@@ -557,7 +612,7 @@ export function DescribeYourImage({
                     }}
                     title="Clear description and all generated prompts"
                   >
-                    Clear
+                    Clear All
                   </button>
                 )}
 

@@ -771,6 +771,9 @@ export default function EnhancedEducationalPreview({
   // Explore Drawer accordion state — only one category expanded at a time
   const [expandedExploreCategory, setExpandedExploreCategory] = useState<PromptCategory | null>(null);
 
+  // ── External clear signal for DescribeYourImage (footer Clear All) ──
+  const [clearSignal, setClearSignal] = useState(0);
+
   // Feedback system state (Phase L7)
   const [feedbackPending, setFeedbackPending] = useState<FeedbackPendingData | null>(null);
   const { getOverlap } = useFeedbackMemory();
@@ -1206,7 +1209,8 @@ export default function EnhancedEducationalPreview({
     setSelections(newSelections);
   }, [activeTier]);
 
-  // Handle clear all (clears selections AND provider AND scene AND AR AND drawer)
+  // Handle clear all (clears EVERYTHING: selections, provider, scene, AR, drawer,
+  // AI tiers, AI optimisation, optimizer toggle, human text via clearSignal)
   const handleClear = useCallback(() => {
     setSelections(EMPTY_SELECTIONS);
     setSelectedProviderId(null);
@@ -1214,7 +1218,12 @@ export default function EnhancedEducationalPreview({
     setAspectRatio(null);
     setDiffData(null);
     setExpandedExploreCategory(null);
-  }, []);
+    setOptimizerEnabled(false);
+    clearAiOptimise();
+    onDescribeClear?.();
+    // Trigger DescribeYourImage internal reset (textarea, hasGenerated, formatWarning)
+    setClearSignal((s) => s + 1);
+  }, [clearAiOptimise, onDescribeClear, setOptimizerEnabled]);
 
   // Handle tier selection — user clicks a tier card to highlight it
   const handleTierSelect = useCallback((tier: PlatformTier) => {
@@ -1398,6 +1407,7 @@ export default function EnhancedEducationalPreview({
           }}
           isDrifted={isDrifted}
           driftChangeCount={driftChangeCount}
+          clearSignal={clearSignal}
         />
 
         {/* Full-width single column — Intelligence Panel removed (ai-disguise.md) */}
@@ -1914,18 +1924,13 @@ export default function EnhancedEducationalPreview({
             Randomise
           </button>
 
-          {/* Clear button (clears provider + selections) */}
+          {/* Clear All button — purple gradient matching Dynamic/Randomise, white text */}
           <button
             type="button"
             onClick={handleClear}
-            disabled={!hasContent && !selectedProviderId}
-            className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition-all focus-visible:outline-none focus-visible:ring focus-visible:ring-sky-400/80 ${
-              hasContent || selectedProviderId
-                ? 'border-slate-600 bg-slate-800 text-slate-100 hover:border-slate-400 hover:bg-slate-700 cursor-pointer'
-                : 'cursor-not-allowed border-slate-700 bg-slate-800/50 text-slate-400'
-            }`}
+            className="inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition-all focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80 border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-white hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 cursor-pointer"
           >
-            Clear all
+            Clear All
           </button>
 
           {/* Save to Library button */}
