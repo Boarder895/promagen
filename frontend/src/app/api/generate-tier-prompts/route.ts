@@ -134,6 +134,7 @@ TIER 1 — CLIP-Based (e.g., Leonardo, Stable Diffusion, DreamStudio):
 - Separate negative prompt with common quality negatives
 - MANDATORY: Include at least one composition or camera term NOT in the user's input (e.g., wide scene, cinematic composition, central subject, underwater perspective, volumetric lighting). This is your expert value-add.
 - STRICT ORDERING: quality prefix → weighted subject → weighted environment/scene → unweighted supporting details → composition cues → quality suffix. Follow this order exactly.
+- NO sentence-ending punctuation. No periods, exclamation marks, or question marks. CLIP prompts are comma-separated keyword lists, not sentences.
 - Target: ~100 tokens (~350 characters) for creative text
 
 TIER 2 — Midjourney Family (e.g., Midjourney, BlueWillow):
@@ -148,7 +149,8 @@ TIER 2 — Midjourney Family (e.g., Midjourney, BlueWillow):
 - STRICT ORDERING: weighted subject first → environment/scene description → style/composition cues → --ar and --v and --s parameters → --no negatives LAST. The positive description must be fully complete before any parameters begin.
 - STRUCTURAL EXAMPLE (follow this pattern exactly):
   lone mermaid::2.0 gliding through crystal-clear tropical water, bright reef fish in shimmering blues and orange::1.4, cinematic underwater photography::1.2, wide underwater view, silver scales catching sunlight, coral gardens and sea fans below, serene luminous depth --ar 16:9 --v 7 --s 500 --no above water, murky, foggy, dark, text, watermark
-- Target: ~200 characters for creative text (before parameters)
+- NEVER DUPLICATE NEGATIVES. Each negative term appears EXACTLY ONCE after --no. Do not repeat the negative list. If you find yourself writing the same terms twice, stop — you have a structural error.
+- Target: ~300 characters for creative text (before parameters). Richer inputs may need more space — prioritise completeness over brevity.
 
 TIER 3 — Natural Language (e.g., DALL·E, Adobe Firefly, Google Imagen):
 - Full grammatical sentences describing the scene
@@ -156,7 +158,7 @@ TIER 3 — Natural Language (e.g., DALL·E, Adobe Firefly, Google Imagen):
 - Include lighting, atmosphere, and composition naturally within sentences
 - Convert negatives to positive reinforcement ("sharp and clear" not "no blur")
 - CRITICAL: Do NOT return a lightly edited version of the user's input. You are a prompt engineer, not a paraphraser. The output must demonstrate expert knowledge the user does not have.
-- MANDATORY: Weave an art style or medium reference naturally into the description — do NOT use explicit rendering directives like "rendered as" or "in the style of". Instead, integrate it as part of the scene description (e.g., "a luminous digital fantasy scene of..." or "with the vivid clarity of underwater photography" or "in cinematic wide-angle detail"). The style should feel like part of the description, not an instruction bolted on.
+- MANDATORY: Weave an art style or medium reference naturally into the description — do NOT use explicit rendering directives. BANNED PHRASES: "rendered as", "in the style of", "should feel like", "meant to look like", "designed to resemble", "intended to appear as", "the image should". Instead, integrate style as part of the scene itself (e.g., "a luminous digital fantasy scene of..." or "with the vivid clarity of underwater photography" or "in cinematic wide-angle detail"). The style must feel like a natural part of the description, never a meta-instruction to the model.
 - MANDATORY: Add at least one composition or camera cue NOT in the user's input (e.g., "viewed from below looking up toward the surface", "in a wide cinematic underwater scene", "with the subject centred in the frame").
 - MANDATORY: Add at least one atmospheric or lighting detail NOT in the user's input (e.g., "with luminous tropical clarity", "dappled caustic light patterns on the seabed", "god rays piercing the blue depths").
 - STRICT ORDERING across 2–4 sentences: Sentence 1 = subject + primary action + composition/style. Sentence 2 = secondary visual elements + lighting. Sentence 3 (if needed) = environment + atmosphere. Keep rendering style woven in, not stated as a separate directive.
@@ -165,10 +167,10 @@ TIER 3 — Natural Language (e.g., DALL·E, Adobe Firefly, Google Imagen):
 TIER 4 — Plain Language (e.g., Canva, Bing, Freepik):
 - Simple, focused, short description
 - Minimal technical jargon — a non-expert should understand it
-- MUST be two sentences: first sentence for the subject and action with key elements, second sentence for the setting and mood
+- MUST be 2–3 short sentences: first sentence for the subject and action with key elements, second sentence for the environment, optional third sentence for mood/atmosphere if needed
 - Keep all key visual anchors from the input — do not over-compress. Include the subject and at least 3 supporting visual elements, but do NOT list more than 5 elements in a single sentence.
 - ALWAYS state the primary setting EXPLICITLY. Do not rely on implication. Write "underwater" not just "in water". Write "in a dense forest" not just "with trees". Plain language platforms need direct, unambiguous setting cues.
-- STRICT ORDERING: Sentence 1 = subject + action + 3–4 key visual elements. Sentence 2 = explicit setting + lighting/atmosphere + mood.
+- STRICT ORDERING: Sentence 1 = subject + action + 3–4 key visual elements. Sentence 2 = explicit setting + environment details. Sentence 3 (optional) = lighting/atmosphere + mood.
 - Target: ~150–200 characters
 ${providerBlock}
 
@@ -178,7 +180,7 @@ Rules:
 3. Each tier must feel NATIVE to its platform family — not like a reformatted version of another tier.
 4. Tier 1 must have clean, high-signal keyword assembly — no sentence fragments or orphaned verbs.
 5. Tier 2 must read as natural prose that Midjourney interprets well — not keyword soup. Positive description must be FULLY COMPLETE before any --ar/--v/--s/--no parameters begin. The --no flag MUST be present before ANY negative terms.
-6. Tier 3 must be grammatically complete with coherent spatial flow AND demonstrate prompt engineering expertise beyond the user's input. Style references must be woven naturally into description, not stated as rendering directives.
+6. Tier 3 must be grammatically complete with coherent spatial flow AND demonstrate prompt engineering expertise beyond the user's input. Style references must be woven naturally into description — NEVER use meta-instructions like "the image should feel like", "rendered as", or "meant to look like". Describe the scene, not what you want the model to do.
 7. Tier 4 must be short enough that a casual user understands it instantly, but complete enough to produce a good image. The primary setting (underwater, outdoor, indoor, etc.) must be stated explicitly.
 8. Negative prompts should protect against quality issues SPECIFIC to the description — do not use generic negatives. Tailor negatives to what could go wrong with THIS scene. For Tier 2: negatives MUST follow a --no flag — placing negatives inline without --no is a CRITICAL structural error that reverses their meaning.
 9. WEIGHT HIERARCHY (applies to Tier 1 and Tier 2): The primary subject MUST carry the highest weight. Supporting visual elements get medium weights. Abstract mood terms (beauty, wonder, magic, peaceful) get the LOWEST weights or no weight wrapping at all. This is non-negotiable.
@@ -193,6 +195,64 @@ Return format:
   "tier3": { "positive": "...", "negative": "..." },
   "tier4": { "positive": "...", "negative": "..." }
 }`;
+}
+
+// ============================================================================
+// POST-PROCESSING — catches GPT mechanical errors before returning to client
+// ============================================================================
+
+/**
+ * P1: Deduplicate T2 --no terms.
+ * GPT sometimes repeats the entire --no block. Split on --no, deduplicate
+ * comma-separated terms, rejoin with single --no.
+ */
+function deduplicateMjNegatives(prompt: string): string {
+  const noIndex = prompt.indexOf('--no ');
+  if (noIndex === -1) return prompt;
+
+  const positiveAndParams = prompt.slice(0, noIndex).trimEnd();
+  const negativePart = prompt.slice(noIndex + 5); // after "--no "
+
+  // Split on commas, trim whitespace, deduplicate preserving order
+  const terms = negativePart.split(',').map((t) => t.trim()).filter(Boolean);
+  const seen = new Set<string>();
+  const unique: string[] = [];
+  for (const term of terms) {
+    const lower = term.toLowerCase();
+    if (!seen.has(lower)) {
+      seen.add(lower);
+      unique.push(term);
+    }
+  }
+
+  return `${positiveAndParams} --no ${unique.join(', ')}`;
+}
+
+/**
+ * P2: Strip trailing sentence punctuation from T1 CLIP prompts.
+ * CLIP prompts are comma-separated keyword lists — no periods.
+ */
+function stripTrailingPunctuation(prompt: string): string {
+  return prompt.replace(/[.!?]+\s*$/, '').trimEnd();
+}
+
+/**
+ * Run all post-processing on validated tier prompts.
+ * Mutates nothing — returns a new object.
+ */
+function postProcessTiers(tiers: z.infer<typeof ResponseSchema>): z.infer<typeof ResponseSchema> {
+  return {
+    tier1: {
+      positive: stripTrailingPunctuation(tiers.tier1.positive),
+      negative: stripTrailingPunctuation(tiers.tier1.negative),
+    },
+    tier2: {
+      positive: deduplicateMjNegatives(tiers.tier2.positive),
+      negative: tiers.tier2.negative,
+    },
+    tier3: tiers.tier3,
+    tier4: tiers.tier4,
+  };
 }
 
 // ============================================================================
@@ -323,9 +383,12 @@ export async function POST(req: NextRequest): Promise<Response> {
       );
     }
 
-    // ── Return validated tier prompts ─────────────────────────────────
+    // ── Post-process: catch GPT mechanical errors ──────────────────
+    const processed = postProcessTiers(validated.data);
+
+    // ── Return post-processed tier prompts ───────────────────────────
     return NextResponse.json(
-      { tiers: validated.data },
+      { tiers: processed },
       {
         status: 200,
         headers: { 'Cache-Control': 'no-store' },
