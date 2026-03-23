@@ -148,9 +148,9 @@ TIER 2 — Midjourney Family (e.g., Midjourney, BlueWillow):
 - Rich artistic and mood descriptors work well
 - STRICT ORDERING: weighted subject first → environment/scene description → style/composition cues → --ar and --v and --s parameters → --no negatives LAST. The positive description must be fully complete before any parameters begin.
 - STRUCTURAL EXAMPLE (follow this pattern exactly):
-  lone mermaid::2.0 gliding through crystal-clear tropical water, bright reef fish in shimmering blues and orange::1.4, cinematic underwater photography::1.2, wide underwater view, silver scales catching sunlight, coral gardens and sea fans below, serene luminous depth --ar 16:9 --v 7 --s 500 --no above water, murky, foggy, dark, text, watermark
-- NEVER DUPLICATE NEGATIVES. Each negative term appears EXACTLY ONCE after --no. Do not repeat the negative list. If you find yourself writing the same terms twice, stop — you have a structural error.
+  lone mermaid::2.0 gliding through crystal-clear tropical water, bright reef fish in shimmering blues and orange::1.4, cinematic underwater photography::1.2, wide underwater view, silver scales catching sunlight, coral gardens and sea fans below, serene luminous depth --ar 16:9 --v 7 --s 500 --no above water, murky, foggy, dark, text, watermark (negatives appear exactly ONCE — never repeat this block)
 - Target: ~300 characters for creative text (before parameters). Richer inputs may need more space — prioritise completeness over brevity.
+- FINAL RULE FOR THIS TIER — NEVER DUPLICATE NEGATIVES. The --no block appears ONCE. Each negative term appears EXACTLY ONCE. If you have already written the negatives, STOP. Do not write them again. Repeating the negative list is the single most common structural error — check your output before finishing.
 
 TIER 3 — Natural Language (e.g., DALL·E, Adobe Firefly, Google Imagen):
 - Full grammatical sentences describing the scene
@@ -171,6 +171,8 @@ TIER 4 — Plain Language (e.g., Canva, Bing, Freepik):
 - Keep all key visual anchors from the input — do not over-compress. Include the subject and at least 3 supporting visual elements, but do NOT list more than 5 elements in a single sentence.
 - ALWAYS state the primary setting EXPLICITLY. Do not rely on implication. Write "underwater" not just "in water". Write "in a dense forest" not just "with trees". Plain language platforms need direct, unambiguous setting cues.
 - STRICT ORDERING: Sentence 1 = subject + action + 3–4 key visual elements. Sentence 2 = explicit setting + environment details. Sentence 3 (optional) = lighting/atmosphere + mood.
+- Every sentence MUST be at least 10 words. Do not compress mood and setting into a bare adjective list. WRONG: "It is underwater, clear, and dreamlike." (7 words, bare adjective checklist). RIGHT: "The underwater scene glows with soft light and a calm, dreamlike atmosphere." (12 words, paints the feeling). Bare adjective lists are structurally wrong for this family — write complete descriptive sentences.
+- Do not use meta-language like "fill the scene", "in this image", or "the composition shows". Describe what exists, not the image itself.
 - Target: ~150–200 characters
 ${providerBlock}
 

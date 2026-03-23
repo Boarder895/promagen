@@ -23,8 +23,10 @@
 'use client';
 
 import React, { useState, useCallback, useMemo } from 'react';
+import Image from 'next/image';
 import type { GeneratedPrompts, PlatformTier } from '../../types/prompt-intelligence';
 import { TIER_CONFIGS } from '../../types/prompt-intelligence';
+import { getPlatformTierId } from '@/data/platform-tiers';
 import {
   lookupBestOptimalChars,
   lookupOptimalLength,
@@ -63,6 +65,8 @@ interface FourTierPromptPreviewProps {
   isTierGenerating?: boolean;
   /** Provider name the tiers were generated for (shows badge, null = generic) */
   generatedForProvider?: string | null;
+  /** All providers — used to show tier-grouped provider icons */
+  providers?: { id: string; name: string; localIcon?: string }[];
 }
 
 interface TierCardProps {
@@ -470,6 +474,95 @@ function TierCard({
 }
 
 // ============================================================================
+// TIER PROVIDER ICONS — shows all providers for the active tier
+// ============================================================================
+// Styling matches PotM "Try in" provider icons (prompt-showcase.tsx lines 263-288)
+// but non-clickable. Hover: glow + scale-110.
+
+const TIER_PROVIDER_ICON_STYLES = `
+  @keyframes tier-icon-glow {
+    0%, 100% { box-shadow: 0 0 6px rgba(255,255,255,0.2); }
+    50% { box-shadow: 0 0 14px rgba(255,255,255,0.5); }
+  }
+  .tier-provider-icon:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 12px rgba(255,255,255,0.35);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tier-provider-icon:hover { transform: none; }
+  }
+`;
+
+function TierProviderIcons({
+  providers,
+  activeTier,
+}: {
+  providers: { id: string; name: string; localIcon?: string }[];
+  activeTier: PlatformTier;
+}) {
+  // Group providers by tier
+  const tierProviders = useMemo(() => {
+    const grouped: Record<number, { id: string; name: string; localIcon?: string }[]> = {
+      1: [], 2: [], 3: [], 4: [],
+    };
+    for (const p of providers) {
+      const tierId = getPlatformTierId(p.id);
+      if (tierId && grouped[tierId]) {
+        grouped[tierId].push(p);
+      }
+    }
+    return grouped;
+  }, [providers]);
+
+  const activeProviders = tierProviders[activeTier] ?? [];
+  if (activeProviders.length === 0) return null;
+
+  return (
+    <>
+      <style dangerouslySetInnerHTML={{ __html: TIER_PROVIDER_ICON_STYLES }} />
+      <div
+        className="flex flex-wrap items-center justify-center"
+        style={{ gap: 'clamp(5px, 0.4vw, 8px)', padding: 'clamp(4px, 0.3vw, 6px) 0' }}
+      >
+        {activeProviders.map((p) => (
+          <div
+            key={p.id}
+            className="tier-provider-icon inline-flex shrink-0 cursor-default items-center justify-center rounded-lg bg-white/15 ring-1 ring-white/10 transition-all"
+            style={{
+              width: 'clamp(30px, 2.3vw, 38px)',
+              height: 'clamp(30px, 2.3vw, 38px)',
+            }}
+            title={p.name}
+          >
+            {p.localIcon ? (
+              <Image
+                src={p.localIcon}
+                alt={p.name}
+                width={24}
+                height={24}
+                className="rounded-sm"
+                style={{
+                  width: 'clamp(18px, 1.5vw, 24px)',
+                  height: 'clamp(18px, 1.5vw, 24px)',
+                  filter: 'drop-shadow(0 0 3px rgba(255,255,255,0.4))',
+                }}
+              />
+            ) : (
+              <span
+                className="text-white/60 font-medium"
+                style={{ fontSize: 'clamp(0.5rem, 0.55vw, 0.65rem)' }}
+              >
+                {p.name.slice(0, 2)}
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+// ============================================================================
 // MAIN COMPONENT
 // ============================================================================
 
@@ -487,6 +580,7 @@ export function FourTierPromptPreview({
   termIndex,
   isTierGenerating = false,
   generatedForProvider = null,
+  providers = [],
 }: FourTierPromptPreviewProps) {
   const handleCopy = useCallback((tier: PlatformTier, text: string) => {
     onCopy?.(tier, text);
@@ -514,10 +608,15 @@ export function FourTierPromptPreview({
           <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
             🎯 Prompt Preview
           </h3>
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-white font-medium">
             Tier {currentTier}: {TIER_CONFIGS[currentTier].name}
           </span>
         </div>
+
+        {/* Tier provider icons — all providers in this tier family */}
+        {providers.length > 0 && (
+          <TierProviderIcons providers={providers} activeTier={currentTier} />
+        )}
         
         {/* Single tier card - full width */}
         <TierCard
@@ -575,10 +674,15 @@ export function FourTierPromptPreview({
             </span>
           )}
         </h3>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-white font-medium">
           Same scene, different syntaxes
         </p>
       </div>
+
+      {/* Tier provider icons — all providers in the active tier family */}
+      {providers.length > 0 && (
+        <TierProviderIcons providers={providers} activeTier={currentTier} />
+      )}
       
       {/* Grid of tier cards */}
       <div className={`grid gap-3 ${compact ? 'grid-cols-2' : 'grid-cols-1 lg:grid-cols-2'}`}>

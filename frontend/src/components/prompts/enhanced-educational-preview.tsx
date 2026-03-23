@@ -1667,6 +1667,7 @@ export default function EnhancedEducationalPreview({
                 termIndex={colourTermIndex}
                 isTierGenerating={isTierGenerating}
                 generatedForProvider={generatedForProvider}
+                providers={providers}
               />
             </div>
 
