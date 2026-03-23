@@ -109,6 +109,8 @@ export interface EnhancedEducationalPreviewProps {
   onDescribeTextChange?: (text: string) => void;
   /** Called when "Generate Prompt" clicked — fires Call 2 in parallel */
   onDescribeGenerate?: (sentence: string) => void;
+  /** Called when user clicks Clear — resets AI state */
+  onDescribeClear?: () => void;
   /** Whether the current text has drifted from last generation */
   isDrifted?: boolean;
   /** Number of word-level changes detected */
@@ -808,6 +810,7 @@ export default function EnhancedEducationalPreview({
   // AI Disguise pass-through (from playground-workspace orchestrator)
   onDescribeTextChange,
   onDescribeGenerate,
+  onDescribeClear,
   isDrifted,
   driftChangeCount,
   aiTierPrompts,
@@ -1016,11 +1019,17 @@ export default function EnhancedEducationalPreview({
   }, [aspectRatio, selectedProviderId, compositionMode, selections]);
 
   // Active tier prompt text (for copy, diff, and "What If")
+  // Fix 6: Prefers AI tier text (Call 2) when available. Falls back to template text.
+  // This is THE critical fix — the assembled prompt box and Call 3 input both use this,
+  // so AI-quality text flows through the entire pipeline, not lossy template text.
   const activeTierPromptText = useMemo(() => {
     const tierKey = `tier${activeTier}` as keyof Omit<GeneratedPrompts, 'negative'>;
-    let text = generatedPrompts[tierKey] ?? '';
 
-    // Inject AR composition if present
+    // AI tier text takes priority when available
+    const source = aiTierPrompts ?? generatedPrompts;
+    let text = source[tierKey] ?? '';
+
+    // Inject AR composition if present (applies to both AI and template text)
     if (compositionPack) {
       const platformId = selectedProviderId ?? TIER_REPRESENTATIVE[activeTier];
       if (compositionPack.text) {
@@ -1038,7 +1047,7 @@ export default function EnhancedEducationalPreview({
       }
     }
     return text;
-  }, [generatedPrompts, activeTier, compositionPack, selectedProviderId]);
+  }, [generatedPrompts, aiTierPrompts, activeTier, compositionPack, selectedProviderId]);
 
   // ============================================================================
   // Live Diff — tracks mode changes and computes visual diff (3s fade)
@@ -1175,18 +1184,47 @@ export default function EnhancedEducationalPreview({
     };
   }, [selectedProviderId, selectedProvider?.name]);
 
-  // Fire Call 3 when optimizer toggled ON + provider selected + has content
+  // Fire Call 3 when optimizer toggled ON, and re-fire debounced when text changes while ON
+  // Fix 3: Aspect ratio / selection changes re-fire Call 3 so the optimised prompt stays in sync
   const prevOptimizerEnabledRef = useRef(false);
+  const prevPromptTextRef = useRef('');
+  const reFireTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     const wasEnabled = prevOptimizerEnabledRef.current;
+    const prevText = prevPromptTextRef.current;
     prevOptimizerEnabledRef.current = isOptimizerEnabled;
+    prevPromptTextRef.current = activeTierPromptText;
 
-    if (isOptimizerEnabled && !wasEnabled && selectedProviderId && activeTierPromptText && aiOptimiseContext) {
-      aiOptimise(activeTierPromptText, selectedProviderId, aiOptimiseContext);
-    }
+    // Toggled OFF → clear
     if (!isOptimizerEnabled && wasEnabled) {
       clearAiOptimise();
+      if (reFireTimerRef.current) clearTimeout(reFireTimerRef.current);
+      return;
     }
+
+    // Not enabled or missing requirements → skip
+    if (!isOptimizerEnabled || !selectedProviderId || !activeTierPromptText || !aiOptimiseContext) {
+      return;
+    }
+
+    // Just toggled ON → fire immediately
+    if (!wasEnabled) {
+      aiOptimise(activeTierPromptText, selectedProviderId, aiOptimiseContext);
+      return;
+    }
+
+    // Already ON and text changed → debounced re-fire (800ms)
+    if (activeTierPromptText !== prevText) {
+      if (reFireTimerRef.current) clearTimeout(reFireTimerRef.current);
+      reFireTimerRef.current = setTimeout(() => {
+        aiOptimise(activeTierPromptText, selectedProviderId, aiOptimiseContext);
+      }, 800);
+    }
+
+    return () => {
+      if (reFireTimerRef.current) clearTimeout(reFireTimerRef.current);
+    };
   }, [isOptimizerEnabled, selectedProviderId, activeTierPromptText, aiOptimiseContext, aiOptimise, clearAiOptimise]);
 
   // Effective optimised values: AI result takes priority over client-side
@@ -1447,6 +1485,10 @@ export default function EnhancedEducationalPreview({
           isLocked={false}
           onTextChange={onDescribeTextChange}
           onGenerate={onDescribeGenerate}
+          onClear={() => {
+            onDescribeClear?.();
+            clearAiOptimise();
+          }}
           isDrifted={isDrifted}
           driftChangeCount={driftChangeCount}
         />

@@ -51,6 +51,12 @@ const DESCRIBE_STYLES = `
   }
   .dyi-generating { animation: dyi-pulse 1.2s ease-in-out infinite; }
 
+  @keyframes dyi-regen-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.3); }
+    50% { box-shadow: 0 0 0 5px rgba(251, 191, 36, 0); }
+  }
+  .dyi-regen { animation: dyi-regen-pulse 1.4s ease-in-out infinite; }
+
   @keyframes dyi-category-pop {
     from { opacity: 0; transform: scale(0.9); }
     to { opacity: 1; transform: scale(1); }
@@ -58,6 +64,10 @@ const DESCRIBE_STYLES = `
   .dyi-cat-badge { animation: dyi-category-pop 0.2s ease-out both; }
 
   .dyi-panel { will-change: max-height, opacity; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dyi-generating, .dyi-regen { animation: none; }
+  }
 `;
 
 // ============================================================================
@@ -95,6 +105,8 @@ export interface DescribeYourImageProps {
   onTextChange?: (text: string) => void;
   /** Called when "Generate Prompt" succeeds — fires Call 2 in parallel */
   onGenerate?: (sentence: string) => void;
+  /** Called when user clicks Clear — resets human text, AI tiers, AI optimise, drift */
+  onClear?: () => void;
   /** Whether the current text has drifted from last generation */
   isDrifted?: boolean;
   /** Number of word-level changes detected since last generation */
@@ -165,6 +177,7 @@ export function DescribeYourImage({
   isLocked,
   onTextChange,
   onGenerate,
+  onClear,
   isDrifted = false,
   driftChangeCount = 0,
 }: DescribeYourImageProps) {
@@ -208,6 +221,15 @@ export function DescribeYourImage({
     await convert(inputText);
     setHasGenerated(true);
   }, [inputText, isLoading, convert, onGenerate]);
+
+  // ── Clear all — resets textarea, categories, AI state ─────────────
+  const handleClear = useCallback(() => {
+    setInputText('');
+    setHasGenerated(false);
+    setFormatWarning({ detected: false });
+    onTextChange?.('');
+    onClear?.();
+  }, [onTextChange, onClear]);
 
   // ── Apply parsed categories to builder state ──────────────────────
   useEffect(() => {
@@ -457,7 +479,8 @@ export function DescribeYourImage({
               style={{ marginTop: 'clamp(8px, 0.8vw, 12px)' }}
             >
               <div className="flex items-center" style={{ gap: 'clamp(8px, 0.8vw, 12px)' }}>
-                {/* Generate Prompt button */}
+                {/* Generate / Regenerate Prompt button */}
+                {/* Fix 5: Amber pulse + "Regenerate" when drift >= 3 */}
                 <button
                   type="button"
                   onClick={handleGenerate}
@@ -469,9 +492,11 @@ export function DescribeYourImage({
                     ${
                       isLoading
                         ? 'dyi-generating bg-orange-600/30 border-orange-500/40'
-                        : inputText.trim()
-                          ? 'bg-orange-600/20 border-orange-500/40 hover:bg-orange-600/30 hover:border-orange-500/60 cursor-pointer'
-                          : 'bg-slate-800/40 border-slate-700/30 cursor-not-allowed'
+                        : isDrifted && driftChangeCount >= 3 && hasGenerated
+                          ? 'dyi-regen bg-amber-600/20 border-amber-500/40 hover:bg-amber-600/30 hover:border-amber-400/60 cursor-pointer'
+                          : inputText.trim()
+                            ? 'bg-orange-600/20 border-orange-500/40 hover:bg-orange-600/30 hover:border-orange-500/60 cursor-pointer'
+                            : 'bg-slate-800/40 border-slate-700/30 cursor-not-allowed'
                     }
                   `}
                   style={{
@@ -505,10 +530,32 @@ export function DescribeYourImage({
                       >
                         <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                       </svg>
-                      Generate Prompt
+                      {isDrifted && driftChangeCount >= 3 && hasGenerated ? 'Regenerate' : 'Generate Prompt'}
                     </>
                   )}
                 </button>
+
+                {/* Fix 1: Clear button — resets everything for a fresh start */}
+                {hasGenerated && !isLoading && (
+                  <button
+                    type="button"
+                    onClick={handleClear}
+                    className="inline-flex items-center rounded-lg text-white/70 hover:text-white transition-colors cursor-pointer"
+                    style={{
+                      padding: 'clamp(5px, 0.5vw, 8px) clamp(8px, 0.8vw, 12px)',
+                      fontSize: 'clamp(0.62rem, 0.68vw, 0.75rem)',
+                      border: '1px solid rgba(100, 116, 139, 0.3)',
+                      gap: 'clamp(3px, 0.3vw, 5px)',
+                    }}
+                    title="Clear description and all generated prompts"
+                  >
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                      style={{ width: 'clamp(12px, 0.9vw, 14px)', height: 'clamp(12px, 0.9vw, 14px)' }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Clear
+                  </button>
+                )}
 
                 {/* Currently populating indicator */}
                 {isLoading && populatingCategory && (
@@ -591,6 +638,20 @@ export function DescribeYourImage({
                   <span className="text-sky-400/50"> — add detail to these to boost your DNA score</span>
                 </span>
               </div>
+            )}
+
+            {/* Fix 4: Hint — tell user they can edit and regenerate */}
+            {hasGenerated && !isLoading && !isDrifted && (
+              <p
+                style={{
+                  marginTop: 'clamp(4px, 0.4vw, 6px)',
+                  fontSize: 'clamp(0.56rem, 0.58vw, 0.65rem)',
+                  lineHeight: 1.4,
+                  color: '#94A3B8',
+                }}
+              >
+                Edit your description above and click Regenerate to refine your prompts
+              </p>
             )}
           </div>
         </div>

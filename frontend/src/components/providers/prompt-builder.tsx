@@ -217,6 +217,8 @@ export interface PromptBuilderProps {
   onDescribeTextChange?: (text: string) => void;
   /** Called when "Generate Prompt" clicked — fires Call 2 in parallel */
   onDescribeGenerate?: (sentence: string) => void;
+  /** Called when user clicks Clear — resets AI state */
+  onDescribeClear?: () => void;
   /** Whether the current text has drifted from last generation */
   isDrifted?: boolean;
   /** Number of word-level changes detected */
@@ -947,6 +949,7 @@ export function PromptBuilder({
   // AI Disguise pass-through (from playground-workspace orchestrator)
   onDescribeTextChange,
   onDescribeGenerate,
+  onDescribeClear,
   isDrifted,
   driftChangeCount,
   aiTierPrompts: _aiTierPrompts,
@@ -2714,6 +2717,7 @@ export function PromptBuilder({
               isLocked={isLocked}
               onTextChange={onDescribeTextChange}
               onGenerate={onDescribeGenerate}
+              onClear={onDescribeClear}
               isDrifted={isDrifted}
               driftChangeCount={driftChangeCount}
             />

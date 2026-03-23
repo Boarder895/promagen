@@ -178,6 +178,7 @@ export default function PlaygroundWorkspace({ providers, onProviderChange }: Pla
     isGenerating: isTierGenerating,
     generatedForProvider,
     generate: generateTiers,
+    clear: clearTiers,
   } = useTierGeneration();
 
   // ── AI Disguise: Drift Detection (Improvement 1) ──────────────────
@@ -189,6 +190,13 @@ export default function PlaygroundWorkspace({ providers, onProviderChange }: Pla
 
   // Track previous provider for re-fire detection
   const prevProviderIdRef = useRef<string | null>(null);
+
+  // ── Clear everything (Fix 1+2: clear button + stale optimised text) ──
+  const handleDescribeClear = useCallback(() => {
+    setHumanText('');
+    clearTiers();
+    markDriftSynced('');
+  }, [clearTiers, markDriftSynced]);
 
   // ── Provider selection handler ────────────────────────────────────
   const handleProviderSelect = useCallback(
@@ -278,6 +286,7 @@ export default function PlaygroundWorkspace({ providers, onProviderChange }: Pla
           // AI Disguise callbacks (passed through to DescribeYourImage)
           onDescribeTextChange={handleDescribeTextChange}
           onDescribeGenerate={handleDescribeGenerate}
+          onDescribeClear={handleDescribeClear}
           isDrifted={isDrifted}
           driftChangeCount={driftChangeCount}
           aiTierPrompts={aiTierPrompts}
@@ -291,6 +300,7 @@ export default function PlaygroundWorkspace({ providers, onProviderChange }: Pla
           // AI Disguise callbacks + tier data
           onDescribeTextChange={handleDescribeTextChange}
           onDescribeGenerate={handleDescribeGenerate}
+          onDescribeClear={handleDescribeClear}
           isDrifted={isDrifted}
           driftChangeCount={driftChangeCount}
           aiTierPrompts={aiTierPrompts}
