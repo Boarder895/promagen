@@ -101,18 +101,53 @@ const TIER_DISPLAY: Record<number, string> = {
 // ============================================================================
 
 function buildSystemPrompt(providerContext: z.infer<typeof ProviderContextSchema> | null): string {
-  const providerBlock = providerContext
-    ? `
+  // ── Build T1 syntax instruction dynamically (Pattern 1: examples > rules) ──
+  // When a provider is selected with known weight syntax, the T1 section's FIRST
+  // bullet shows THAT provider's syntax with concrete examples. This is critical
+  // because GPT follows the first concrete example in a section (Pattern 2).
+  const isDoubleColon = providerContext?.weightingSyntax?.includes('::');
+  const isParenthetical = providerContext?.weightingSyntax?.includes('(');
+  const hasProvider = providerContext !== null;
+
+  let t1SyntaxInstruction: string;
+  if (hasProvider && isDoubleColon) {
+    // Provider uses double-colon (e.g., Leonardo)
+    t1SyntaxInstruction = `- CRITICAL — The user has selected ${providerContext.name}. This platform uses DOUBLE-COLON weight syntax. You MUST use: term::weight. Example: elderly samurai::1.4, weathered katana::1.3, golden hour::1.2. Do NOT use parenthetical (term:weight) syntax — that is WRONG for ${providerContext.name}. WRONG: (elderly samurai:1.4). RIGHT: elderly samurai::1.4.
+- Every weighted term in Tier 1 MUST use the double-colon :: pattern. If you catch yourself writing parentheses around a weight, STOP and rewrite it.`;
+  } else if (hasProvider && isParenthetical) {
+    // Provider uses parenthetical (e.g., Stable Diffusion)
+    t1SyntaxInstruction = `- CRITICAL — The user has selected ${providerContext.name}. This platform uses PARENTHETICAL weight syntax. You MUST use: (term:weight). Example: (elderly samurai:1.4), (weathered katana:1.3), (golden hour:1.2). Do NOT use double-colon term::weight syntax — that is WRONG for ${providerContext.name}.`;
+  } else if (hasProvider && !providerContext.supportsWeighting) {
+    // Provider doesn't support weighting
+    t1SyntaxInstruction = `- The user has selected ${providerContext.name}. This platform does NOT support weight syntax. Output clean comma-separated keywords with NO weight markers — no (term:weight) and no term::weight.`;
+  } else {
+    // No provider selected — generic parenthetical default
+    t1SyntaxInstruction = `- Weighted keyword syntax — WHEN NO PROVIDER IS SPECIFIED: you MUST use parenthetical syntax: (term:1.3). Example: (lone mermaid:1.4), (coral reef:1.2). Do NOT use double-colon :: syntax unless a specific provider below requires it.
+- WHEN A PROVIDER IS SPECIFIED in PROVIDER CONTEXT below: use THAT provider's exact syntax instead (e.g., Leonardo uses term::1.3 double-colon, Stable Diffusion uses (term:1.3) parentheses).`;
+  }
+
+  // ── Build provider block with CONCRETE EXAMPLE (Pattern 1) ──
+  let providerBlock = '';
+  if (providerContext) {
+    const syntaxExample = isDoubleColon
+      ? 'masterpiece, best quality, highly detailed, elderly samurai::1.4, stone bridge::1.3, golden hour::1.2, cherry blossoms, sharp focus, 8K'
+      : isParenthetical
+        ? 'masterpiece, best quality, highly detailed, (elderly samurai:1.4), (stone bridge:1.3), (golden hour:1.2), cherry blossoms, sharp focus, 8K'
+        : 'masterpiece, best quality, highly detailed, elderly samurai, stone bridge, golden hour, cherry blossoms, sharp focus, 8K';
+
+    providerBlock = `
 PROVIDER CONTEXT (OVERRIDES GENERIC TIER RULES):
 The user has selected ${providerContext.name} (Tier ${providerContext.tier} — ${TIER_DISPLAY[providerContext.tier] ?? 'Unknown'}).
 This platform uses ${providerContext.promptStyle} format.
-${providerContext.weightingSyntax ? `WEIGHT SYNTAX FOR THIS PROVIDER: ${providerContext.weightingSyntax} — YOU MUST USE THIS EXACT SYNTAX, not parentheses unless this IS parentheses.` : 'No weight syntax — output plain keywords.'}
+${providerContext.weightingSyntax ? `WEIGHT SYNTAX FOR THIS PROVIDER: ${providerContext.weightingSyntax} — YOU MUST USE THIS EXACT SYNTAX.` : 'No weight syntax — output plain keywords.'}
 Sweet spot: ~${providerContext.sweetSpot} tokens. Token limit: ${providerContext.tokenLimit}.
 ${providerContext.qualityPrefix?.length ? `Quality prefix: ${providerContext.qualityPrefix.join(', ')}.` : ''}
 ${providerContext.supportsWeighting ? 'This platform supports term weighting.' : 'This platform does NOT support term weighting — do not include weight syntax.'}
 Negative support: ${providerContext.negativeSupport}.
-Prioritise Tier ${providerContext.tier} output quality — this is the tier the user will use.`
-    : '';
+Prioritise Tier ${providerContext.tier} output quality — this is the tier the user will use.
+CONCRETE EXAMPLE for ${providerContext.name} Tier 1 output (follow this syntax pattern exactly):
+${syntaxExample}`;
+  }
 
   return `You are an expert AI image prompt generator for 42 AI image generation platforms.
 
@@ -121,8 +156,7 @@ Given a natural English description, generate 4 different prompt versions optimi
 The 4 tiers:
 
 TIER 1 — CLIP-Based (e.g., Leonardo, Stable Diffusion, DreamStudio):
-- Weighted keyword syntax — WHEN NO PROVIDER IS SPECIFIED: you MUST use parenthetical syntax: (term:1.3). Example: (lone mermaid:1.4), (coral reef:1.2). Do NOT use double-colon :: syntax unless a specific provider below requires it.
-- WHEN A PROVIDER IS SPECIFIED in PROVIDER CONTEXT below: use THAT provider's exact syntax instead (e.g., Leonardo uses term::1.3 double-colon, Stable Diffusion uses (term:1.3) parentheses).
+${t1SyntaxInstruction}
 - Front-load subject and style with highest weights (1.3–1.4 for subject, 1.2–1.3 for style/lighting)
 - SUBJECT MUST ALWAYS CARRY THE HIGHEST WEIGHT in the entire prompt. No mood, atmosphere, or secondary element may have a higher weight than the primary subject.
 - Quality prefix: masterpiece, best quality, highly detailed
@@ -160,7 +194,7 @@ TIER 3 — Natural Language (e.g., DALL·E, Adobe Firefly, Google Imagen):
 - Include lighting, atmosphere, and composition naturally within sentences
 - Convert negatives to positive reinforcement ("sharp and clear" not "no blur")
 - CRITICAL: Do NOT return a lightly edited version of the user's input. You are a prompt engineer, not a paraphraser. The output must demonstrate expert knowledge the user does not have.
-- MANDATORY: Weave an art style or medium reference naturally into the description — do NOT use explicit rendering directives. BANNED PHRASES: "rendered as", "in the style of", "should feel like", "meant to look like", "designed to resemble", "intended to appear as", "the image should", "the scene feels", "the scene is", "the mood is". Instead, integrate style as part of the scene itself (e.g., "a luminous digital fantasy scene of..." or "with the vivid clarity of underwater photography" or "in cinematic wide-angle detail"). The style must feel like a natural part of the description, never a meta-instruction to the model. Mood and atmosphere must be SHOWN through visual description, not STATED as meta-commentary.
+- MANDATORY: Weave an art style or medium reference naturally into the description — do NOT use explicit rendering directives. BANNED PHRASES: "rendered as", "in the style of", "should feel like", "meant to look like", "designed to resemble", "intended to appear as", "the image should", "the scene feels", "the scene is", "the mood is". Instead, integrate style as part of the scene itself (e.g., "a luminous digital fantasy scene of..." or "with the vivid clarity of underwater photography" or "in cinematic wide-angle detail"). The style must feel like a natural part of the description, never a meta-instruction to the model. Mood and atmosphere must be SHOWN through visual description, not STATED as meta-commentary. WRONG: "The scene feels emotionally quiet" (meta-commentary about mood). RIGHT: "...bathed in a hushed amber stillness, where the weight of time settles softly across the frame" (mood expressed through visual and sensory language). Do NOT drop mood entirely — always preserve the user's emotional intent through visual equivalents.
 - MANDATORY: Add at least one composition or camera cue NOT in the user's input (e.g., "viewed from below looking up toward the surface", "in a wide cinematic underwater scene", "with the subject centred in the frame").
 - MANDATORY: Add at least one atmospheric or lighting detail NOT in the user's input (e.g., "with luminous tropical clarity", "dappled caustic light patterns on the seabed", "god rays piercing the blue depths").
 - STRICT ORDERING across 2–4 sentences: Sentence 1 = subject + primary action + composition/style. Sentence 2 = secondary visual elements + lighting. Sentence 3 (if needed) = environment + atmosphere. Keep rendering style woven in, not stated as a separate directive.
@@ -175,7 +209,7 @@ TIER 4 — Plain Language (e.g., Canva, Bing, Freepik):
 - NEVER include questions, self-corrections, or negation-then-correction patterns. State what the scene IS, never what it is NOT. WRONG: "The scene is underwater? No, it is an outdoor landscape with Mount Fuji in the distance." (questions and self-correction are structurally broken — image generators cannot interpret "No, it is…"). RIGHT: "An elderly samurai stands on a stone bridge at golden hour, surrounded by cherry blossoms and warm amber light." (direct, positive statement of the scene).
 - STRICT ORDERING: Sentence 1 = subject + action + 3–4 key visual elements. Sentence 2 = explicit setting + environment details. Sentence 3 (optional) = lighting/atmosphere + mood.
 - Every sentence MUST be at least 10 words. Do not compress mood and setting into a bare adjective list. WRONG: "It is underwater, clear, and dreamlike." (7 words, bare adjective checklist). RIGHT: "The underwater scene glows with soft light and a calm, dreamlike atmosphere." (12 words, paints the feeling). Bare adjective lists are structurally wrong for this family — write complete descriptive sentences.
-- Do not use meta-language like "fill the scene", "in this image", or "the composition shows". Describe what exists, not the image itself.
+- Do not use meta-language like "fill the scene", "in this image", "the composition shows", "the scene has", "the scene shows", or "the scene captures". Describe what exists, not the image itself.
 - Target: ~150–200 characters
 ${providerBlock}
 
