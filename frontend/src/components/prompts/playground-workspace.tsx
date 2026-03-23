@@ -212,9 +212,8 @@ export default function PlaygroundWorkspace({ providers, onProviderChange }: Pla
     const prevId = prevProviderIdRef.current;
     prevProviderIdRef.current = selectedProviderId;
 
-    // Only re-fire if provider actually changed AND human text exists
+    // Re-fire if provider changed (including null → provider) AND human text exists
     if (
-      prevId !== null &&
       selectedProviderId !== null &&
       selectedProviderId !== prevId &&
       humanText.trim().length > 0

@@ -1,18 +1,42 @@
 # Human Sentence Conversion
 
-**Version:** 1.0.0  
-**Date:** 20 March 2026  
-**Status:** Design approved — not yet built  
-**Owner:** Martin Farrell (solo founder)  
-**Authority:** This document defines the architecture for converting natural English text into structured, platform-specific AI image prompts via the existing Prompt Intelligence pipeline.
+**Version:** 2.0.0  
+**Date:** 23 March 2026  
+**Status:** BUILT and deployed  
+**Owner:** Promagen  
+**Authority:** This document defines the architecture, UI, API route, and term-matching logic for converting natural English text into structured, platform-specific AI image prompts.
 
 **Cross-references:**
 
-- `prompt-intelligence.md` — Intelligence engine architecture (17 algorithmic systems)
+- `ai-disguise.md` — AI Disguise system (Call 1 is the parse-sentence route documented here; Call 2 fires in parallel)
+- `prompt-lab.md` — Studio section, Prompt Lab architecture, component table
+- `prompt-intelligence.md` — Intelligence engine, semantic tags, DNA scoring
 - `unified-prompt-brain.md` — One Brain / `assemblePrompt()` single assembly path
-- `optimal-prompt-stacking.md` — Per-platform, per-category limits (45 platforms × 12 categories)
-- `budget-aware-conversion-build-plan.md` — Dynamic budget-aware conversion system
+- `prompt-optimizer.md` — Client-side 4-phase optimizer
 - `paid_tier.md` — Pro Promagen feature gates
+- `buttons.md` — Button styling standards (Generate button, Clear All)
+- `code-standard.md` — All code standards (clamp, no grey text, co-located animations)
+
+---
+
+## Table of Contents
+
+1. [Problem Statement](#1-problem-statement)
+2. [Architecture](#2-architecture)
+3. [The API Call (Call 1)](#3-the-api-call-call-1)
+4. [Term Matching](#4-term-matching)
+5. [UI Component — DescribeYourImage](#5-ui-component--describeyourimage)
+6. [Generate Button — Engine Bay Styling](#6-generate-button--engine-bay-styling)
+7. [Clear All — Full Cascade Reset](#7-clear-all--full-cascade-reset)
+8. [Format Detection](#8-format-detection)
+9. [Drift Detection](#9-drift-detection)
+10. [AI Disguise Integration (Call 2)](#10-ai-disguise-integration-call-2)
+11. [File Map](#11-file-map)
+12. [Pro Gate](#12-pro-gate)
+13. [Error Handling](#13-error-handling)
+14. [Security & Cost Control](#14-security--cost-control)
+15. [Non-Regression Rules](#15-non-regression-rules)
+16. [Future Extensions](#16-future-extensions)
 
 ---
 
@@ -22,71 +46,76 @@ Users think in sentences. AI image platforms think in structured categories with
 
 Today, a user must manually break their creative vision into 12 dropdown selections. This works for users who understand prompt engineering. It fails for users who think like this:
 
-> "A beautiful mermaid is swimming gracefully in the open sea, surrounded by clear blue water and colourful tropical fish that move gently around her in every direction. Sunlight pours down through the surface of the water, casting soft shimmering rays all around her and making the whole underwater world look bright, peaceful, and magical."
+> "A lone mermaid glides through the open sea in crystal-clear tropical water, surrounded by clouds of bright reef fish in shimmering blues, yellows, and orange."
 
-That sentence contains subject, action, environment, lighting, atmosphere, colour, and materials — but the user shouldn't need to know that. They should paste it in and let the engine do the thinking.
+That sentence contains subject, action, environment, lighting, atmosphere, colour, and materials — but the user shouldn't need to know that. They paste it in, click Generate, and the engine does the thinking.
 
 ### The quality case
 
-The real problem isn't convenience — it's **image quality**. When a user pastes that sentence raw into Leonardo (CLIP, 75 tokens), everything after token 75 is silently truncated. Half their description vanishes. When they paste it into Midjourney, 70 of the 95 words are wasted — MJ ignores everything past word ~30. When they paste it into Artistly (Plain Language tier), the long paragraph overwhelms a tool designed for 18-word inputs.
+The real problem isn't convenience — it's image quality. When a user pastes a raw sentence into Leonardo (CLIP, 75 tokens), everything after token 75 is silently truncated. When they paste it into Midjourney, most words are wasted. When they paste it into Canva (Plain Language tier), the long paragraph overwhelms a tool designed for short inputs.
 
-The Intelligence Engine already solves all of this — but only if the input arrives as structured category selections. This feature bridges the gap.
+The Intelligence Engine solves all of this — but only if input arrives as structured category selections. This feature bridges the gap.
 
 ---
 
 ## 2. Architecture
 
-### The One Brain Rule
+### The Two-Track System
 
-**The API call parses. The engine optimises. These are two different jobs. Never merge them.**
+When the user clicks "Generate Prompt", two API calls fire **in parallel**:
 
-A single LLM API call categorises the human sentence into 12 structured categories. From that point forward, the existing `assemblePrompt()` pipeline handles everything: per-platform formatting, encoder-aware assembly, weight syntax, fidelity conversion, negative routing, budget-aware trim, the full 17-system intelligence layer.
+- **Call 1** (`/api/parse-sentence`) — Categorises human text into 12 structured categories → populates dropdowns
+- **Call 2** (`/api/generate-tier-prompts`) — Generates 4 tier-native prompts directly from human text → populates tier preview cards
 
-If the API call also attempted to optimise or reformat the prompt, that would create a parallel assembly path — two things assembling prompts that can disagree. This violates the One Brain architecture. The API's only job is parsing.
+Call 1 is documented here. Call 2 is documented in `ai-disguise.md` §5–§8.
 
-### Data flow
+### Data flow (Call 1)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  HUMAN SENTENCE CONVERSION                                       │
+│  HUMAN SENTENCE CONVERSION (Call 1)                              │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │   ┌──────────────────┐                                          │
-│   │ User pastes      │                                          │
-│   │ natural English   │                                          │
-│   │ sentence          │                                          │
+│   │ User types or     │                                          │
+│   │ pastes natural    │                                          │
+│   │ English text      │                                          │
 │   └────────┬─────────┘                                          │
 │            │                                                     │
 │            ▼                                                     │
 │   ┌──────────────────┐                                          │
-│   │ ONE API CALL     │ ← LLM (Claude API)                      │
-│   │ Parse only       │                                          │
-│   │ "Categorise into │                                          │
-│   │  12 categories"  │                                          │
+│   │ POST /api/        │ ← GPT-5.4-mini (OpenAI)                │
+│   │ parse-sentence    │                                          │
+│   │ Parse only        │                                          │
+│   │ "Categorise into  │                                          │
+│   │  12 categories"   │                                          │
 │   └────────┬─────────┘                                          │
 │            │                                                     │
 │            ▼                                                     │
 │   ┌──────────────────┐                                          │
-│   │ Structured JSON   │                                          │
-│   │ {                 │                                          │
-│   │   subject: "...", │                                          │
-│   │   action: "...",  │                                          │
-│   │   style: "...",   │                                          │
-│   │   ...             │                                          │
-│   │ }                 │                                          │
-│   └────────┬─────────┘                                          │
-│            │                                                     │
-│            ▼                                                     │
-│   ┌──────────────────┐                                          │
-│   │ DROPDOWN          │                                          │
-│   │ POPULATION        │                                          │
+│   │ Term Matching     │                                          │
+│   │ (use-sentence-    │                                          │
+│   │  conversion.ts)   │                                          │
 │   │                   │                                          │
-│   │ Known term?       │                                          │
+│   │ Exact match?      │                                          │
 │   │ → Select it       │                                          │
 │   │                   │                                          │
-│   │ Unknown term?     │                                          │
+│   │ Substring match?  │                                          │
+│   │ → Select shortest │                                          │
+│   │                   │                                          │
+│   │ Fuzzy (Lev ≤ 3)? │                                          │
+│   │ → Select it       │                                          │
+│   │                   │                                          │
+│   │ No match?         │                                          │
 │   │ → Custom entry    │                                          │
-│   │   field           │                                          │
+│   └────────┬─────────┘                                          │
+│            │                                                     │
+│            ▼                                                     │
+│   ┌──────────────────┐                                          │
+│   │ 12 DROPDOWNS      │                                          │
+│   │ POPULATE           │                                          │
+│   │ (staggered 150ms  │                                          │
+│   │  per category)    │                                          │
 │   └────────┬─────────┘                                          │
 │            │                                                     │
 │            ▼                                                     │
@@ -96,13 +125,10 @@ If the API call also attempted to optimise or reformat the prompt, that would cr
 │   │ assemblePrompt() → One Brain                      │          │
 │   │ ├── Encoder detection (CLIP/T5/MJ/ChatGLM3/Prop) │          │
 │   │ ├── Per-platform limits (540 unique values)       │          │
-│   │ ├── Budget calculation                            │          │
 │   │ ├── Weight syntax (platform-specific)             │          │
 │   │ ├── Fidelity conversion                           │          │
 │   │ ├── Negative routing                              │          │
 │   │ ├── Smart trim (lowest-relevance first)           │          │
-│   │ ├── Cross-source dedup                            │          │
-│   │ ├── 56-rule compression engine                    │          │
 │   │ └── Platform-specific output                      │          │
 │   │                                                   │          │
 │   │ Output: optimised, platform-specific prompt       │          │
@@ -111,162 +137,334 @@ If the API call also attempted to optimise or reformat the prompt, that would cr
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+### The One Brain Rule
+
+**The API call parses. The engine optimises. These are two different jobs.**
+
+Call 1 categorises the human sentence into 12 structured categories. From that point forward, the existing `assemblePrompt()` pipeline handles everything. Call 1's only job is parsing — it never optimises, reorders, or formats.
+
+Call 2 (AI Disguise) generates tier prompts in parallel but through a completely separate path. See `ai-disguise.md` §5.
+
 ---
 
-## 3. The API Call
+## 3. The API Call (Call 1)
 
-### Purpose
+### Route
 
-One call. Parse only. No optimisation. No reformatting. No prompt assembly.
+**Path:** `POST /api/parse-sentence`  
+**File:** `src/app/api/parse-sentence/route.ts` (243 lines)
 
-### Provider
+### Specification
 
-Claude API (Anthropic). Chosen for structured output reliability, JSON mode, and cost efficiency. Can be swapped for any provider that returns reliable structured JSON.
+| Property              | Value                                                                  |
+| --------------------- | ---------------------------------------------------------------------- |
+| Method                | POST                                                                   |
+| Runtime               | nodejs                                                                 |
+| Dynamic               | force-dynamic                                                          |
+| Max duration          | 15s                                                                    |
+| Rate limit            | 20/hour prod, 200/hour dev                                             |
+| Rate limit key        | `parse-sentence`                                                       |
+| Model                 | GPT-5.4-mini (OpenAI)                                                  |
+| Temperature           | 0.15 (low — consistent extraction with slight flex for creative terms) |
+| Max completion tokens | 700                                                                    |
+| Response format       | json_object                                                            |
+| Cache                 | no-store                                                               |
 
-### System prompt
+### Request Schema
+
+```typescript
+const RequestSchema = z.object({
+  sentence: z.string().min(1).max(1000),
+});
+```
+
+### Response Schema
+
+```typescript
+const CategoryArraySchema = z.array(z.string().max(100)).max(10);
+
+const ParseResponseSchema = z.object({
+  subject: CategoryArraySchema,
+  action: CategoryArraySchema,
+  style: CategoryArraySchema,
+  environment: CategoryArraySchema,
+  composition: CategoryArraySchema,
+  camera: CategoryArraySchema,
+  lighting: CategoryArraySchema,
+  colour: CategoryArraySchema,
+  atmosphere: CategoryArraySchema,
+  materials: CategoryArraySchema,
+  fidelity: CategoryArraySchema,
+  negative: CategoryArraySchema,
+});
+```
+
+### System Prompt (actual deployed text)
 
 ```
 You are a prompt categorisation engine for AI image generation.
 
 Given a natural English description of an image, extract terms into exactly these 12 categories. Return ONLY valid JSON with no preamble, no markdown, no explanation.
 
-Categories:
-- subject: The main subject(s) of the image (people, animals, objects)
-- action: What the subject is doing
-- style: Artistic style (e.g., cinematic, watercolour, anime, photorealistic)
-- environment: The setting or location
-- composition: Framing and layout (e.g., close-up, wide shot, rule of thirds)
-- camera: Lens and camera specifics (e.g., 35mm, telephoto, shallow depth of field)
-- lighting: Light source and quality (e.g., golden hour, neon, candlelight)
-- colour: Dominant colours or colour palette
-- atmosphere: Mood and atmospheric conditions (e.g., misty, peaceful, dramatic)
-- materials: Textures and surface qualities (e.g., glass, marble, wet concrete)
-- fidelity: Quality descriptors (e.g., highly detailed, 8K, masterpiece)
-- negative: Things to exclude from the image
+Categories (with examples of what belongs in each):
+- subject: The main focus — people, animals, objects, landscapes, architecture, scenes, or abstract concepts.
+- action: What the subject is doing or the scene's motion.
+- style: Artistic style or rendering approach.
+- environment: The setting, location, or backdrop.
+- composition: Framing, layout, and depth.
+- camera: Lens, camera model, and technical specs.
+- lighting: Light source, direction, and quality.
+- colour: Dominant colours, palette, or tonal character.
+- atmosphere: Mood, weather effects, and atmospheric conditions.
+- materials: Textures, surfaces, and physical qualities.
+- fidelity: Quality descriptors, resolution, and technical quality terms.
+- negative: Things to exclude. Only populate if exclusions are mentioned.
 
 Rules:
-1. Extract only what is explicitly described or strongly implied. Do not invent.
-2. Use short phrases (1-4 words per term), not full sentences.
+1. Be thorough — extract everything described or strongly implied. Aim to populate 10–12 categories for rich descriptions.
+2. Use short phrases (1–4 words per term), not full sentences.
 3. A category may have multiple terms — return as an array.
-4. If a category has no relevant content, return an empty array.
-5. Do not include fidelity or negative terms unless the user explicitly mentions quality or exclusions.
-6. Preserve the user's creative intent — do not reinterpret or "improve" their words.
+4. If a category genuinely has no relevant content, return an empty array.
+5. Camera specs go in "camera" — not composition. Depth of field and framing go in "composition".
+6. Quality terms like "sharp focus", "8K", "detailed" ALWAYS go in "fidelity".
+7. Physical textures and surface materials go in "materials".
+8. Preserve the user's creative intent — do not reinterpret or "improve" their words.
+9. Do NOT invent or infer terms not in the input.
+10. Do NOT embellish terms. "shot on Leica" stays as "shot on Leica", not "vintage Leica look".
+```
 
-Return format:
-{
-  "subject": ["term", ...],
-  "action": ["term", ...],
-  "style": ["term", ...],
-  "environment": ["term", ...],
-  "composition": ["term", ...],
-  "camera": ["term", ...],
-  "lighting": ["term", ...],
-  "colour": ["term", ...],
-  "atmosphere": ["term", ...],
-  "materials": ["term", ...],
-  "fidelity": ["term", ...],
-  "negative": ["term", ...]
+---
+
+## 4. Term Matching
+
+**File:** `src/hooks/use-sentence-conversion.ts` (260 lines)
+
+After Call 1 returns 12 category arrays, each term is matched against Promagen's existing vocabulary using a 3-step cascade:
+
+### Matching priority
+
+| Step                       | Method                                                                                  | Example                                                        |
+| -------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| 1. Exact match             | Case-insensitive string equality                                                        | "golden hour" → selects "golden hour"                          |
+| 2. Substring containment   | Shortest matching option wins (prevents embellishment)                                  | "Leica" → selects "shot on Leica" (shortest containing option) |
+| 3. Fuzzy (Levenshtein ≤ 3) | Only for terms 5+ chars. Number-aware — "90mm lens" will NOT fuzzy-match to "50mm lens" | "photographc" → selects "photographic"                         |
+| 4. No match                | Term goes into the category's custom entry field                                        | "bioluminescent jellyfish" → custom entry                      |
+
+### Pre-processing
+
+Before matching, terms go through a pre-processing pass (`preprocessExtractedTerms()`) that fixes common GPT extraction issues: contextless fragments, redundant wrappers, and known bad patterns.
+
+### Category population
+
+Matched terms populate the `categoryState` in the prompt builder. Each category receives a `CategoryState`:
+
+```typescript
+{ selected: string[], customValue: string }
+```
+
+- `selected` — vocabulary terms that matched (steps 1–3)
+- `customValue` — terms that didn't match (step 4), comma-joined
+
+---
+
+## 5. UI Component — DescribeYourImage
+
+**File:** `src/components/providers/describe-your-image.tsx` (722 lines)  
+**Pattern:** Collapsible horizontal strip (identical to SceneSelector)
+
+### Layout
+
+```
+┌─ Trigger bar (collapsed): "✍️ Describe Your Image"  ──────────────────┐
+│  ⚡️ is completed animation                   Click to expand ▾       │
+└─────────────────────────────────────────────────────────────────────────┘
+┌─ Expanded panel ────────────────────────────────────────────────────────┐
+│  ┌────────────────────────────────────────────────────────────────────┐ │
+│  │ Paste a natural-language description for an image prompt...        │ │
+│  │                                                          750/1000 │ │
+│  └────────────────────────────────────────────────────────────────────┘ │
+│  [⚡ Generate Prompt] [Clear All]  📐 Composition  Ctrl+Enter   [Close]│
+│                                                                         │
+│  💡 3 empty: Composition, Camera, Materials — add detail to boost DNA  │
+│  Edit your description above and click Regenerate to refine prompts    │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Props
+
+```typescript
+interface DescribeYourImageProps {
+  categoryState: Record<PromptCategory, CategoryState>;
+  setCategoryState: React.Dispatch<
+    React.SetStateAction<Record<PromptCategory, CategoryState>>
+  >;
+  isLocked: boolean;
+  onTextChange?: (text: string) => void; // AI Disguise: tracks human text
+  onGenerate?: (sentence: string) => void; // AI Disguise: fires Call 2 in parallel
+  onClear?: () => void; // AI Disguise: full cascade reset
+  isDrifted?: boolean; // Drift detection state
+  driftChangeCount?: number; // Word-level change count
+  clearSignal?: number; // External clear trigger (footer Clear All)
 }
 ```
 
-### User message
+### State
 
-The raw human sentence, unmodified.
+| State           | Type            | Purpose                                           |
+| --------------- | --------------- | ------------------------------------------------- |
+| `isExpanded`    | boolean         | Trigger bar collapsed/expanded                    |
+| `inputText`     | string          | Textarea content                                  |
+| `hasGenerated`  | boolean         | Whether a generation has completed                |
+| `formatWarning` | FormatDetection | Amber warning if user pastes pre-formatted prompt |
 
-### Expected response
+### Features
 
-For the mermaid example:
+| Feature                    | Description                                                                                                               |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **Collapsible strip**      | Trigger bar "✍️ Describe Your Image". Expands to reveal textarea + controls.                                              |
+| **Textarea**               | 1,000 char max, amber warning at 800 chars. Auto-focus on expand.                                                         |
+| **Generate Prompt button** | Engine bay gradient when text present (§6). Slate/disabled when empty.                                                    |
+| **Clear All button**       | Purple gradient, white text. Full cascade reset (§7).                                                                     |
+| **Category badges**        | During generation, shows which category is currently populating with colour-coded emoji badges (150ms stagger animation). |
+| **Format detection**       | Warns if user pastes CLIP/MJ formatted prompts instead of natural language (§8).                                          |
+| **Drift indicator**        | Shows "N changes detected" badge when user edits after generation. "Regenerate" amber pulse when drift ≥ 3 (§9).          |
+| **Empty categories hint**  | After generation, shows which categories are empty with suggestion to add detail.                                         |
+| **Ctrl+Enter shortcut**    | Keyboard shortcut to generate without clicking button.                                                                    |
+| **`clearSignal` prop**     | Incremented by parent (footer Clear All) to trigger internal reset without lifting all state up.                          |
 
-```json
-{
-  "subject": ["beautiful mermaid", "colourful tropical fish"],
-  "action": ["swimming gracefully"],
-  "style": [],
-  "environment": ["open sea", "tropical ocean"],
-  "composition": [],
-  "camera": [],
-  "lighting": ["sunlight shimmering rays", "soft caustic light"],
-  "colour": ["clear blue", "turquoise"],
-  "atmosphere": ["peaceful", "magical", "dreamlike"],
-  "materials": ["crystal-clear water"],
-  "fidelity": [],
-  "negative": []
-}
+---
+
+## 6. Generate Button — Engine Bay Styling
+
+The Generate Prompt button adopts the exact same visual treatment as the Launch Platform Builder button in the engine bay (`engine-bay.tsx`).
+
+### Three states
+
+| State              | Visual                                                       | Class                                                                                                        |
+| ------------------ | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| **Empty textarea** | Slate/disabled. No animation. `cursor-not-allowed`           | `bg-slate-800/40 border-slate-700/30`                                                                        |
+| **Text present**   | Sky→emerald→indigo gradient. Pulsing glow. Shimmer on hover. | `dyi-generate-active border-sky-400/60 bg-gradient-to-r from-sky-400/40 via-emerald-300/40 to-indigo-400/40` |
+| **Loading**        | Same gradient, no pulse. Spinner icon + "Parsing..." text.   | `dyi-generating border-sky-400/40 bg-gradient-to-r from-sky-400/30 via-emerald-300/30 to-indigo-400/30`      |
+
+### Animations (co-located in `DESCRIBE_STYLES`)
+
+| Animation                    | Keyframes                                                                 | Duration      | Purpose                          |
+| ---------------------------- | ------------------------------------------------------------------------- | ------------- | -------------------------------- |
+| `dyi-generate-pulse`         | Sky/emerald box-shadow oscillation (identical to `engine-bay-pulse`)      | 2s infinite   | Draws attention to active button |
+| `dyi-generate-shimmer-sweep` | White gradient translateX sweep (identical to `engine-bay-shimmer-sweep`) | 1.5s infinite | Hover sparkle effect             |
+
+Both respect `prefers-reduced-motion`.
+
+---
+
+## 7. Clear All — Full Cascade Reset
+
+Two identical Clear All buttons exist in the Prompt Lab — one next to Generate (top), one in the footer.
+
+### Style
+
+Purple gradient matching Dynamic/Randomise buttons (canonical style from `buttons.md` §2.1):
+
+```
+border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-white
+hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400
 ```
 
-### Cost estimate
+**Text colour:** `text-white`. Both are `<button>` elements (not `<a>`), so the `body { color: #020617 }` inheritance issue from `buttons.md` §1.1 does not apply.
 
-Claude Sonnet: ~500 input tokens + ~150 output tokens per call ≈ $0.002 per conversion. At 1,000 conversions/month = $2/month. At 10,000 = $20/month. Well within Pro subscription revenue.
+### Clear cascade (full state reset)
 
----
+When either Clear All is clicked, the following resets in order:
 
-## 4. Dropdown Population
+| Layer                       | What resets                                                         |
+| --------------------------- | ------------------------------------------------------------------- |
+| **DescribeYourImage**       | `inputText` → empty, `hasGenerated` → false, `formatWarning` → none |
+| **Category dropdowns**      | All 12 categories → `{ selected: [], customValue: '' }`             |
+| **AI Disguise (workspace)** | `humanText` → empty, `aiTierPrompts` → null, drift synced           |
+| **AI Optimisation**         | `clearAiOptimise()`, optimizer toggle OFF                           |
+| **Scene/AR**                | `activeSceneId` → undefined, `aspectRatio` → null                   |
+| **Explore drawer**          | `expandedExploreCategory` → null                                    |
+| **Diff data**               | `diffData` → null                                                   |
 
-Once the API returns structured JSON, the builder populates itself.
+### `clearSignal` mechanism
 
-### Term matching logic
+The footer Clear All cannot directly access DescribeYourImage's internal state (`inputText`, `hasGenerated`). Instead:
 
-For each category in the response:
+1. Footer `handleClear()` calls `setClearSignal(s => s + 1)`
+2. DescribeYourImage has `useEffect` watching `clearSignal`
+3. When `clearSignal` changes, it resets its own internal state + calls `onClear()`
 
-1. **Exact match** — If the returned term exactly matches an existing vocabulary term (case-insensitive), select it in the dropdown.
-2. **Fuzzy match** — If a close match exists (e.g., "golden hour lighting" → "golden hour"), select the closest match. Threshold: Levenshtein distance ≤ 3 or substring containment.
-3. **No match** — If the term is genuinely new, place it in the **custom entry field** for that category. Custom entries are already supported in the builder, are protected by `assemblePrompt()`, and are never trimmed by smart trim (user intent is sacred — Prompt Intelligence core principle #1).
-
-### Multiple terms per category
-
-The API may return multiple terms per category (e.g., `subject: ["beautiful mermaid", "colourful tropical fish"]`). These are populated up to the platform's per-category limit:
-
-- Free tier: per-platform free limits from `PLATFORM_SPECIFIC_LIMITS`
-- Pro tier: per-platform pro limits from `PLATFORM_SPECIFIC_LIMITS`
-
-If the API returns more terms than the limit allows, excess terms are placed in the custom entry field as comma-separated values. The assembler handles the rest.
-
-### New vocabulary handling
-
-Unknown terms that appear frequently across multiple users are candidates for the vocabulary library. These are **not** auto-added. Instead:
-
-- Queue to Phase 7.7 Vocabulary Crowdsourcing pipeline (already built: 3-layer dedup, smart category suggestion, admin review with batch workflow)
-- Admin reviews and approves/rejects via the existing Admin Command Centre
-- Approved terms become available in dropdowns for all users
-
-This prevents junk from polluting the vocabulary over time.
+This avoids lifting textarea state to the parent while still enabling full cascade from the footer.
 
 ---
 
-## 5. User Experience
+## 8. Format Detection
 
-### Input surface
+**Function:** `detectPromptFormat()` in `describe-your-image.tsx`
 
-A text input area in the prompt builder — either:
+Warns users who paste pre-formatted AI prompts instead of natural language descriptions. Only fires when input > 10 characters.
 
-**Option A:** Dedicated "Paste your description" textarea above the 12 dropdowns. User pastes, clicks "Parse", dropdowns populate. Clear separation between sentence input and structured input.
+### Patterns detected
 
-**Option B:** The existing assembled prompt output area doubles as input. User pastes into it, system detects it's a sentence (not structured output), triggers the parse. More seamless but potentially confusing.
+| Pattern             | Detection                                                   | Warning                                                           |
+| ------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------- |
+| CLIP-Based (Tier 1) | `(term::1.3)` or `term::1.3` or `(term:1.2)` — 2+ matches   | "This looks like a pre-formatted CLIP prompt with weight syntax." |
+| Midjourney (Tier 2) | `--ar`, `--stylize`, `--v`, `--s`, `--q`, `--no` — 1+ match | "This looks like a Midjourney prompt with parameter flags."       |
+| Generic weighted    | 3+ `::` occurrences                                         | "This looks like a weighted AI prompt."                           |
 
-**Option C:** A modal/drawer that opens from a "Write naturally" button. User types or pastes, clicks "Convert", modal closes, dropdowns are populated. Clean entry point, no UI clutter in the existing builder.
+All warnings include: "The generator works best with plain English descriptions."
 
-**Decision: TBD** — requires Martin's approval on which surface feels right.
-
-### Loading state
-
-The API call takes ~1-2 seconds. During this time:
-
-- Show a progress indicator (assembly line animation from the Pro page concept — repurposed)
-- Dropdowns remain interactive but show a subtle loading state
-- User can cancel at any time
-
-### Post-population
-
-After dropdowns populate:
-
-- User can modify any selection (the parse is a starting point, not a lock)
-- User can add/remove terms from any category
-- The assembled prompt updates live as selections change
-- The user retains full control — the API suggests, the user decides
+T3 (Natural Language) and T4 (Plain Language) inputs pass through without warnings — they're already natural language.
 
 ---
 
-## 6. Pro Gate
+## 9. Drift Detection
+
+**Hook:** `useDriftDetection` (`src/hooks/use-drift-detection.ts`, 165 lines)
+
+After generation, if the user edits their text, the system tracks word-level changes using a bag-of-words symmetric difference. Zero API calls.
+
+### Behaviour
+
+| Change count | Visual                                                                                         |
+| ------------ | ---------------------------------------------------------------------------------------------- |
+| 0            | No indicator                                                                                   |
+| 1–2          | DriftIndicator badge: "N changes detected"                                                     |
+| ≥ 3          | Generate button text → "Regenerate", amber pulse animation (`dyi-regen`), DriftIndicator badge |
+
+### Purpose
+
+Implements the Zeigarnik Effect (`human-factors.md` §4) — the unfinished-task nag. Users who edit after generating feel compelled to regenerate, creating a loop of engagement.
+
+---
+
+## 10. AI Disguise Integration (Call 2)
+
+DescribeYourImage sits inside `EnhancedEducationalPreview` which is orchestrated by `PlaygroundWorkspace`. When "Generate Prompt" is clicked:
+
+1. `onGenerate(inputText)` fires → workspace triggers Call 2 (`generateTiers()`) in parallel
+2. `convert(inputText)` fires → Call 1 (`/api/parse-sentence`) extracts categories
+3. Both run simultaneously — user sees category badges populating (Call 1) and tier cards filling (Call 2)
+
+The user never knows two API calls fired. The UX presents it as one seamless "analysis" operation.
+
+See `ai-disguise.md` §5–§8 for Call 2 system prompt, post-processing, and harmony engineering details.
+
+---
+
+## 11. File Map
+
+| File                         | Path                          | Lines | Purpose                                                                                             |
+| ---------------------------- | ----------------------------- | ----- | --------------------------------------------------------------------------------------------------- |
+| `describe-your-image.tsx`    | `src/components/providers/`   | 722   | UI component — textarea, Generate/Clear buttons, format detection, drift indicator, category badges |
+| `parse-sentence/route.ts`    | `src/app/api/parse-sentence/` | 243   | Call 1 API route — GPT-5.4-mini categorisation, Zod validation, rate limiting                       |
+| `use-sentence-conversion.ts` | `src/hooks/`                  | 260   | Term matching hook — exact→fuzzy→custom, pre-processing, CategoryState builder                      |
+| `use-drift-detection.ts`     | `src/hooks/`                  | 165   | Drift detection — bag-of-words symmetric diff, zero API calls                                       |
+| `drift-indicator.tsx`        | `src/components/prompt-lab/`  | 136   | "N changes detected" amber badge component                                                          |
+
+---
+
+## 12. Pro Gate
 
 ### Tier access
 
@@ -276,130 +474,110 @@ After dropdowns populate:
 | Signed-in free (5 prompts/day) | Not available |
 | Pro (unlimited)                | Full access   |
 
+**Current status:** NOT YET GATED. The Prompt Lab is accessible to all users during v1 stability testing. Gating implementation per `paid_tier.md` §5.13.
+
 ### Rationale
 
-This feature has a per-use API cost (~$0.002). It's also the strongest conversion driver — a free user sees the "Write naturally" button, tries to click it, sees the Pro gate. The value proposition is instantly clear: "I can just type what I want and Promagen figures out the rest."
-
-### Free tier teaser
-
-Free users see the button but it's gated. On click, show a tooltip or modal: "Write like a human, generate like a pro. Upgrade to Pro Promagen to unlock natural language conversion."
+Per-use API cost (~$0.005 for Call 1 + Call 2 combined). Strongest conversion driver — free users see "Generate Prompt", try to click, see Pro gate.
 
 ---
 
-## 7. Error Handling
+## 13. Error Handling
 
 ### API failure
 
-If the LLM API call fails (timeout, rate limit, malformed response):
+If Call 1 fails (timeout, rate limit, malformed response):
 
-- Show a clear error message: "Couldn't parse your description. Try again or use the dropdowns manually."
-- Do not populate dropdowns with partial/broken data
-- Log the failure for monitoring
-- User can retry or fall back to manual dropdown selection
+- Red error text: "Couldn't parse your description. Try again or use the dropdowns manually."
+- Dropdowns are not populated with partial/broken data
+- Error logged to console with `[parse-sentence]` prefix
+- User can retry or use manual dropdown selection
 
 ### Malformed response
 
-If the API returns valid JSON but with unexpected structure:
-
-- Validate against a Zod schema (same pattern as all other Promagen data)
-- Skip any categories that don't match the expected format
-- Populate what's valid, ignore what's not
-- No silent failures — if categories are skipped, note it subtly
+- Zod schema validation on response — any unexpected structure is rejected
+- Each category array capped at 10 terms, each term capped at 100 chars
+- Skip invalid categories, populate valid ones
 
 ### Empty categories
 
-If the API returns empty arrays for most categories (e.g., user typed something very abstract like "a feeling of nostalgia"):
+After generation, if 1–5 categories are empty, a hint appears:
 
-- Populate what's available (maybe just `atmosphere: ["nostalgic"]`)
-- Leave other dropdowns untouched
-- User fills in the rest manually — the parse is a head start, not a complete solution
+> 💡 3 empty: Composition, Camera, Materials — add detail to boost your DNA score
 
 ---
 
-## 8. Security & Cost Control
+## 14. Security & Cost Control
 
 ### Rate limiting
 
-- Per-user rate limit: 20 conversions per hour (Pro only)
-- Global rate limit: 1,000 conversions per hour (across all users)
-- Rate limit response: "You've reached the conversion limit. Please wait or use the dropdowns directly."
+- 20 conversions per hour in production (per IP)
+- 200 per hour in development
+- Rate limit response: 429 with `Retry-After` header
 
 ### Input sanitisation
 
-- Strip HTML/script tags before sending to API
-- Maximum input length: 1,000 characters (~200 words, blocks abuse)
-- Reject empty or whitespace-only input
+- HTML/script tags stripped: `.replace(/<[^>]*>/g, '')`
+- Maximum 1,000 characters
+- Empty/whitespace-only input rejected
 
 ### Prompt injection protection
 
-- The system prompt is hardcoded server-side, never exposed to the client
-- The user's text is sent as the user message only
-- The API response is validated against a strict Zod schema — any unexpected fields are rejected
-- The parsed terms go through the same vocabulary pipeline as manual selections — no special code paths
+- System prompt hardcoded server-side, never exposed to client
+- User text sent as user message only
+- Response validated against strict Zod schema
+- Parsed terms go through the same vocabulary matching pipeline as manual selections
 
-### Cost monitoring
+### Cost
 
-- Track API spend per user per month
-- Dashboard in Admin Command Centre (Phase 7.11) for conversion volume and cost
-- Alert threshold: if monthly API spend exceeds £50, notify admin
-
----
-
-## 9. Implementation Plan
-
-### Prerequisites
-
-- Claude API key provisioned (server-side, never exposed to client)
-- API route: `POST /api/parse-sentence`
-- Zod schema for response validation
-
-### Build order
-
-| Part | Description                                                                         | Effort  | Dependencies               |
-| ---- | ----------------------------------------------------------------------------------- | ------- | -------------------------- |
-| 1    | API route (`/api/parse-sentence`) with system prompt, Zod validation, rate limiting | 1 day   | Claude API key             |
-| 2    | Term matching logic (exact → fuzzy → custom entry)                                  | 1 day   | Existing vocabulary data   |
-| 3    | Dropdown population wiring (hook that calls API, populates builder state)           | 1 day   | Parts 1-2                  |
-| 4    | UI surface (input area / button / loading state) — choice of Option A/B/C           | 1 day   | Part 3 + Martin's approval |
-| 5    | Pro gate (tier check, free user teaser)                                             | 0.5 day | Part 4                     |
-| 6    | Admin dashboard integration (conversion volume, cost tracking)                      | 0.5 day | Part 1                     |
-| 7    | Tests (API route, term matching, dropdown population, error handling)               | 1 day   | Parts 1-5                  |
-
-**Total estimate: 6 days**
-
-### What already exists (no build needed)
-
-- `assemblePrompt()` — consumes structured selections, produces platform-specific prompts
-- Custom entry fields per category — already in both builders
-- Per-platform limits (`PLATFORM_SPECIFIC_LIMITS`) — already enforced
-- Vocabulary Crowdsourcing pipeline (Phase 7.7) — already built for unknown terms
-- Admin Command Centre (Phase 7.11) — already has dashboard infrastructure
-- Pro tier gate infrastructure (Clerk auth + `usePromagenAuth` hook)
+- ~$0.002 per Call 1 invocation (GPT-5.4-mini)
+- ~$0.003 per Call 2 invocation (fires in parallel)
+- Total per generation: ~$0.005
 
 ---
 
-## 10. Future Extensions (Not In Scope — Document Only)
+## 15. Non-Regression Rules
 
-### 10.1 Batch conversion
+1. **Call 1 parses only** — never optimises, reorders, or formats. One Brain handles assembly.
+2. **Generate button must match engine bay styling exactly** — `dyi-generate-pulse` and `dyi-generate-shimmer` are copied from `engine-bay-pulse` and `engine-bay-shimmer-sweep`. Do not diverge.
+3. **Clear All must cascade through ALL state** — textarea, 12 dropdowns, AI tiers, AI optimise, optimizer toggle, aspect ratio, scene, drift. Partial clear causes stale state bugs.
+4. **Both Clear All buttons must be identical** — top (next to Generate) and footer. Same purple gradient, same white text, same full cascade.
+5. **`clearSignal` must increment, not reset** — `setClearSignal(s => s + 1)` not `setClearSignal(1)`. The `useEffect` compares previous vs current.
+6. **Format detection only fires above 10 chars** — prevents false positives on short input.
+7. **Category badges use 150ms stagger** — `dyi-cat-badge` animation with `animation-delay` per index.
+8. **Drift threshold for "Regenerate" is ≥ 3 word changes** — below 3 shows badge only, no button text change.
+9. **All animations co-located in `DESCRIBE_STYLES`** — not in `globals.css`. Per `best-working-practice.md`.
+10. **Textarea auto-focuses on expand** — 300ms delay for smooth CSS transition to complete first.
 
-User uploads multiple sentences (e.g., a brief document). Each sentence is parsed and saved as a separate prompt in the Saved Prompts library. Useful for professional workflows.
+---
 
-### 10.2 Conversation mode
+## 16. Future Extensions (Not In Scope)
 
-Instead of a single parse, a back-and-forth: "Make it more dramatic" → API adjusts categories → dropdowns update. Requires conversation history management.
+### 16.1 Batch conversion
 
-### 10.3 Image-to-sentence-to-prompt
+User uploads multiple sentences. Each is parsed and saved as a separate prompt in the library.
 
-User uploads a reference image → vision API describes it in natural English → sentence conversion parses it → dropdowns populate. Full circle from image to structured prompt.
+### 16.2 Conversation mode
 
-### 10.4 Learning from corrections
+Back-and-forth: "Make it more dramatic" → API adjusts categories → dropdowns update.
 
-When a user modifies the parsed selections (e.g., moves "golden hour" from atmosphere to lighting), that correction feeds back into the system prompt tuning. Over time, the parse accuracy improves.
+### 16.3 Image-to-sentence-to-prompt
+
+User uploads reference image → vision API describes it → sentence conversion parses it → dropdowns populate.
+
+### 16.4 Learning from corrections
+
+When a user modifies parsed selections (e.g., moves "golden hour" from atmosphere to lighting), that correction feeds back into system prompt tuning.
 
 ---
 
 ## Changelog
 
-| Date        | Version | Change                                                                                                                                   |
-| ----------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| 20 Mar 2026 | 1.0.0   | Initial document. Architecture, API spec, data flow, dropdown population logic, Pro gate, error handling, security, implementation plan. |
+| Date        | Version | Change                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ----------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 23 Mar 2026 | 2.0.0   | **COMPLETE REWRITE — reflects actual built state.** Status changed from "Design approved — not yet built" to "BUILT and deployed". Owner corrected to "Promagen". API provider corrected from Claude API to GPT-5.4-mini (OpenAI). UI decision resolved: Option A (collapsible strip above dropdowns). Added §5 (DescribeYourImage component, 722 lines), §6 (engine bay Generate button styling with pulse + shimmer), §7 (Clear All full cascade reset with `clearSignal` mechanism), §8 (format detection for CLIP/MJ/weighted prompts), §9 (drift detection), §10 (AI Disguise Call 2 parallel firing). System prompt updated to match actual deployed `route.ts` (10 rules with thorough categorisation examples). Term matching documented with 3-step cascade (exact→fuzzy→custom) including number-aware Levenshtein guard. File map with actual line counts. Non-regression rules (10 rules). All original design sections (architecture, error handling, security, future extensions) updated to reflect built reality. |
+| 20 Mar 2026 | 1.0.0   | Initial design document. Architecture, API spec, data flow, dropdown population logic, Pro gate, error handling, security, implementation plan. Pre-build, all theoretical.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+
+---
+
+_End of document._

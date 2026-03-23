@@ -3,7 +3,7 @@
 **Last updated:** 23 March 2026  
 **Owner:** Promagen  
 **Authority:** This document defines the architecture, data structures, and implementation plan for the Prompt Intelligence system.
-**Cross-reference:** For colour-coded prompt anatomy, see `paid_tier.md` §5.14. For Prompt Lab parity features, see `paid_tier.md` §5.13. For AI Disguise system, see `ai-disguise.md`. For Prompt Lab architecture, see `prompt-lab.md` v3.0.0. For Image Generation preview panel (colour-coded segments from static data), see `paid_tier.md` §5.10 ImageGen Preview Panel. For prompt builder architecture, see `prompt-builder-page.md`.
+**Cross-reference:** For colour-coded prompt anatomy, see `paid_tier.md` §5.14. For Prompt Lab parity features, see `paid_tier.md` §5.13. For AI Disguise system (including Call 2 system prompt v3.0.0, post-processing layer, and harmony engineering), see `ai-disguise.md` v3.0.0. For Prompt Lab architecture, see `prompt-lab.md` v3.1.0. For human sentence conversion UI and term matching, see `human-sentence-conversion.md` v2.0.0. For Image Generation preview panel (colour-coded segments from static data), see `paid_tier.md` §5.10 ImageGen Preview Panel. For prompt builder architecture, see `prompt-builder-page.md`. For button styling standards, see `buttons.md` v4.0.0.
 
 ---
 
@@ -171,8 +171,8 @@ Every prompt option tagged with semantic metadata.
 interface SemanticTag {
   category: PromptCategory;
   families: string[]; // 1-5 family tags
-  mood?: 'calm' | 'intense' | 'neutral' | 'eerie' | 'joyful';
-  era?: 'past' | 'present' | 'future' | 'timeless';
+  mood?: "calm" | "intense" | "neutral" | "eerie" | "joyful";
+  era?: "past" | "present" | "future" | "timeless";
   conflicts?: string[]; // Options that clash with this
   complements?: string[]; // Options that work well with this
   suggests?: Partial<Record<PromptCategory, string[]>>; // Cross-category suggestions
@@ -190,7 +190,14 @@ Defines style families and their relationships.
     "sci-fi": {
       "displayName": "Science Fiction",
       "description": "Futuristic, technological, speculative",
-      "members": ["cyberpunk", "futuristic", "neon", "holographic", "chrome", "dystopian"],
+      "members": [
+        "cyberpunk",
+        "futuristic",
+        "neon",
+        "holographic",
+        "chrome",
+        "dystopian"
+      ],
       "related": ["urban", "neon", "tech"],
       "opposes": ["rustic", "vintage", "pastoral", "organic"],
       "mood": "intense",
@@ -301,7 +308,13 @@ Maps live market states to suggestion boosts.
     "high_volatility": {
       "trigger": "FX volatility > threshold (TBD)",
       "boost": {
-        "atmosphere": ["chaotic", "dynamic", "turbulent", "intense", "electric"],
+        "atmosphere": [
+          "chaotic",
+          "dynamic",
+          "turbulent",
+          "intense",
+          "electric"
+        ],
         "lighting": ["dramatic", "harsh", "high contrast"],
         "colour": ["bold", "saturated", "contrasting"],
         "style": ["dramatic", "intense", "bold"]
@@ -438,16 +451,16 @@ Gallery Mode converts weather conditions to atmosphere terms:
 ```typescript
 // Maps weather conditions to semantic-tags atmosphere values
 const WEATHER_ATMOSPHERE_MAP: Record<string, string[]> = {
-  storm: ['dramatic', 'intense', 'electric'],
-  thunder: ['dramatic', 'intense', 'electric'],
-  rain: ['moody', 'reflective', 'glistening'],
-  drizzle: ['moody', 'reflective', 'glistening'],
-  snow: ['serene', 'pristine', 'cold'],
-  fog: ['mysterious', 'ethereal', 'diffused'],
-  mist: ['mysterious', 'ethereal', 'diffused'],
-  cloud: ['overcast', 'soft light'],
-  clear: ['vibrant', 'bright', 'warm'],
-  sunny: ['vibrant', 'bright', 'warm'],
+  storm: ["dramatic", "intense", "electric"],
+  thunder: ["dramatic", "intense", "electric"],
+  rain: ["moody", "reflective", "glistening"],
+  drizzle: ["moody", "reflective", "glistening"],
+  snow: ["serene", "pristine", "cold"],
+  fog: ["mysterious", "ethereal", "diffused"],
+  mist: ["mysterious", "ethereal", "diffused"],
+  cloud: ["overcast", "soft light"],
+  clear: ["vibrant", "bright", "warm"],
+  sunny: ["vibrant", "bright", "warm"],
 };
 
 function weatherToAtmosphere(conditions: string): string[] {
@@ -455,7 +468,7 @@ function weatherToAtmosphere(conditions: string): string[] {
   for (const [key, atmosphere] of Object.entries(WEATHER_ATMOSPHERE_MAP)) {
     if (lower.includes(key)) return atmosphere;
   }
-  return ['vibrant', 'bright', 'warm']; // Default: clear
+  return ["vibrant", "bright", "warm"]; // Default: clear
 }
 ```
 
@@ -505,9 +518,12 @@ Gallery Mode uses `conflicts.json` to prevent incoherent prompts:
 
 ```typescript
 function validateSceneBrief(brief: SceneBrief): ValidationResult {
-  const allTerms = [brief.lighting, brief.style, ...brief.atmosphere, ...brief.motifs].filter(
-    Boolean,
-  );
+  const allTerms = [
+    brief.lighting,
+    brief.style,
+    ...brief.atmosphere,
+    ...brief.motifs,
+  ].filter(Boolean);
 
   // Check against conflicts.json
   const conflicts = detectConflicts(allTerms);
@@ -527,20 +543,23 @@ Gallery Mode always includes platform-appropriate negatives:
 
 ```typescript
 const GALLERY_NEGATIVE_PROMPTS = {
-  universal: 'text, logos, watermarks, words, letters, signatures',
-  safety: 'political symbols, gore, explicit content, nudity, real people',
-  quality: 'distorted faces, extra limbs, blurry, low quality, artifacts',
+  universal: "text, logos, watermarks, words, letters, signatures",
+  safety: "political symbols, gore, explicit content, nudity, real people",
+  quality: "distorted faces, extra limbs, blurry, low quality, artifacts",
 };
 
 function getNegativePrompt(tier: PromptTier): string {
-  const parts = [GALLERY_NEGATIVE_PROMPTS.universal, GALLERY_NEGATIVE_PROMPTS.safety];
+  const parts = [
+    GALLERY_NEGATIVE_PROMPTS.universal,
+    GALLERY_NEGATIVE_PROMPTS.safety,
+  ];
 
   // Add quality negatives for CLIP-based platforms
-  if (tier === 'tier1' || tier === 'tier2') {
+  if (tier === "tier1" || tier === "tier2") {
     parts.push(GALLERY_NEGATIVE_PROMPTS.quality);
   }
 
-  return parts.join(', ');
+  return parts.join(", ");
 }
 ```
 
@@ -803,7 +822,9 @@ function findOutliers(terms: string[]): string[] {
   }
 
   // Find dominant family
-  const dominantFamily = [...familyCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+  const dominantFamily = [...familyCounts.entries()].sort(
+    (a, b) => b[1] - a[1],
+  )[0]?.[0];
 
   // Terms not in dominant family are outliers
   return terms.filter((term) => {
@@ -858,8 +879,8 @@ function intelligentRandomise(
   } else {
     // Pick random subject
     newSelections.subject = {
-      selected: [pickRandom(getOptions('subject'))],
-      customValue: '',
+      selected: [pickRandom(getOptions("subject"))],
+      customValue: "",
     };
   }
 
@@ -871,7 +892,7 @@ function intelligentRandomise(
 
   // Fill other categories coherently within family
   for (const category of CATEGORIES) {
-    if (category === 'subject') continue;
+    if (category === "subject") continue;
 
     const options = getOptions(category);
     const familyOptions = options.filter((opt) =>
@@ -880,11 +901,11 @@ function intelligentRandomise(
 
     // Pick from family-matched options, or fall back to any
     const pool = familyOptions.length > 0 ? familyOptions : options;
-    const count = category === 'negative' ? randomInt(2, 3) : 1;
+    const count = category === "negative" ? randomInt(2, 3) : 1;
 
     newSelections[category] = {
       selected: pickMultipleRandom(pool, count),
-      customValue: '',
+      customValue: "",
     };
   }
 
@@ -964,14 +985,14 @@ Non-Regression Rule: New pages must not modify HomepageGrid, exchange rails, Fin
 
 #### `/studio/playground` — Prompt Lab (Pro Promagen exclusive)
 
-| Aspect       | Detail                                                                            |
-| ------------ | --------------------------------------------------------------------------------- |
-| Purpose      | Builder-first entry: Create prompts without pre-selecting a provider              |
-| Content      | Full Prompt Builder with provider dropdown selector in header                     |
+| Aspect       | Detail                                                                                                 |
+| ------------ | ------------------------------------------------------------------------------------------------------ |
+| Purpose      | Builder-first entry: Create prompts without pre-selecting a provider                                   |
+| Content      | Full Prompt Builder with provider dropdown selector in header                                          |
 | Features     | Provider switching (instant reformat); All intelligence features; Colour-coded prompts; 4-tier preview |
-| Entry points | Pro page card 6 (🧪 Prompt Lab); Direct URL; "Prompt Lab" button in standard builder footer |
-| Exit points  | "Open in X" launches provider; Save → Library; Copy to clipboard                  |
-| Auth gate    | **Pro Promagen exclusive** — NOT YET GATED (see `paid_tier.md` §5.13)            |
+| Entry points | Pro page card 6 (🧪 Prompt Lab); Direct URL; "Prompt Lab" button in standard builder footer            |
+| Exit points  | "Open in X" launches provider; Save → Library; Copy to clipboard                                       |
+| Auth gate    | **Pro Promagen exclusive** — NOT YET GATED (see `paid_tier.md` §5.13)                                  |
 
 **Key Difference from `/providers/[id]`:**
 
@@ -993,21 +1014,22 @@ Non-Regression Rule: New pages must not modify HomepageGrid, exchange rails, Fin
 
 **Implementation:**
 
-| File                                                   | Purpose                         | Lines |
-| ------------------------------------------------------ | ------------------------------- | ----- |
-| `src/app/studio/playground/page.tsx`                   | Server component (data fetch)   | 69    |
-| `src/app/studio/playground/playground-page-client.tsx` | Client wrapper (provider state) | 135   |
-| `src/components/prompts/playground-workspace.tsx`      | AI Disguise orchestrator (v3.0.0) | 313   |
-| `src/components/prompts/enhanced-educational-preview.tsx` | Lab preview & AI Disguise wiring (v3.0.0) | 2,008 |
-| `src/components/prompt-builder/four-tier-prompt-preview.tsx` | 4-tier colour-coded preview | 684   |
-| `src/components/prompt-builder/intelligence-panel.tsx` | **REMOVED from Prompt Lab render (23 Mar 2026).** Code file untouched — still used by standard builder. DnaBar conflict count still fed via simplified `useRealIntelligence`. See `ai-disguise.md` D11. | 515   |
-| `src/components/prompt-builder/prompt-intelligence-builder.tsx` | Intelligence builder     | 714   |
+| File                                                            | Purpose                                                                                                                                                                                                 | Lines |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| `src/app/studio/playground/page.tsx`                            | Server component (data fetch)                                                                                                                                                                           | 69    |
+| `src/app/studio/playground/playground-page-client.tsx`          | Client wrapper (provider state)                                                                                                                                                                         | 135   |
+| `src/components/prompts/playground-workspace.tsx`               | AI Disguise orchestrator (v3.0.0)                                                                                                                                                                       | 313   |
+| `src/components/prompts/enhanced-educational-preview.tsx`       | Lab preview & AI Disguise wiring (v3.1.0), footer Clear All cascade via `clearSignal`                                                                                                                   | 2,014 |
+| `src/components/prompt-builder/four-tier-prompt-preview.tsx`    | 4-tier colour-coded preview, "Generated for" badge, **tier provider icons strip**, **white tier labels**, `providers` prop                                                                              | 788   |
+| `src/components/prompt-builder/intelligence-panel.tsx`          | **REMOVED from Prompt Lab render (23 Mar 2026).** Code file untouched — still used by standard builder. DnaBar conflict count still fed via simplified `useRealIntelligence`. See `ai-disguise.md` D11. | 515   |
+| `src/components/prompt-builder/prompt-intelligence-builder.tsx` | Intelligence builder                                                                                                                                                                                    | 714   |
 
 #### Prompt Lab AI Disguise Update (v3.0.0 — 23 March 2026)
 
 The Prompt Lab now uses the AI Disguise system — 3 targeted GPT-5.4-mini API calls for prompt generation and optimisation, disguised as "1,001 proprietary algorithms". The IntelligencePanel has been removed from the Prompt Lab render (scored 52/100 for the AI Disguise workflow — designed for the dropdown-selection workflow, became a passive sidebar in the human-text-input workflow).
 
 **Impact on intelligence system:**
+
 - `usePromptAnalysis` hook still runs in the Lab — feeds DnaBar with `conflictCount`, `hasHardConflicts`, `healthScore`
 - The `conflicts`, `suggestions`, `platformHints`, `weatherSuggestions` mappings are no longer computed (removed from `useRealIntelligence`)
 - `handleSuggestionClick` and `handleMoodTermClick` callbacks removed
@@ -1018,13 +1040,14 @@ The Prompt Lab now uses the AI Disguise system — 3 targeted GPT-5.4-mini API c
 
 #### Prompt Lab Parity Features (v5.0.0 — 18 March 2026)
 
-The Prompt Lab now has full feature parity with the standard builder for colour-coded prompts and optimizer UX. These features are implemented in `enhanced-educational-preview.tsx` (2,008 lines):
+The Prompt Lab now has full feature parity with the standard builder for colour-coded prompts and optimizer UX. These features are implemented in `enhanced-educational-preview.tsx` (2,014 lines):
 
 **1. Colour-coded prompts in all 4 tiers:** `FourTierPromptPreview` receives `isPro` and `termIndex` props. When `isPro=true`, each tier card renders prompt text via `parsePromptIntoSegments()` with `CATEGORY_COLOURS` from `src/lib/prompt-colours.ts`.
 
 **2. Assembled prompt box:** Full-width box between category grid and 4-tier cards showing `activeTierPromptText`. Colour-coded for Pro users. Inline `SaveIcon` + copy icons (float-right). `StageBadge` in header. Char count right-aligned.
 
 **3. Dynamic label switching:** When `isOptimizerEnabled && selectedProviderId`:
+
 - Label: "Assembled prompt" → "Optimized prompt in [Provider] [icon]" (`text-emerald-300`)
 - Border: `border-slate-600` → `border-emerald-600/50 bg-emerald-950/20`
 - Text: `text-slate-100` → `text-emerald-100`
@@ -1047,15 +1070,29 @@ The Prompt Lab now has full feature parity with the standard builder for colour-
 
 **11. cursor-pointer on all interactive elements:** Copy prompt, Randomise, Clear, Save footer buttons. Intelligence panel Conflicts/Suggestions tabs and weather suggestion buttons.
 
+#### Prompt Lab UI Polish (v3.1.0 — 23 March 2026)
+
+**12. Tier Provider Icons Strip:** `FourTierPromptPreview` now accepts a `providers` prop and shows all providers for the active tier as a centered icon row between the header and tier cards. Icons grouped via `getPlatformTierId()`. Styling matches PotM "Try in" icons: `bg-white/15 ring-1 ring-white/10`, `clamp(30px, 2.3vw, 38px)` squares, `drop-shadow(0 0 3px rgba(255,255,255,0.4))`. Non-clickable (`cursor-default`), hover glow + `scale(1.1)`. Educational — teaches users which providers belong to which tier family.
+
+**13. White Tier Labels:** "Tier X: Name" and "Same scene, different syntaxes" text changed from `text-slate-500` to `text-white font-medium`. No grey text in Prompt Lab per code standard.
+
+**14. Generate Button — Engine Bay Styling:** The Generate Prompt button in `DescribeYourImage` adopts the same visual treatment as the Launch Platform Builder button. When textarea has text: sky→emerald→indigo gradient, `dyi-generate-pulse` animation, shimmer overlay on hover. When empty: slate/disabled. Animations co-located in `DESCRIBE_STYLES`. See `buttons.md` §7.1.
+
+**15. Purple Gradient Clear All Buttons:** Both top (next to Generate) and footer Clear All buttons use canonical purple gradient (`border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-white`). Full cascade reset. Footer uses `clearSignal` mechanism to trigger DescribeYourImage internal reset. See `buttons.md` §7.2–§7.3.
+
+**16. Call 2 Harmony Engineering:** The Call 2 system prompt evolved from 11 rules (scoring 62/100) to 18 rules (scoring 93/100) through 5 rounds of iterative testing. Post-processing layer added: P1 deduplicates T2 `--no` block, P2 strips T1 trailing periods. Temperature 0.3→0.5, max tokens 1500→2000. See `ai-disguise.md` §6–§8.
+
 #### Colour Pipeline in Pro Page Preview Panels (v6.0.0 — 19 March 2026)
 
 The colour-coded prompt pipeline extends beyond the builders to three Pro page preview panels:
 
 **Dynamic consumers (use `parsePromptIntoSegments()` at runtime):**
+
 - `DailyPromptsPreviewPanel` — parses assembled prompt from live PotM data via `sharedParsePrompt()` with a `termIndex` built from `categoryMap.selections`. Renders colour-coded assembled + optimized prompt boxes.
 - `LabTierWindow` (inside `PromptLabPreviewPanel`) — parses per-tier prompt text via `labParsePrompt()` with `labBuildTermIndex()` from `tierCategoryMap`. Renders colour-coded prompt in each of the 4 rotating provider windows.
 
 **Static consumer (uses hardcoded segment data):**
+
 - `ImageGenPreviewPanel` — does NOT use `parsePromptIntoSegments()`. Instead, each of the 5 showcase prompts is pre-segmented into `{ text, color }[]` arrays using `IG_C` (a local alias of `CATEGORY_COLOURS` hex values). This is because the prompts are static marketing copy, not dynamically assembled. The segments are hand-categorised: environment terms in sky-400, lighting in amber, style in purple, etc.
 
 **Why two patterns:** Dynamic parsing works when the prompt was assembled by `assemblePrompt()` and a `categoryMap` is available to build a `termIndex`. Static segments are used when the prompt text is predetermined and the categorisation is editorial (human-decided, not algorithm-decided).
@@ -1327,24 +1364,24 @@ PROMAGEN
 
 ### Modified Files
 
-| File                                                 | Changes                                                                     |
-| ---------------------------------------------------- | --------------------------------------------------------------------------- |
-| `src/lib/prompt-builder.ts`                          | Import intelligence; use smart trim; Subject anchor; `selectionsFromMap()`  |
-| `src/hooks/use-prompt-optimization.ts`               | Use smart trim; protect custom text                                         |
-| `src/components/providers/prompt-builder.tsx`         | DNA bar; conflict warnings; colour-coded prompts; legend; lifetime counter (v11.0.0, 3,104 lines) |
-| `src/components/ui/combobox.tsx`                      | `labelColour` prop (v7.3.0, 811 lines); reordered options; relevance hints |
-| `src/components/prompts/enhanced-educational-preview.tsx` | Lab parity + AI Disguise wiring: colour-coding, assembled box, dynamic label, StageBadge, optimizer neutral mode, Call 3 wiring, AlgorithmCycling, effective optimised values, IntelligencePanel removed, full-width layout (v3.0.0, 2,008 lines) |
-| `src/components/prompt-builder/four-tier-prompt-preview.tsx` | `isPro` + `termIndex` props for colour-coded rendering, "Generated for" badge (v3.0.0, 684 lines) |
-| `src/components/prompt-builder/intelligence-panel.tsx` | cursor-pointer on Conflicts/Suggestions/Market Mood tabs (515 lines). **REMOVED from Prompt Lab render (23 Mar 2026) — retained in standard builder only.** |
-| `src/components/prompt-builder/prompt-intelligence-builder.tsx` | `colourTermIndex` computation, passes to FourTierPromptPreview (714 lines) |
-| `src/app/pro-promagen/pro-promagen-client.tsx` | Colour pipeline consumer: DailyPromptsPreviewPanel (dynamic), LabTierWindow (dynamic), ImageGenPreviewPanel (static `IG_C` segments) (v6.0.0, 3,560 lines) |
+| File                                                            | Changes                                                                                                                                                                                                                                                                                                                                 |
+| --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/lib/prompt-builder.ts`                                     | Import intelligence; use smart trim; Subject anchor; `selectionsFromMap()`                                                                                                                                                                                                                                                              |
+| `src/hooks/use-prompt-optimization.ts`                          | Use smart trim; protect custom text                                                                                                                                                                                                                                                                                                     |
+| `src/components/providers/prompt-builder.tsx`                   | DNA bar; conflict warnings; colour-coded prompts; legend; lifetime counter (v11.0.0, 3,104 lines)                                                                                                                                                                                                                                       |
+| `src/components/ui/combobox.tsx`                                | `labelColour` prop (v7.3.0, 811 lines); reordered options; relevance hints                                                                                                                                                                                                                                                              |
+| `src/components/prompts/enhanced-educational-preview.tsx`       | Lab parity + AI Disguise wiring: colour-coding, assembled box, dynamic label, StageBadge, optimizer neutral mode, Call 3 wiring, AlgorithmCycling, effective optimised values, IntelligencePanel removed, full-width layout, **footer Clear All cascade via `clearSignal`**, **purple gradient Clear All button** (v3.1.0, 2,014 lines) |
+| `src/components/prompt-builder/four-tier-prompt-preview.tsx`    | `isPro` + `termIndex` props for colour-coded rendering, "Generated for" badge, **tier provider icons strip** (`TierProviderIcons` component, `providers` prop), **white tier labels** (`text-white font-medium`) (v3.1.0, 788 lines)                                                                                                    |
+| `src/components/prompt-builder/intelligence-panel.tsx`          | cursor-pointer on Conflicts/Suggestions/Market Mood tabs (515 lines). **REMOVED from Prompt Lab render (23 Mar 2026) — retained in standard builder only.**                                                                                                                                                                             |
+| `src/components/prompt-builder/prompt-intelligence-builder.tsx` | `colourTermIndex` computation, passes to FourTierPromptPreview (714 lines)                                                                                                                                                                                                                                                              |
+| `src/app/pro-promagen/pro-promagen-client.tsx`                  | Colour pipeline consumer: DailyPromptsPreviewPanel (dynamic), LabTierWindow (dynamic), ImageGenPreviewPanel (static `IG_C` segments) (v6.0.0, 3,560 lines)                                                                                                                                                                              |
 
 ### New Files (v5.0.0)
 
-| File                           | Purpose                                             | Lines |
-| ------------------------------ | --------------------------------------------------- | ----- |
-| `src/lib/prompt-colours.ts`    | SSOT: 13 category colours, labels, emojis, parser   | 210   |
-| `src/lib/lifetime-counter.ts`  | `incrementLifetimePrompts()` + `getLifetimePrompts()` | 33  |
+| File                          | Purpose                                               | Lines |
+| ----------------------------- | ----------------------------------------------------- | ----- |
+| `src/lib/prompt-colours.ts`   | SSOT: 13 category colours, labels, emojis, parser     | 210   |
+| `src/lib/lifetime-counter.ts` | `incrementLifetimePrompts()` + `getLifetimePrompts()` | 33    |
 
 ---
 
@@ -1409,6 +1446,11 @@ When modifying for Prompt Intelligence:
 - **Prompt Lab route is `/studio/playground` — do NOT use the legacy `/prompts/playground` path**
 - **ImageGenPreviewPanel uses static `IG_C` segments — do NOT convert to dynamic `parsePromptIntoSegments()` (the prompts are editorial, not assembled)**
 - **IntelligencePanel is REMOVED from Prompt Lab render — do NOT re-add. DnaBar still fed via simplified `useRealIntelligence`. Panel remains in standard builder only. See `ai-disguise.md` D11.**
+- **Tier provider icons are non-clickable** — `cursor-default`, `div` not `button`. Hover glow + scale only. Do not add click handlers. See `prompt-lab.md` §10.
+- **Tier labels are `text-white font-medium`** — not `text-slate-500`. No grey text in Prompt Lab.
+- **Generate button must match engine bay styling** — `dyi-generate-pulse` and `dyi-generate-shimmer` copied from engine bay source. Do not diverge. See `buttons.md` §7.1.
+- **Both Clear All buttons use purple gradient with `text-white`** — not Core Colours. See `buttons.md` §7.2–§7.3.
+- **Post-processing is mandatory on Call 2 responses** — `postProcessTiers()` must run before returning to client. See `ai-disguise.md` §7.
 - **`usePromptAnalysis` still runs in Lab for DnaBar — do NOT remove the simplified `useRealIntelligence` hook from `enhanced-educational-preview.tsx`**
 
 **Existing features preserved:** Yes (required for every change)
@@ -1416,6 +1458,8 @@ When modifying for Prompt Intelligence:
 ---
 
 ## Changelog
+
+- **23 Mar 2026 (v2.3.0):** **PROMPT LAB UI POLISH + HARMONY ENGINEERING REFS.** Cross-references updated to `prompt-lab.md` v3.1.0, `ai-disguise.md` v3.0.0, `human-sentence-conversion.md` v2.0.0, `buttons.md` v4.0.0. §9 Prompt Lab parity: Added features 12–16: tier provider icons strip (788 lines, `TierProviderIcons` component, `providers` prop, PotM-matching style), white tier labels (`text-white font-medium`), engine bay Generate button styling (pulse + shimmer), purple gradient Clear All buttons (`clearSignal` mechanism), Call 2 harmony engineering reference (18 rules, 93/100, 5 rounds). File tables updated: `four-tier-prompt-preview.tsx` 684→788, `enhanced-educational-preview.tsx` 2,008→2,014, `generate-tier-prompts/route.ts` 319→406. §12 files table updated with v3.1.0 versions and new features. §15: Added 5 non-regression rules (tier icons non-clickable, white tier labels, engine bay Generate, purple Clear All, post-processing mandatory).
 
 - **23 Mar 2026 (v2.2.0):** **AI DISGUISE INTEGRATION — INTELLIGENCE PANEL REMOVAL FROM PROMPT LAB** — §9: Updated Prompt Lab file table with actual line counts (`playground-workspace.tsx` 313, `enhanced-educational-preview.tsx` 2,008, `four-tier-prompt-preview.tsx` 684). `IntelligencePanel` marked as REMOVED from Prompt Lab render (scored 52/100 for AI Disguise workflow) — code file untouched (515 lines), still used by standard builder, DnaBar still fed via simplified `useRealIntelligence`. Added "Prompt Lab AI Disguise Update (v3.0.0)" subsection documenting impact on intelligence system: `usePromptAnalysis` still runs for DnaBar, `conflicts`/`suggestions`/`platformHints`/`weatherSuggestions` mappings removed, layout changed to full-width single column. §12: Updated Lab file line counts and versions. Added AI Disguise wiring notes. IntelligencePanel marked as removed from Lab render. §15: Updated cursor-pointer rule (standard builder only). Added 2 new rules: IntelligencePanel removal from Lab, `useRealIntelligence` preservation for DnaBar. Updated cross-references to include `ai-disguise.md` and `prompt-lab.md` v3.0.0.
 - **19 Mar 2026 (v2.1.0):** **COLOUR PIPELINE EXTENSION TO PRO PAGE PREVIEWS** — Added "Colour Pipeline in Pro Page Preview Panels" subsection documenting 3 consumers: DailyPromptsPreviewPanel (dynamic `sharedParsePrompt`), LabTierWindow (dynamic `labParsePrompt`), ImageGenPreviewPanel (static `IG_C` segments). §12: Added `pro-promagen-client.tsx` to modified files table (v6.0.0, 3,560 lines). §15: Added non-regression rule for ImageGen static segments (do not convert to dynamic parsing). Updated cross-reference header to include ImageGen preview panel.

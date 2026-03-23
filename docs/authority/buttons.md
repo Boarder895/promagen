@@ -1,7 +1,7 @@
 # Buttons Authority Document
 
-**Last updated:** 10 February 2026  
-**Version:** 3.0.0  
+**Last updated:** 23 March 2026  
+**Version:** 4.0.0  
 **Owner:** Promagen  
 **Authority:** This document defines ALL button behaviour, styling, wiring, and code locations across Promagen.
 
@@ -24,27 +24,37 @@ This document is the single source of truth for every interactive button in Prom
 
 ## Quick Reference: All Buttons
 
-| Location             | Button                  | Destination            | Mechanism          | Text/Icon Colour   |
-| -------------------- | ----------------------- | ---------------------- | ------------------ | ------------------ |
-| Control Dock         | Sign in (AuthButton)    | Clerk modal            | `<SignInButton>`   | **WHITE**          |
-| Control Dock         | Greenwich Meridian      | Toggle reference frame | `<button onClick>` | `text-purple-100`  |
-| Mission Control      | Home                    | `/`                    | `<a href>`         | `text-purple-100`  |
-| Mission Control      | Studio                  | `/studio`              | `<a href>`         | `text-purple-100`  |
-| Mission Control      | Pro                     | `/pro-promagen`        | `<a href>`         | `text-purple-100`  |
-| Engine Bay           | Launch Platform Builder | `/providers/{id}`      | `<a href>`         | `text-white`       |
-| Engine Bay           | Provider icons          | State update           | `onClick`          | N/A                |
-| Prompt Builder       | Randomise               | Fill all categories    | `<button onClick>` | `text-purple-100`  |
-| Prompt Builder       | Save                    | Save to library        | `<button onClick>` | `text-emerald-100` |
-| Prompt Builder       | Done                    | Close/navigate         | `<button onClick>` | `text-slate-100`   |
-| Prompt Builder       | Open in {Platform}      | `/go/{id}?src=...`     | `<a href>`         | `text-sky-100`     |
-| Fallback Nav         | AuthButton              | Clerk modal            | `<SignInButton>`   | Inherits           |
-| Fallback Nav         | Home                    | `/`                    | `<a href>`         | Inherits           |
-| Fallback Nav         | Studio                  | `/studio`              | `<a href>`         | Inherits           |
-| Fallback Nav         | Pro Promagen            | `/pro-promagen`        | `<a href>`         | Inherits           |
-| Studio Feature Cards | Library                 | `/studio/library`      | `<a href>`         | Inherits           |
-| Studio Feature Cards | Explore                 | `/studio/explore`      | `<a href>`         | Inherits           |
-| Studio Feature Cards | Learn                   | `/studio/learn`        | `<a href>`         | Inherits           |
-| Studio Feature Cards | Playground              | `/studio/playground`   | `<a href>`         | Inherits           |
+| Location             | Button                   | Destination            | Mechanism          | Text/Icon Colour   |
+| -------------------- | ------------------------ | ---------------------- | ------------------ | ------------------ |
+| Control Dock         | Sign in (AuthButton)     | Clerk modal            | `<SignInButton>`   | **WHITE**          |
+| Control Dock         | Greenwich Meridian       | Toggle reference frame | `<button onClick>` | `text-purple-100`  |
+| Mission Control      | Home                     | `/`                    | `<a href>`         | `text-purple-100`  |
+| Mission Control      | Studio                   | `/studio`              | `<a href>`         | `text-purple-100`  |
+| Mission Control      | Pro                      | `/pro-promagen`        | `<a href>`         | `text-purple-100`  |
+| Engine Bay           | Launch Platform Builder  | `/providers/{id}`      | `<a href>`         | `text-white`       |
+| Engine Bay           | Provider icons           | State update           | `onClick`          | N/A                |
+| Prompt Builder       | Randomise                | Fill all categories    | `<button onClick>` | `text-purple-100`  |
+| Prompt Builder       | Save                     | Save to library        | `<button onClick>` | `text-emerald-100` |
+| Prompt Builder       | Done                     | Close/navigate         | `<button onClick>` | `text-slate-100`   |
+| Prompt Builder       | Open in {Platform}       | `/go/{id}?src=...`     | `<a href>`         | `text-sky-100`     |
+| **Prompt Lab (DYI)** | **Generate Prompt**      | Fire Call 1 + Call 2   | `<button onClick>` | **`text-white`**   |
+| **Prompt Lab (DYI)** | **Clear All (top)**      | Full cascade reset     | `<button onClick>` | **`text-white`**   |
+| **Prompt Lab (DYI)** | **Close**                | Collapse DYI panel     | `<button onClick>` | `text-slate-300`   |
+| **Prompt Lab**       | **Copy prompt (footer)** | Copy to clipboard      | `<button onClick>` | `text-slate-50`    |
+| **Prompt Lab**       | **Randomise (footer)**   | Fill all categories    | `<button onClick>` | `text-purple-100`  |
+| **Prompt Lab**       | **Clear All (footer)**   | Full cascade reset     | `<button onClick>` | **`text-white`**   |
+| **Prompt Lab**       | **Save (footer)**        | Save to library        | `<button onClick>` | `text-emerald-100` |
+| **Prompt Lab**       | **Copy Tier N**          | Copy tier prompt       | `<button onClick>` | `text-white`       |
+| **Prompt Lab**       | **Static/Dynamic**       | Toggle composition     | `<button onClick>` | `text-purple-100`  |
+| **Prompt Lab**       | **Tier card**            | Select active tier     | `<div onClick>`    | Inherits           |
+| Fallback Nav         | AuthButton               | Clerk modal            | `<SignInButton>`   | Inherits           |
+| Fallback Nav         | Home                     | `/`                    | `<a href>`         | Inherits           |
+| Fallback Nav         | Studio                   | `/studio`              | `<a href>`         | Inherits           |
+| Fallback Nav         | Pro Promagen             | `/pro-promagen`        | `<a href>`         | Inherits           |
+| Studio Feature Cards | Library                  | `/studio/library`      | `<a href>`         | Inherits           |
+| Studio Feature Cards | Explore                  | `/studio/explore`      | `<a href>`         | Inherits           |
+| Studio Feature Cards | Learn                    | `/studio/learn`        | `<a href>`         | Inherits           |
+| Studio Feature Cards | Playground               | `/studio/playground`   | `<a href>`         | Inherits           |
 
 ---
 
@@ -96,13 +106,17 @@ This means `<a>` tags inherit BLACK text by default. Tailwind's `text-purple-100
 
 ### 1.4 Colour Reference by Button Type
 
-| Button Type                           | Parent Colour     | Child Colour (svg + span)  |
-| ------------------------------------- | ----------------- | -------------------------- |
-| **Control Dock Sign in (AuthButton)** | `text-purple-100` | **`!text-white`** (forced) |
-| Purple gradient (Mission Control)     | `text-purple-100` | `text-purple-100`          |
-| Sky gradient (Open in Platform)       | `text-sky-100`    | `text-sky-100`             |
-| White (Engine Bay active)             | `text-white`      | `text-white`               |
-| Slate (disabled states)               | `text-slate-500`  | Inherits OK (not `<a>`)    |
+| Button Type                           | Parent Colour      | Child Colour (svg + span)     |
+| ------------------------------------- | ------------------ | ----------------------------- |
+| **Control Dock Sign in (AuthButton)** | `text-purple-100`  | **`!text-white`** (forced)    |
+| Purple gradient (Mission Control)     | `text-purple-100`  | `text-purple-100`             |
+| Sky gradient (Open in Platform)       | `text-sky-100`     | `text-sky-100`                |
+| White (Engine Bay active)             | `text-white`       | `text-white`                  |
+| Slate (disabled states)               | `text-slate-500`   | Inherits OK (not `<a>`)       |
+| **Engine Bay Generate (Prompt Lab)**  | `text-white`       | `text-white` (via `<button>`) |
+| **Purple Clear All (Prompt Lab)**     | `text-white`       | `text-white` (via `<button>`) |
+| **Purple Randomise (Prompt Lab)**     | `text-purple-100`  | `text-purple-100`             |
+| **Emerald Save (Prompt Lab)**         | `text-emerald-100` | `text-emerald-100`            |
 
 ### 1.5 RECURRING ISSUE: AuthButton in Control Dock — WHITE text/icon
 
@@ -157,7 +171,7 @@ All buttons in Promagen use a single, consistent design language.
 
 ```tsx
 const buttonStyles =
-  'inline-flex items-center justify-center gap-2 rounded-full border border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 px-4 py-2 text-sm font-medium text-purple-100 shadow-sm transition-all hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80';
+  "inline-flex items-center justify-center gap-2 rounded-full border border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 px-4 py-2 text-sm font-medium text-purple-100 shadow-sm transition-all hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80";
 ```
 
 ### 2.2 Style Breakdown
@@ -188,8 +202,8 @@ const buttonStyles =
   disabled={isLocked}
   className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition-all focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80 ${
     isLocked
-      ? 'cursor-not-allowed border-slate-700 bg-slate-800/50 text-slate-500'
-      : 'border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-100 hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400'
+      ? "cursor-not-allowed border-slate-700 bg-slate-800/50 text-slate-500"
+      : "border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-100 hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400"
   }`}
 >
   <span className="text-base">🎲</span>
@@ -220,7 +234,7 @@ const buttonClasses = `
 Used for: Mission Control buttons, Randomise, Greenwich Meridian toggle
 
 ```tsx
-'border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-100 hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400';
+"border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-100 hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400";
 ```
 
 ### 3.2 Emerald Gradient (Save/Success)
@@ -228,7 +242,7 @@ Used for: Mission Control buttons, Randomise, Greenwich Meridian toggle
 Used for: Save to Library button
 
 ```tsx
-'border-emerald-500/70 bg-gradient-to-r from-emerald-600/20 to-teal-600/20 text-emerald-100 hover:from-emerald-600/30 hover:to-teal-600/30 hover:border-emerald-400';
+"border-emerald-500/70 bg-gradient-to-r from-emerald-600/20 to-teal-600/20 text-emerald-100 hover:from-emerald-600/30 hover:to-teal-600/30 hover:border-emerald-400";
 ```
 
 **File:** `src/components/providers/prompt-builder.tsx`  
@@ -239,7 +253,7 @@ Used for: Save to Library button
 Used for: Open in {Platform} button
 
 ```tsx
-'border-sky-500/70 bg-sky-600/10 text-sky-100 hover:bg-sky-500/20';
+"border-sky-500/70 bg-sky-600/10 text-sky-100 hover:bg-sky-500/20";
 ```
 
 **File:** `src/components/providers/prompt-builder.tsx`  
@@ -257,7 +271,7 @@ Used for: Open in {Platform} button
 Used for: Done button
 
 ```tsx
-'border-slate-600 bg-slate-800 text-slate-100 hover:border-slate-400 hover:bg-slate-700';
+"border-slate-600 bg-slate-800 text-slate-100 hover:border-slate-400 hover:bg-slate-700";
 ```
 
 **File:** `src/components/providers/prompt-builder.tsx`  
@@ -268,7 +282,7 @@ Used for: Done button
 Used for: Engine Bay Launch button (active state)
 
 ```tsx
-'engine-bay-active border-sky-400/60 bg-gradient-to-r from-sky-400/40 via-emerald-300/40 to-indigo-400/40 text-white';
+"engine-bay-active border-sky-400/60 bg-gradient-to-r from-sky-400/40 via-emerald-300/40 to-indigo-400/40 text-white";
 ```
 
 **File:** `src/components/home/engine-bay.tsx`  
@@ -288,7 +302,7 @@ Used for: Engine Bay Launch button (active state)
 Used for: All buttons when disabled/locked
 
 ```tsx
-'cursor-not-allowed border-slate-700 bg-slate-800/50 text-slate-500';
+"cursor-not-allowed border-slate-700 bg-slate-800/50 text-slate-500";
 ```
 
 ---
@@ -304,13 +318,13 @@ Used for: All buttons when disabled/locked
 
 ```tsx
 const actionButtonBase =
-  'inline-flex w-full flex-col items-center justify-center gap-0.5 rounded-xl border px-4 py-3 text-center text-sm font-semibold shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/80';
+  "inline-flex w-full flex-col items-center justify-center gap-0.5 rounded-xl border px-4 py-3 text-center text-sm font-semibold shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/80";
 
 const actionButtonActive =
-  'border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-100 hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 cursor-pointer';
+  "border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-100 hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 cursor-pointer";
 
 const actionButtonLoading =
-  'border-slate-600/50 bg-slate-800/30 text-slate-400 cursor-wait opacity-70';
+  "border-slate-600/50 bg-slate-800/30 text-slate-400 cursor-wait opacity-70";
 ```
 
 ### 4.2 Grid Layout
@@ -320,7 +334,7 @@ const actionButtonLoading =
 ```tsx
 // 3-button layout (isStudioSubPage=true): Home | Studio | Pro
 // 2-button layout (default): varies by page context
-const gridCols = isStudioSubPage ? 'grid-cols-3' : 'grid-cols-2';
+const gridCols = isStudioSubPage ? "grid-cols-3" : "grid-cols-2";
 
 <div className={`grid ${gridCols} gap-3`}>{/* buttons */}</div>;
 ```
@@ -333,7 +347,11 @@ const gridCols = isStudioSubPage ? 'grid-cols-3' : 'grid-cols-2';
 
 ```tsx
 const renderHomeButton = () => (
-  <a href="/" className={`${actionButtonBase} ${actionButtonActive}`} aria-label="Go to Homepage">
+  <a
+    href="/"
+    className={`${actionButtonBase} ${actionButtonActive}`}
+    aria-label="Go to Homepage"
+  >
     <svg
       className="h-5 w-5 text-purple-100"
       fill="none"
@@ -341,7 +359,12 @@ const renderHomeButton = () => (
       viewBox="0 0 24 24"
       aria-hidden="true"
     >
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={homeIconPath} />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+        d={homeIconPath}
+      />
     </svg>
     <span className="text-purple-100">Home</span>
   </a>
@@ -364,7 +387,12 @@ const renderStudioButton = () => (
       viewBox="0 0 24 24"
       aria-hidden="true"
     >
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={studioIconPath} />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+        d={studioIconPath}
+      />
     </svg>
     <span className="text-purple-100">Studio</span>
   </a>
@@ -387,7 +415,12 @@ const renderProButton = () => (
       viewBox="0 0 24 24"
       aria-hidden="true"
     >
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={proIconPath} />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+        d={proIconPath}
+      />
     </svg>
     <span className="text-purple-100">Pro</span>
   </a>
@@ -400,16 +433,16 @@ const renderProButton = () => (
 
 ```tsx
 const userIconPath =
-  'M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z';
+  "M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z";
 
 const homeIconPath =
-  'M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25';
+  "M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25";
 
 const studioIconPath =
-  'M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zM12 2.25V4.5m5.834.166l-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243l-1.59-1.59';
+  "M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zM12 2.25V4.5m5.834.166l-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243l-1.59-1.59";
 
 const proIconPath =
-  'M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z';
+  "M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z";
 ```
 
 ---
@@ -566,17 +599,129 @@ const proIconPath =
 
 ---
 
-## 7. Control Dock / Reference Frame Toggle
+## 7. Prompt Lab Buttons (v4.0.0)
+
+**Files:**
+
+- `src/components/providers/describe-your-image.tsx` (722 lines) — Generate, Clear All (top), Close
+- `src/components/prompts/enhanced-educational-preview.tsx` (2,014 lines) — Copy prompt, Randomise, Clear All (footer), Save
+- `src/components/prompt-builder/four-tier-prompt-preview.tsx` (788 lines) — Copy Tier N, Tier card click
+- `src/components/composition-mode-toggle.tsx` — Static/Dynamic toggle
+
+### 7.1 Generate Prompt Button
+
+**File:** `describe-your-image.tsx` lines 543–600
+
+The Generate button uses **engine bay styling** — identical to the Launch Platform Builder button. Three states:
+
+| State          | Visual                                                       | Class                                                                                                                                  |
+| -------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Empty textarea | Slate/disabled. No animation. `cursor-not-allowed`           | `bg-slate-800/40 border-slate-700/30`                                                                                                  |
+| Text present   | Sky→emerald→indigo gradient. Pulsing glow. Shimmer on hover. | `dyi-generate-active border-sky-400/60 bg-gradient-to-r from-sky-400/40 via-emerald-300/40 to-indigo-400/40 text-white cursor-pointer` |
+| Loading        | Same gradient, no pulse. Spinner + "Parsing..."              | `dyi-generating border-sky-400/40`                                                                                                     |
+| Drift ≥ 3      | Same as text present, but label changes to "Regenerate"      | Same active class                                                                                                                      |
+
+**Animations (co-located in `DESCRIBE_STYLES`):**
+
+| Animation                    | Keyframes                          | Duration      | Source                                 |
+| ---------------------------- | ---------------------------------- | ------------- | -------------------------------------- |
+| `dyi-generate-pulse`         | Sky/emerald box-shadow oscillation | 2s infinite   | Copied from `engine-bay-pulse`         |
+| `dyi-generate-shimmer-sweep` | White gradient translateX sweep    | 1.5s infinite | Copied from `engine-bay-shimmer-sweep` |
+
+**Shimmer overlay:** `group relative overflow-hidden` wrapper + absolute inset shimmer div. `opacity-0 → group-hover:opacity-100`. Identical to engine bay line 398–402.
+
+**Non-regression rule:** Do NOT diverge from engine bay source. If engine bay animation changes, this button must match.
+
+### 7.2 Clear All Button (Top — next to Generate)
+
+**File:** `describe-your-image.tsx` lines 602–617
+
+Only visible when `hasGenerated && !isLoading`.
+
+**Style:** Purple gradient with white text (canonical style from §2.1):
+
+```
+border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-white
+hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400
+```
+
+**Action:** Full cascade clear — textarea, 12 dropdowns, AI tiers, AI optimise, optimizer toggle, aspect ratio, scene, drift. Calls `handleClear()` → `onClear()` → workspace `handleDescribeClear()`.
+
+**Text colour:** `text-white`. Uses `<button>` not `<a>`, so body colour inheritance is not an issue (see §1.1).
+
+### 7.3 Clear All Button (Footer)
+
+**File:** `enhanced-educational-preview.tsx` lines 1929–1935
+
+**Style:** Identical to §7.2 — same purple gradient, same white text, same `rounded-full`.
+
+**Action:** Same full cascade as §7.2, PLUS uses `setClearSignal(s => s + 1)` to trigger DescribeYourImage internal reset (textarea, `hasGenerated`, `formatWarning`). This is necessary because the footer cannot directly access DYI's internal state.
+
+**Non-regression rule:** Both Clear All buttons MUST be identical in style and function. If one changes, both change.
+
+### 7.4 Close Button (DYI Panel)
+
+**File:** `describe-your-image.tsx` lines 663–674
+
+Collapses the DescribeYourImage panel. `text-slate-500 hover:text-slate-300`. No gradient, no animation. Minimal.
+
+### 7.5 Copy Prompt Button (Footer)
+
+**File:** `enhanced-educational-preview.tsx` lines 1872–1915
+
+**Style:** `border-slate-600 bg-slate-900 text-slate-50 hover:border-slate-400`. Neutral, not gradient.
+
+**States:** Normal → "Copied!" (green checkmark, 2s timeout). Disabled when no content.
+
+**Action:** Copies `activeTierPromptText` (AI tier text when available, template fallback). Calls `incrementLifetimePrompts()`.
+
+### 7.6 Randomise Button (Footer)
+
+**File:** `enhanced-educational-preview.tsx` lines 1919–1925
+
+**Style:** Canonical purple gradient (§2.1): `border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-100`.
+
+### 7.7 Save to Library Button (Footer)
+
+**File:** `enhanced-educational-preview.tsx` lines 1938–1970
+
+**Style:** Emerald gradient: `border-emerald-500/70 bg-gradient-to-r from-emerald-600/20 to-teal-600/20 text-emerald-100`.
+
+**States:** Normal → "✓ Saved!" (emerald confirmation, 2s timeout). Disabled when no content.
+
+### 7.8 Copy Tier N Button
+
+**File:** `four-tier-prompt-preview.tsx` lines 444–468
+
+Inside each TierCard. **Style:** Matches TierCard's own colour scheme (`config.bgColour`). White text.
+
+### 7.9 Tier Card Click (Select Tier)
+
+**File:** `four-tier-prompt-preview.tsx` lines 329–330
+
+Each tier card has `role="button"` and `onClick` (when `onTierSelect` provided). Clicking selects that tier as active. `cursor-pointer` when clickable.
+
+### 7.10 Static/Dynamic Toggle (Composition Mode)
+
+**File:** `composition-mode-toggle.tsx`
+
+**Style:** Canonical purple gradient (§2.1): `border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-100`.
+
+Uses `<button>` — no colour inheritance issues.
+
+---
+
+## 8. Control Dock / Reference Frame Toggle
 
 **File:** `src/components/reference-frame-toggle.tsx`
 
-### 7.1 Button Styling
+### 8.1 Button Styling
 
 **Lines:** 165-171
 
 Uses canonical purple gradient styling. No colour inheritance issues (uses `<button>` not `<a>`).
 
-### 7.2 States
+### 8.2 States
 
 | User State       | Cursor               | Behaviour                      |
 | ---------------- | -------------------- | ------------------------------ |
@@ -587,9 +732,9 @@ Uses canonical purple gradient styling. No colour inheritance issues (uses `<but
 
 ---
 
-## 8. Icon Standards
+## 9. Icon Standards
 
-### 8.1 Size Reference
+### 11.1 Size Reference
 
 | Context         | Size    | Class     |
 | --------------- | ------- | --------- |
@@ -597,7 +742,7 @@ Uses canonical purple gradient styling. No colour inheritance issues (uses `<but
 | Mission Control | 20×20px | `h-5 w-5` |
 | Feature cards   | 20×20px | `h-5 w-5` |
 
-### 8.2 SVG Structure
+### 11.2 SVG Structure
 
 ```tsx
 <svg
@@ -607,11 +752,16 @@ Uses canonical purple gradient styling. No colour inheritance issues (uses `<but
   stroke="currentColor"
   aria-hidden="true"
 >
-  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="..." />
+  <path
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth={1.5}
+    d="..."
+  />
 </svg>
 ```
 
-### 8.3 Icon Reference
+### 11.3 Icon Reference
 
 | Icon          | Path Variable    | Used In                         |
 | ------------- | ---------------- | ------------------------------- |
@@ -628,9 +778,9 @@ Uses canonical purple gradient styling. No colour inheritance issues (uses `<but
 
 ---
 
-## 9. Debugging Guide
+## 10. Debugging Guide
 
-### 9.1 Text/Icon Appearing Black
+### 11.1 Text/Icon Appearing Black
 
 **Cause:** Parent `<a>` tag has colour class but children don't inherit it.
 
@@ -641,7 +791,7 @@ Uses canonical purple gradient styling. No colour inheritance issues (uses `<but
 <span className="text-purple-100">
 ```
 
-### 9.2 AuthButton Text/Icon Appearing Slate or Purple (Not White)
+### 11.2 AuthButton Text/Icon Appearing Slate or Purple (Not White)
 
 **Cause:** AuthButton is a shared component with its own `text-purple-100`. Parent wrapper selectors lose the CSS specificity battle.
 
@@ -666,7 +816,7 @@ Uses canonical purple gradient styling. No colour inheritance issues (uses `<but
 [&_button]:!text-white [&_svg]:!text-white [&_span]:!text-white
 ```
 
-### 9.3 Button Not Clicking
+### 11.3 Button Not Clicking
 
 **Check:**
 
@@ -675,7 +825,7 @@ Uses canonical purple gradient styling. No colour inheritance issues (uses `<but
 3. Button isn't disabled (`aria-disabled`, `disabled` attribute)
 4. Z-index stacking context (content should be `z-10` above decorative elements)
 
-### 9.4 Navigation Not Working
+### 11.4 Navigation Not Working
 
 **Check:**
 
@@ -687,7 +837,7 @@ Uses canonical purple gradient styling. No colour inheritance issues (uses `<but
 
 **If `<Link>` fails, use `<a href>` instead** — native anchors are more reliable.
 
-### 9.5 Animation Not Playing
+### 11.5 Animation Not Playing
 
 **Check:**
 
@@ -698,9 +848,9 @@ Uses canonical purple gradient styling. No colour inheritance issues (uses `<but
 
 ---
 
-## 10. Testing Checklist
+## 11. Testing Checklist
 
-### 10.1 Colour Inheritance (CRITICAL)
+### 11.1 Colour Inheritance (CRITICAL)
 
 - [ ] **Control Dock: Sign in button text is WHITE (not purple, not slate/black)**
 - [ ] **Control Dock: Sign in button icon is WHITE (not purple, not slate/black)**
@@ -710,14 +860,14 @@ Uses canonical purple gradient styling. No colour inheritance issues (uses `<but
 - [ ] Engine Bay: Launch text/icon is white (not black) when active
 - [ ] Prompt Builder: Open in {Platform} text/icon is sky-100 (not black)
 
-### 10.2 Control Dock Buttons
+### 11.2 Control Dock Buttons
 
 - [ ] Sign in opens Clerk modal (unauthenticated)
 - [ ] Sign in text and icon are WHITE
 - [ ] When signed in, shows Clerk UserButton avatar
 - [ ] Greenwich Meridian toggle works for Pro users
 
-### 10.3 Mission Control Buttons
+### 11.3 Mission Control Buttons
 
 - [ ] Home navigates to `/`
 - [ ] Studio navigates to `/studio`
@@ -727,7 +877,7 @@ Uses canonical purple gradient styling. No colour inheritance issues (uses `<but
 - [ ] 2-button layout on pro-promagen page (Studio | Home)
 - [ ] 3-button layout on provider pages (Home | Studio | Pro)
 
-### 10.4 Engine Bay Button
+### 11.4 Engine Bay Button
 
 - [ ] Launch disabled when no platform selected
 - [ ] Launch enabled when platform selected
@@ -736,7 +886,7 @@ Uses canonical purple gradient styling. No colour inheritance issues (uses `<but
 - [ ] Shimmer appears on hover when active
 - [ ] Text and icon are white when active
 
-### 10.5 Prompt Builder Buttons
+### 11.5 Prompt Builder Buttons
 
 - [ ] Randomise fills all categories
 - [ ] Save shows confirmation then resets
@@ -744,7 +894,28 @@ Uses canonical purple gradient styling. No colour inheritance issues (uses `<but
 - [ ] Open in {Platform} opens new tab
 - [ ] All disabled states work correctly
 
-### 10.6 Accessibility
+### 11.6 Prompt Lab Buttons
+
+- [ ] **Generate button is slate/disabled when textarea empty**
+- [ ] **Generate button shows engine bay gradient (sky→emerald→indigo) when text present**
+- [ ] **Generate button pulse animation runs when text present**
+- [ ] **Generate button shimmer appears on hover when text present**
+- [ ] **Generate button shows spinner + "Parsing..." when loading**
+- [ ] **Generate button text/icon are white (not black, not purple)**
+- [ ] **"Regenerate" text + amber pulse when drift ≥ 3 changes**
+- [ ] **Clear All (top) visible only after generation**
+- [ ] **Clear All (top) is purple gradient with white text**
+- [ ] **Clear All (top) clears textarea, dropdowns, AI tiers, optimizer, AR, scene, drift**
+- [ ] **Clear All (footer) is identical purple gradient with white text**
+- [ ] **Clear All (footer) triggers same full cascade (including DYI textarea via clearSignal)**
+- [ ] **Copy prompt shows "Copied!" confirmation (2s)**
+- [ ] **Randomise fills all categories**
+- [ ] **Save shows "✓ Saved!" confirmation (2s)**
+- [ ] **Copy Tier N copies correct tier text**
+- [ ] **Tier card click selects that tier as active**
+- [ ] **Static/Dynamic toggle switches composition mode**
+
+### 11.7 Accessibility
 
 - [ ] All buttons keyboard focusable
 - [ ] Focus ring visible on focus
@@ -754,35 +925,45 @@ Uses canonical purple gradient styling. No colour inheritance issues (uses `<but
 
 ---
 
-## 11. File Location Summary
+## 12. File Location Summary
 
-| Component                              | File                                          | Key Lines |
-| -------------------------------------- | --------------------------------------------- | --------- |
-| **Control Dock (Sign in + Greenwich)** | `src/components/home/control-dock.tsx`        | Full file |
-| AuthButton (shared)                    | `src/components/auth/auth-button.tsx`         | Full file |
-| Mission Control buttons                | `src/components/home/mission-control.tsx`     | 300-380   |
-| Mission Control styles                 | `src/components/home/mission-control.tsx`     | 195-205   |
-| Engine Bay launch                      | `src/components/home/engine-bay.tsx`          | 319-372   |
-| Engine Bay animations                  | `src/components/home/engine-bay.tsx`          | 375-426   |
-| Prompt Builder buttons                 | `src/components/providers/prompt-builder.tsx` | 1467-1569 |
-| Reference Frame Toggle                 | `src/components/reference-frame-toggle.tsx`   | 165-241   |
+| Component                                | File                                                         | Key Lines               |
+| ---------------------------------------- | ------------------------------------------------------------ | ----------------------- |
+| **Control Dock (Sign in + Greenwich)**   | `src/components/home/control-dock.tsx`                       | Full file               |
+| AuthButton (shared)                      | `src/components/auth/auth-button.tsx`                        | Full file               |
+| Mission Control buttons                  | `src/components/home/mission-control.tsx`                    | 300-380                 |
+| Mission Control styles                   | `src/components/home/mission-control.tsx`                    | 195-205                 |
+| Engine Bay launch                        | `src/components/home/engine-bay.tsx`                         | 319-372                 |
+| Engine Bay animations                    | `src/components/home/engine-bay.tsx`                         | 375-426                 |
+| Prompt Builder buttons                   | `src/components/providers/prompt-builder.tsx`                | 1467-1569               |
+| Reference Frame Toggle                   | `src/components/reference-frame-toggle.tsx`                  | 165-241                 |
+| **Prompt Lab: Generate + Clear + Close** | `src/components/providers/describe-your-image.tsx`           | 543-674                 |
+| **Prompt Lab: Generate animations**      | `src/components/providers/describe-your-image.tsx`           | 47-99 (DESCRIBE_STYLES) |
+| **Prompt Lab: Footer buttons**           | `src/components/prompts/enhanced-educational-preview.tsx`    | 1872-1970               |
+| **Prompt Lab: Copy Tier + Tier cards**   | `src/components/prompt-builder/four-tier-prompt-preview.tsx` | 329-468                 |
+| **Prompt Lab: Static/Dynamic toggle**    | `src/components/composition-mode-toggle.tsx`                 | 225-300                 |
 
 ---
 
-## 12. Related Documents
+## 13. Related Documents
 
-| Topic           | Document                |
-| --------------- | ----------------------- |
-| Mission Control | `mission-control.md`    |
-| Engine Bay      | `ignition.md`           |
-| Homepage layout | `ribbon-homepage.md`    |
-| Code standards  | `code-standard.md` §6.1 |
-| Authentication  | `clerk-auth.md`         |
-| Paid tier logic | `paid_tier.md`          |
+| Topic                         | Document                           |
+| ----------------------------- | ---------------------------------- |
+| Mission Control               | `mission-control.md`               |
+| Engine Bay                    | `ignition.md`                      |
+| Homepage layout               | `ribbon-homepage.md`               |
+| Code standards                | `code-standard.md` §6.1            |
+| Authentication                | `clerk-auth.md`                    |
+| Paid tier logic               | `paid_tier.md`                     |
+| **Prompt Lab**                | **`prompt-lab.md`**                |
+| **AI Disguise**               | **`ai-disguise.md`**               |
+| **Human Sentence Conversion** | **`human-sentence-conversion.md`** |
 
 ---
 
 ## Changelog
+
+- **23 Mar 2026 (v4.0.0):** **PROMPT LAB BUTTONS.** Added complete §7 Prompt Lab Buttons section (10 subsections, ~120 lines) documenting all Prompt Lab interactive elements: Generate Prompt button with engine bay gradient styling (3 states: empty/text/loading, `dyi-generate-pulse` + `dyi-generate-shimmer` copied from `engine-bay-pulse`/`engine-bay-shimmer-sweep`), Clear All top button (purple gradient, white text, full cascade reset), Clear All footer button (identical style, uses `clearSignal` mechanism for DYI internal reset), Close button, Copy prompt footer button, Randomise footer button, Save to Library footer button, Copy Tier N button, Tier card click-to-select, Static/Dynamic composition toggle. Quick Reference table expanded with 11 new Prompt Lab rows. Colour Reference table expanded with 4 new entries (engine bay Generate, purple Clear All, Randomise, Save). File Location Summary expanded with 5 Prompt Lab entries. Testing Checklist expanded with §11.6 (18 Prompt Lab checks). Related Documents expanded with `prompt-lab.md`, `ai-disguise.md`, `human-sentence-conversion.md`. All sections renumbered (§7 inserted, §8–§13 shifted from §7–§12).
 
 - **10 Feb 2026 (v3.0.0):** **AUTHBUTTON WHITE COLOUR FIX** — Sign-in button moved from Mission Control grid to Control Dock (next to Greenwich Meridian). Added §1.5 documenting the recurring white text/icon issue: AuthButton's own `text-purple-100` fights parent overrides, requires `!important` wrapper on all four child types (`button`, `a`, `svg`, `span`). Added §9.2 debugging guide for AuthButton colour issues with common mistakes. Updated Quick Reference table with Text/Icon Colour column. Updated §1.3 Affected Components and §1.4 Colour Reference. Mission Control grid reduced from 3→2 / 4→3 columns (sign-in no longer in grid). Updated testing checklist §10.1-10.3.
 

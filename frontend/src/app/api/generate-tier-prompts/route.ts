@@ -145,8 +145,10 @@ TIER 2 — Midjourney Family (e.g., Midjourney, BlueWillow):
 - Negatives MUST be scene-specific, not boilerplate. For an underwater scene use "--no above water, murky, foggy, dark". For a portrait use "--no cropped, out of frame". Do NOT default to "extra limbs, distorted anatomy" unless the scene features human anatomy prominently.
 - MANDATORY: Include at least one art style or rendering medium reference (e.g., digital painting, concept art, fantasy illustration, underwater photography, cinematic still). This anchors the model's aesthetic interpretation.
 - MANDATORY: Include at least one composition or framing cue NOT in the user's input (e.g., wide underwater view, cinematic framing, central subject, dramatic perspective).
+- Do NOT use abstract emotional terms as standalone weighted clauses. WRONG: "quiet bittersweet atmosphere::1.2" (not visually renderable). RIGHT: "golden ethereal stillness::1.0" or simply weave mood into descriptive prose without weighting. Convert emotions to visual equivalents before applying :: weights.
 - Rich artistic and mood descriptors work well
 - STRICT ORDERING: weighted subject first → environment/scene description → style/composition cues → --ar and --v and --s parameters → --no negatives LAST. The positive description must be fully complete before any parameters begin.
+- MANDATORY PARAMETERS: EVERY Midjourney prompt MUST end with --ar [ratio] --v 7 --s [value] --no [negatives]. If ANY of --ar, --v, --s, or --no is missing, the prompt is structurally incomplete. Choose --ar based on the scene: 16:9 for landscapes, 9:16 for portraits, 1:1 for balanced compositions, 3:2 for standard photography. --s 500 is default; raise to 750 for highly stylistic scenes.
 - STRUCTURAL EXAMPLE (follow this pattern exactly):
   lone mermaid::2.0 gliding through crystal-clear tropical water, bright reef fish in shimmering blues and orange::1.4, cinematic underwater photography::1.2, wide underwater view, silver scales catching sunlight, coral gardens and sea fans below, serene luminous depth --ar 16:9 --v 7 --s 500 --no above water, murky, foggy, dark, text, watermark (negatives appear exactly ONCE — never repeat this block)
 - Target: ~300 characters for creative text (before parameters). Richer inputs may need more space — prioritise completeness over brevity.
@@ -158,7 +160,7 @@ TIER 3 — Natural Language (e.g., DALL·E, Adobe Firefly, Google Imagen):
 - Include lighting, atmosphere, and composition naturally within sentences
 - Convert negatives to positive reinforcement ("sharp and clear" not "no blur")
 - CRITICAL: Do NOT return a lightly edited version of the user's input. You are a prompt engineer, not a paraphraser. The output must demonstrate expert knowledge the user does not have.
-- MANDATORY: Weave an art style or medium reference naturally into the description — do NOT use explicit rendering directives. BANNED PHRASES: "rendered as", "in the style of", "should feel like", "meant to look like", "designed to resemble", "intended to appear as", "the image should". Instead, integrate style as part of the scene itself (e.g., "a luminous digital fantasy scene of..." or "with the vivid clarity of underwater photography" or "in cinematic wide-angle detail"). The style must feel like a natural part of the description, never a meta-instruction to the model.
+- MANDATORY: Weave an art style or medium reference naturally into the description — do NOT use explicit rendering directives. BANNED PHRASES: "rendered as", "in the style of", "should feel like", "meant to look like", "designed to resemble", "intended to appear as", "the image should", "the scene feels", "the scene is", "the mood is". Instead, integrate style as part of the scene itself (e.g., "a luminous digital fantasy scene of..." or "with the vivid clarity of underwater photography" or "in cinematic wide-angle detail"). The style must feel like a natural part of the description, never a meta-instruction to the model. Mood and atmosphere must be SHOWN through visual description, not STATED as meta-commentary.
 - MANDATORY: Add at least one composition or camera cue NOT in the user's input (e.g., "viewed from below looking up toward the surface", "in a wide cinematic underwater scene", "with the subject centred in the frame").
 - MANDATORY: Add at least one atmospheric or lighting detail NOT in the user's input (e.g., "with luminous tropical clarity", "dappled caustic light patterns on the seabed", "god rays piercing the blue depths").
 - STRICT ORDERING across 2–4 sentences: Sentence 1 = subject + primary action + composition/style. Sentence 2 = secondary visual elements + lighting. Sentence 3 (if needed) = environment + atmosphere. Keep rendering style woven in, not stated as a separate directive.
@@ -170,6 +172,7 @@ TIER 4 — Plain Language (e.g., Canva, Bing, Freepik):
 - MUST be 2–3 short sentences: first sentence for the subject and action with key elements, second sentence for the environment, optional third sentence for mood/atmosphere if needed
 - Keep all key visual anchors from the input — do not over-compress. Include the subject and at least 3 supporting visual elements, but do NOT list more than 5 elements in a single sentence.
 - ALWAYS state the primary setting EXPLICITLY. Do not rely on implication. Write "underwater" not just "in water". Write "in a dense forest" not just "with trees". Plain language platforms need direct, unambiguous setting cues.
+- NEVER include questions, self-corrections, or negation-then-correction patterns. State what the scene IS, never what it is NOT. WRONG: "The scene is underwater? No, it is an outdoor landscape with Mount Fuji in the distance." (questions and self-correction are structurally broken — image generators cannot interpret "No, it is…"). RIGHT: "An elderly samurai stands on a stone bridge at golden hour, surrounded by cherry blossoms and warm amber light." (direct, positive statement of the scene).
 - STRICT ORDERING: Sentence 1 = subject + action + 3–4 key visual elements. Sentence 2 = explicit setting + environment details. Sentence 3 (optional) = lighting/atmosphere + mood.
 - Every sentence MUST be at least 10 words. Do not compress mood and setting into a bare adjective list. WRONG: "It is underwater, clear, and dreamlike." (7 words, bare adjective checklist). RIGHT: "The underwater scene glows with soft light and a calm, dreamlike atmosphere." (12 words, paints the feeling). Bare adjective lists are structurally wrong for this family — write complete descriptive sentences.
 - Do not use meta-language like "fill the scene", "in this image", or "the composition shows". Describe what exists, not the image itself.
@@ -227,15 +230,56 @@ function deduplicateMjNegatives(prompt: string): string {
     }
   }
 
-  return `${positiveAndParams} --no ${unique.join(', ')}`;
+  // Strip trailing period from the last negative term
+  const joined = unique.join(', ');
+  const cleaned = joined.replace(/[.!?]+\s*$/, '').trimEnd();
+
+  return `${positiveAndParams} --no ${cleaned}`;
 }
 
 /**
- * P2: Strip trailing sentence punctuation from T1 CLIP prompts.
+ * P2: Strip trailing sentence punctuation from CLIP prompts.
  * CLIP prompts are comma-separated keyword lists — no periods.
  */
 function stripTrailingPunctuation(prompt: string): string {
   return prompt.replace(/[.!?]+\s*$/, '').trimEnd();
+}
+
+/**
+ * P3: Catch T4 self-correction patterns (belt-and-braces for B1 system prompt fix).
+ * GPT occasionally generates "The scene is X? No, it is Y..." in plain language tier.
+ * This strips the question-correction fragment and keeps the corrected content.
+ *
+ * Pattern: "...sentence? No, it is <corrected>." → "...corrected content."
+ * Also catches: "...sentence? No — it is <corrected>."
+ */
+function fixT4SelfCorrection(prompt: string): string {
+  // Match "? No, it is..." or "? No — it is..." pattern
+  const selfCorrectionPattern = /[^.!?]*\?\s*No[,—–\s]+it\s+is\s+/gi;
+  if (!selfCorrectionPattern.test(prompt)) return prompt;
+
+  // Remove the question + "No, it is" prefix, keep the corrected content
+  // Split on sentences first, then fix the broken one
+  const sentences = prompt.split(/(?<=[.!?])\s+/).filter(Boolean);
+  const fixed: string[] = [];
+
+  for (const sentence of sentences) {
+    // Check if this sentence contains the self-correction pattern
+    const match = sentence.match(/^(.*?\?)\s*No[,—–\s]+it\s+is\s+(.+)$/i);
+    if (match) {
+      // Extract what the correction says the scene actually is
+      const corrected = match[2]?.trim();
+      if (corrected) {
+        // Capitalize first letter and ensure it ends with a period
+        const capitalised = corrected.charAt(0).toUpperCase() + corrected.slice(1);
+        fixed.push(capitalised.endsWith('.') ? capitalised : `${capitalised}.`);
+      }
+    } else {
+      fixed.push(sentence);
+    }
+  }
+
+  return fixed.join(' ').trim();
 }
 
 /**
@@ -253,7 +297,10 @@ function postProcessTiers(tiers: z.infer<typeof ResponseSchema>): z.infer<typeof
       negative: tiers.tier2.negative,
     },
     tier3: tiers.tier3,
-    tier4: tiers.tier4,
+    tier4: {
+      positive: fixT4SelfCorrection(tiers.tier4.positive),
+      negative: tiers.tier4.negative,
+    },
   };
 }
 

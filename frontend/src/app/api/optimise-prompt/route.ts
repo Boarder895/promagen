@@ -137,6 +137,7 @@ ${ctx.qualityPrefix?.length ? `- Quality prefix: ${ctx.qualityPrefix.join(', ')}
 - Negative handling: ${ctx.negativeSupport}
 
 OPTIMISATION RULES:
+0. SYNTAX VALIDATION FIRST (DO THIS BEFORE ANYTHING ELSE): Check whether every weighted term in the input uses the CORRECT weight syntax for ${ctx.name}. The correct syntax is: ${ctx.weightingSyntax ?? '(term:weight)'}. If the input uses parenthetical syntax (term:1.3) but this platform requires double-colon syntax term::1.3, or vice versa, you MUST rewrite ALL weights to use the correct syntax. Wrong syntax = broken prompt on this platform. This single check alone can require a full rewrite. WRONG: leaving parenthetical syntax on a double-colon platform. RIGHT: converting every (term:1.3) to term::1.3 before optimising content.
 1. Reorder terms by platform-specific impact priority: ${categoryOrderStr}. Front-load high-impact categories.
 2. Remove redundant or duplicate semantic content — "realistic textures" after "realistic texture" is waste.
 3. Remove orphaned verb fragments — "stands", "leaving", "reflecting quietly" are sentence debris in keyword prompts.
@@ -146,10 +147,11 @@ OPTIMISATION RULES:
 7. For CLIP/keyword platforms (Tier 1): output must be clean comma-separated weighted keywords — NO sentence fragments, NO orphaned verbs, NO "a" or "the" articles. Use ONLY the weight syntax specified above.
 8. For Midjourney (Tier 2): ensure --ar, --v, --s, --no parameters are correctly formatted and placed at the end. Creative text should be descriptive prose, not keyword soup.
 9. For natural language platforms (Tier 3): ensure grammatical coherence — complete sentences, proper transitions. Convert any negative terms to positive reinforcement.
-10. For plain platforms (Tier 4): keep it short, simple, and impactful. Maximum 2 sentences. Remove all technical jargon.
+10. For plain platforms (Tier 4): keep it short, simple, and impactful. Maximum 2–3 sentences. Remove all technical jargon.
 11. PRESERVE the user's core creative intent — optimise structure and efficiency, not meaning. Never remove the subject, core mood, or defining visual elements.
-12. List every change made in the "changes" array — the user sees this in the transparency panel.
+12. List every change made in the "changes" array — the user sees this in the transparency panel. If the only change is syntax correction, list it: "Converted weight syntax from parenthetical to double-colon for ${ctx.name}".
 13. CRITICAL: The output weight syntax MUST match exactly: ${ctx.weightingSyntax ?? '(term:weight)'}. Wrong syntax = broken prompt on this platform.
+14. YOU MUST ALWAYS MAKE AT LEAST ONE CHANGE. If the prompt content is already optimal, verify and correct the weight syntax (Rule 0), adjust character count toward the sweet spot (Rule 6), or strengthen quality anchors (Rule 5). Returning the input unchanged is NEVER acceptable — the user clicked "Optimise" and expects a measurably different, improved result.
 
 Return ONLY valid JSON:
 {
