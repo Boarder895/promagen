@@ -223,13 +223,22 @@ export function DescribeYourImage({
   }, [inputText, isLoading, convert, onGenerate]);
 
   // ── Clear all — resets textarea, categories, AI state ─────────────
+  // Fix: Full cascade reset — textarea + dropdowns + AI tiers + optimizer + drift
   const handleClear = useCallback(() => {
     setInputText('');
     setHasGenerated(false);
     setFormatWarning({ detected: false });
+    // Reset all 12 category dropdowns to empty
+    setCategoryState(() => {
+      const empty: Record<string, CategoryState> = {};
+      for (const cat of ['subject','action','style','environment','composition','camera','lighting','colour','atmosphere','materials','fidelity','negative']) {
+        empty[cat] = { selected: [], customValue: '' };
+      }
+      return empty as Record<PromptCategory, CategoryState>;
+    });
     onTextChange?.('');
     onClear?.();
-  }, [onTextChange, onClear]);
+  }, [setCategoryState, onTextChange, onClear]);
 
   // ── Apply parsed categories to builder state ──────────────────────
   useEffect(() => {
@@ -535,24 +544,19 @@ export function DescribeYourImage({
                   )}
                 </button>
 
-                {/* Fix 1: Clear button — resets everything for a fresh start */}
+                {/* Clear button — Core Colours gradient matching footer Clear All */}
                 {hasGenerated && !isLoading && (
                   <button
                     type="button"
                     onClick={handleClear}
-                    className="inline-flex items-center rounded-lg text-white/70 hover:text-white transition-colors cursor-pointer"
+                    className="inline-flex items-center rounded-lg font-semibold text-black bg-gradient-to-r from-sky-400 via-emerald-300 to-indigo-400 hover:from-sky-300 hover:via-emerald-200 hover:to-indigo-300 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
                     style={{
-                      padding: 'clamp(5px, 0.5vw, 8px) clamp(8px, 0.8vw, 12px)',
-                      fontSize: 'clamp(0.62rem, 0.68vw, 0.75rem)',
-                      border: '1px solid rgba(100, 116, 139, 0.3)',
+                      padding: 'clamp(5px, 0.5vw, 8px) clamp(10px, 1vw, 16px)',
+                      fontSize: 'clamp(0.65rem, 0.72vw, 0.8rem)',
                       gap: 'clamp(3px, 0.3vw, 5px)',
                     }}
                     title="Clear description and all generated prompts"
                   >
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-                      style={{ width: 'clamp(12px, 0.9vw, 14px)', height: 'clamp(12px, 0.9vw, 14px)' }}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
                     Clear
                   </button>
                 )}

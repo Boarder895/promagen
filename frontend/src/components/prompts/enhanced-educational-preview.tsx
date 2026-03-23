@@ -28,7 +28,6 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { Combobox } from '@/components/ui/combobox';
 import { FourTierPromptPreview } from '@/components/prompt-builder/four-tier-prompt-preview';
-import { IntelligencePanel } from '@/components/prompt-builder/intelligence-panel';
 import { SceneSelector } from '@/components/providers/scene-selector';
 import { DescribeYourImage } from '@/components/providers/describe-your-image';
 import { CompositionModeToggle } from '@/components/composition-mode-toggle';
@@ -88,8 +87,6 @@ import {
   type PromptCategory,
   type PromptSelections,
   type GeneratedPrompts,
-  type ConflictWarning,
-  type StyleSuggestion,
 } from '@/types/prompt-intelligence';
 import type { CategoryState } from '@/types/prompt-builder';
 import type { Provider } from '@/types/providers';
@@ -160,14 +157,6 @@ const CATEGORY_COLORS: Record<PromptCategory, string> = {
   fidelity: '#2dd4bf',    // teal-400
   negative: '#e879f9',    // fuchsia-400
 };
-
-/** Category icon+color map for IntelligencePanel suggestion chips */
-const INTELLIGENCE_CATEGORY_META: Record<string, { icon: string; color: string }> = Object.fromEntries(
-  CATEGORY_ORDER.map((cat) => [
-    cat,
-    { icon: CATEGORY_META[cat]?.icon ?? '🔹', color: CATEGORY_COLORS[cat] ?? '#6366f1' },
-  ]),
-);
 
 // ============================================================================
 // LIVE DIFF VIEW — Shows what intelligence adds when toggling Static↔Dynamic
@@ -567,15 +556,12 @@ function ProviderSelector({ providers, selectedId, onSelect }: ProviderSelectorP
 }
 
 // ============================================================================
-// REAL INTELLIGENCE — Wired to the full prompt-intelligence engine
+// REAL INTELLIGENCE — DNA Bar data only (Intelligence Panel removed from Prompt Lab)
 // ============================================================================
-// Replaces the former useMockIntelligence (v2.1.0) which had 1 hardcoded
-// conflict pair. Now uses the same analyzePrompt() pipeline as the real
-// prompt builder — 85 conflict groups, real DNA scoring, real suggestions.
-//
-// Maps real engine types (DetectedConflict, SuggestedOption) to the shapes
-// IntelligencePanel expects (ConflictWarning, StyleSuggestion) so the panel
-// component requires zero changes.
+// The full IntelligencePanel was removed in favour of inline conflict surfacing
+// and full-width layout (ai-disguise.md). The usePromptAnalysis hook still runs
+// to provide conflictCount, hasHardConflicts, and healthScore for the DNA bar.
+// The IntelligencePanel remains in the standard builder (/providers/[id]).
 // ============================================================================
 
 function useRealIntelligence(
@@ -583,11 +569,9 @@ function useRealIntelligence(
   selectedProviderId: string | null,
   hasContent: boolean,
 ) {
-  // Build PromptState from educational preview selections
-  // Use 'stability' as default platformId when none selected (Tier 1, CLIP-based)
   const platformId = selectedProviderId ?? 'stability';
 
-  const { analysis, conflictCount, hasHardConflicts, healthScore } = usePromptAnalysis(
+  const { conflictCount, hasHardConflicts, healthScore } = usePromptAnalysis(
     {
       subject: selections.subject?.[0] ?? '',
       selections: selections as Partial<Record<PromptCategory, string[]>>,
@@ -600,61 +584,7 @@ function useRealIntelligence(
     },
   );
 
-  // Map DetectedConflict[] → ConflictWarning[] for IntelligencePanel
-  const conflicts: ConflictWarning[] = useMemo(() => {
-    if (!analysis?.conflicts?.conflicts) return [];
-    return analysis.conflicts.conflicts.map((c) => ({
-      term1: c.terms[0] ?? '',
-      term2: c.terms[1] ?? c.terms[0] ?? '',
-      severity: (c.severity === 'hard' ? 'high' : 'medium') as ConflictWarning['severity'],
-      reason: c.reason,
-      category1: c.categories[0] ?? ('style' as PromptCategory),
-      category2: c.categories[1] ?? c.categories[0] ?? ('style' as PromptCategory),
-    }));
-  }, [analysis]);
-
-  // Map SuggestedOption[] → StyleSuggestion[] for IntelligencePanel
-  // Store category in familyId so click handler can route to correct category
-  const suggestions: StyleSuggestion[] = useMemo(() => {
-    if (!analysis?.suggestions?.suggestions) return [];
-    const all: StyleSuggestion[] = [];
-    for (const [category, opts] of Object.entries(analysis.suggestions.suggestions)) {
-      if (!opts) continue;
-      for (const opt of opts) {
-        all.push({
-          term: opt.option,
-          reason: opt.reason,
-          familyId: category, // Used by click handler to route to correct category
-          confidence: Math.min(1, opt.score / 100),
-        });
-      }
-    }
-    // Sort by confidence descending, take top 6
-    all.sort((a, b) => b.confidence - a.confidence);
-    return all.slice(0, 6);
-  }, [analysis]);
-
-  // Real platform hints from analysis
-  const platformHints: string[] = useMemo(() => {
-    const tier = getPlatformTier(platformId);
-    const hints: string[] = [];
-    if (tier === 1) hints.push('💡 Tier 1 (CLIP): Use (term:1.2) weights for emphasis');
-    if (tier === 2) hints.push('💡 Tier 2 (MJ): Add --ar 16:9 for aspect ratio');
-    if (tier === 3) hints.push('💡 Tier 3 (NatLang): Write naturally, describe the scene');
-    if (tier === 4) hints.push('💡 Tier 4 (Plain): Keep it simple, fewer terms work better');
-    if (conflictCount > 0) {
-      hints.push(`⚠️ ${conflictCount} conflict${conflictCount > 1 ? 's' : ''} detected — review your selections`);
-    }
-    return hints;
-  }, [platformId, conflictCount]);
-
-  // Weather suggestions from market mood (if available)
-  const weatherSuggestions: string[] = useMemo(() => {
-    if (!analysis?.marketSuggestions?.length) return [];
-    return analysis.marketSuggestions.map((s) => s.option);
-  }, [analysis]);
-
-  return { conflicts, suggestions, platformHints, weatherSuggestions, healthScore, hasHardConflicts, conflictCount };
+  return { healthScore, hasHardConflicts, conflictCount };
 }
 
 // ============================================================================
@@ -1104,7 +1034,7 @@ export default function EnhancedEducationalPreview({
   }, [selections]);
 
   // Get intelligence data — real engine (85 conflict groups, DNA scoring, suggestions)
-  const { conflicts, suggestions, platformHints, weatherSuggestions, healthScore: realHealthScore, hasHardConflicts: realHasHardConflicts, conflictCount: realConflictCount } =
+  const { healthScore: realHealthScore, hasHardConflicts: realHasHardConflicts, conflictCount: realConflictCount } =
     useRealIntelligence(selections, selectedProviderId, hasContent);
 
   // ============================================================================
@@ -1258,34 +1188,6 @@ export default function EnhancedEducationalPreview({
       [category]: newSelections,
     }));
   }, []);
-
-  // Handle suggestion click — routes to correct category via familyId
-  const handleSuggestionClick = useCallback(
-    (suggestion: StyleSuggestion) => {
-      // familyId holds the real category (set by useRealIntelligence mapping)
-      const category = suggestion.familyId as PromptCategory;
-      const validCategory = CATEGORY_ORDER.includes(category) ? category : 'style';
-      setSelections((prev) => ({
-        ...prev,
-        [validCategory]: [...prev[validCategory], suggestion.term].slice(
-          0,
-          STANDARD_LIMITS[activeTier][validCategory],
-        ),
-      }));
-    },
-    [activeTier],
-  );
-
-  // Handle mood term click
-  const handleMoodTermClick = useCallback(
-    (term: string, category: 'atmosphere' | 'colour' | 'lighting') => {
-      setSelections((prev) => ({
-        ...prev,
-        [category]: [...prev[category], term].slice(0, STANDARD_LIMITS[activeTier][category]),
-      }));
-    },
-    [activeTier],
-  );
 
   // Handle randomise
   const handleRandomise = useCallback(() => {
@@ -1488,14 +1390,18 @@ export default function EnhancedEducationalPreview({
           onClear={() => {
             onDescribeClear?.();
             clearAiOptimise();
+            setSelections(EMPTY_SELECTIONS);
+            setOptimizerEnabled(false);
+            setAspectRatio(null);
+            setActiveSceneId(undefined);
+            setDiffData(null);
           }}
           isDrifted={isDrifted}
           driftChangeCount={driftChangeCount}
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Left Column: Categories + Preview */}
-          <div className="lg:col-span-2 space-y-4">
+        {/* Full-width single column — Intelligence Panel removed (ai-disguise.md) */}
+        <div className="space-y-4">
 
             {/* ═══════════════════════════════════════════════════ */}
             {/* Selection Echo Strip — bird's-eye view of ALL      */}
@@ -1945,25 +1851,6 @@ export default function EnhancedEducationalPreview({
                 </p>
               </div>
             )}
-          </div>
-
-          {/* Right Column: Intelligence Panel */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-0">
-              <IntelligencePanel
-                conflicts={conflicts}
-                suggestions={suggestions}
-                platformHints={platformHints}
-                marketMood={null}
-                weatherSuggestions={weatherSuggestions}
-                tier={activeTier}
-                onSuggestionClick={handleSuggestionClick}
-                onMoodTermClick={handleMoodTermClick}
-                compact={false}
-                categoryMeta={INTELLIGENCE_CATEGORY_META}
-              />
-            </div>
-          </div>
         </div>
       </div>
 
