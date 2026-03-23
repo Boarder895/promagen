@@ -1,8 +1,8 @@
 # Prompt Optimizer — Authority Documentation
 
-**Version:** 4.0.0
+**Version:** 5.0.0
 **Authority:** This is the single source of truth for the prompt optimizer subsystem.
-**Last updated:** 18 March 2026
+**Last updated:** 23 March 2026
 
 ---
 
@@ -20,6 +20,7 @@ No competitor provides this. Most generators either hard-truncate or silently dr
 - Pro tier gating for Transparency Panel → `paid_tier.md` §5.14 (colour-coded anatomy), §5.13 (Prompt Lab parity)
 - Intelligence/scoring/semantic tags → `prompt-intelligence.md`
 - Prompt Lab optimizer behaviour → `prompt-lab.md` (neutral mode, dynamic label, "Within optimal range")
+- AI Disguise system (Call 3 AI optimisation) → `ai-disguise.md` §6
 - Colour-coded prompt text in optimizer output → `code-standard.md` § 6.14 (SSOT colours)
 
 ---
@@ -629,7 +630,7 @@ Fallback: if the reconstructed clause doesn't match the prompt string exactly, i
 | `use-prompt-optimization.ts`          | `optimizePromptGoldStandard()` | React hook wraps the engine             |
 | `optimization-transparency-panel.tsx` | Types from optimizer           | Displays removedTerms by phase (Pro only) |
 | `prompt-builder.tsx` (standard)       | Via hook                       | Copy-to-clipboard triggers optimization; separate optimized prompt box when `wasOptimized` |
-| `enhanced-educational-preview.tsx` (Lab) | Via hook                    | Dynamic label switching; neutral mode; "Within optimal range" feedback; colour-coded optimized text |
+| `enhanced-educational-preview.tsx` (Lab) | Via hook (client-side) + `useAiOptimisation` (AI) | Dynamic label switching; neutral mode; "Within optimal range" feedback; colour-coded optimized text. **v5.0.0:** AI result (`effectiveOptimisedText`) overrides client-side in display. Client-side still feeds LengthIndicator. Transparency Panel hidden when AI result available. |
 
 ### 12.3 Data Dependencies
 
@@ -711,12 +712,58 @@ The `OptimizationTransparencyPanel` in the Prompt Lab was previously hardcoded t
 | Aspect | Standard Builder (`prompt-builder.tsx`) | Prompt Lab (`enhanced-educational-preview.tsx`) |
 | --- | --- | --- |
 | Optimizer always available | Yes (provider always known from URL) | No — disabled until provider selected (neutral mode) |
-| Optimized prompt display | Separate box below assembled (visible when `wasOptimized`) | Same box — label dynamically switches |
-| Label switch condition | N/A (separate boxes) | `isOptimizerEnabled && selectedProviderId` (no `wasOptimized`) |
-| "Within optimal range" | Not shown | Emerald bar when no trimming needed |
-| Transparency Panel | `isPro` from hook | `isPro` from hook (was hardcoded `false`, now fixed) |
+| Optimized prompt display | Separate box below assembled (visible when `wasOptimized`) | Same box — label dynamically switches (uses `effectiveWasOptimized`) |
+| Label switch condition | N/A (separate boxes) | `isOptimizerEnabled && selectedProviderId` (uses `effectiveWasOptimized` from AI result priority) |
+| Primary optimizer | Client-side 4-phase pipeline only | **AI (Call 3)** with client-side as fallback |
+| "Within optimal range" | Not shown | Emerald bar when no trimming needed + not actively AI optimising |
+| Transparency Panel | `isPro` from hook | `isPro` from hook. **Hidden when AI result available** (AI changes shown as emerald chips instead) |
 | Colour-coded output | Pro only | Pro only |
-| Copy handler | `handleCopyOptimized` (separate button) | Same button — copies optimized when optimizer ON |
+| Copy handler | `handleCopyOptimized` (separate button) | Same button — copies `effectiveOptimisedText` (AI result priority) |
+| Re-fire behaviour | N/A (manual only) | Debounced 800ms re-fire when `activeTierPromptText` changes while ON |
+| Visual during processing | None | Algorithm cycling animation (101 names, amber→emerald, 1.8s min) |
+
+### 14.7 AI Disguise Overlay (v5.0.0 — 23 March 2026)
+
+The Prompt Lab now uses a dedicated AI-powered optimisation path (Call 3) that overlays the client-side optimizer. The client-side 4-phase pipeline continues to run independently — it feeds the length indicator bar and provides the fallback if the AI call fails or times out.
+
+**Architecture:**
+
+```
+User toggles "Optimise" ON (with provider selected)
+    │
+    ├─ Client-side optimizer runs instantly → feeds LengthIndicator bar
+    │
+    └─ Call 3 fires → /api/optimise-prompt (GPT-5.4-mini)
+       │
+       ├─ Algorithm cycling animation plays during API call (1.8s min)
+       │
+       └─ AI response arrives → effective values override client-side:
+          effectiveOptimisedText = aiOptimiseResult?.optimised ?? optimizedResult.optimized
+          effectiveOptimisedLength = aiOptimiseResult?.charCount ?? optimizedResult.optimizedLength
+          effectiveWasOptimized = aiOptimiseResult ? (AI length < original) : wasOptimized
+```
+
+**Key implementation details:**
+
+1. **Separate hook:** `useAiOptimisation` (335 lines, `src/hooks/use-ai-optimisation.ts`) — NOT a modification of `use-prompt-optimization.ts`. Clean separation — no modal `isLabMode` logic.
+
+2. **Effective values override:** Three computed values in `enhanced-educational-preview.tsx` replace direct use of `optimizedResult.*` throughout the component:
+   - `effectiveOptimisedText` — AI result takes priority
+   - `effectiveOptimisedLength` — AI char count takes priority
+   - `effectiveWasOptimized` — AI comparison takes priority
+
+3. **Transparency Panel conditional:** When `aiOptimiseResult` is available, the `OptimizationTransparencyPanel` (showing client-side phase/removal data) is hidden. Instead, emerald "✓ change description" chips from `aiOptimiseResult.changes` are shown.
+
+4. **Debounced re-fire:** When optimizer is already ON and `activeTierPromptText` changes (aspect ratio change, dropdown selection change, AI tiers arrive from Call 2), Call 3 re-fires after 800ms debounce via `reFireTimerRef`. This keeps the AI-optimised prompt in sync with the assembled prompt.
+
+5. **Clear cascade:** When the user clicks Clear, `clearAiOptimise()` is called alongside `setOptimizerEnabled(false)`. This prevents stale AI results persisting into the next generation cycle.
+
+6. **Provider-specific syntax:** Call 3 system prompt enforces the exact provider weight syntax (Leonardo `::`, SD `()`, etc.) with MANDATORY/CRITICAL instructions. Also enforces the 4-word weight wrapping rule and quality suffix for Tier 1. See `ai-disguise.md` §6 for full system prompt.
+
+**What the client-side optimizer still does in the Lab:**
+- Feeds the `LengthIndicator` bar (always runs regardless of AI)
+- Provides instant feedback on prompt length before AI responds
+- Acts as complete fallback if Call 3 fails, times out (12s), or returns invalid data
 
 ---
 
@@ -726,7 +773,7 @@ When modifying the optimizer subsystem:
 
 - Do NOT change the 4-pipeline architecture (Keywords, Midjourney, Natural, Plain)
 - Do NOT change scoring formula or category weights without full test suite run
-- Do NOT add `wasOptimized` to the Lab's dynamic label condition — the label switches on optimizer enable, not on trimming
+- Do NOT add `wasOptimized` to the Lab's dynamic label condition — uses `effectiveWasOptimized` (AI result priority)
 - Do NOT re-hardcode `isPro={false}` on `OptimizationTransparencyPanel` in the Lab
 - Do NOT allow enabling the optimizer in the Lab without a selected provider
 - Do NOT remove the "Within optimal range" emerald bar from the Lab
@@ -734,6 +781,11 @@ When modifying the optimizer subsystem:
 - Preserve Midjourney `--` parameter protection
 - Preserve natural language clause reconstruction
 - Preserve colour-coded output for Pro users
+- **Do NOT modify `use-prompt-optimization.ts` for AI Disguise — AI optimisation uses separate `useAiOptimisation` hook**
+- **`effectiveOptimisedText` must take priority over `optimizedResult.optimized` in ALL Lab display locations — copy handlers, char counts, prompt text rendering, colour-coded segments**
+- **Client-side optimizer MUST continue running in Lab** — it feeds the `LengthIndicator` bar and acts as fallback. Do NOT skip it when AI is available.
+- **Transparency Panel is hidden when `aiOptimiseResult` is available** — AI changes shown as emerald chips instead. Do NOT show both simultaneously.
+- **Clear cascade must call `clearAiOptimise()` AND `setOptimizerEnabled(false)`** — prevents stale AI results and re-fire on cleared text
 
 **Existing features preserved:** Yes (required for every change)
 
@@ -741,6 +793,7 @@ When modifying the optimizer subsystem:
 
 ## Changelog
 
+- **23 Mar 2026 (v5.0.0):** **AI DISGUISE OVERLAY — CALL 3 AI OPTIMISATION IN PROMPT LAB** — §14.6: Updated comparison table (10 aspects, up from 7). Added: primary optimizer (AI vs client-side), re-fire behaviour, visual during processing, effective values in label/copy. Updated: label condition now uses `effectiveWasOptimized`, Transparency Panel hidden when AI result available, copy handler uses `effectiveOptimisedText`. §14.7: New section documenting AI Disguise overlay architecture — Call 3 (`/api/optimise-prompt`, GPT-5.4-mini) as primary optimizer in Lab, client-side 4-phase pipeline as fallback + LengthIndicator feed. Documented: separate `useAiOptimisation` hook (335 lines), effective value override pattern, Transparency Panel conditional, debounced 800ms re-fire via `reFireTimerRef`, clear cascade (`clearAiOptimise` + `setOptimizerEnabled(false)`), provider-specific weight syntax enforcement, 4-word rule, quality suffix. §15: Added 5 new non-regression rules (separate hook, effective value priority, client-side must keep running, Transparency Panel conditional, clear cascade). Updated `wasOptimized` rule to reference `effectiveWasOptimized`. Added cross-reference to `ai-disguise.md` §6.
 - **18 Mar 2026 (v4.0.0):** **LAB OPTIMIZER PARITY + NEUTRAL MODE + DYNAMIC LABEL** — Added §14 documenting all Prompt Lab–specific optimizer behaviours. §14.1: Neutral mode — optimizer force-disabled when no provider selected via `finalOptimizerDisabled`, tooltip "Select an AI provider above to enable optimisation." §14.2: Dynamic label switching — assembled prompt box label/border/text transitions from slate to emerald when `isOptimizerEnabled && selectedProviderId`. Documented the deliberate exclusion of `wasOptimized` from the condition. §14.3: "Within optimal range" emerald bar when no trimming needed. §14.4: Colour-coded optimized text (Pro only) via `parsePromptIntoSegments()`. §14.5: `isPro` wiring fix — `OptimizationTransparencyPanel` in Lab corrected from hardcoded `false` to hook value. §14.6: Standard Builder vs Lab comparison table (7 aspects). Updated §12.2 consumers table (added Lab with specific behaviours). Updated open items: #4 resolved (isPro now wired). Updated file line count: text-length-optimizer.tsx 347→392. Added §15 Non-Regression Rules (10 rules). Added cross-references to `prompt-lab.md` and `code-standard.md` § 6.14.
 - **24 Feb 2026 (v3.0.0):** Phase C — Semantic similarity engine, prompt compression/rewriting (59 rules), real CLIP BPE tokenization. See §9 for full feature table.
 - **Feb 2026 (v2.1.0):** Phase B — Expanded redundancy pairs (29→217), injected-term discovery, per-strategy weights.

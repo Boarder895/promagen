@@ -117,8 +117,10 @@ function buildSystemPrompt(ctx: z.infer<typeof ProviderContextSchema>): string {
   const tierName = TIER_DISPLAY[ctx.tier] ?? 'Unknown';
   const categoryOrderStr = ctx.categoryOrder?.join(' → ') ?? 'subject → style → environment → lighting → atmosphere → fidelity';
   const weightNote = ctx.supportsWeighting
-    ? `Weight syntax: ${ctx.weightingSyntax ?? '(term:weight)'}. Distribute weights: subject highest (1.3–1.4), supporting 1.0–1.2, filler unweighted.`
+    ? `WEIGHT SYNTAX (MANDATORY): Use EXACTLY this syntax: ${ctx.weightingSyntax ?? '(term:weight)'}. Do NOT substitute parentheses for double-colon or vice versa. Distribute weights: subject highest (1.3–1.4), supporting 1.0–1.2, filler unweighted. Rich phrases longer than 4 words must NOT be weight-wrapped — break them into shorter weighted terms instead (e.g., "lone woman in crimson coat" becomes "lone woman${ctx.weightingSyntax?.includes('::') ? '::1.3' : ':1.3)'}, crimson coat${ctx.weightingSyntax?.includes('::') ? '::1.2' : ':1.2)'}").`
     : 'This platform does NOT support weight syntax — remove all weight markers.';
+
+  const qualitySuffix = ctx.tier === 1 ? '\n- Quality suffix (append at end): sharp focus, 8K, intricate textures' : '';
 
   return `You are an expert prompt optimiser for the AI image generation platform "${ctx.name}".
 
@@ -130,7 +132,7 @@ PLATFORM SPECIFICATIONS:
 - Token limit: ${ctx.tokenLimit}
 ${ctx.maxChars ? `- Hard character limit: ${ctx.maxChars}` : '- No hard character limit'}
 - ${weightNote}
-${ctx.qualityPrefix?.length ? `- Quality prefix: ${ctx.qualityPrefix.join(', ')}` : '- No quality prefix defined'}
+${ctx.qualityPrefix?.length ? `- Quality prefix: ${ctx.qualityPrefix.join(', ')}` : '- No quality prefix defined'}${qualitySuffix}
 - Category impact priority: ${categoryOrderStr}
 - Negative handling: ${ctx.negativeSupport}
 
@@ -139,14 +141,15 @@ OPTIMISATION RULES:
 2. Remove redundant or duplicate semantic content — "realistic textures" after "realistic texture" is waste.
 3. Remove orphaned verb fragments — "stands", "leaving", "reflecting quietly" are sentence debris in keyword prompts.
 4. Remove filler tokens that dilute model attention — adverbs, unnecessary articles, vague modifiers.
-5. Strengthen quality anchors appropriate to this platform (add masterpiece, best quality for CLIP; add sharp focus, detailed for natural language).
+5. Strengthen quality anchors appropriate to this platform. For CLIP platforms: ensure quality prefix AND quality suffix are present.
 6. Ensure the final prompt is within the sweet spot (${ctx.idealMin}–${ctx.idealMax} characters). This is the PRIMARY optimisation target.
-7. For CLIP/keyword platforms (Tier 1): output must be clean comma-separated weighted keywords — NO sentence fragments, NO orphaned verbs, NO "a" or "the" articles.
+7. For CLIP/keyword platforms (Tier 1): output must be clean comma-separated weighted keywords — NO sentence fragments, NO orphaned verbs, NO "a" or "the" articles. Use ONLY the weight syntax specified above.
 8. For Midjourney (Tier 2): ensure --ar, --v, --s, --no parameters are correctly formatted and placed at the end. Creative text should be descriptive prose, not keyword soup.
 9. For natural language platforms (Tier 3): ensure grammatical coherence — complete sentences, proper transitions. Convert any negative terms to positive reinforcement.
 10. For plain platforms (Tier 4): keep it short, simple, and impactful. Maximum 2 sentences. Remove all technical jargon.
 11. PRESERVE the user's core creative intent — optimise structure and efficiency, not meaning. Never remove the subject, core mood, or defining visual elements.
 12. List every change made in the "changes" array — the user sees this in the transparency panel.
+13. CRITICAL: The output weight syntax MUST match exactly: ${ctx.weightingSyntax ?? '(term:weight)'}. Wrong syntax = broken prompt on this platform.
 
 Return ONLY valid JSON:
 {

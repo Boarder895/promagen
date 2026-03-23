@@ -1,20 +1,22 @@
 # AI Disguise — Prompt Lab Intelligence Engine
 
-**Version:** 1.0.0  
+**Version:** 2.0.0  
 **Created:** 22 March 2026  
+**Updated:** 23 March 2026  
 **Owner:** Promagen  
-**Status:** SPECIFICATION — Not yet built  
+**Status:** Parts 1–5 BUILT and deployed. Part 5 passive learning pipeline DEFERRED. Part 6 (testing) DEFERRED.  
 **Scope:** Prompt Lab (`/studio/playground`) ONLY. The standard builder (`/providers/[id]`) is untouched.  
 **Authority:** This document defines the architecture, API routes, animation system, provider switching behaviour, and learning pipeline for the Prompt Lab's AI-powered prompt generation and optimisation system.
 
 > **Cross-references:**
 >
+> - `prompt-lab.md` — Studio section routes, Prompt Lab architecture, component table (v3.0.0)
 > - `unified-prompt-brain.md` — One Brain assembly architecture (standard builder)
 > - `prompt-optimizer.md` — Client-side 4-phase optimizer (standard builder)
 > - `prompt-builder-page.md` — Builder UI and `assemblePrompt()` integration
-> - `prompt-lab.md` — Studio section routes and Prompt Lab architecture
 > - `prompt-intelligence.md` — Intelligence layer, tier preview, colour coding
 > - `paid_tier.md` — Pro gating (Prompt Lab is Pro exclusive)
+> - `human-factors.md` — Zeigarnik Effect (§4), Anticipatory Dopamine (§3), Temporal Compression (§6)
 > - `code-standard.md` — All code standards (clamp, no grey text, co-located animations)
 
 ---
@@ -212,7 +214,7 @@ const RequestSchema = z.object({
       qualityPrefix: z.array(z.string()).optional(),
       weightingSyntax: z.string().optional(),
       supportsWeighting: z.boolean().optional(),
-      negativeSupport: z.enum(["separate", "inline", "none"]),
+      negativeSupport: z.enum(["separate", "inline", "none", "converted"]),
     })
     .nullable(),
 });
@@ -221,50 +223,56 @@ const RequestSchema = z.object({
 ### System Prompt (Call 2)
 
 ```
-You are an expert AI image prompt generator for {platformCount} AI image generation platforms.
+You are an expert AI image prompt generator for 42 AI image generation platforms.
 
-Given a natural English description, generate 4 different prompt versions optimised for different platform families. Return ONLY valid JSON with no preamble.
+Given a natural English description, generate 4 different prompt versions optimised for different platform families. Return ONLY valid JSON with no preamble, no markdown, no explanation.
 
 The 4 tiers:
 
 TIER 1 — CLIP-Based (e.g., Leonardo, Stable Diffusion, DreamStudio):
-- Weighted keyword syntax: (term:1.3), (term:1.1)
-- Front-load subject and style with highest weights
+- Weighted keyword syntax — DEFAULT: (term:1.3). BUT if a provider is specified below, use THAT provider's exact syntax instead.
+- Front-load subject and style with highest weights (1.3–1.4 for subject, 1.2–1.3 for style/lighting)
 - Quality prefix: masterpiece, best quality, highly detailed
-- Comma-separated keywords, NOT sentences
-- Separate negative prompt field
-- Keep within ~100 tokens (350 chars)
+- Quality suffix: sharp focus, 8K, intricate textures (add at end)
+- Comma-separated weighted keywords, NOT sentences
+- Rich phrases longer than 4 words should NOT be weight-wrapped — break into shorter weighted terms instead
+- Separate negative prompt with common quality negatives
+- Target: ~100 tokens (~350 characters) for creative text
 
-TIER 2 — Midjourney Family:
-- Natural language with parameter flags
-- Style weighting via :: syntax (e.g., cinematic::2.0)
+TIER 2 — Midjourney Family (e.g., Midjourney, BlueWillow):
+- Descriptive prose with style weighting via :: syntax (e.g., cinematic::2.0)
 - End with parameters: --ar 16:9 --v 6 --s 500
-- Negative via --no flag
-- Artistic and mood descriptors work well
-- Keep within ~200 chars for creative text
+- Negative via --no flag at end (e.g., --no blur, watermark, text)
+- Rich artistic and mood descriptors work well
+- Target: ~200 characters for creative text (before parameters)
 
-TIER 3 — Natural Language (e.g., DALL·E, Adobe Firefly):
-- Full grammatical sentences
-- Describe the scene as if telling an artist what to paint
-- Include lighting, atmosphere, and composition naturally
-- Convert negatives to positive reinforcement
-- Keep within ~300 chars
+TIER 3 — Natural Language (e.g., DALL·E, Adobe Firefly, Google Imagen):
+- Full grammatical sentences describing the scene
+- Describe as if telling an artist what to paint — spatial relationships, prepositions, poetry preserved
+- Include lighting, atmosphere, and composition naturally within sentences
+- Convert negatives to positive reinforcement ("sharp and clear" not "no blur")
+- Target: ~250–350 characters
 
 TIER 4 — Plain Language (e.g., Canva, Bing, Freepik):
-- Simple, focused description
-- Short and direct
-- Minimal technical jargon
+- Simple, focused, short description
+- Minimal technical jargon — a non-expert should understand it
 - One or two sentences maximum
-- Keep within ~150 chars
+- Target: ~100–150 characters
 
-{providerSpecificInstructions}
+{providerBlock}
 
 Rules:
-1. PRESERVE the user's creative intent — their exact words, metaphors, and spatial descriptions
-2. Do NOT add elements not present in the input
-3. Each tier should feel native to its platform family — not like a reformatted version of the others
-4. Quality anchors may be added (masterpiece, detailed) but never override user content
-5. Negative prompts should protect against common quality issues relevant to the description
+1. PRESERVE the user's creative intent — their exact words, metaphors, spatial descriptions, and poetic language. Do not paraphrase away the poetry.
+2. Do NOT add visual elements not present or strongly implied in the input. Quality anchors (masterpiece, detailed) are acceptable additions.
+3. Each tier must feel NATIVE to its platform family — not like a reformatted version of another tier.
+4. Tier 1 must have clean, high-signal keyword assembly — no sentence fragments or orphaned verbs.
+5. Tier 2 must read as natural prose that Midjourney interprets well — not keyword soup.
+6. Tier 3 must be grammatically complete with coherent spatial flow.
+7. Tier 4 must be short enough that a casual user understands it instantly.
+8. Negative prompts should protect against quality issues relevant to the description — do not use generic negatives if specific ones are more appropriate.
+9. Weight distribution in Tier 1: subject gets highest weight (1.3–1.4), supporting elements get 1.0–1.2, filler gets no weight wrapping. Break long phrases (5+ words) into shorter weighted terms — e.g., "lone woman in crimson coat" becomes "lone woman::1.3, crimson coat::1.2" (or equivalent in the provider's syntax).
+10. CRITICAL — Weight syntax is PROVIDER-SPECIFIC. When a provider is specified in PROVIDER CONTEXT below, you MUST use that provider's exact weight syntax. For example: Leonardo uses term::weight (double colon), Stable Diffusion uses (term:weight) (parentheses). Do NOT default to parentheses when the provider specifies double colon. When no provider is selected, default to (term:weight) parenthetical syntax.
+11. Quality suffix: For Tier 1, append quality terms at the end: sharp focus, 8K, intricate textures. These are standard CLIP quality anchors.
 
 Return format:
 {
@@ -275,18 +283,23 @@ Return format:
 }
 ```
 
-When `providerId` is set, `{providerSpecificInstructions}` injects platform-specific guidance:
+When `providerId` is set, `{providerBlock}` injects:
 
 ```
-The user has selected {providerName} ({tierName}).
-This platform uses {promptStyle} format with {weightingSyntax} syntax.
+PROVIDER CONTEXT (OVERRIDES GENERIC TIER RULES):
+The user has selected {providerName} (Tier {tier} — {tierName}).
+This platform uses {promptStyle} format.
+WEIGHT SYNTAX FOR THIS PROVIDER: {weightingSyntax} — YOU MUST USE THIS EXACT SYNTAX, not parentheses unless this IS parentheses.
 Sweet spot: ~{sweetSpot} tokens. Token limit: {tokenLimit}.
 Quality prefix: {qualityPrefix}.
+This platform supports/does NOT support term weighting.
 Negative support: {negativeSupport}.
-Prioritise Tier {tierNumber} output quality — this is the tier that will be used.
+Prioritise Tier {tier} output quality — this is the tier the user will use.
 ```
 
-When `providerId` is null, `{providerSpecificInstructions}` is empty — generic best-practice tiers are generated.
+When `providerId` is null, `{providerBlock}` is empty — generic best-practice tiers are generated.
+
+**Key fix (v2.0.0):** Provider context now uses "OVERRIDES GENERIC TIER RULES" heading and screams weight syntax with "YOU MUST USE THIS EXACT SYNTAX". This prevents GPT from defaulting to SD-style parentheses when the provider specifies double-colon syntax (e.g., Leonardo).
 
 ### Response Schema
 
@@ -377,7 +390,7 @@ const RequestSchema = z.object({
     qualityPrefix: z.array(z.string()).optional(),
     weightingSyntax: z.string().optional(),
     supportsWeighting: z.boolean().optional(),
-    negativeSupport: z.enum(["separate", "inline", "none"]),
+    negativeSupport: z.enum(["separate", "inline", "none", "converted"]),
     categoryOrder: z.array(z.string()).optional(),
   }),
 });
@@ -388,38 +401,50 @@ const RequestSchema = z.object({
 ```
 You are an expert prompt optimiser for the AI image generation platform "{providerName}".
 
-Your job is to take an assembled prompt and optimise it specifically for {providerName}, which is a Tier {tier} ({tierName}) platform.
+Your job is to take an assembled prompt and optimise it specifically for {providerName}, which is a Tier {tier} platform: {tierName}.
 
-Platform specifications:
+PLATFORM SPECIFICATIONS:
 - Prompt style: {promptStyle}
 - Sweet spot: {idealMin}–{idealMax} characters
 - Token limit: {tokenLimit}
-- Weight syntax: {weightingSyntax}
+{maxChars ? "- Hard character limit: {maxChars}" : "- No hard character limit"}
+- WEIGHT SYNTAX (MANDATORY): Use EXACTLY this syntax: {weightingSyntax}. Do NOT substitute parentheses for double-colon or vice versa. Distribute weights: subject highest (1.3–1.4), supporting 1.0–1.2, filler unweighted. Rich phrases longer than 4 words must NOT be weight-wrapped — break them into shorter weighted terms instead (e.g., "lone woman in crimson coat" becomes "lone woman::1.3, crimson coat::1.2" or "(lone woman:1.3), (crimson coat:1.2)" depending on provider syntax).
 - Quality prefix: {qualityPrefix}
-- Category priority order: {categoryOrder}
+- Quality suffix (Tier 1 only): sharp focus, 8K, intricate textures
+- Category impact priority: {categoryOrder}
 - Negative handling: {negativeSupport}
 
-Optimisation rules:
-1. Reorder terms by platform-specific impact priority: {categoryOrder}
-2. Remove redundant or duplicate semantic content
-3. Strengthen quality anchors appropriate to this platform
-4. Trim filler tokens (orphaned verbs, fragments, excessive adjectives)
-5. Ensure the final prompt is within the sweet spot ({idealMin}–{idealMax} chars)
-6. For CLIP platforms: ensure weights are properly distributed (subject highest, filler lowest)
-7. For Midjourney: ensure parameters are correctly formatted and placed at end
-8. For natural language platforms: ensure grammatical coherence
-9. For plain platforms: keep it short, focused, and impactful
-10. PRESERVE the user's core creative intent — optimise structure, not meaning
+OPTIMISATION RULES:
+1. Reorder terms by platform-specific impact priority: {categoryOrder}. Front-load high-impact categories.
+2. Remove redundant or duplicate semantic content — "realistic textures" after "realistic texture" is waste.
+3. Remove orphaned verb fragments — "stands", "leaving", "reflecting quietly" are sentence debris in keyword prompts.
+4. Remove filler tokens that dilute model attention — adverbs, unnecessary articles, vague modifiers.
+5. Strengthen quality anchors appropriate to this platform. For CLIP platforms: ensure quality prefix AND quality suffix are present.
+6. Ensure the final prompt is within the sweet spot ({idealMin}–{idealMax} characters). This is the PRIMARY optimisation target.
+7. For CLIP/keyword platforms (Tier 1): output must be clean comma-separated weighted keywords — NO sentence fragments, NO orphaned verbs, NO "a" or "the" articles. Use ONLY the weight syntax specified above.
+8. For Midjourney (Tier 2): ensure --ar, --v, --s, --no parameters are correctly formatted and placed at the end. Creative text should be descriptive prose, not keyword soup.
+9. For natural language platforms (Tier 3): ensure grammatical coherence — complete sentences, proper transitions. Convert any negative terms to positive reinforcement.
+10. For plain platforms (Tier 4): keep it short, simple, and impactful. Maximum 2 sentences. Remove all technical jargon.
+11. PRESERVE the user's core creative intent — optimise structure and efficiency, not meaning. Never remove the subject, core mood, or defining visual elements.
+12. List every change made in the "changes" array — the user sees this in the transparency panel.
+13. CRITICAL: The output weight syntax MUST match exactly: {weightingSyntax}. Wrong syntax = broken prompt on this platform.
 
 Return ONLY valid JSON:
 {
   "optimised": "the optimised prompt text",
-  "negative": "the optimised negative prompt (if applicable)",
-  "changes": ["brief description of each change made"],
-  "charCount": number,
-  "tokenEstimate": number
+  "negative": "the optimised negative prompt (if applicable, empty string if not)",
+  "changes": ["Reordered subject to front position", "Removed redundant 'realistic' duplicate", ...],
+  "charCount": 285,
+  "tokenEstimate": 72
 }
 ```
+
+**Key fixes (v2.0.0):**
+- Weight syntax marked as `(MANDATORY)` with explicit "Do NOT substitute" instruction
+- Dynamic examples using the provider's actual syntax (if `::` → shows `::1.3`, if `()` → shows `:1.3)`)
+- 4-word phrase breaking rule with examples
+- Quality suffix added for Tier 1 platforms only (via `qualitySuffix` conditional)
+- Rule 13 added as final CRITICAL reinforcement of weight syntax
 
 ### Response Schema
 
@@ -435,19 +460,44 @@ const ResponseSchema = z.object({
 
 ### Frontend Integration
 
-**Modified hook:** `use-prompt-optimization.ts` gains a new mode for Prompt Lab.
+**New hook:** `useAiOptimisation` (NEW file: `src/hooks/use-ai-optimisation.ts`, 335 lines)
 
-When operating inside the Prompt Lab (`isLabMode: true`), the `getOptimizedPrompt()` function calls the new API route instead of running the client-side 4-phase pipeline. The algorithm cycling animation plays during the API call.
+This is a dedicated hook — NOT a modification of `use-prompt-optimization.ts`. The client-side optimizer continues to run independently for the length indicator bar. The AI result takes priority in display when available via `effectiveOptimisedText`, `effectiveOptimisedLength`, and `effectiveWasOptimized`.
+
+```typescript
+interface UseAiOptimisationReturn {
+  result: { optimised: string; changes: string[]; charCount: number; tokenEstimate: number } | null;
+  isOptimising: boolean;
+  animationPhase: 'idle' | 'cycling' | 'decelerating' | 'landing';
+  currentAlgorithm: string;
+  algorithmCount: number;
+  optimise: (promptText: string, providerId: string, context: OptimisationProviderContext) => void;
+  clear: () => void;
+}
+```
+
+**Effective values in `enhanced-educational-preview.tsx`:**
+
+```typescript
+const effectiveOptimisedText = aiOptimiseResult?.optimised ?? optimizedResult.optimized;
+const effectiveOptimisedLength = aiOptimiseResult?.charCount ?? optimizedResult.optimizedLength;
+const effectiveWasOptimized = aiOptimiseResult
+  ? effectiveOptimisedLength < optimizedResult.originalLength
+  : wasOptimized;
+```
+
+These effective values are used in: copy handlers, char count displays, prompt text rendering, colour-coded segments, "Within optimal range" condition, and copy tooltip text.
 
 **Call 3 Firing Rules:**
 
-| Event                                                     | Action                                         |
-| --------------------------------------------------------- | ---------------------------------------------- |
-| User clicks "Optimise" toggle ON (with provider selected) | Fire Call 3                                    |
-| User switches provider while optimizer is ON              | Re-fire Call 3 with new provider context       |
-| User modifies selections while optimizer is ON            | Re-fire Call 3 (debounced 500ms)               |
-| No provider selected                                      | Optimizer toggle disabled (existing behaviour) |
-| Optimizer toggled OFF                                     | Clear optimised output, show assembled prompt  |
+| Event                                                     | Action                                                        |
+| --------------------------------------------------------- | ------------------------------------------------------------- |
+| User clicks "Optimise" toggle ON (with provider selected) | Fire Call 3 immediately                                       |
+| `activeTierPromptText` changes while optimizer is ON      | Re-fire Call 3 debounced (800ms) — covers AR/selection change |
+| User switches provider while optimizer is ON              | Re-fire Call 3 (via `activeTierPromptText` change)            |
+| User modifies selections while optimizer is ON            | Re-fire Call 3 (debounced 800ms)                              |
+| No provider selected                                      | Optimizer toggle disabled (existing behaviour)                |
+| Optimizer toggled OFF                                     | Clear AI optimised output, show assembled prompt              |
 
 ---
 
@@ -924,25 +974,28 @@ Uses the existing `env.providers.openAiApiKey` from `src/lib/env.ts`. No new env
 
 ## 15. File Map
 
-### New Files
+### New Files (all BUILT)
 
-| File                                              | Purpose                               | Est. lines |
-| ------------------------------------------------- | ------------------------------------- | ---------- |
-| `src/app/api/generate-tier-prompts/route.ts`      | Call 2 API route                      | ~200       |
-| `src/app/api/optimise-prompt/route.ts`            | Call 3 API route                      | ~250       |
-| `src/hooks/use-tier-generation.ts`                | Hook for Call 2 (AI tier generation)  | ~120       |
-| `src/hooks/use-ai-optimisation.ts`                | Hook for Call 3 (AI optimisation)     | ~180       |
-| `src/data/algorithm-names.ts`                     | 104 algorithm names + shuffle utility | ~130       |
-| `src/components/prompt-lab/algorithm-cycling.tsx` | Cycling animation component           | ~250       |
+| File                                              | Purpose                                | Actual lines |
+| ------------------------------------------------- | -------------------------------------- | ------------ |
+| `src/app/api/generate-tier-prompts/route.ts`      | Call 2 API route                       | 319          |
+| `src/app/api/optimise-prompt/route.ts`            | Call 3 API route                       | 315          |
+| `src/hooks/use-tier-generation.ts`                | Hook for Call 2 (AI tier generation)   | 224          |
+| `src/hooks/use-ai-optimisation.ts`                | Hook for Call 3 (AI optimisation + animation timing) | 335 |
+| `src/hooks/use-drift-detection.ts`                | Prompt DNA Drift Detection (zero API calls) | 165     |
+| `src/data/algorithm-names.ts`                     | 101 cycling + 3 finale names + shuffle + count | 187   |
+| `src/components/prompt-lab/algorithm-cycling.tsx`  | Cycling animation component (amber→emerald) | 256     |
+| `src/components/prompt-lab/drift-indicator.tsx`    | "N changes detected" amber badge       | 136          |
 
-### Modified Files
+### Modified Files (all BUILT)
 
-| File                                                         | Change                                                                       | Impact |
-| ------------------------------------------------------------ | ---------------------------------------------------------------------------- | ------ |
-| `src/components/prompts/enhanced-educational-preview.tsx`    | Wire AI tiers into FourTierPromptPreview, add "Generated for" badge          | Medium |
-| `src/components/providers/prompt-builder.tsx`                | Wire AI tiers when in Prompt Lab mode (detected via `providerSelector` prop) | Medium |
-| `src/hooks/use-prompt-optimization.ts`                       | Add lab mode that calls API instead of client-side optimizer                 | Small  |
-| `src/components/prompt-builder/four-tier-prompt-preview.tsx` | Add loading shimmer state, cross-fade transition                             | Small  |
+| File                                                         | Change                                                                       | Actual lines |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------------- | ------------ |
+| `src/components/prompts/playground-workspace.tsx`            | AI Disguise orchestrator — lifts hooks, auto-re-fires, cascade clear         | 313          |
+| `src/components/prompts/enhanced-educational-preview.tsx`    | Call 3 wiring, `AlgorithmCycling`, effective values, IntelligencePanel removed, full-width layout, cascade clear | 2,008 |
+| `src/components/providers/describe-your-image.tsx`           | Clear button (Core Colours gradient, 12-dropdown reset), drift indicator, "Regenerate" pulse, hint text | 667 |
+| `src/components/providers/prompt-builder.tsx`                | Pass-through AI Disguise props (`onDescribeClear`, `onDescribeGenerate`, etc.) | 3,644 |
+| `src/components/prompt-builder/four-tier-prompt-preview.tsx` | "Generated for X" badge, "Generating..." pulse, `aiTierPrompts` prop         | 684          |
 
 ### Untouched Files (explicitly protected)
 
@@ -950,26 +1003,45 @@ Uses the existing `env.providers.openAiApiKey` from `src/lib/env.ts`. No new env
 | -------------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | `src/lib/prompt-builder.ts`                        | One Brain remains the standard builder's assembly engine                                   |
 | `src/lib/prompt-builder/generators.ts`             | Template generators remain as fallback for Prompt Lab and sole engine for standard builder |
-| `src/lib/prompt-optimizer.ts`                      | Client-side optimizer remains the standard builder's optimizer                             |
-| `src/app/api/parse-sentence/route.ts`              | Call 1 is unchanged                                                                        |
+| `src/lib/prompt-optimizer.ts`                      | Client-side optimizer remains — AI result overrides in display but client-side still runs  |
+| `src/app/api/parse-sentence/route.ts`              | Call 1 is unchanged (243 lines)                                                            |
 | `src/hooks/use-sentence-conversion.ts`             | Extraction hook is unchanged                                                               |
-| `src/components/providers/describe-your-image.tsx` | UI component is unchanged                                                                  |
+| `src/components/prompt-builder/intelligence-panel.tsx` | 515 lines — REMOVED FROM PROMPT LAB RENDER but code file untouched (used by standard builder) |
 
 ---
 
 ## 16. Non-Regression Rules
 
+### Standard Builder Protection
 1. **Standard builder is untouched** — no changes to `/providers/[id]` route, `assemblePrompt()`, `generators.ts`, or client-side optimizer
 2. **Call 1 is unchanged** — `/api/parse-sentence` route, `useSentenceConversion` hook, and dropdown population animation remain identical
 3. **One Brain principle preserved** — `assemblePrompt()` remains the sole assembly engine for the standard builder. The Prompt Lab's AI tiers are a parallel output, not a replacement of One Brain
 4. **Template generators remain as fallback** — if Call 2 fails, times out, or returns invalid data, the Prompt Lab falls back to `generateAllTierPrompts()` (template output)
 5. **Optimizer client-side pipeline preserved** — the standard builder's 4-phase optimizer continues to work exactly as documented in `prompt-optimizer.md`
-6. **All code standards apply** — `clamp()` sizing, no grey text, no opacity dimming, cursor-pointer on clickables, co-located animations, desktop-only
-7. **Pro gating unchanged** — Prompt Lab remains Pro exclusive (gating implementation per `paid_tier.md §5.13`)
-8. **Algorithm names never reference AI** — no mention of "GPT", "OpenAI", "AI", "language model", "LLM", or "neural network" in any user-facing text
-9. **`incrementLifetimePrompts()` preserved** — all copy handlers must continue to track usage
-10. **Colour-coded prompts preserved** — AI-generated tier text must still support `parsePromptIntoSegments()` colour coding for Pro users
-11. **Existing features preserved: Yes** — required statement for every change set
+
+### AI Disguise Rules
+6. **Algorithm names never reference AI** — no mention of "GPT", "OpenAI", "AI", "language model", "LLM", or "neural network" in any user-facing text
+7. **Weight syntax is provider-specific** — Leonardo uses `term::weight` (double colon), Stable Diffusion uses `(term:weight)` (parentheses). Do NOT hardcode one as universal Tier 1 syntax.
+8. **4-word weight wrapping rule** — rich phrases longer than 4 words must NOT be weight-wrapped in Call 2 or Call 3 output. Break into shorter weighted terms.
+9. **Quality suffix for Tier 1** — `sharp focus, 8K, intricate textures` appended at end for all Tier 1 platforms
+10. **AI hooks lifted in PlaygroundWorkspace** — `useTierGeneration` and `useDriftDetection` must be in the orchestrator, NOT in child components. State must persist across provider switches.
+11. **Call 2 fires in PARALLEL with Call 1** — never sequential
+12. **Call 3 re-fires debounced (800ms)** when `activeTierPromptText` changes while optimizer is ON
+13. **`activeTierPromptText` uses `aiTierPrompts ?? generatedPrompts`** — AI text takes priority over template text
+
+### Layout & UI Rules
+14. **IntelligencePanel is REMOVED from Prompt Lab** — do NOT re-add. DnaBar still fed via simplified `useRealIntelligence`. Panel remains in standard builder only.
+15. **Prompt Lab layout is full-width single column** (`space-y-4`) — do NOT restore `lg:grid-cols-3` grid
+16. **Clear must cascade through ALL state** — textarea, 12 category dropdowns (all to `{ selected: [], customValue: '' }`), optimizer OFF, AI tiers clear, AI optimise clear, aspect ratio null, scene undefined, drift reset
+17. **Clear button uses Core Colours gradient** — `from-sky-400 via-emerald-300 to-indigo-400 text-black`. No opacity-based styling.
+18. **Drift detection ≥ 3 changes triggers "Regenerate" pulse** — amber animation on Generate button, text changes to "Regenerate". Under 3 changes: badge only.
+
+### Existing Behaviour
+19. **All code standards apply** — `clamp()` sizing, no grey text, no opacity dimming, cursor-pointer on clickables, co-located animations, desktop-only
+20. **Pro gating unchanged** — Prompt Lab remains Pro exclusive (gating implementation per `paid_tier.md §5.13`)
+21. **`incrementLifetimePrompts()` preserved** — all copy handlers must continue to track usage
+22. **Colour-coded prompts preserved** — AI-generated tier text must still support `parsePromptIntoSegments()` colour coding for Pro users
+23. **Existing features preserved: Yes** — required statement for every change set
 
 ---
 
@@ -987,45 +1059,64 @@ Uses the existing `env.providers.openAiApiKey` from `src/lib/env.ts`. No new env
 | D8  | Standard builder learns from Prompt Lab data (passive, then active)                           | Competitive moat — the more users use Prompt Lab, the smarter the standard builder gets    | 22 Mar 2026 |
 | D9  | User-facing language: "Prompt Intelligence Engine", "Deep Optimisation Pipeline" — never "AI" | Protects value proposition — users pay for proprietary engineering, not a GPT wrapper      | 22 Mar 2026 |
 | D10 | Standard builder "Refine" button (Phase 3, future) — NOT "Polish with AI"                     | Consistent with disguise principle — all user-facing language implies algorithms, not AI   | 22 Mar 2026 |
+| D11 | IntelligencePanel removed from Prompt Lab render                                               | Scored 52/100 — designed for dropdown workflow, became passive sidebar in AI Disguise flow. DnaBar still fed. Panel untouched in standard builder. | 23 Mar 2026 |
+| D12 | Full-width single column layout (removed `lg:grid-cols-3`)                                     | Removing Intelligence Panel frees 33% horizontal space. Dropdowns, assembled prompt, tier cards all benefit from full width. | 23 Mar 2026 |
+| D13 | Clear button cascade resets ALL state (12 dropdowns, optimizer OFF, AI clear, AR, scene, drift) | Partial clear caused stale optimised text and "96 changes detected" on next generation. One button, total reset. | 23 Mar 2026 |
+| D14 | Provider-specific weight syntax enforcement in Call 2 + Call 3 system prompts                   | Leonardo uses `term::weight`, SD uses `(term:weight)`. Generic "Tier 1 uses parentheses" rule caused wrong syntax for Leonardo. Provider context now overrides with "MUST USE THIS EXACT SYNTAX". | 23 Mar 2026 |
+| D15 | 4-word weight wrapping rule added to both system prompts                                        | "lone woman in a crimson coat" as a single weighted phrase produces noisy CLIP output. Breaking to shorter terms improves encoding quality. | 23 Mar 2026 |
+| D16 | Quality suffix added for Tier 1 (`sharp focus, 8K, intricate textures`)                        | Tier 1 reference format includes quality suffix per platform-formats docs. Omitting it made output less complete than documented format. | 23 Mar 2026 |
+| D17 | Debounced Call 3 re-fire at 800ms (not 500ms)                                                  | AR changes, selection changes, and AI tier arrivals all change `activeTierPromptText`. 800ms prevents excessive API calls while keeping the optimised prompt in sync. | 23 Mar 2026 |
+| D18 | `useAiOptimisation` as separate hook (not modifying `use-prompt-optimization`)                  | Client-side optimizer still runs for length indicator bar. AI result overlays via effective values. Clean separation — no modal logic in existing hook. | 23 Mar 2026 |
 
 ---
 
 ## 18. Build Order
 
-### Part 1 — Foundation (API routes + data)
+### Part 1 — Foundation (API routes + data) ✅ BUILT
 
-1. Create `src/data/algorithm-names.ts` — 104 names + shuffle utility
-2. Create `src/app/api/generate-tier-prompts/route.ts` — Call 2 API route
-3. Create `src/app/api/optimise-prompt/route.ts` — Call 3 API route
+1. ✅ Created `src/data/algorithm-names.ts` — 187 lines (101 cycling + 3 finale + Fisher-Yates shuffle + `getAlgorithmCount()`)
+2. ✅ Created `src/app/api/generate-tier-prompts/route.ts` — 319 lines (GPT-5.4-mini, temp 0.3, max 1500 tokens, Zod validated, rate limit 20/hr prod)
+3. ✅ Created `src/app/api/optimise-prompt/route.ts` — 315 lines (GPT-5.4-mini, temp 0.2, max 1200 tokens, Zod validated, rate limit 30/hr prod)
 
-### Part 2 — Hooks
+### Part 2 — Hooks ✅ BUILT
 
-4. Create `src/hooks/use-tier-generation.ts` — Call 2 hook
-5. Create `src/hooks/use-ai-optimisation.ts` — Call 3 hook with animation timing
+4. ✅ Created `src/hooks/use-tier-generation.ts` — 224 lines (AbortController for provider-switch cancellation, tracks `generatedForProvider`)
+5. ✅ Created `src/hooks/use-ai-optimisation.ts` — 335 lines (3-phase animation timing: fast cycling → deceleration → landing, 1.8s min, 12s hard timeout)
+6. ✅ Created `src/hooks/use-drift-detection.ts` — 165 lines (bag-of-words symmetric diff, zero API calls)
 
-### Part 3 — Animation Component
+### Part 3 — Animation Components ✅ BUILT
 
-6. Create `src/components/prompt-lab/algorithm-cycling.tsx` — cycling animation with phases
+7. ✅ Created `src/components/prompt-lab/algorithm-cycling.tsx` — 256 lines (amber→emerald colour shift, monospace cycling, pulsing glow, `prefers-reduced-motion`)
+8. ✅ Created `src/components/prompt-lab/drift-indicator.tsx` — 136 lines (amber pulsing dot + "N changes detected" badge)
 
-### Part 4 — Integration (Prompt Lab wiring)
+### Part 4 — Integration (Prompt Lab wiring) ✅ BUILT
 
-7. Wire AI tiers into `enhanced-educational-preview.tsx` (no-provider mode)
-8. Wire AI tiers into `prompt-builder.tsx` (provider-selected mode)
-9. Wire AI optimisation into optimizer toggle (lab mode only)
-10. Add "Generated for X" badge to tier preview
-11. Add loading shimmer + cross-fade transitions to tier cards
+9. ✅ `playground-workspace.tsx` rewritten as AI Disguise orchestrator (229→313 lines) — lifts hooks, auto-re-fires Call 2, cascade clear
+10. ✅ `describe-your-image.tsx` updated (577→667 lines) — Clear button with Core Colours gradient, 12-dropdown reset, drift indicator, "Regenerate" pulse, hint text
+11. ✅ `enhanced-educational-preview.tsx` updated (1,899→2,008 lines) — Call 3 wiring with debounced 800ms re-fire, `AlgorithmCycling` render, effective optimised values, IntelligencePanel removed, full-width layout, cascade clear
+12. ✅ `four-tier-prompt-preview.tsx` updated (647→684 lines) — "Generated for X" violet badge, "Generating..." amber pulse
+13. ✅ `prompt-builder.tsx` updated — AI Disguise prop pass-through (`onDescribeClear`, `onDescribeGenerate`, etc.)
 
-### Part 5 — Learning Pipeline (passive)
+### Part 4b — Fixes (post-build) ✅ BUILT
 
-12. Add learning pair logging to telemetry route
-13. Extend prompt-telemetry schema to include AI generation data
+14. ✅ Provider-specific weight syntax fix — Call 2 + Call 3 system prompts updated (D14)
+15. ✅ 4-word weight wrapping rule added to both system prompts (D15)
+16. ✅ Quality suffix for Tier 1 added to both system prompts (D16)
+17. ✅ Clear cascade fix — full state reset through all layers (D13)
+18. ✅ IntelligencePanel removed from Prompt Lab — full-width layout (D11, D12)
+19. ✅ Opacity violation fixed on Clear button — Core Colours gradient (D13)
 
-### Part 6 — Testing
+### Part 5 — Learning Pipeline (passive) ⏳ DEFERRED
 
-14. Unit tests for both new API routes
-15. Unit tests for both new hooks
-16. Integration test: full flow from human text → AI tiers → AI optimisation
-17. Animation timing tests (minimum display, deceleration, landing)
+20. ⏳ Add learning pair logging to telemetry route — NOT YET BUILT
+21. ⏳ Extend prompt-telemetry schema to include AI generation data — NOT YET BUILT
+
+### Part 6 — Testing ⏳ DEFERRED
+
+22. ⏳ Unit tests for both new API routes
+23. ⏳ Unit tests for both new hooks
+24. ⏳ Integration test: full flow from human text → AI tiers → AI optimisation
+25. ⏳ Animation timing tests (minimum display, deceleration, landing)
 
 ---
 

@@ -103,9 +103,10 @@ const TIER_DISPLAY: Record<number, string> = {
 function buildSystemPrompt(providerContext: z.infer<typeof ProviderContextSchema> | null): string {
   const providerBlock = providerContext
     ? `
-PROVIDER CONTEXT:
+PROVIDER CONTEXT (OVERRIDES GENERIC TIER RULES):
 The user has selected ${providerContext.name} (Tier ${providerContext.tier} — ${TIER_DISPLAY[providerContext.tier] ?? 'Unknown'}).
-This platform uses ${providerContext.promptStyle} format${providerContext.weightingSyntax ? ` with ${providerContext.weightingSyntax} weight syntax` : ''}.
+This platform uses ${providerContext.promptStyle} format.
+${providerContext.weightingSyntax ? `WEIGHT SYNTAX FOR THIS PROVIDER: ${providerContext.weightingSyntax} — YOU MUST USE THIS EXACT SYNTAX, not parentheses unless this IS parentheses.` : 'No weight syntax — output plain keywords.'}
 Sweet spot: ~${providerContext.sweetSpot} tokens. Token limit: ${providerContext.tokenLimit}.
 ${providerContext.qualityPrefix?.length ? `Quality prefix: ${providerContext.qualityPrefix.join(', ')}.` : ''}
 ${providerContext.supportsWeighting ? 'This platform supports term weighting.' : 'This platform does NOT support term weighting — do not include weight syntax.'}
@@ -120,10 +121,12 @@ Given a natural English description, generate 4 different prompt versions optimi
 The 4 tiers:
 
 TIER 1 — CLIP-Based (e.g., Leonardo, Stable Diffusion, DreamStudio):
-- Weighted keyword syntax: (term:1.3), (term:1.1)
-- Front-load subject and style with highest weights (subject:1.4, style:1.3, lighting:1.2, fidelity:1.2)
+- Weighted keyword syntax — DEFAULT: (term:1.3). BUT if a provider is specified below, use THAT provider's exact syntax instead.
+- Front-load subject and style with highest weights (1.3–1.4 for subject, 1.2–1.3 for style/lighting)
 - Quality prefix: masterpiece, best quality, highly detailed
+- Quality suffix: sharp focus, 8K, intricate textures (add at end)
 - Comma-separated weighted keywords, NOT sentences
+- Rich phrases longer than 4 words should NOT be weight-wrapped — break into shorter weighted terms instead
 - Separate negative prompt with common quality negatives
 - Target: ~100 tokens (~350 characters) for creative text
 
@@ -157,8 +160,9 @@ Rules:
 6. Tier 3 must be grammatically complete with coherent spatial flow.
 7. Tier 4 must be short enough that a casual user understands it instantly.
 8. Negative prompts should protect against quality issues relevant to the description — do not use generic negatives if specific ones are more appropriate.
-9. Weight distribution in Tier 1: subject gets highest weight (1.3–1.4), supporting elements get 1.0–1.2, filler gets no weight wrapping.
-10. Do NOT include :: weight syntax in Tier 1. Tier 1 uses (term:weight) parenthetical syntax. :: is Tier 2 only.
+9. Weight distribution in Tier 1: subject gets highest weight (1.3–1.4), supporting elements get 1.0–1.2, filler gets no weight wrapping. Break long phrases (5+ words) into shorter weighted terms — e.g., "lone woman in crimson coat" becomes "lone woman::1.3, crimson coat::1.2" (or equivalent in the provider's syntax).
+10. CRITICAL — Weight syntax is PROVIDER-SPECIFIC. When a provider is specified in PROVIDER CONTEXT below, you MUST use that provider's exact weight syntax. For example: Leonardo uses term::weight (double colon), Stable Diffusion uses (term:weight) (parentheses). Do NOT default to parentheses when the provider specifies double colon. When no provider is selected, default to (term:weight) parenthetical syntax.
+11. Quality suffix: For Tier 1, append quality terms at the end: sharp focus, 8K, intricate textures. These are standard CLIP quality anchors.
 
 Return format:
 {

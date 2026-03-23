@@ -1,7 +1,7 @@
 # paid_tier.md â€” What Is Free and What Is Paid in Promagen
 
-**Last updated:** 22 March 2026  
-**Version:** 7.0.0  
+**Last updated:** 23 March 2026  
+**Version:** 8.0.0  
 **Status:** Authoritative  
 **Scope:** Product behaviour, access rules, and monetisation boundaries  
 **Rule:** If a capability is not explicitly listed in this document, it is free.
@@ -1331,7 +1331,7 @@ When the Image Gen card is hovered, a single full-height showcase card appears, 
 | Ideogram    | ideogram | Zen Garden       | `/images/pro/imagegen-ideogram.png`     |
 | Imagine     | natural  | Coral Reef       | `/images/pro/imagegen-imagine-meta.png` |
 
-**Prompt text:** The actual prompts used to generate the images, segmented by category colour using `CATEGORY_COLOURS` SSOT. Leonardo uses `(weighted:1.3)` syntax, Flux uses keyword chains, DALL·E/Ideogram/Imagine use natural language prose. Font: `font-mono leading-relaxed`, `clamp(0.625rem, 0.65vw, 0.8rem)` — matches Prompt Lab preview exactly.
+**Prompt text:** The actual prompts used to generate the images, segmented by category colour using `CATEGORY_COLOURS` SSOT. Leonardo uses `term::1.3` (double-colon) syntax, Flux uses keyword chains, DALL·E/Ideogram/Imagine use natural language prose. Font: `font-mono leading-relaxed`, `clamp(0.625rem, 0.65vw, 0.8rem)` — matches Prompt Lab preview exactly.
 
 **Blur-to-sharp animation (15s cycle):**
 
@@ -1665,22 +1665,29 @@ See `scene-starters.md` for full architecture, data schema, and file locations.
 
 ### 5.13 Prompt Lab (`/studio/playground`) — Pro Promagen exclusive
 
-The Prompt Lab is a second prompt builder environment at `/studio/playground`. It is listed as card 6 (🧪) in the Feature Control Panel on `/pro-promagen`.
+The Prompt Lab is Promagen's AI-powered prompt creation environment at `/studio/playground`. It is listed as card 6 (🧪) in the Feature Control Panel on `/pro-promagen`.
+
+**v8.0.0 (23 March 2026):** The Prompt Lab now features the AI Disguise system — three targeted API calls to GPT-5.4-mini that generate and optimise prompts directly from human text, disguised as "1,001 proprietary algorithms". Full specification: `ai-disguise.md`. Architecture and component details: `prompt-lab.md` v3.0.0.
 
 #### Tier Comparison
 
-| Aspect                  | Standard Promagen | Pro Promagen                      |
-| ----------------------- | ----------------- | --------------------------------- |
-| Access                  | Not available     | Full access                       |
-| Route                   | —                 | `/studio/playground`              |
-| Provider selection      | —                 | Dropdown (all 45)                 |
-| Intelligence panel      | —                 | Full panel                        |
-| Tier preview            | —                 | All 4 tiers (colour-coded)        |
-| Colour-coded prompts    | —                 | Full colour-coding (§5.14)        |
-| Assembled prompt box    | —                 | Colour-coded + stage badge        |
-| Dynamic label switching | —                 | Assembled → Optimized on toggle   |
-| Colour legend           | —                 | LabCategoryColourLegend in header |
-| Optimizer neutral mode  | —                 | Disabled until provider selected  |
+| Aspect                   | Standard Promagen | Pro Promagen                                       |
+| ------------------------ | ----------------- | -------------------------------------------------- |
+| Access                   | Not available     | Full access                                        |
+| Route                    | —                 | `/studio/playground`                               |
+| Provider selection       | —                 | Dropdown (all 45)                                  |
+| AI tier generation       | —                 | Call 2 — GPT generates 4 native tier prompts       |
+| AI prompt optimisation   | —                 | Call 3 — GPT optimises for specific provider       |
+| Algorithm cycling        | —                 | 101 names, amber→emerald, slot-machine landing     |
+| Drift detection          | —                 | Word-level diff with "Regenerate" pulse            |
+| Intelligence panel       | —                 | **Removed (v8.0.0)** — DnaBar conflict count retained |
+| Layout                   | —                 | Full-width single column (`space-y-4`)             |
+| Tier preview             | —                 | All 4 tiers (colour-coded, AI-generated)           |
+| Colour-coded prompts     | —                 | Full colour-coding (§5.14)                         |
+| Assembled prompt box     | —                 | Colour-coded + stage badge + AI tier text priority |
+| Dynamic label switching  | —                 | Assembled → Optimized on toggle (uses `effectiveWasOptimized`) |
+| Colour legend            | —                 | LabCategoryColourLegend in header                  |
+| Optimizer neutral mode   | —                 | Disabled until provider selected                   |
 
 #### Current Status
 
@@ -1694,50 +1701,84 @@ The Prompt Lab is a second prompt builder environment at `/studio/playground`. I
 
 #### Architecture
 
-The Prompt Lab reuses the same components as the standard prompt builder (`/providers/[id]`) but with a provider selector dropdown instead of a pre-selected provider from the URL.
+The Prompt Lab uses the same base components as the standard builder but with an AI Disguise overlay — 3 API calls to GPT-5.4-mini for generation and optimisation, plus dedicated hooks and animation components.
 
-| File                                                      | Purpose                           |
-| --------------------------------------------------------- | --------------------------------- |
-| `src/app/studio/playground/page.tsx`                      | Server component (data fetch)     |
-| `src/app/studio/playground/playground-page-client.tsx`    | Client wrapper (provider state)   |
-| `src/components/prompts/playground-workspace.tsx`         | Workspace with dropdown           |
-| `src/components/prompts/enhanced-educational-preview.tsx` | Lab preview (1,899 lines, v5.0.0) |
+**Core files:**
+
+| File                                                      | Purpose                                                      | Lines |
+| --------------------------------------------------------- | ------------------------------------------------------------ | ----- |
+| `src/app/studio/playground/page.tsx`                      | Server component (data fetch)                                | 69    |
+| `src/app/studio/playground/playground-page-client.tsx`    | Client wrapper (provider state)                              | 135   |
+| `src/components/prompts/playground-workspace.tsx`         | AI Disguise orchestrator (lifts hooks, auto-re-fires)        | 313   |
+| `src/components/prompts/enhanced-educational-preview.tsx` | Lab preview — full-width, AI wiring, algorithm cycling       | 2,008 |
+| `src/components/providers/describe-your-image.tsx`        | Human text input — Clear, drift, "Regenerate" pulse          | 667   |
+
+**AI Disguise files (new in v8.0.0):**
+
+| File                                                      | Purpose                                                      | Lines |
+| --------------------------------------------------------- | ------------------------------------------------------------ | ----- |
+| `src/app/api/generate-tier-prompts/route.ts`              | Call 2 — AI tier generation                                  | 319   |
+| `src/app/api/optimise-prompt/route.ts`                    | Call 3 — AI prompt optimisation                              | 315   |
+| `src/hooks/use-tier-generation.ts`                        | Call 2 hook (AbortController for provider-switch)            | 224   |
+| `src/hooks/use-ai-optimisation.ts`                        | Call 3 hook (3-phase animation timing)                       | 335   |
+| `src/hooks/use-drift-detection.ts`                        | Prompt DNA drift detection (zero API calls)                  | 165   |
+| `src/data/algorithm-names.ts`                             | 101 cycling + 3 finale names + shuffle                       | 187   |
+| `src/components/prompt-lab/algorithm-cycling.tsx`          | Cycling animation (amber→emerald, slot-machine)              | 256   |
+| `src/components/prompt-lab/drift-indicator.tsx`            | "N changes detected" amber badge                             | 136   |
+
+**Removed from Prompt Lab (v8.0.0):**
+
+| Component | Status |
+| --- | --- |
+| `IntelligencePanel` | **REMOVED from render.** Scored 52/100 for AI Disguise workflow — designed for dropdown-selection, became passive sidebar. DnaBar still fed via simplified `useRealIntelligence`. Panel remains in standard builder (`/providers/[id]`). Code file untouched (515 lines). |
 
 **Key difference from standard builder:**
 
-- Standard (`/providers/[id]`): Provider pre-selected from URL, static header
-- Prompt Lab (`/studio/playground`): Provider selected via dropdown, dynamic header, all 45 platforms accessible from one page
+- Standard (`/providers/[id]`): Provider pre-selected from URL, template assembly via `assemblePrompt()`, client-side 4-phase optimizer, Intelligence Panel sidebar, 3-column grid
+- Prompt Lab (`/studio/playground`): Provider selected via dropdown, AI tier generation (Call 2) with template fallback, AI optimisation (Call 3) with client-side fallback, full-width single column, algorithm cycling animation
 
 #### Prompt Lab Parity Features (v5.0.0)
 
-These features bring the Lab to parity with the standard builder:
+These features bring the Lab to parity with the standard builder (retained from v5.0.0):
 
-**Colour-coded prompts in all 4 tiers:** `FourTierPromptPreview` receives `isPro` and `termIndex` props. When `isPro=true`, each tier card renders prompt text via `parsePromptIntoSegments()` with `CATEGORY_COLOURS`. All 5 `TierCard` calls updated (single-tier + 4 multi-tier). File: `four-tier-prompt-preview.tsx`.
+**Colour-coded prompts in all 4 tiers:** `FourTierPromptPreview` receives `isPro` and `termIndex` props. When `isPro=true`, each tier card renders prompt text via `parsePromptIntoSegments()` with `CATEGORY_COLOURS`. File: `four-tier-prompt-preview.tsx` (684 lines).
 
-**Assembled prompt box:** Full-width box between category grid and 4-tier cards showing `activeTierPromptText`. Colour-coded for Pro users. Inline `SaveIcon` + copy icons (float-right). `StageBadge` in header. Char count right-aligned. States: `copiedAssembled` + `handleCopyAssembled` callback.
+**Assembled prompt box:** Full-width box showing `activeTierPromptText` (AI tier text when available via `aiTierPrompts ?? generatedPrompts`, template text as fallback). Colour-coded for Pro users. Inline `SaveIcon` + copy icons. `StageBadge` in header. Char count right-aligned.
 
-**Optimized prompt box provider label:** When provider selected, shows "Optimized prompt in [ProviderName] [icon]" with 20×20px provider icon. `onError` hides icon if missing. Provider from `selectedProvider.localIcon || /icons/providers/${selectedProvider.id}.png`.
+**Optimized prompt box provider label:** When provider selected, shows "Optimized prompt in [ProviderName] [icon]" with 20×20px provider icon. Uses `effectiveOptimisedText` (AI result priority over client-side).
 
 **Dynamic label switching:** When `isOptimizerEnabled && selectedProviderId`:
 
 - Label: "Optimized prompt in [Provider] [icon]" in `text-emerald-300`
 - Border: `border-emerald-600/50 bg-emerald-950/20`
 - Text: `text-emerald-100`
-- Copy tooltip: "Copy optimized prompt"
-  Otherwise: "Assembled prompt" in white, `border-slate-600 bg-slate-950/80`.
-  **Note:** The condition does NOT include `wasOptimized` — the label switches the moment the optimizer is enabled with a provider, regardless of whether trimming occurred.
+  **Note:** Condition uses `effectiveWasOptimized` (AI result takes priority over client-side `wasOptimized`).
 
-**Optimizer disabled in neutral mode:** `finalOptimizerDisabled = isOptimizerDisabled || !selectedProviderId`. Neutral tooltip: "Select an AI provider above to enable optimisation." Provider selected → real platform tooltip.
+**Optimizer disabled in neutral mode:** `finalOptimizerDisabled = isOptimizerDisabled || !selectedProviderId`. Neutral tooltip: "Select an AI provider above to enable optimisation."
 
-**Green "Within optimal range":** When optimizer ON + provider selected + no trimming: emerald bar "✓ Within optimal range — X chars / No trimming needed".
+**Green "Within optimal range":** When optimizer ON + provider selected + no trimming + not actively optimising: emerald bar "✓ Within optimal range — X chars".
 
-**StageBadge:** Local component showing 📋 Static / ✨ Dynamic / ⚡ Optimized / ✓ Optimal. Appears in assembled prompt box header.
+**LabCategoryColourLegend:** Header between `│` divider and Optimize toggle. Emoji `clamp(18px, 1.4vw, 22px)`, solid `rgba(15, 23, 42, 0.97)` bg.
 
-**LabCategoryColourLegend:** Local component (same restyled design as standard builder's `CategoryColourLegend`). Positioned in header between `│` divider and Optimize toggle. Emoji doubled `clamp(18px, 1.4vw, 22px)`, solid `rgba(15, 23, 42, 0.97)` bg, `rounded-xl`, ethereal glow overlay.
+**Inline copy + save icons:** Both assembled and optimized boxes. All copy handlers call `incrementLifetimePrompts()`.
 
-**Inline copy + save icons:** Copy + `SaveIcon` inside both assembled and optimized prompt boxes (matching standard builder: clipboard SVG float-right). Optimized box height: `min-h-[60px] max-h-[150px]`.
+**Lifetime counter wiring:** All copy handlers call `incrementLifetimePrompts()`. Feeds Pro Gem Badge (§5.15).
 
-**Lifetime counter wiring:** All 3 copy handlers (`handleCopy`, `handleCopyOptimized`, `handleCopyAssembled`) call `incrementLifetimePrompts()` on successful copy.
+#### AI Disguise Features (v8.0.0)
+
+**AI Tier Generation (Call 2):** "Generate Prompt" fires Call 2 in parallel with Call 1. AI generates 4 tier-native prompts from human text, preserving poetry and spatial relationships. Provider-specific weight syntax (Leonardo `::`, SD `()`, Midjourney `::` prose). 4-word weight wrapping rule — long phrases broken to shorter weighted terms. Quality suffix for Tier 1. Template generators are fallback only.
+
+**"Generated for" Badge:** Violet badge on 4-tier header when provider selected and Call 2 has returned. Persists when provider de-selected. Updates on provider switch.
+
+**AI Prompt Optimisation (Call 3):** Fires when optimizer toggled ON. Restructures prompt for specific provider — reorders by impact priority, applies provider syntax, removes filler, strengthens quality anchors. Debounced 800ms re-fire when `activeTierPromptText` changes (AR, selections, AI tiers).
+
+**Algorithm Cycling Animation:** 101 names cycle at 160–200ms (amber monospace), decelerating to slot-machine stop, landing on "✓ {87–102} algorithms applied" (emerald). 1.8s minimum, 12s hard timeout. `prefers-reduced-motion` respected.
+
+**Prompt DNA Drift Detection:** Client-side word-level diff. When `isDrifted && changeCount >= 3`: Generate button pulses amber, text changes to "Regenerate". Below 3: badge only. Zero API calls.
+
+**Clear Button:** Core Colours gradient (`from-sky-400 via-emerald-300 to-indigo-400 text-black`). Full cascade: textarea, 12 category dropdowns (`{ selected: [], customValue: '' }`), optimizer OFF, AI tiers clear, AI optimise clear, aspect ratio, scene, drift.
+
+**Hint Text:** After generation, when no drift: "Edit your description above and click Regenerate to refine your prompts". Disappears when drift detected.
 
 #### Feature Control Panel Integration
 
@@ -1746,7 +1787,7 @@ On the Pro page:
 - **Free users:** Card shows "Pro exclusive" / "Pro only" — no navigation link
 - **Paid users:** Card shows "Full access" / "Open lab →" — links to `/studio/playground`
 
-Authority: `docs/authority/prompt-intelligence.md` §9
+Authority: `docs/authority/ai-disguise.md` (v2.0.0), `docs/authority/prompt-lab.md` (v3.0.0)
 
 ---
 
@@ -1806,8 +1847,8 @@ A small 🎨 icon appears next to the "Assembled prompt" heading (Pro users only
 | `src/lib/prompt-colours.ts`                                  | SSOT: colours, labels, parser       | v1.0.0  |
 | `src/components/ui/combobox.tsx`                             | `labelColour` prop                  | v7.3.0  |
 | `src/components/providers/prompt-builder.tsx`                | Pro colour-coding + legend          | v10.2.0 |
-| `src/components/prompts/enhanced-educational-preview.tsx`    | Lab colour-coding (full parity)     | v5.0.0  |
-| `src/components/prompt-builder/four-tier-prompt-preview.tsx` | Colour-coded 4-tier cards           | v5.0.0  |
+| `src/components/prompts/enhanced-educational-preview.tsx`    | Lab colour-coding (full parity)     | v8.0.0  |
+| `src/components/prompt-builder/four-tier-prompt-preview.tsx` | Colour-coded 4-tier cards           | v8.0.0  |
 | `src/components/home/prompt-showcase.tsx`                    | Imports shared SSOT                 | v9.2.0  |
 | `src/app/pro-promagen/pro-promagen-client.tsx`               | Imports shared SSOT + Daily preview | v5.0.0  |
 
@@ -1951,8 +1992,9 @@ Authority for those lives elsewhere:
 - Feature Control Panel → `src/components/pro-promagen/feature-control-panel.tsx`
 - Surface-aware prompt tiers → `src/hooks/use-global-prompt-tier.ts` (v5.0.0, includes `'pro-page'` surface + same-tab sync)
 - Prompt tier API → `src/app/api/user/preferences/route.ts`
-- Prompt Lab → `docs/authority/prompt-intelligence.md` §9
-- Prompt Lab parity features → `src/components/prompts/enhanced-educational-preview.tsx` (v5.0.0)
+- Prompt Lab → `docs/authority/prompt-lab.md` (v3.0.0)
+- AI Disguise system → `docs/authority/ai-disguise.md` (v2.0.0)
+- Prompt Lab parity features → `src/components/prompts/enhanced-educational-preview.tsx` (v8.0.0, 2,008 lines)
 - Pro Gem Badge → `src/components/layout/pro-gem-badge.tsx` + `src/lib/lifetime-counter.ts`
 - Stripe payments → `docs/authority/stripe.md`
 - Continental exchange grouping → `src/lib/geo/continents.ts`
@@ -1991,6 +2033,7 @@ If it is not written here, it is Standard Promagen (free).
 
 ## Changelog
 
+- **23 Mar 2026:** **PROMPT LAB AI DISGUISE + INTELLIGENCE PANEL REMOVAL (v8.0.0)** — §5.13: Major Prompt Lab update. AI Disguise system deployed — 3 GPT-5.4-mini API calls for prompt generation and optimisation, disguised as "1,001 proprietary algorithms". Call 2 (`/api/generate-tier-prompts`, 319 lines) generates 4 native tier prompts from human text, fired in parallel with Call 1. Call 3 (`/api/optimise-prompt`, 315 lines) AI-optimises assembled prompt for specific provider, fired on optimizer toggle. Provider-specific weight syntax enforcement — Leonardo uses `term::weight`, SD uses `(term:weight)`, never hardcoded. 4-word weight wrapping rule — long phrases broken to shorter weighted terms. Quality suffix for Tier 1 (`sharp focus, 8K, intricate textures`). 8 new files (2 API routes, 3 hooks, 2 animation components, 1 data file). `PlaygroundWorkspace` rewritten as AI Disguise orchestrator (229→313 lines). `enhanced-educational-preview.tsx` (1,899→2,008 lines): Call 3 wiring with debounced 800ms re-fire, `AlgorithmCycling` render, effective optimised values. `IntelligencePanel` removed from Prompt Lab render (scored 52/100 for AI workflow). Layout changed from `lg:grid-cols-3` to full-width single column. `DescribeYourImage` (577→667 lines): Clear button with Core Colours gradient + full cascade reset (12 dropdowns, optimizer OFF, AI clear), drift indicator, "Regenerate" amber pulse when drift ≥ 3, hint text. `FourTierPromptPreview` (647→684 lines): "Generated for X" violet badge. Tier comparison table expanded (15 aspects). AI Disguise features section added (7 features). Leonardo syntax fixed from `(weighted:1.3)` to `term::1.3` in §5.10 ImageGen text. Authority refs updated: added `ai-disguise.md` v2.0.0, `prompt-lab.md` v3.0.0. §5.14 file versions updated to v8.0.0.
 - **22 Mar 2026:** **PRO PAGE TOOLTIP PREVIEW + PLATFORM COUNT + PANEL FIXES (v7.0.0)** — Major Pro page overhaul across 4 files. §5.10: Prompt Format card redesigned — paid users see colour-coded tier `<select>` dropdown (each option styled in tier colour: blue/purple/emerald/orange), free users see standard two-row text ("All current prompts are a spread" / "The choice of Prompt Text is yours"). 45/17 alternating stat removed from Prompt Intelligence card. Card 8 renamed from "⚙️ Stacking" to "🧠 Prompt Intelligence" (#fb923c). TierPreviewPanel header: dropdown removed, amber text centred. TierWindow rebuilt to match real `WeatherPromptTooltip` structure: "Image Prompt" header + PRO badge + Save/Copy, tier badge pill, **colour-coded prompt text** via `labBuildTermIndex`/`labParsePrompt`/`CATEGORY_COLOURS` (same as Prompt Lab), "Other formats available" with **unblurred** tier rows (no lock icons — free and paid see identical view), "Unlock all formats" per-window for free users, gold crown on active. Dropdown cooldown: `dropdownCooldownRef` blocks `handleCardHover` for 2 seconds after dropdown selection to prevent accidental panel switch to adjacent Saved card. `onDropdownSelect` callback added to `FeatureControlPanel` interface. ExchangesPreviewPanel: removed `slice(0, maxVisibleCards)` clip — all regional exchange cards now render with auto-scroll (17s `proAutoScroll` cycle), matching Frame preview pattern. SavedPreviewPanel: extracted `SavedPromptWindow` sub-component with `useAutoScroll()` + `pro-auto-scroll` CSS class; prompt text white (colour coding removed — saved prompts lack reliable categoryMap data for accurate term matching). DailyPromptsPreviewPanel: Category Colour Key (🎨 4-column legend) removed. All "42 platform" references updated to "45 platforms" in `pro-promagen-client.tsx` (6 refs), `upgrade-cta.tsx` (1 ref), `tier-showcase.tsx` (1 ref), `feature-control-panel.tsx` (1 ref). `PreviewPanel` type expanded to 9 values (`'intelligence'` added). File sizes: `pro-promagen-client.tsx` 4,693 lines, `feature-control-panel.tsx` 453 lines.
 - **19 Mar 2026:** **IMAGE GEN PREVIEW + VOTE POWER REMOVED (v6.0.0)** — §5.10: Vote Power card (🏆, #fbbf24) removed from 3×3 grid position 9. Replaced by Image Generation card (🖼️, #e879f9) — "Coming to Pro" teaser for BYOAPI feature. Vote weighting (1.5×) still active in backend (§5.8), just no longer a headline card. New `ImageGenPreviewPanel` — single full-height card rotating through 5 platforms (Leonardo, Flux, DALL·E 3, Ideogram, Imagine) every 15s with 300ms crossfade. Left half: colour-coded prompt segments using `CATEGORY_COLOURS` SSOT, `font-mono leading-relaxed` matching Prompt Lab font. Right half: real AI-generated images from `/public/images/pro/` with blur-to-sharp CSS animation (18px→0 over 10s, hold 3s, reset). Fuchsia progress bar synced to cycle. 5 navigation dots. `key={activeIdx}` resets animation on swap. New `FramePreviewPanel` — 5 reference city windows (Tokyo, New York, Sydney, Mumbai, London) showing exchange cards rearranged per anchor city, with auto-scroll. `PreviewPanel` type expanded to 8 values (`'frame'` + `'imagegen'` added). `onImageGenHover` prop added to `FeatureControlPanel`. 9 preview panels always mounted (8 feature + 1 CTA). `feature-control-panel.tsx` updated to v2.2.0 (431 lines). `pro-promagen-client.tsx` updated to v6.0.0 (3,560 lines). 5 static image assets added to `public/images/pro/`.
 - **18 Mar 2026:** **PRO PAGE OVERHAUL v5.0.0 — DAILY PREVIEW + TIER SYNC + DEBOUNCED INTENT + GEM BADGE + LAB PARITY** — Major Pro page and Prompt Lab update across 8 files. §5.10: Hover Bridge replaced by Debounced Intent v5.0.0 — 150ms debounce on card-to-card switches filters diagonal cursor movement (replaces failed Intent Triangle from v4.1). Daily Prompts card gains preview panel (`DailyPromptsPreviewPanel`) — miniaturised builder mockup with 12 colour-coded category rows, assembled + optimized prompt boxes, auto-scrolling (17s cycle: 0.3s hold → 8s down → 0.3s hold → 8s up), click navigates to `/providers/{id}` with PotM payload. `PreviewPanel` type expanded from 5 to 6 values (`'daily'` added). Pro page local `useState<PromptTier>` replaced by `useGlobalPromptTier('pro-page')` shared hook — single source of truth for tier across Pro page and all exchange tooltips. Same-tab sync via synthetic `StorageEvent` dispatch in `saveTier()`. §5.13: Prompt Lab parity — all 4 tier preview cards colour-coded, assembled prompt box with StageBadge, dynamic label switching (assembled → optimized when optimizer enabled, no `wasOptimized` gate), provider icon on optimized label, `LabCategoryColourLegend` in header, optimizer disabled in neutral mode, green "Within optimal range" feedback, inline copy + save icons. §5.15: Pro Gem Badge — evolving hexagonal gem replaces flat PRO pill in homepage-grid header. 6 tiers by lifetime prompt count (Raw Crystal → Cut Sapphire → Emerald → Amber → Rose Diamond → Prismatic). Pulsing glow animation, `prefers-reduced-motion` respected, all sizing `clamp()`. `incrementLifetimePrompts()` wired into all 6 copy handlers (3 in standard builder, 3 in Lab). §5.16: Bidirectional Tier Sync — `'pro-page'` added to `PromptSurface` type, `useGlobalPromptTier` dispatches synthetic StorageEvent for same-tab sync. Files: pro-promagen-client.tsx (2,716 lines), enhanced-educational-preview.tsx (1,899 lines), feature-control-panel.tsx (419 lines), use-global-prompt-tier.ts (244 lines), pro-gem-badge.tsx (~200 lines, NEW), lifetime-counter.ts (NEW), homepage-grid.tsx (updated), four-tier-prompt-preview.tsx (updated).
