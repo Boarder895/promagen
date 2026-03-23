@@ -54,6 +54,10 @@ const R2_T4_META_LANGUAGE =
 const R2_T3_NATURAL =
   'An elderly Japanese samurai stands alone on a crumbling stone bridge at golden hour, his weathered katana catching the last amber light in a luminous oil-painting-meets-cinematic-photograph scene. Cherry blossom petals spiral downward through volumetric sunbeams, while koi fish drift beneath the bridge in mirror-still water that reflects the burning sky. In the distance, snow-capped Mount Fuji rises through low clouds brushed with pink and violet, with a wide cinematic view and a centered figure.';
 
+/** Round 4 T2 output — DUPLICATE PARAMETER BLOCK (P7 bug) */
+const R4_T2_DUPLICATE_PARAMS =
+  'elderly Japanese samurai::2.0 standing alone on a crumbling stone bridge at golden hour, his weathered katana catching the last amber light, cherry blossom petals spiraling through volumetric god rays, koi fish drifting below in mirror-still water that reflects the burning sky, snow-capped Mount Fuji rising in the far distance through low pink and violet clouds, oil painting crossed with cinematic photography::1.4, wide cinematic composition, low-angle view, emotionally quiet detail --ar 16:9 --v 7 --s 500 --no text, watermark, logo, blurry --ar 16:9 --v 7 --s 500 --no blurry, low quality, text, watermark, cropped subject, out of frame, muddy water, flat lighting, duplicate samurai';
+
 // ============================================================================
 // SYNTAX CONVERSION TESTS
 // ============================================================================
@@ -239,6 +243,18 @@ describe('enforceMjParameters (B4 regression lock)', () => {
     expect(result.text).toContain('--s 500');
     expect(result.text).toContain('--no');
     expect(result.missingParams).toHaveLength(4);
+  });
+
+  it('R4: does NOT add params when they already exist (even with duplicates)', () => {
+    // R4 bug: GPT produced duplicate param blocks. After P7 dedup in route.ts,
+    // the compliance gate should see params are present and not add more.
+    const afterP7 = 'samurai::2.0 on a bridge --ar 16:9 --v 7 --s 500 --no text, watermark, logo, blurry, low quality, cropped subject, out of frame, muddy water, flat lighting, duplicate samurai';
+    const result = enforceMjParameters(afterP7);
+    expect(result.wasFixed).toBe(false);
+    expect(result.missingParams).toHaveLength(0);
+    // Count occurrences of --ar — should be exactly 1
+    const arCount = (result.text.match(/--ar/g) ?? []).length;
+    expect(arCount).toBe(1);
   });
 });
 

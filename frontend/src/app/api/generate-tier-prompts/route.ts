@@ -208,7 +208,7 @@ TIER 4 — Plain Language (e.g., Canva, Bing, Freepik):
 - MUST be 2–3 short sentences: first sentence for the subject and action with key elements, second sentence for the environment, optional third sentence for mood/atmosphere if needed
 - Keep all key visual anchors from the input — do not over-compress. Include the subject and at least 3 supporting visual elements, but do NOT list more than 5 elements in a single sentence.
 - ALWAYS state the primary setting EXPLICITLY. Do not rely on implication. Write "underwater" not just "in water". Write "in a dense forest" not just "with trees". Plain language platforms need direct, unambiguous setting cues.
-- NEVER include questions, self-corrections, or negation-then-correction patterns. State what the scene IS, never what it is NOT. WRONG: "The scene is underwater? No, it is an outdoor landscape with Mount Fuji in the distance." (questions and self-correction are structurally broken — image generators cannot interpret "No, it is…"). RIGHT: "An elderly samurai stands on a stone bridge at golden hour, surrounded by cherry blossoms and warm amber light." (direct, positive statement of the scene).
+- NEVER include questions, self-corrections, or negation-then-correction patterns. State what the scene IS, never what it is NOT. WRONG: "Is this indoors? No, it is actually set outside in a meadow." (questions and self-correction are structurally broken — image generators cannot interpret "No, it is…"). RIGHT: "A knight stands in a sunlit meadow at dawn, holding a banner against the wind." (direct, positive statement of the scene).
 - STRICT ORDERING: Sentence 1 = subject + action + 3–4 key visual elements. Sentence 2 = explicit setting + environment details. Sentence 3 (optional) = lighting/atmosphere + mood.
 - Every sentence MUST be at least 10 words. Do not compress mood and setting into a bare adjective list. WRONG: "It is underwater, clear, and dreamlike." (7 words, bare adjective checklist). RIGHT: "The underwater scene glows with soft light and a calm, dreamlike atmosphere." (12 words, paints the feeling). Bare adjective lists are structurally wrong for this family — write complete descriptive sentences.
 - Do not use meta-language like "fill the scene", "in this image", "the composition shows", "the scene has", "the scene shows", or "the scene captures". Describe what exists, not the image itself.
@@ -243,34 +243,71 @@ Return format:
 // ============================================================================
 
 /**
- * P1: Deduplicate T2 --no terms.
- * GPT sometimes repeats the entire --no block. Split on --no, deduplicate
- * comma-separated terms, rejoin with single --no.
+ * P1+P7: Deduplicate entire T2 Midjourney parameter block.
+ *
+ * GPT at temp 0.5 sometimes duplicates the entire parameter set:
+ *   ...prose --ar 16:9 --v 7 --s 500 --no X, Y --ar 16:9 --v 7 --s 500 --no Z, W
+ *
+ * This function:
+ * 1. Extracts the prose (everything before first --ar/--v/--s/--no)
+ * 2. Collects ALL --ar, --v, --s values (keeps last occurrence)
+ * 3. Collects ALL --no terms (deduplicates, preserves order)
+ * 4. Rebuilds: prose + --ar + --v + --s + --no (single clean block)
  */
-function deduplicateMjNegatives(prompt: string): string {
-  const noIndex = prompt.indexOf('--no ');
-  if (noIndex === -1) return prompt;
+function deduplicateMjParams(prompt: string): string {
+  // Find where parameters start (first -- flag)
+  const paramStart = prompt.search(/\s--(?:ar|v|s|no)\s/);
+  if (paramStart === -1) return prompt;
 
-  const positiveAndParams = prompt.slice(0, noIndex).trimEnd();
-  const negativePart = prompt.slice(noIndex + 5); // after "--no "
+  const prose = prompt.slice(0, paramStart).trimEnd();
+  const paramSection = prompt.slice(paramStart);
 
-  // Split on commas, trim whitespace, deduplicate preserving order
-  const terms = negativePart.split(',').map((t) => t.trim()).filter(Boolean);
+  // Extract all --ar values (keep last)
+  let ar = '';
+  const arMatches = [...paramSection.matchAll(/--ar\s+(\d+:\d+)/g)];
+  if (arMatches.length > 0) ar = arMatches[arMatches.length - 1]?.[1] ?? '';
+
+  // Extract all --v values (keep last)
+  let v = '';
+  const vMatches = [...paramSection.matchAll(/--v\s+(\d+)/g)];
+  if (vMatches.length > 0) v = vMatches[vMatches.length - 1]?.[1] ?? '';
+
+  // Extract all --s values (keep last)
+  let s = '';
+  const sMatches = [...paramSection.matchAll(/--s\s+(\d+)/g)];
+  if (sMatches.length > 0) s = sMatches[sMatches.length - 1]?.[1] ?? '';
+
+  // Extract ALL --no terms across all --no blocks, deduplicate
+  const noBlocks = [...paramSection.matchAll(/--no\s+([^-]+?)(?=\s+--|$)/g)];
+  const allNoTerms: string[] = [];
   const seen = new Set<string>();
-  const unique: string[] = [];
-  for (const term of terms) {
-    const lower = term.toLowerCase();
-    if (!seen.has(lower)) {
-      seen.add(lower);
-      unique.push(term);
+  for (const block of noBlocks) {
+    const terms = (block[1] ?? '').split(',').map(t => t.trim()).filter(Boolean);
+    for (const term of terms) {
+      const lower = term.toLowerCase();
+      if (!seen.has(lower)) {
+        seen.add(lower);
+        allNoTerms.push(term);
+      }
     }
   }
 
-  // Strip trailing period from the last negative term
-  const joined = unique.join(', ');
-  const cleaned = joined.replace(/[.!?]+\s*$/, '').trimEnd();
+  // Strip trailing punctuation from last negative term
+  if (allNoTerms.length > 0) {
+    const last = allNoTerms[allNoTerms.length - 1];
+    if (last) {
+      allNoTerms[allNoTerms.length - 1] = last.replace(/[.!?]+$/, '').trim();
+    }
+  }
 
-  return `${positiveAndParams} --no ${cleaned}`;
+  // Rebuild: prose + params + --no (single clean block)
+  const parts = [prose];
+  if (ar) parts.push(`--ar ${ar}`);
+  if (v) parts.push(`--v ${v}`);
+  if (s) parts.push(`--s ${s}`);
+  if (allNoTerms.length > 0) parts.push(`--no ${allNoTerms.join(', ')}`);
+
+  return parts.join(' ');
 }
 
 /**
@@ -329,7 +366,7 @@ function postProcessTiers(tiers: z.infer<typeof ResponseSchema>): z.infer<typeof
       negative: stripTrailingPunctuation(tiers.tier1.negative),
     },
     tier2: {
-      positive: deduplicateMjNegatives(tiers.tier2.positive),
+      positive: deduplicateMjParams(tiers.tier2.positive),
       negative: tiers.tier2.negative,
     },
     tier3: tiers.tier3,
