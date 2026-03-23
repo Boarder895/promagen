@@ -92,7 +92,7 @@ export function matchTermToVocabulary(term: string, category: PromptCategory): s
 const LIGHT_NOUNS = /\b(light|lighting|glow|sunlight|moonlight|illumination|shadow|shadows|backlit|backlight|lamp|candle|neon|flash|spotlight|ray|rays|beam)\b/i;
 
 /**
- * Clean up parsed terms per category. Applied after GPT extraction, before
+ * Clean up parsed terms per category. Applied after engine extraction, before
  * vocabulary matching. Fixes contextless fragments and known issues.
  *
  * Fix 1: Lighting terms missing a light-noun get " light" appended.

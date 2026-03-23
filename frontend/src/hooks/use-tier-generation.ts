@@ -3,7 +3,7 @@
 // useTierGeneration — AI Tier Prompt Generation (Call 2)
 // ============================================================================
 // Calls POST /api/generate-tier-prompts to generate all 4 tier prompts
-// directly from the user's human text description via GPT-5.4-mini.
+// directly from the user's human text description via the Prompt Intelligence Engine.
 //
 // Fires in parallel with Call 1 (useSentenceConversion).
 // When a provider is selected, generates provider-tailored output.

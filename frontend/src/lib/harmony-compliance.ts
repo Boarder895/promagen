@@ -169,11 +169,12 @@ const MJ_PARAM_PATTERNS = {
 /**
  * P5: T2 Midjourney Parameter Compliance Gate.
  *
- * Validates that --ar, --v, --s, --no are all present in T2 output.
- * If missing, appends sensible defaults.
+ * Handles BOTH problems in one function:
+ * 1. DEDUP — GPT sometimes produces duplicate --ar/--v/--s/--no blocks
+ * 2. ADD — GPT sometimes forgets --ar/--v/--s/--no entirely
  *
- * This is the PERMANENT fix for B4 — GPT can forget parameters,
- * this function ensures they're always present.
+ * Execution order: dedup first → then check for missing → add if needed.
+ * This means it catches duplicates even if P7 in the route didn't run.
  */
 export function enforceMjParameters(
   prompt: string,
@@ -182,7 +183,63 @@ export function enforceMjParameters(
   const missingParams: string[] = [];
   let text = prompt;
 
-  // Check each required parameter
+  // ── STEP 1: DEDUP — collapse duplicate param blocks ────────────
+  const paramStart = text.search(/\s--(?:ar|v|s|no)\s/);
+  if (paramStart !== -1) {
+    const prose = text.slice(0, paramStart).trimEnd();
+    const paramSection = text.slice(paramStart);
+
+    // Count occurrences of each param
+    const arMatches = [...paramSection.matchAll(/--ar\s+(\d+:\d+)/g)];
+    const vMatches = [...paramSection.matchAll(/--v\s+(\d+)/g)];
+    const sMatches = [...paramSection.matchAll(/--s\s+(\d+)/g)];
+    const noBlocks = [...paramSection.matchAll(/--no\s+([^-]+?)(?=\s+--|$)/g)];
+
+    const hasDuplicates =
+      arMatches.length > 1 || vMatches.length > 1 ||
+      sMatches.length > 1 || noBlocks.length > 1;
+
+    if (hasDuplicates) {
+      // Keep last occurrence of --ar, --v, --s (usually more complete)
+      const ar = arMatches.length > 0 ? arMatches[arMatches.length - 1]?.[1] ?? '' : '';
+      const v = vMatches.length > 0 ? vMatches[vMatches.length - 1]?.[1] ?? '' : '';
+      const s = sMatches.length > 0 ? sMatches[sMatches.length - 1]?.[1] ?? '' : '';
+
+      // Merge ALL --no terms, deduplicate
+      const allNoTerms: string[] = [];
+      const seen = new Set<string>();
+      for (const block of noBlocks) {
+        const terms = (block[1] ?? '').split(',').map(t => t.trim()).filter(Boolean);
+        for (const term of terms) {
+          const lower = term.toLowerCase();
+          if (!seen.has(lower)) {
+            seen.add(lower);
+            allNoTerms.push(term);
+          }
+        }
+      }
+
+      // Strip trailing punctuation from last --no term
+      if (allNoTerms.length > 0) {
+        const last = allNoTerms[allNoTerms.length - 1];
+        if (last) {
+          allNoTerms[allNoTerms.length - 1] = last.replace(/[.!?]+$/, '').trim();
+        }
+      }
+
+      // Rebuild clean single block
+      const parts = [prose];
+      if (ar) parts.push(`--ar ${ar}`);
+      if (v) parts.push(`--v ${v}`);
+      if (s) parts.push(`--s ${s}`);
+      if (allNoTerms.length > 0) parts.push(`--no ${allNoTerms.join(', ')}`);
+
+      text = parts.join(' ');
+      fixes.push(`Deduplicated MJ parameters (${arMatches.length} --ar, ${vMatches.length} --v, ${sMatches.length} --s, ${noBlocks.length} --no blocks → 1 each)`);
+    }
+  }
+
+  // ── STEP 2: ADD — check for missing params and append ──────────
   if (!MJ_PARAM_PATTERNS.ar.test(text)) {
     missingParams.push('--ar');
   }
@@ -197,10 +254,7 @@ export function enforceMjParameters(
   }
 
   if (missingParams.length > 0) {
-    // Find insertion point — before --no if it exists, or at end
     const noIndex = text.indexOf('--no ');
-
-    // Build defaults for missing params
     const defaults: string[] = [];
     if (missingParams.includes('--ar')) defaults.push('--ar 16:9');
     if (missingParams.includes('--v')) defaults.push('--v 7');
@@ -209,17 +263,14 @@ export function enforceMjParameters(
     const paramBlock = defaults.join(' ');
 
     if (noIndex !== -1 && paramBlock) {
-      // Insert before --no
       const beforeNo = text.slice(0, noIndex).trimEnd();
       const noBlock = text.slice(noIndex);
       text = `${beforeNo} ${paramBlock} ${noBlock}`;
     } else if (paramBlock) {
-      // Append at end
       text = `${text.trimEnd()} ${paramBlock}`;
     }
 
     if (missingParams.includes('--no')) {
-      // Append generic --no if missing entirely
       text = `${text.trimEnd()} --no text, watermark, logo, blurry`;
       fixes.push('Added default --no block (scene-specific negatives recommended)');
     }

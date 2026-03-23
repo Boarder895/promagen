@@ -2,7 +2,7 @@
 // ============================================================================
 // POST /api/parse-sentence — Human Sentence Conversion
 // ============================================================================
-// ONE API call to GPT-4o-mini. Parse only. No optimisation.
+// ONE API call to the Prompt Intelligence Engine. Parse only. No optimisation.
 // Returns structured 12-category JSON from a natural English sentence.
 // The existing assemblePrompt() pipeline handles all optimisation.
 //
@@ -127,7 +127,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   const apiKey = env.providers.openAiApiKey;
   if (!apiKey) {
     return NextResponse.json(
-      { error: 'CONFIG_ERROR', message: 'OpenAI API key not configured.' },
+      { error: 'CONFIG_ERROR', message: 'Generation engine not configured.' },
       { status: 500 },
     );
   }
@@ -164,7 +164,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     );
   }
 
-  // ── Call OpenAI GPT-5.4-mini ────────────────────────────────────────
+  // ── Call generation engine ────────────────────────────────────────
   try {
     const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -186,7 +186,7 @@ export async function POST(req: NextRequest): Promise<Response> {
 
     if (!openaiRes.ok) {
       const errText = await openaiRes.text().catch(() => 'Unknown error');
-      console.error('[parse-sentence] OpenAI error:', openaiRes.status, errText);
+      console.error('[parse-sentence] Engine error:', openaiRes.status, errText);
       return NextResponse.json(
         { error: 'API_ERROR', message: 'Failed to parse your description. Please try again.' },
         { status: 502 },
@@ -197,7 +197,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     const content = openaiData?.choices?.[0]?.message?.content;
 
     if (!content || typeof content !== 'string') {
-      console.error('[parse-sentence] Empty OpenAI response:', openaiData);
+      console.error('[parse-sentence] Empty engine response:', openaiData);
       return NextResponse.json(
         { error: 'API_ERROR', message: 'Empty response from AI. Please try again.' },
         { status: 502 },
@@ -209,7 +209,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     try {
       jsonParsed = JSON.parse(content);
     } catch {
-      console.error('[parse-sentence] Invalid JSON from OpenAI:', content);
+      console.error('[parse-sentence] Invalid JSON from engine:', content);
       return NextResponse.json(
         { error: 'PARSE_ERROR', message: 'AI returned invalid data. Please try again.' },
         { status: 502 },

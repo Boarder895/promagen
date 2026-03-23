@@ -192,7 +192,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   const apiKey = env.providers.openAiApiKey;
   if (!apiKey) {
     return NextResponse.json(
-      { error: 'CONFIG_ERROR', message: 'OpenAI API key not configured.' },
+      { error: 'CONFIG_ERROR', message: 'Generation engine not configured.' },
       { status: 500 },
     );
   }
@@ -240,7 +240,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     ? `ASSEMBLED PROMPT TO OPTIMISE:\n${sanitisedPrompt}\n\nORIGINAL USER DESCRIPTION (for intent reference):\n${sanitisedOriginal}`
     : `ASSEMBLED PROMPT TO OPTIMISE:\n${sanitisedPrompt}`;
 
-  // ── Call OpenAI GPT-5.4-mini ────────────────────────────────────────
+  // ── Call generation engine ──────────────────────────────────────────
   try {
     const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -262,7 +262,7 @@ export async function POST(req: NextRequest): Promise<Response> {
 
     if (!openaiRes.ok) {
       const errText = await openaiRes.text().catch(() => 'Unknown error');
-      console.error('[optimise-prompt] OpenAI error:', openaiRes.status, errText);
+      console.error('[optimise-prompt] Engine error:', openaiRes.status, errText);
       return NextResponse.json(
         { error: 'API_ERROR', message: 'Optimisation failed. Please try again.' },
         { status: 502 },
@@ -273,7 +273,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     const content = openaiData?.choices?.[0]?.message?.content;
 
     if (!content || typeof content !== 'string') {
-      console.error('[optimise-prompt] Empty OpenAI response:', openaiData);
+      console.error('[optimise-prompt] Empty engine response:', openaiData);
       return NextResponse.json(
         { error: 'API_ERROR', message: 'Empty response from engine. Please try again.' },
         { status: 502 },
@@ -285,7 +285,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     try {
       jsonParsed = JSON.parse(content);
     } catch {
-      console.error('[optimise-prompt] Invalid JSON from OpenAI:', content);
+      console.error('[optimise-prompt] Invalid JSON from engine:', content);
       return NextResponse.json(
         { error: 'PARSE_ERROR', message: 'Engine returned invalid data. Please try again.' },
         { status: 502 },

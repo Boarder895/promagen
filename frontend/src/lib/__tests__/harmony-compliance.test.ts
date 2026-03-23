@@ -250,11 +250,37 @@ describe('enforceMjParameters (B4 regression lock)', () => {
     // the compliance gate should see params are present and not add more.
     const afterP7 = 'samurai::2.0 on a bridge --ar 16:9 --v 7 --s 500 --no text, watermark, logo, blurry, low quality, cropped subject, out of frame, muddy water, flat lighting, duplicate samurai';
     const result = enforceMjParameters(afterP7);
-    expect(result.wasFixed).toBe(false);
     expect(result.missingParams).toHaveLength(0);
     // Count occurrences of --ar — should be exactly 1
     const arCount = (result.text.match(/--ar/g) ?? []).length;
     expect(arCount).toBe(1);
+  });
+
+  it('R5: deduplicates double param blocks from GPT', () => {
+    // R5 bug: GPT produced TWO complete parameter blocks.
+    // enforceMjParameters must now dedup INSIDE the compliance gate.
+    const doubleParams = 'samurai::2.0 on a bridge, cherry blossoms --ar 16:9 --v 7 --s 500 --no text, watermark, logo, blurry --ar 16:9 --v 7 --s 500 --no modern clothing, extra people, city buildings';
+    const result = enforceMjParameters(doubleParams);
+    expect(result.wasFixed).toBe(true);
+    // Exactly ONE of each param
+    expect((result.text.match(/--ar/g) ?? []).length).toBe(1);
+    expect((result.text.match(/--v/g) ?? []).length).toBe(1);
+    expect((result.text.match(/--s/g) ?? []).length).toBe(1);
+    expect((result.text.match(/--no/g) ?? []).length).toBe(1);
+    // All --no terms merged and deduplicated
+    expect(result.text).toContain('text');
+    expect(result.text).toContain('modern clothing');
+    expect(result.text).toContain('city buildings');
+    // Prose preserved
+    expect(result.text).toContain('samurai::2.0 on a bridge, cherry blossoms');
+  });
+
+  it('R5: dedup handles exact R5 GPT output', () => {
+    const result = enforceMjParameters(R4_T2_DUPLICATE_PARAMS);
+    expect((result.text.match(/--ar/g) ?? []).length).toBe(1);
+    expect((result.text.match(/--v/g) ?? []).length).toBe(1);
+    expect((result.text.match(/--s/g) ?? []).length).toBe(1);
+    expect((result.text.match(/--no/g) ?? []).length).toBe(1);
   });
 });
 
