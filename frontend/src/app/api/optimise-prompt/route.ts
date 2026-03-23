@@ -24,6 +24,8 @@ import { z } from 'zod';
 
 import { env } from '@/lib/env';
 import { rateLimit } from '@/lib/rate-limit';
+import { enforceT1Syntax } from '@/lib/harmony-compliance';
+import type { ComplianceContext } from '@/lib/harmony-compliance';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -299,9 +301,26 @@ export async function POST(req: NextRequest): Promise<Response> {
       );
     }
 
-    // ── Return validated optimised prompt ─────────────────────────────
+    // ── Compliance gate: enforce correct syntax on optimised output ──
+    const result = { ...validated.data };
+    const compCtx: ComplianceContext = {
+      weightingSyntax: parsed.data.providerContext.weightingSyntax,
+      supportsWeighting: parsed.data.providerContext.supportsWeighting ?? false,
+      providerName: parsed.data.providerContext.name,
+      tier: parsed.data.providerContext.tier,
+    };
+
+    const syntaxResult = enforceT1Syntax(result.optimised, compCtx);
+    if (syntaxResult.wasFixed) {
+      result.optimised = syntaxResult.text;
+      result.charCount = syntaxResult.text.length;
+      result.changes = [...result.changes, ...syntaxResult.fixes];
+      console.debug('[optimise-prompt] Compliance fix:', syntaxResult.fixes.join('; '));
+    }
+
+    // ── Return compliance-gated optimised prompt ─────────────────────
     return NextResponse.json(
-      { result: validated.data },
+      { result },
       {
         status: 200,
         headers: { 'Cache-Control': 'no-store' },

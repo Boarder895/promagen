@@ -25,6 +25,8 @@ import { z } from 'zod';
 
 import { env } from '@/lib/env';
 import { rateLimit } from '@/lib/rate-limit';
+import { enforceT1Syntax, enforceMjParameters } from '@/lib/harmony-compliance';
+import type { ComplianceContext } from '@/lib/harmony-compliance';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -469,9 +471,41 @@ export async function POST(req: NextRequest): Promise<Response> {
     // ── Post-process: catch GPT mechanical errors ──────────────────
     const processed = postProcessTiers(validated.data);
 
-    // ── Return post-processed tier prompts ───────────────────────────
+    // ── Compliance gate: deterministic syntax validation (P4/P5) ──
+    // This is the permanent safety net — catches what GPT misses, 100% of the time.
+    let compliant = processed;
+    if (parsed.data.providerContext) {
+      const compCtx: ComplianceContext = {
+        weightingSyntax: parsed.data.providerContext.weightingSyntax,
+        supportsWeighting: parsed.data.providerContext.supportsWeighting ?? false,
+        providerName: parsed.data.providerContext.name,
+        tier: parsed.data.providerContext.tier,
+      };
+
+      // P4: T1 syntax compliance
+      const t1Result = enforceT1Syntax(processed.tier1.positive, compCtx);
+      if (t1Result.wasFixed) {
+        compliant = {
+          ...compliant,
+          tier1: { ...compliant.tier1, positive: t1Result.text },
+        };
+        console.debug('[generate-tier-prompts] P4 compliance fix:', t1Result.fixes.join('; '));
+      }
+    }
+
+    // P5: T2 MJ parameter compliance (always, regardless of provider)
+    const t2Result = enforceMjParameters(processed.tier2.positive);
+    if (t2Result.wasFixed) {
+      compliant = {
+        ...compliant,
+        tier2: { ...compliant.tier2, positive: t2Result.text },
+      };
+      console.debug('[generate-tier-prompts] P5 compliance fix:', t2Result.fixes.join('; '));
+    }
+
+    // ── Return compliance-gated tier prompts ─────────────────────────
     return NextResponse.json(
-      { tiers: processed },
+      { tiers: compliant },
       {
         status: 200,
         headers: { 'Cache-Control': 'no-store' },

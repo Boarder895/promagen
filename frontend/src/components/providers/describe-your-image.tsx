@@ -427,7 +427,7 @@ export function DescribeYourImage({
 
             {/* Right: chevron */}
             <svg
-              className={`text-slate-500 shrink-0 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
+              className={`text-slate-300 shrink-0 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -641,16 +641,6 @@ export function DescribeYourImage({
                   </span>
                 )}
 
-                {/* Ctrl+Enter hint */}
-                {!isLoading && inputText.trim() && (
-                  <span
-                    className="text-slate-500"
-                    style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)' }}
-                  >
-                    Ctrl+Enter
-                  </span>
-                )}
-
                 {/* Drift indicator — §4 Zeigarnik Effect: nags user to regenerate */}
                 {!isLoading && hasGenerated && (
                   <DriftIndicator
@@ -664,7 +654,7 @@ export function DescribeYourImage({
               <button
                 type="button"
                 onClick={() => setIsExpanded(false)}
-                className="text-slate-500 hover:text-slate-300 transition-colors cursor-pointer"
+                className="text-slate-300 hover:text-white transition-colors cursor-pointer"
                 style={{
                   padding: 'clamp(4px, 0.4vw, 6px)',
                   fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)',

@@ -510,12 +510,12 @@ export function SceneSelector({
               </span>
 
               <span
-                className="text-slate-500 shrink-0"
+                className="text-slate-300 shrink-0"
                 style={{ fontSize: 'clamp(0.6rem, 0.68vw, 0.73rem)' }}
               >
                 ·&nbsp;{TOTAL_SCENES} scenes
                 {!isPro && (
-                  <span className="text-emerald-500/70">&nbsp;·&nbsp;{FREE_SCENE_COUNT} free</span>
+                  <span className="text-emerald-400">&nbsp;·&nbsp;{FREE_SCENE_COUNT} free</span>
                 )}
               </span>
 
@@ -579,7 +579,7 @@ export function SceneSelector({
 
             {/* Right: chevron */}
             <svg
-              className={`text-slate-500 shrink-0 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
+              className={`text-slate-300 shrink-0 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -692,7 +692,7 @@ export function SceneSelector({
                     )}
                   </div>
                   <span
-                    className="text-slate-500/80"
+                    className="text-slate-300"
                     style={{ fontSize: 'clamp(0.55rem, 0.62vw, 0.68rem)' }}
                   >
                     {scenesForWorld.length} scene{scenesForWorld.length !== 1 ? 's' : ''}
@@ -768,7 +768,7 @@ export function SceneSelector({
 
             {/* Body */}
             <p
-              className="text-slate-400"
+              className="text-slate-300"
               style={{
                 fontSize: 'clamp(0.62rem, 0.7vw, 0.78rem)',
                 marginBottom: 'clamp(12px, 1.2vw, 18px)',
@@ -844,7 +844,7 @@ export function SceneSelector({
                   {upgradeScene.name}
                 </span>
                 <span
-                  className="block text-slate-500 truncate"
+                  className="block text-slate-300 truncate"
                   style={{ fontSize: 'clamp(0.58rem, 0.65vw, 0.72rem)' }}
                 >
                   {upgradeScene.description}
@@ -871,7 +871,7 @@ export function SceneSelector({
                 🔓 Unlock 175 Pro scenes
               </p>
               <ul
-                className="text-slate-400"
+                className="text-slate-300"
                 style={{
                   fontSize: 'clamp(0.58rem, 0.65vw, 0.72rem)',
                   lineHeight: '1.6',
@@ -893,7 +893,7 @@ export function SceneSelector({
               <button
                 type="button"
                 onClick={() => setUpgradeSceneId(undefined)}
-                className="rounded-lg border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200 transition-colors"
+                className="rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
                 style={{
                   padding: 'clamp(5px, 0.5vw, 8px) clamp(12px, 1vw, 18px)',
                   fontSize: 'clamp(0.62rem, 0.7vw, 0.78rem)',
@@ -977,7 +977,7 @@ function WorldPill({ world, isActive, onClick, isProLocked = false, sceneCount }
         ${
           isActive
             ? 'bg-slate-800/70 text-slate-100 shadow-sm'
-            : 'text-slate-400 hover:bg-slate-800/30 hover:text-slate-300'
+            : 'text-slate-300 hover:bg-slate-800/30 hover:text-white'
         }
       `}
       style={{
@@ -1144,7 +1144,7 @@ function SceneCard({
       {/* Category count (tier-aware) + affinity dot */}
       <div className="flex items-center" style={{ gap: 'clamp(3px, 0.3vw, 5px)' }}>
         <span
-          className={isActive ? 'text-cyan-400/50' : 'text-slate-600'}
+          className={isActive ? 'text-cyan-300' : 'text-slate-300'}
           style={{ fontSize: 'clamp(0.46rem, 0.52vw, 0.58rem)' }}
         >
           {displayCount}

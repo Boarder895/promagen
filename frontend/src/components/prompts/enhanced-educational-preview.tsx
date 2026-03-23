@@ -333,7 +333,7 @@ function DnaBar({ selections, dominantFamily, healthScore: _healthScore, conflic
 
   // Color based on score
   const scoreColor =
-    score > 70 ? 'text-emerald-400' : score > 40 ? 'text-yellow-400' : 'text-slate-400';
+    score > 70 ? 'text-emerald-400' : score > 40 ? 'text-yellow-400' : 'text-red-400';
 
   const barGradient =
     score > 70
@@ -347,7 +347,7 @@ function DnaBar({ selections, dominantFamily, healthScore: _healthScore, conflic
       {/* DNA Icon + Label */}
       <div className="flex items-center gap-2 shrink-0">
         <span className="text-lg">🧬</span>
-        <span className="text-xs font-medium text-white/60 hidden sm:inline">Prompt DNA</span>
+        <span className="text-xs font-medium text-white hidden sm:inline">Prompt DNA</span>
       </div>
 
       {/* Progress Bar Container - Stretches to fill */}
@@ -365,7 +365,7 @@ function DnaBar({ selections, dominantFamily, healthScore: _healthScore, conflic
       <div className="flex items-center gap-2 shrink-0">
         <span className={`text-xl font-bold tabular-nums ${scoreColor}`}>{score}%</span>
         <div className="flex flex-col shrink-0 hidden md:flex">
-          <span className="text-slate-400" style={{ fontSize: 'clamp(9px, 0.6vw, 11px)' }}>
+          <span className="text-slate-300" style={{ fontSize: 'clamp(9px, 0.6vw, 11px)' }}>
             {totalFilled}/{totalCategories} filled
           </span>
           {conflictCount > 0 && (
@@ -1356,7 +1356,7 @@ export default function EnhancedEducationalPreview({
 
         {/* Show selected provider tier info */}
         {selectedProvider && (
-          <div className="mt-3 flex items-center gap-2 text-xs text-white/60">
+          <div className="mt-3 flex items-center gap-2 text-xs text-slate-300">
             <span className="font-medium text-white">{selectedProvider.name}</span>
             <span>·</span>
             <span>
@@ -1425,8 +1425,8 @@ export default function EnhancedEducationalPreview({
             {hasContent && (
               <div className="rounded-xl bg-slate-900/80 border border-white/10 p-3">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs font-medium text-slate-400">Your selections</span>
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs font-medium text-slate-200">Your selections</span>
+                  <span className="text-xs text-slate-300">
                     {Object.values(selections).flat().length} terms
                   </span>
                 </div>
@@ -1454,7 +1454,7 @@ export default function EnhancedEducationalPreview({
                           }}
                         />
                         {term}
-                        <span className="text-xs text-slate-400">✕</span>
+                        <span className="text-xs text-slate-300">✕</span>
                       </button>
                     )),
                   )}
@@ -1530,7 +1530,7 @@ export default function EnhancedEducationalPreview({
                   <span className="text-xs font-medium text-emerald-400">
                     ✨ Intelligence added:
                   </span>
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-slate-300">
                     {diffData.diffs.filter(d => d.type === 'added').length} new ·{' '}
                     {diffData.diffs.filter(d => d.type === 'modified').length} enhanced
                   </span>
@@ -1561,7 +1561,7 @@ export default function EnhancedEducationalPreview({
                         Optimized prompt
                         {selectedProvider && (
                           <>
-                            <span className="text-white/40">in</span>
+                            <span className="text-slate-300">in</span>
                             <span className="text-white/70">{selectedProvider.name}</span>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
@@ -1633,7 +1633,7 @@ export default function EnhancedEducationalPreview({
                             ? 'bg-emerald-500/20 text-emerald-400'
                             : isOptimizerEnabled && selectedProviderId
                               ? 'bg-white/5 text-emerald-300 hover:bg-white/10 hover:text-emerald-200'
-                              : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'
+                              : 'bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white'
                         }`}
                         title={copiedAssembled ? 'Copied!' : isOptimizerEnabled && selectedProviderId ? 'Copy optimized prompt' : 'Copy assembled prompt'}
                         aria-label={copiedAssembled ? 'Copied to clipboard' : isOptimizerEnabled && selectedProviderId ? 'Copy optimized prompt to clipboard' : 'Copy assembled prompt to clipboard'}
@@ -1708,7 +1708,7 @@ export default function EnhancedEducationalPreview({
                         <span className="text-xs text-amber-200">
                           <span className="font-medium">Optimized:</span>{' '}
                           {optimizedResult.originalLength} → {effectiveOptimisedLength} chars{' '}
-                          <span className="text-amber-400/60">
+                          <span className="text-amber-300">
                             (saved {optimizedResult.originalLength - effectiveOptimisedLength})
                           </span>
                         </span>
@@ -1757,7 +1757,7 @@ export default function EnhancedEducationalPreview({
                           Optimized prompt
                           {selectedProvider && (
                             <>
-                              <span className="text-white/40">in</span>
+                              <span className="text-slate-300">in</span>
                               <span className="text-white/70">{selectedProvider.name}</span>
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
@@ -1878,7 +1878,7 @@ export default function EnhancedEducationalPreview({
               ${
                 hasContent
                   ? 'border-slate-600 bg-slate-900 text-slate-50 hover:border-slate-400 hover:bg-slate-800 cursor-pointer'
-                  : 'cursor-not-allowed border-slate-800 bg-slate-900/50 text-slate-400'
+                  : 'cursor-not-allowed border-slate-800 bg-slate-900/50 text-slate-300'
               }
               focus-visible:outline-none focus-visible:ring focus-visible:ring-sky-400/80
             `}
@@ -1944,7 +1944,7 @@ export default function EnhancedEducationalPreview({
                 ? savedConfirmation
                   ? 'border-emerald-400 bg-emerald-500/20 text-emerald-300 cursor-pointer'
                   : 'border-emerald-500/70 bg-gradient-to-r from-emerald-600/20 to-teal-600/20 text-emerald-100 hover:from-emerald-600/30 hover:to-teal-600/30 hover:border-emerald-400 cursor-pointer'
-                : 'cursor-not-allowed border-slate-700 bg-slate-800/50 text-slate-400'
+                : 'cursor-not-allowed border-slate-700 bg-slate-800/50 text-slate-300'
             }`}
           >
             {savedConfirmation ? (
