@@ -28,7 +28,7 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { Combobox } from '@/components/ui/combobox';
 import { FourTierPromptPreview } from '@/components/prompt-builder/four-tier-prompt-preview';
-import { SceneSelector } from '@/components/providers/scene-selector';
+// SceneSelector REMOVED from Prompt Lab — algorithm-only path. Remains in standard builder.
 import { DescribeYourImage } from '@/components/providers/describe-your-image';
 // Removed: CompositionModeToggle, AspectRatioSelector, ExploreDrawer (dropdowns/AR removed)
 import { TextLengthOptimizer } from '@/components/providers/text-length-optimizer';
@@ -370,15 +370,6 @@ export default function EnhancedEducationalPreview({
   const [copiedOptimized, setCopiedOptimized] = useState(false);
   const [copiedAssembled, setCopiedAssembled] = useState(false);
 
-  // ── Mutual exclusion: SceneSelector vs DescribeYourImage ──────────
-  // When one is expanded, the other hides. Everything else stays visible.
-  const [activeInput, setActiveInput] = useState<'none' | 'scene' | 'describe'>('none');
-  const handleSceneExpandChange = useCallback((expanded: boolean) => {
-    setActiveInput(expanded ? 'scene' : 'none');
-  }, []);
-  const handleDescribeExpandChange = useCallback((expanded: boolean) => {
-    setActiveInput(expanded ? 'describe' : 'none');
-  }, []);
 
   // ── External clear signal for DescribeYourImage (footer Clear All) ──
   const [clearSignal, setClearSignal] = useState(0);
@@ -418,11 +409,8 @@ export default function EnhancedEducationalPreview({
     return buildTermIndexFromSelections(selections);
   }, [isPro, selections]);
 
-  // Scene Starters state
-  const [_activeSceneId, setActiveSceneId] = useState<string | undefined>(undefined);
-
-  // ── CategoryState adapter for SceneSelector ──
-  // SceneSelector reads/writes Record<PromptCategory, CategoryState>.
+  // ── CategoryState adapter for DescribeYourImage ──
+  // DescribeYourImage reads/writes Record<PromptCategory, CategoryState>.
   // Educational preview uses PromptSelections (Record<string, string[]>).
   // This adapter bridges the two formats without changing either component.
   const categoryStateForScene = useMemo(() => {
@@ -473,12 +461,6 @@ export default function EnhancedEducationalPreview({
     [],
   );
 
-  const handleActiveSceneChange = useCallback(
-    (sceneId: string | undefined, _prefills?: Record<string, string[]>) => {
-      setActiveSceneId(sceneId);
-    },
-    [],
-  );
 
   // Active tier — clickable by user OR set by provider selection
   const [activeTier, setActiveTier] = useState<PlatformTier>(DEFAULT_TIER);
@@ -730,7 +712,6 @@ export default function EnhancedEducationalPreview({
   const handleClear = useCallback(() => {
     setSelections(EMPTY_SELECTIONS);
     setSelectedProviderId(null);
-    setActiveSceneId(undefined);
     setOptimizerEnabled(false);
     clearAiOptimise();
     onDescribeClear?.();
@@ -867,27 +848,14 @@ export default function EnhancedEducationalPreview({
       {/* Main Content */}
       <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30">
         {/* ════════════════════════════════════════════════════════ */}
-        {/* Scene Starters — quick-start strip (Phase L1)          */}
-        {/* Same component as real prompt builder. Collapsed by     */}
-        {/* default. Selecting a scene prefills all categories.     */}
-        {/* Human factor: Variable Reward + Peak-End Rule —         */}
-        {/* the cascade of dropdowns filling at once is the peak.   */}
+        {/* Scene Starters REMOVED — Prompt Lab is algorithm-only.  */}
+        {/* Scene Starters remain in standard builder.              */}
         {/* ════════════════════════════════════════════════════════ */}
-        <SceneSelector
-          categoryState={categoryStateForScene}
-          setCategoryState={setCategoryStateAdapter}
-          userTier="paid"
-          isLocked={false}
-          onActiveSceneChange={handleActiveSceneChange}
-          platformTier={activeTier}
-          hidden={activeInput === 'describe'}
-          onExpandChange={handleSceneExpandChange}
-        />
 
         {/* ════════════════════════════════════════════════════════ */}
         {/* Describe Your Image — Human Sentence Conversion         */}
-        {/* Same component as in PromptBuilder. Always shown in     */}
-        {/* Prompt Lab (both provider-selected and no-provider).    */}
+        {/* The primary input for the Prompt Lab. User types or     */}
+        {/* pastes natural text, clicks Generate, algorithms run.   */}
         {/* Authority: human-sentence-conversion.md                  */}
         {/* ════════════════════════════════════════════════════════ */}
         <DescribeYourImage
@@ -901,7 +869,6 @@ export default function EnhancedEducationalPreview({
             clearAiOptimise();
             setSelections(EMPTY_SELECTIONS);
             setOptimizerEnabled(false);
-            setActiveSceneId(undefined);
           }}
           isDrifted={isDrifted}
           driftChangeCount={driftChangeCount}
@@ -912,8 +879,6 @@ export default function EnhancedEducationalPreview({
           onRemoveSideNote={onRemoveSideNote}
           sideNotePulseKey={sideNotePulseKey}
           generateDisabled={generateDisabled}
-          hidden={activeInput === 'scene'}
-          onExpandChange={handleDescribeExpandChange}
         />
 
         {/* ════════════════════════════════════════════════════════ */}

@@ -138,7 +138,7 @@ function PromptLengthGauge({ charCount, optimalChars, diminishingAt }: LengthGau
 
   if (charCount <= 0) {
     status = '';
-    statusColor = 'text-white/30';
+    statusColor = 'text-slate-300';
     cursorColor = 'rgba(100,116,139,0.4)';
   } else if (charCount <= optimalChars) {
     status = 'sweet spot';
@@ -164,7 +164,7 @@ function PromptLengthGauge({ charCount, optimalChars, diminishingAt }: LengthGau
       {/* Label row */}
       <div className="flex items-center justify-between" style={{ marginBottom: 'clamp(2px, 0.2vw, 4px)' }}>
         <span
-          className="text-white/40 font-medium"
+          className="text-slate-300 font-medium"
           style={{ fontSize: 'clamp(0.48rem, 0.52vw, 0.6rem)' }}
         >
           Prompt length
@@ -346,16 +346,16 @@ function TierCard({
         <div className="flex items-center gap-2">
           <span className={`
             inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold
-            ${isActive ? 'bg-white text-black' : 'bg-white/10 text-white/60'}
+            ${isActive ? 'bg-white text-black' : 'bg-white/10 text-slate-200'}
           `}>
             {tier}
           </span>
           <div>
-            <h4 className={`font-semibold text-sm ${isActive ? 'text-white' : 'text-white/70'}`}>
+            <h4 className={`font-semibold text-sm ${isActive ? 'text-white' : 'text-slate-200'}`}>
               {config.name}
             </h4>
             {!compact && (
-              <p className="text-xs text-white/50">
+              <p className="text-xs text-slate-300">
                 {config.description}
               </p>
             )}
@@ -378,7 +378,7 @@ function TierCard({
               key={i}
               className={`
                 px-2 py-0.5 rounded text-xs font-mono
-                ${isActive ? 'bg-white/20 text-white/80' : 'bg-white/5 text-white/40'}
+                ${isActive ? 'bg-white/20 text-white' : 'bg-white/5 text-slate-300'}
               `}
             >
               {feature}
@@ -397,8 +397,8 @@ function TierCard({
       >
         <p className={`
           break-words whitespace-pre-wrap
-          ${!isPro ? (isActive ? 'text-white/90' : 'text-white/60') : ''}
-          ${!positive && 'italic text-white/30'}
+          ${isActive ? 'text-white' : 'text-slate-200'}
+          ${!positive && 'italic text-slate-300'}
         `}>
           {!positive
             ? 'Select options to generate prompt...'
@@ -409,13 +409,16 @@ function TierCard({
                   if (!hasAnatomy) return positive;
                   return segments.map((seg, i) => {
                     const c = CATEGORY_COLOURS[seg.category] ?? CATEGORY_COLOURS.structural;
+                    // Structural text inherits the <p> base colour (white/slate-200)
+                    // Only category-matched text gets coloured inline
+                    const isStructural = seg.category === 'structural';
                     return (
                       <span
                         key={i}
-                        style={{
+                        style={!isStructural ? {
                           color: c,
                           textShadow: seg.weight >= 1.05 ? `0 0 10px ${c}50` : undefined,
-                        }}
+                        } : undefined}
                       >
                         {seg.text}
                       </span>
@@ -456,7 +459,7 @@ function TierCard({
                 ? 'bg-white text-black hover:bg-white/90'
                 : 'bg-white/10 text-white hover:bg-white/20'
               }`
-            : 'bg-white/5 text-white/30 cursor-not-allowed'
+            : 'bg-white/5 text-slate-300 cursor-not-allowed'
           }
         `}
       >
@@ -552,7 +555,7 @@ function TierProviderIcons({
               />
             ) : (
               <span
-                className="text-white/60 font-medium"
+                className="text-slate-200 font-medium"
                 style={{ fontSize: 'clamp(0.5rem, 0.55vw, 0.65rem)' }}
               >
                 {p.name.slice(0, 2)}
@@ -752,10 +755,10 @@ export function FourTierPromptPreview({
         <div className="flex items-start gap-2">
           <span className="text-base">💡</span>
           <div>
-            <p className="text-xs text-white/70">
+            <p className="text-xs text-white">
               <strong>Compare:</strong> Each tier formats your prompt differently.
             </p>
-            <p className="text-[10px] text-white/50 mt-1">
+            <p className="text-[10px] text-slate-300 mt-1">
               T1 uses <code className="text-sky-400">(term:1.2)</code> weights • 
               T2 uses <code className="text-purple-400">--no</code> • 
               T3 uses sentences • 
