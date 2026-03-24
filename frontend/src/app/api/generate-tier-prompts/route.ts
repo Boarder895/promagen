@@ -298,6 +298,30 @@ function deduplicateMjParams(prompt: string): string {
     }
   }
 
+  // Detect and remove run-on fusion artifacts.
+  // GPT sometimes duplicates the entire --no list without a comma separator:
+  //   --no A, B, C A, B, C  →  comma-split gives [..., "C A", ...]
+  // "C A" is a fusion of two real terms. Detect by checking if any term
+  // can be split into two parts where BOTH parts are already in the list.
+  const termSetLower = new Set(allNoTerms.map(t => t.toLowerCase()));
+  const fusionIndices: number[] = [];
+  for (let i = 0; i < allNoTerms.length; i++) {
+    const words = allNoTerms[i]!.toLowerCase().split(/\s+/);
+    if (words.length <= 2) continue; // 1-2 word terms can't be fusions
+    for (let splitAt = 1; splitAt < words.length; splitAt++) {
+      const firstPart = words.slice(0, splitAt).join(' ');
+      const secondPart = words.slice(splitAt).join(' ');
+      if (termSetLower.has(firstPart) && termSetLower.has(secondPart)) {
+        fusionIndices.push(i);
+        break;
+      }
+    }
+  }
+  // Remove fusions in reverse to preserve indices
+  for (let i = fusionIndices.length - 1; i >= 0; i--) {
+    allNoTerms.splice(fusionIndices[i]!, 1);
+  }
+
   // Strip trailing punctuation from last negative term
   if (allNoTerms.length > 0) {
     const last = allNoTerms[allNoTerms.length - 1];

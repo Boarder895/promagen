@@ -199,7 +199,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     if (!content || typeof content !== 'string') {
       console.error('[parse-sentence] Empty engine response:', openaiData);
       return NextResponse.json(
-        { error: 'API_ERROR', message: 'Empty response from AI. Please try again.' },
+        { error: 'API_ERROR', message: 'Empty response from engine. Please try again.' },
         { status: 502 },
       );
     }
@@ -211,7 +211,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     } catch {
       console.error('[parse-sentence] Invalid JSON from engine:', content);
       return NextResponse.json(
-        { error: 'PARSE_ERROR', message: 'AI returned invalid data. Please try again.' },
+        { error: 'PARSE_ERROR', message: 'Engine returned invalid data. Please try again.' },
         { status: 502 },
       );
     }
@@ -220,7 +220,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     if (!validated.success) {
       console.error('[parse-sentence] Schema validation failed:', validated.error.issues);
       return NextResponse.json(
-        { error: 'PARSE_ERROR', message: 'AI response did not match expected format. Please try again.' },
+        { error: 'PARSE_ERROR', message: 'Engine response did not match expected format. Please try again.' },
         { status: 502 },
       );
     }
