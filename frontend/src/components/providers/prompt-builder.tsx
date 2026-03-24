@@ -229,6 +229,21 @@ export interface PromptBuilderProps {
   isTierGenerating?: boolean;
   /** Provider name the AI tiers were generated for */
   generatedForProvider?: string | null;
+  // ── Prompt Lab v4 pass-through ────────────────────────────────────
+  /** Assessment UI element to render between DescribeYourImage and category grid */
+  assessmentElement?: React.ReactNode;
+  /** When true, DescribeYourImage skips internal Call 1 (extract) — orchestrator handles it */
+  skipInternalParse?: boolean;
+  /** Whether external assessment is loading (v4: Call 1 in assess mode) */
+  externalLoading?: boolean;
+  /** Side notes to display alongside textarea */
+  sideNotes?: import('@/types/category-assessment').SideNote[];
+  /** Called when user removes a side note pill */
+  onRemoveSideNote?: (category: import('@/types/prompt-builder').PromptCategory) => void;
+  /** OD-6: Pulse key for side note pills after re-assessment */
+  sideNotePulseKey?: number;
+  /** When true, DYI Generate Prompt button is disabled (assessment exists, no drift) */
+  generateDisabled?: boolean;
 }
 
 // Platforms that use --no inline for negatives
@@ -955,6 +970,13 @@ export function PromptBuilder({
   aiTierPrompts: _aiTierPrompts,
   isTierGenerating: _isTierGenerating,
   generatedForProvider: _generatedForProvider,
+  assessmentElement,
+  skipInternalParse,
+  externalLoading,
+  sideNotes,
+  onRemoveSideNote,
+  sideNotePulseKey,
+  generateDisabled,
 }: PromptBuilderProps) {
   // ============================================================================
   // Platform ID (computed first for hook dependency)
@@ -1041,6 +1063,15 @@ export function PromptBuilder({
   // Phase 3: Explore Drawer accordion — only one drawer open at a time
   const [expandedExploreCategory, setExpandedExploreCategory] =
     useState<PromptCategory | null>(null);
+
+  // ── Mutual exclusion: SceneSelector vs DescribeYourImage ──────────
+  const [activeInput, setActiveInput] = useState<'none' | 'scene' | 'describe'>('none');
+  const handleSceneExpandChange = useCallback((expanded: boolean) => {
+    setActiveInput(expanded ? 'scene' : 'none');
+  }, []);
+  const handleDescribeExpandChange = useCallback((expanded: boolean) => {
+    setActiveInput(expanded ? 'describe' : 'none');
+  }, []);
 
   const handleActiveSceneChange = useCallback(
     (
@@ -2702,6 +2733,8 @@ export function PromptBuilder({
             platformTier={platformTier}
             feedbackTermHints={rawTermHints}
             initialSceneId={preloadedSceneId}
+            hidden={activeInput === 'describe'}
+            onExpandChange={handleSceneExpandChange}
           />
 
           {/* ════════════════════════════════════════════════════════ */}
@@ -2720,8 +2753,24 @@ export function PromptBuilder({
               onClear={onDescribeClear}
               isDrifted={isDrifted}
               driftChangeCount={driftChangeCount}
+              skipInternalParse={skipInternalParse}
+              externalLoading={externalLoading}
+              sideNotes={sideNotes}
+              onRemoveSideNote={onRemoveSideNote}
+              sideNotePulseKey={sideNotePulseKey}
+              generateDisabled={generateDisabled}
+              hidden={activeInput === 'scene'}
+              onExpandChange={handleDescribeExpandChange}
             />
           )}
+
+          {/* ════════════════════════════════════════════════════════ */}
+          {/* Assessment Box — Prompt Lab v4 Phase 2 (Assess)         */}
+          {/* Rendered between text input and category grid.          */}
+          {/* Only present when orchestrator provides it.             */}
+          {/* Authority: prompt-lab-v4-flow.md §4                     */}
+          {/* ════════════════════════════════════════════════════════ */}
+          {assessmentElement}
 
           {/* Category dropdowns grid */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

@@ -32,6 +32,8 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import type { PromptCategory, CategoryState } from '@/types/prompt-builder';
 import { useSentenceConversion } from '@/hooks/use-sentence-conversion';
 import { DriftIndicator } from '@/components/prompt-lab/drift-indicator';
+import { SideNotePills } from '@/components/prompt-lab/side-note-pills';
+import type { SideNote } from '@/types/category-assessment';
 
 // ============================================================================
 // CONSTANTS
@@ -142,6 +144,28 @@ export interface DescribeYourImageProps {
   driftChangeCount?: number;
   /** Increment to trigger external clear (e.g., from footer Clear All) */
   clearSignal?: number;
+  /**
+   * When true, handleGenerate calls ONLY onGenerate() and skips the internal
+   * useSentenceConversion convert() call. Used by Prompt Lab v4 where the
+   * orchestrator fires Call 1 (assess mode) instead of the old Call 1 (extract).
+   * Default: false (standard builder behaviour unchanged).
+   */
+  skipInternalParse?: boolean;
+  /** Whether the external assessment/generation is in progress (disables Generate button) */
+  externalLoading?: boolean;
+  // ── Prompt Lab v4: Side notes (§7) ──────────────────────────────────
+  /** Side notes to display as pills alongside the textarea */
+  sideNotes?: SideNote[];
+  /** Called when user removes a side note pill */
+  onRemoveSideNote?: (category: PromptCategory) => void;
+  /** OD-6: Incrementing key to pulse surviving pills after re-assessment */
+  sideNotePulseKey?: number;
+  /** When true, Generate Prompt button is disabled (assessment exists, no drift) */
+  generateDisabled?: boolean;
+  /** When true, the entire component is hidden (mutual exclusion with SceneSelector) */
+  hidden?: boolean;
+  /** Called when expand state changes (for parent coordination) */
+  onExpandChange?: (expanded: boolean) => void;
 }
 
 // ============================================================================
@@ -212,6 +236,14 @@ export function DescribeYourImage({
   isDrifted = false,
   driftChangeCount = 0,
   clearSignal = 0,
+  skipInternalParse = false,
+  externalLoading = false,
+  sideNotes = [],
+  onRemoveSideNote,
+  sideNotePulseKey = 0,
+  generateDisabled = false,
+  hidden = false,
+  onExpandChange,
 }: DescribeYourImageProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [inputText, setInputText] = useState('');
@@ -241,10 +273,15 @@ export function DescribeYourImage({
     }
   }, [clearSignal, setCategoryState, onTextChange, onClear]);
   // ── Toggle expand/collapse ────────────────────────────────────────
+  // Both setState calls are in the same event handler — React 18 batches
+  // them into a single render. onExpandChange must NOT be inside the
+  // setIsExpanded updater (that runs during render → React error).
   const handleToggle = useCallback(() => {
     if (isLocked) return;
-    setIsExpanded((prev) => !prev);
-  }, [isLocked]);
+    const next = !isExpanded;
+    setIsExpanded(next);
+    onExpandChange?.(next);
+  }, [isLocked, isExpanded, onExpandChange]);
 
   // Focus textarea when expanded
   useEffect(() => {
@@ -264,14 +301,22 @@ export function DescribeYourImage({
 
   // ── Generate prompt ───────────────────────────────────────────────
   const handleGenerate = useCallback(async () => {
-    if (!inputText.trim() || isLoading) return;
+    if (!inputText.trim() || isLoading || externalLoading) return;
+
+    // v4 mode: orchestrator handles Call 1 (assess). We just notify.
+    if (skipInternalParse) {
+      onGenerate?.(inputText);
+      return;
+    }
+
+    // Standard builder mode: fire Call 1 (extract) + Call 2 in parallel
     setHasGenerated(false);
     // Fire Call 2 in parallel via orchestrator callback (ai-disguise.md §5)
     onGenerate?.(inputText);
     // Fire Call 1 (category extraction — existing)
     await convert(inputText);
     setHasGenerated(true);
-  }, [inputText, isLoading, convert, onGenerate]);
+  }, [inputText, isLoading, externalLoading, skipInternalParse, convert, onGenerate]);
 
   // ── Clear all — resets textarea, categories, AI state ─────────────
   // Fix: Full cascade reset — textarea + dropdowns + AI tiers + optimizer + drift
@@ -346,7 +391,7 @@ export function DescribeYourImage({
     : [];
 
   return (
-    <>
+    <div style={{ display: hidden ? 'none' : undefined }}>
       <style dangerouslySetInnerHTML={{ __html: DESCRIBE_STYLES }} />
 
       <div>
@@ -497,6 +542,16 @@ export function DescribeYourImage({
               </span>
             </div>
 
+            {/* ── Side note pills (§7 — user's Manual choices) ─────────── */}
+            {sideNotes.length > 0 && onRemoveSideNote && (
+              <SideNotePills
+                sideNotes={sideNotes}
+                onRemove={onRemoveSideNote}
+                disabled={isLoading || externalLoading}
+                pulseKey={sideNotePulseKey}
+              />
+            )}
+
             {/* ── Format detection warning ──────────────────────────── */}
             {formatWarning.detected && (
               <div
@@ -543,17 +598,19 @@ export function DescribeYourImage({
                 <button
                   type="button"
                   onClick={handleGenerate}
-                  disabled={isLoading || !inputText.trim()}
+                  disabled={isLoading || externalLoading || !inputText.trim() || generateDisabled}
                   className={`
                     group relative inline-flex items-center overflow-hidden rounded-lg font-semibold text-white
                     transition-all duration-200
                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/80
                     ${
-                      isLoading
+                      isLoading || externalLoading
                         ? 'dyi-generating border-sky-400/40 bg-gradient-to-r from-sky-400/30 via-emerald-300/30 to-indigo-400/30'
-                        : inputText.trim()
-                          ? 'dyi-generate-active border-sky-400/60 bg-gradient-to-r from-sky-400/40 via-emerald-300/40 to-indigo-400/40 cursor-pointer'
-                          : 'bg-slate-800/40 border-slate-700/30 cursor-not-allowed'
+                        : generateDisabled
+                          ? 'bg-slate-800/40 border-slate-700/30 cursor-not-allowed'
+                          : inputText.trim()
+                            ? 'dyi-generate-active border-sky-400/60 bg-gradient-to-r from-sky-400/40 via-emerald-300/40 to-indigo-400/40 cursor-pointer'
+                            : 'bg-slate-800/40 border-slate-700/30 cursor-not-allowed'
                     }
                   `}
                   style={{
@@ -564,13 +621,13 @@ export function DescribeYourImage({
                   }}
                 >
                   {/* Shimmer overlay — identical to engine bay */}
-                  {inputText.trim() && !isLoading && (
+                  {inputText.trim() && !isLoading && !externalLoading && (
                     <div
                       className="dyi-generate-shimmer pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
                       aria-hidden="true"
                     />
                   )}
-                  {isLoading ? (
+                  {isLoading || externalLoading ? (
                     <span className="relative z-10 inline-flex items-center" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
                       <svg
                         className="animate-spin"
@@ -581,7 +638,7 @@ export function DescribeYourImage({
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4} />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                       </svg>
-                      Parsing...
+                      {externalLoading ? 'Checking...' : 'Parsing...'}
                     </span>
                   ) : (
                     <span className="relative z-10 inline-flex items-center" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
@@ -653,7 +710,10 @@ export function DescribeYourImage({
               {/* Close button */}
               <button
                 type="button"
-                onClick={() => setIsExpanded(false)}
+                onClick={() => {
+                  setIsExpanded(false);
+                  onExpandChange?.(false);
+                }}
                 className="text-slate-300 hover:text-white transition-colors cursor-pointer"
                 style={{
                   padding: 'clamp(4px, 0.4vw, 6px)',
@@ -705,7 +765,7 @@ export function DescribeYourImage({
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 

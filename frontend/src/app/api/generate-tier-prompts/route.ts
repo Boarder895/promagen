@@ -3,18 +3,17 @@
 // POST /api/generate-tier-prompts — AI Tier Prompt Generation (Call 2)
 // ============================================================================
 // Generates all 4 tier prompts directly from the user's human text
-// description using the Prompt Intelligence Engine. Replaces string-template generators
-// for the Prompt Lab only.
+// description using the Prompt Intelligence Engine.
 //
-// Fires in parallel with Call 1 (/api/parse-sentence).
-// When a provider is selected, generates provider-tailored output.
-// When no provider is selected, generates generic best-practice tiers.
+// v4.0: Accepts optional gapIntent + categoryDecisions from the
+// Check → Assess → Decide → Generate flow. When present, the user
+// message includes category decisions (engine-fill vs user-chosen terms).
+// Backward compatible: omitting gapIntent/categoryDecisions works identically.
 //
-// Authority: ai-disguise.md §5 (Call 2 — AI Tier Generation)
+// Authority: prompt-lab-v4-flow.md §9, ai-disguise.md §5
 // Pattern: matches /api/parse-sentence (same rate-limit, env, Zod, error handling)
 // Scope: Prompt Lab (/studio/playground) ONLY
 // One Brain rule: This does NOT replace assemblePrompt() for the standard builder.
-// Existing features preserved: Yes (new file, no modifications).
 // ============================================================================
 
 import 'server-only';
@@ -67,6 +66,17 @@ const RequestSchema = z.object({
   providerId: z.string().max(50).nullable(),
   /** Provider's platform format data (sent by client to avoid server-side file reads) */
   providerContext: ProviderContextSchema.nullable(),
+  // ── v4: Category decisions from Check → Assess → Decide flow ──────
+  /** Why Call 2 is receiving this shape of input (§9) */
+  gapIntent: z.enum(['all-satisfied', 'skipped', 'user-decided']).optional(),
+  /** Decisions per uncovered category — only present when gapIntent is "user-decided" */
+  categoryDecisions: z.array(z.object({
+    category: z.enum([
+      'subject', 'action', 'style', 'environment', 'composition', 'camera',
+      'lighting', 'colour', 'atmosphere', 'materials', 'fidelity', 'negative',
+    ]),
+    fill: z.string().min(1).max(100),
+  })).optional(),
 });
 
 // ============================================================================
@@ -474,6 +484,39 @@ export async function POST(req: NextRequest): Promise<Response> {
   // ── Build system prompt with optional provider context ──────────────
   const systemPrompt = buildSystemPrompt(parsed.data.providerContext);
 
+  // ── Build composite user message with category decisions (§9) ──────
+  // When gapIntent is "user-decided", the user message includes their
+  // decisions about how to handle uncovered categories.
+  let userMessage = sanitised;
+  const { gapIntent, categoryDecisions } = parsed.data;
+
+  if (gapIntent === 'user-decided' && categoryDecisions && categoryDecisions.length > 0) {
+    const engineFills = categoryDecisions.filter((d) => d.fill === 'engine');
+    const manualFills = categoryDecisions.filter((d) => d.fill !== 'engine');
+
+    const parts: string[] = [sanitised, '', 'CATEGORY DECISIONS (from user assessment):'];
+
+    if (engineFills.length > 0) {
+      parts.push(
+        `Engine-fill categories (add expert-level content for these): ${engineFills.map((d) => d.category).join(', ')}`
+      );
+    }
+
+    if (manualFills.length > 0) {
+      parts.push('User-chosen terms (incorporate these naturally into all 4 tiers):');
+      for (const d of manualFills) {
+        parts.push(`  - ${d.category}: ${d.fill}`);
+      }
+    }
+
+    userMessage = parts.join('\n');
+  } else if (gapIntent === 'skipped') {
+    // User acknowledged gaps but chose to ignore them — generate from text alone
+    // The engine knows gaps exist but the user explicitly chose not to fill them
+    userMessage = sanitised;
+  }
+  // gapIntent "all-satisfied" or absent — just the human text (original behaviour)
+
   // ── Call generation engine ──────────────────────────────────────────
   try {
     const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -489,14 +532,42 @@ export async function POST(req: NextRequest): Promise<Response> {
         response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: sanitised },
+          { role: 'user', content: userMessage },
         ],
       }),
     });
 
     if (!openaiRes.ok) {
-      const errText = await openaiRes.text().catch(() => 'Unknown error');
-      console.error('[generate-tier-prompts] Engine error:', openaiRes.status, errText);
+      let errData: Record<string, unknown> = {};
+      try {
+        errData = await openaiRes.json() as Record<string, unknown>;
+      } catch {
+        // Can't parse error body
+      }
+
+      // Content policy rejection (§11)
+      const error = errData?.error as Record<string, unknown> | undefined;
+      if (openaiRes.status === 400 && error?.code === 'content_policy_violation') {
+        console.error(
+          '[generate-tier-prompts] Content policy rejection for input length:',
+          sanitised.length,
+        );
+        return NextResponse.json(
+          { error: 'CONTENT_POLICY', message: 'Your description contains content that our engine cannot process. Please revise your description and try again.' },
+          { status: 400 },
+        );
+      }
+
+      // Rate limit (429)
+      if (openaiRes.status === 429) {
+        console.error('[generate-tier-prompts] Engine rate limited');
+        return NextResponse.json(
+          { error: 'API_ERROR', message: 'Engine is busy. Please try again in a moment.' },
+          { status: 429 },
+        );
+      }
+
+      console.error('[generate-tier-prompts] Engine error:', openaiRes.status);
       return NextResponse.json(
         { error: 'API_ERROR', message: 'Failed to generate prompts. Please try again.' },
         { status: 502 },
@@ -504,6 +575,20 @@ export async function POST(req: NextRequest): Promise<Response> {
     }
 
     const openaiData = await openaiRes.json();
+
+    // Content policy check for 200 with content_filter (§11 pattern 2)
+    const choices = openaiData?.choices as Array<Record<string, unknown>> | undefined;
+    if (choices?.[0]?.finish_reason === 'content_filter') {
+      console.error(
+        '[generate-tier-prompts] Content policy filter for input length:',
+        sanitised.length,
+      );
+      return NextResponse.json(
+        { error: 'CONTENT_POLICY', message: 'Your description contains content that our engine cannot process. Please revise your description and try again.' },
+        { status: 400 },
+      );
+    }
+
     const content = openaiData?.choices?.[0]?.message?.content;
 
     if (!content || typeof content !== 'string') {

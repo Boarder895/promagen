@@ -113,6 +113,10 @@ export interface SceneSelectorProps {
    * When set, SceneSelector auto-expands and navigates to that scene's world.
    */
   initialSceneId?: string;
+  /** When true, the entire component is hidden (mutual exclusion with DYI) */
+  hidden?: boolean;
+  /** Called when expand state changes (for parent coordination) */
+  onExpandChange?: (expanded: boolean) => void;
 }
 
 // ============================================================================
@@ -205,12 +209,15 @@ export function SceneSelector({
   platformTier,
   feedbackTermHints,
   initialSceneId,
+  hidden = false,
+  onExpandChange,
 }: SceneSelectorProps) {
   // ── State ──────────────────────────────────────────────────────────────
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeWorldSlug, setActiveWorldSlug] = useState<string>(ALL_WORLDS[0]?.slug ?? '');
   const [activeSceneId, setActiveSceneId] = useState<string | undefined>();
   const [pulsingCardId, setPulsingCardId] = useState<string | undefined>();
+
   // Step 2.6: Prefill snapshot — what the scene originally set
   const [scenePrefillSnapshot, setScenePrefillSnapshot] = useState<
     Record<string, string[]> | undefined
@@ -229,9 +236,10 @@ export function SceneSelector({
     if (!scene) return;
     // Expand the selector, navigate to the scene's world, highlight the scene
     setIsExpanded(true);
+    onExpandChange?.(true);
     setActiveWorldSlug(scene.world);
     setActiveSceneId(initialSceneId);
-  }, [initialSceneId]);
+  }, [initialSceneId, onExpandChange]);
 
   // ── Derived ────────────────────────────────────────────────────────────
   const isPro = userTier === 'paid';
@@ -290,8 +298,10 @@ export function SceneSelector({
 
   const handleToggle = useCallback(() => {
     if (isLocked) return;
-    setIsExpanded((prev) => !prev);
-  }, [isLocked]);
+    const next = !isExpanded;
+    setIsExpanded(next);
+    onExpandChange?.(next);
+  }, [isLocked, isExpanded, onExpandChange]);
 
   const handleWorldClick = useCallback((slug: string) => {
     setActiveWorldSlug(slug);
@@ -454,7 +464,7 @@ export function SceneSelector({
   // ── Render ─────────────────────────────────────────────────────────────
 
   return (
-    <>
+    <div style={{ display: hidden ? 'none' : undefined }}>
       {/* Co-located styles — component-first rule */}
       <style dangerouslySetInnerHTML={{ __html: SCENE_STYLES }} />
 
@@ -948,7 +958,7 @@ export function SceneSelector({
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
 

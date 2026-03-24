@@ -71,6 +71,10 @@ export interface UseTierGenerationReturn {
     sentence: string,
     providerId: string | null,
     providerContext: TierGenerationProviderContext | null,
+    /** v4: Gap intent from Check → Assess → Decide flow */
+    gapIntent?: 'all-satisfied' | 'skipped' | 'user-decided',
+    /** v4: Category decisions (only when gapIntent is "user-decided") */
+    categoryDecisions?: Array<{ category: string; fill: string }>,
   ) => Promise<boolean>;
   /** Clear all generated results (e.g., on "Clear All") */
   clear: () => void;
@@ -137,6 +141,8 @@ export function useTierGeneration(): UseTierGenerationReturn {
       sentence: string,
       providerId: string | null,
       providerContext: TierGenerationProviderContext | null,
+      gapIntent?: 'all-satisfied' | 'skipped' | 'user-decided',
+      categoryDecisions?: Array<{ category: string; fill: string }>,
     ): Promise<boolean> => {
       const trimmed = sentence.trim();
       if (!trimmed) {
@@ -155,14 +161,23 @@ export function useTierGeneration(): UseTierGenerationReturn {
       setError(null);
 
       try {
+        // Build request body — v4 fields are optional for backward compat
+        const requestBody: Record<string, unknown> = {
+          sentence: trimmed,
+          providerId,
+          providerContext,
+        };
+        if (gapIntent) {
+          requestBody.gapIntent = gapIntent;
+        }
+        if (categoryDecisions && categoryDecisions.length > 0) {
+          requestBody.categoryDecisions = categoryDecisions;
+        }
+
         const res = await fetch('/api/generate-tier-prompts', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sentence: trimmed,
-            providerId,
-            providerContext,
-          }),
+          body: JSON.stringify(requestBody),
           signal: controller.signal,
         });
 

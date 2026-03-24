@@ -37,6 +37,7 @@ import {
   parsePromptIntoSegments,
 } from '@/lib/prompt-colours';
 import type { PromptCategory } from '@/types/prompt-builder';
+import { TierGenerationCycling } from '@/components/prompt-lab/tier-generation-cycling';
 
 // ============================================================================
 // TYPES
@@ -67,6 +68,8 @@ interface FourTierPromptPreviewProps {
   generatedForProvider?: string | null;
   /** All providers — used to show tier-grouped provider icons */
   providers?: { id: string; name: string; localIcon?: string }[];
+  /** Category names populated by Call 1 — feeds category-aware algorithm cycling */
+  activeCategories?: string[];
 }
 
 interface TierCardProps {
@@ -581,6 +584,7 @@ export function FourTierPromptPreview({
   isTierGenerating = false,
   generatedForProvider = null,
   providers = [],
+  activeCategories = [],
 }: FourTierPromptPreviewProps) {
   const handleCopy = useCallback((tier: PlatformTier, text: string) => {
     onCopy?.(tier, text);
@@ -668,9 +672,8 @@ export function FourTierPromptPreview({
                 color: '#FBBF24',
                 fontWeight: 500,
               }}
-              className="animate-pulse"
             >
-              Generating...
+              Processing
             </span>
           )}
         </h3>
@@ -678,6 +681,10 @@ export function FourTierPromptPreview({
           Same scene, different syntaxes
         </p>
       </div>
+
+      {/* AI Disguise: Algorithm cycling during tier generation (Call 2) */}
+      {/* 101 algorithm names cycle rapidly in amber monospace — §3 Anticipatory Dopamine */}
+      <TierGenerationCycling isActive={isTierGenerating ?? false} activeCategories={activeCategories} />
 
       {/* Tier provider icons — all providers in the active tier family */}
       {providers.length > 0 && (
