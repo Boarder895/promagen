@@ -175,7 +175,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       body: JSON.stringify({
         model: 'gpt-5.4-mini',
         temperature: 0.15, // Low temperature for consistent extraction, slight flex for creative terms
-        max_completion_tokens: 700,
+        max_completion_tokens: 1200, // 700 truncates JSON for dense 12-category inputs near 1000 chars
         response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
