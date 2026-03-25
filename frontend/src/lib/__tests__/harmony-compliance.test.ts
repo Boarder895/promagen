@@ -19,6 +19,7 @@ import {
   enforceT1Syntax,
   enforceMjParameters,
   detectT4MetaLanguage,
+  detectT4ShortSentences,
   detectT3BannedPhrases,
   runFullCompliance,
   RULE_CEILING,
@@ -342,6 +343,41 @@ describe('detectT3BannedPhrases', () => {
     const found = detectT3BannedPhrases(R2_T3_NATURAL);
     expect(found).toHaveLength(0);
   });
+
+  it('detects "that feels" (added R4)', () => {
+    const prompt = 'A clarity that feels immense and resolute.';
+    expect(detectT3BannedPhrases(prompt)).toContain('that feels');
+  });
+});
+
+// ============================================================================
+// T4 SHORT SENTENCE DETECTION (P9)
+// ============================================================================
+
+describe('detectT4ShortSentences', () => {
+  it('detects sentences under 10 words', () => {
+    const prompt = 'A long first sentence with quite a few words filling it out nicely. Short one.';
+    const short = detectT4ShortSentences(prompt);
+    expect(short).toHaveLength(1);
+    expect(short[0]).toContain('Short one.');
+  });
+
+  it('detects R2 bare adjective checklist', () => {
+    const prompt = 'Peaks glow blue under the first sunlight. Crisp, cinematic, and realistic.';
+    const short = detectT4ShortSentences(prompt);
+    expect(short.length).toBeGreaterThan(0);
+  });
+
+  it('returns empty for compliant sentences', () => {
+    const prompt = 'A lone explorer stands at the edge of a frozen valley at dawn with visible breath.';
+    expect(detectT4ShortSentences(prompt)).toHaveLength(0);
+  });
+
+  it('handles single sentence', () => {
+    const prompt = 'Short.';
+    const short = detectT4ShortSentences(prompt);
+    expect(short).toHaveLength(1);
+  });
 });
 
 // ============================================================================
@@ -407,9 +443,11 @@ describe('Rule ceiling enforcement', () => {
     expect(total).toBe(CURRENT_RULE_COUNT);
   });
 
-  it('ceiling is exactly 27 (raise requires explicit approval)', () => {
+  it('ceiling is exactly 30 (raise requires explicit approval)', () => {
     // If this test fails, someone raised the ceiling without updating the test.
     // That's intentional — the ceiling should only change with a documented decision.
-    expect(RULE_CEILING).toBe(27);
+    // v2: Raised from 27 → 30 (Martin-approved, 25 Mar 2026).
+    // +T1-8 (cluster merge), +T3-5 (opening diversity), +T4-5 (scene depth).
+    expect(RULE_CEILING).toBe(30);
   });
 });

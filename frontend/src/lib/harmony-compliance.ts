@@ -315,7 +315,8 @@ export interface T4ComplianceResult {
  *
  * Does NOT auto-fix (meta-language replacement requires semantic understanding).
  * Instead, flags the issue for logging/transparency. Self-correction IS auto-fixed
- * by P3 in the post-processing pipeline.
+ * by P3 in the post-processing pipeline. Meta-language openers are auto-fixed
+ * by P8 in the post-processing pipeline.
  *
  * Used for: compliance reporting, regression testing, UI warnings.
  */
@@ -342,6 +343,29 @@ export function detectT4MetaLanguage(prompt: string): T4ComplianceResult {
 }
 
 // ============================================================================
+// T4 SENTENCE LENGTH COMPLIANCE (T4-4 detection)
+// ============================================================================
+
+/**
+ * P9: Detect T4 sentences that fall below the 10-word minimum.
+ *
+ * Does NOT auto-fix (padding a sentence requires semantic understanding —
+ * you can't just add filler words). Instead, flags for logging/transparency.
+ * The primary fix is the system prompt rule (T4-4) strengthened by the
+ * MANDATORY SCENE DEPTH rule (T4-5) which gives GPT enough content to
+ * naturally exceed 10 words.
+ *
+ * @returns Array of sentences that have fewer than 10 words (empty = compliant)
+ */
+export function detectT4ShortSentences(prompt: string): string[] {
+  const sentences = prompt
+    .split(/(?<=[.!?])\s+/)
+    .filter(Boolean)
+    .map((s) => s.trim());
+  return sentences.filter((s) => s.split(/\s+/).length < 10);
+}
+
+// ============================================================================
 // T3 BANNED PHRASE DETECTION
 // ============================================================================
 
@@ -356,6 +380,7 @@ const T3_BANNED_PHRASES = [
   'the scene feels',
   'the scene is',
   'the mood is',
+  'that feels',
 ] as const;
 
 /**
@@ -375,7 +400,7 @@ export interface FullComplianceReport {
   tier1: ComplianceResult;
   tier2: MjComplianceResult;
   tier3: { bannedPhrases: string[] };
-  tier4: T4ComplianceResult;
+  tier4: T4ComplianceResult & { shortSentences: string[] };
   /** Overall pass/fail */
   allPassing: boolean;
   /** Total fixes applied */
@@ -404,8 +429,11 @@ export function runFullCompliance(
   // T3: banned phrase detection (flag only)
   const tier3 = { bannedPhrases: detectT3BannedPhrases(tiers.tier3) };
 
-  // T4: meta-language detection (flag only; P3 handles self-correction)
-  const tier4 = detectT4MetaLanguage(tiers.tier4);
+  // T4: meta-language detection (flag only; P3 handles self-correction, P8 handles openers)
+  const tier4Meta = detectT4MetaLanguage(tiers.tier4);
+  // T4: sentence length detection (P9 — flag only)
+  const shortSentences = detectT4ShortSentences(tiers.tier4);
+  const tier4 = { ...tier4Meta, shortSentences };
 
   const totalFixes = tier1.fixes.length + tier2.fixes.length;
   const allPassing =
@@ -413,7 +441,8 @@ export function runFullCompliance(
     !tier2.wasFixed &&
     tier3.bannedPhrases.length === 0 &&
     !tier4.hasMetaLanguage &&
-    !tier4.hasSelfCorrection;
+    !tier4.hasSelfCorrection &&
+    shortSentences.length === 0;
 
   return { tier1, tier2, tier3, tier4, allPassing, totalFixes };
 }
@@ -427,7 +456,7 @@ export function runFullCompliance(
  * Updated manually when rules are added/removed.
  * Used by regression tests to enforce the rule ceiling.
  *
- * RULE CEILING: 22 rules maximum (current count).
+ * RULE CEILING: 30 rules maximum (current count).
  * To add a new rule, you MUST either:
  * 1. Replace an existing rule, OR
  * 2. Build the fix as post-processing code instead, OR
@@ -436,16 +465,22 @@ export function runFullCompliance(
  * Rationale: GPT's attention budget is finite. After ~18 rules, each new
  * rule competes with existing rules for attention. The harmony doc's own
  * data shows diminishing returns past this point.
+ *
+ * v2: Ceiling raised from 27 → 30 (Martin-approved, 25 Mar 2026).
+ * +T1-8 (cluster merge), +T3-5 (opening diversity), +T4-5 (scene depth).
+ * Fix 2 (T1-4 sensory terms) strengthens existing rule, not a new rule.
+ * Fix 5 (P8 meta-opener auto-fix) and Fix 6 (P9 short sentence detection)
+ * are post-processing code, not system prompt rules.
  */
-export const RULE_CEILING = 27;
-export const CURRENT_RULE_COUNT = 27;
+export const RULE_CEILING = 30;
+export const CURRENT_RULE_COUNT = 30;
 
 export const RULE_INVENTORY = {
   // Tier-specific rules (embedded in tier sections)
-  tier1: ['T1-1 syntax', 'T1-2 subject weight', 'T1-3 colour pairing', 'T1-4 literal language', 'T1-5 composition', 'T1-6 ordering', 'T1-7 no punctuation'],
+  tier1: ['T1-1 syntax', 'T1-2 subject weight', 'T1-3 colour pairing', 'T1-4 literal language + sensory', 'T1-5 composition', 'T1-6 ordering', 'T1-7 no punctuation', 'T1-8 semantic clustering'],
   tier2: ['T2-1 subject weight', 'T2-2 clause placement', 'T2-3 no flag', 'T2-4 scene negatives', 'T2-5 abstract-to-visual', 'T2-6 mandatory params'],
-  tier3: ['T3-1 no paraphrase', 'T3-2 banned phrases', 'T3-3 composition cue', 'T3-4 mood preservation'],
-  tier4: ['T4-1 explicit setting', 'T4-2 no self-correction', 'T4-3 meta-language ban', 'T4-4 sentence minimum'],
+  tier3: ['T3-1 no paraphrase', 'T3-2 banned phrases', 'T3-3 composition cue', 'T3-4 mood preservation', 'T3-5 opening diversity'],
+  tier4: ['T4-1 explicit setting', 'T4-2 no self-correction', 'T4-3 meta-language ban', 'T4-4 sentence minimum', 'T4-5 scene depth'],
   // Global rules (in Rules section)
   global: ['G1 preserve intent', 'G2 expert value-add', 'G3 native per tier', 'G4 weight hierarchy', 'G5 provider syntax', 'G6 abstract-to-visual'],
 } as const;

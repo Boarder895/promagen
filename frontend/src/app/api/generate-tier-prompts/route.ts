@@ -26,6 +26,7 @@ import { env } from '@/lib/env';
 import { rateLimit } from '@/lib/rate-limit';
 import { enforceT1Syntax, enforceMjParameters } from '@/lib/harmony-compliance';
 import type { ComplianceContext } from '@/lib/harmony-compliance';
+import { postProcessTiers } from '@/lib/harmony-post-processing';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -176,12 +177,13 @@ ${t1SyntaxInstruction}
 - Quality suffix: sharp focus, 8K, intricate textures (add at end)
 - Comma-separated weighted keywords, NOT sentences
 - Rich phrases longer than 4 words should NOT be weight-wrapped — break into shorter weighted terms instead. WRONG: (small girl in a yellow raincoat:1.3). RIGHT: (small girl:1.3), yellow raincoat. WRONG: (suspended inside skeletal remains of a sunken Gothic cathedral:1.3). RIGHT: (sunken Gothic cathedral:1.3), skeletal remains, suspended inside.
+- MERGE related micro-elements into semantic clusters. Do NOT list the same visual concept as multiple separate tokens. WRONG: fine snow, snow flurries, soft wind, drifting snow (4 tokens for 1 concept — wastes token budget and dilutes signal). RIGHT: (wind-driven snow patterns:1.2), drifting flurries (2 tokens, semantically distinct). Each token should describe a DIFFERENT visual element, not the same element phrased slightly differently. Before finalising, scan your output for any group of 3+ tokens describing the same concept and merge them. COMMON OVERLAP TRAP — time-of-day and lighting: "first light", "early sun", "dawn glow", "morning rays" all describe the same lighting condition. Pick the ONE strongest term and weight it. WRONG: (first light:1.2), (early sun:1.2) (two tokens for one concept). RIGHT: (first light:1.2) (one token, clean). Similarly for colour pairs: "pale blue ice" and "silver highlights" describing the same surface → merge to (pale blue-silver ice:1.2). INTERACTION MERGING — when two visual elements interact (light hitting a surface, colour mixing, weather affecting an object), describe the INTERACTION as one token, not the elements separately. WRONG: (copper-orange sunset:1.2), (cold blue mist:1.2) (two separate tokens for a light interaction). RIGHT: (copper-orange light fading into cold blue:1.3) (one interaction token). WRONG: (electric blue glow:1.2), (pale green glow:1.2) (same bioluminescence split into two). RIGHT: (electric blue-green bioluminescence:1.2) (one unified visual phenomenon).
 - Use weight steps in 0.1 increments only: 1.1, 1.2, 1.3, 1.4. Do NOT use 1.15, 1.25, or other fractional steps.
 - NEVER weight-wrap isolated colour words (e.g., "yellows", "orange"). Always pair colours with their visual context (e.g., "yellow reef fish", "orange coral").
-- CLIP interprets LITERALLY — avoid metaphorical language. Use "schools of fish" not "clouds of fish", "beams of light" not "rivers of light", "patches of coral" not "carpet of coral". Every term must describe something visually concrete.
+- CLIP interprets LITERALLY — avoid metaphorical language. Use "schools of fish" not "clouds of fish", "beams of light" not "rivers of light", "patches of coral" not "carpet of coral". Every term must describe something visually concrete. This includes sensory and abstract modifiers that a camera cannot photograph. WRONG: soft wind, subtle footsteps, quiet determination, gentle warmth. RIGHT: (windswept snow:1.2), (footprints in snow:1.1), (solitary figure:1.1), (warm amber glow:1.1). If a camera cannot photograph it as a distinct visual element, rewrite it as something it CAN photograph.
 - Separate negative prompt with common quality negatives
 - MANDATORY: Include at least one composition or camera term NOT in the user's input (e.g., wide scene, cinematic composition, central subject, underwater perspective, volumetric lighting). This is your expert value-add.
-- STRICT ORDERING: quality prefix → weighted subject → weighted environment/scene → unweighted supporting details → composition cues → quality suffix. Follow this order exactly.
+- STRICT ORDERING: quality prefix → weighted subject → weighted environment/scene → unweighted supporting details → composition cues → quality suffix. Follow this order exactly. ALL time-of-day and lighting terms (dawn, golden hour, first light, moonlight, overcast, etc.) MUST be weighted — they are primary visual drivers, not supporting details. WRONG: first light (naked, unweighted, lost in the middle). RIGHT: (first light:1.2) placed in the environment/scene block.
 - NO sentence-ending punctuation. No periods, exclamation marks, or question marks. CLIP prompts are comma-separated keyword lists, not sentences.
 - Target: ~100 tokens (~350 characters) for creative text
 
@@ -201,7 +203,7 @@ TIER 2 — Midjourney Family (e.g., Midjourney, BlueWillow):
 - STRUCTURAL EXAMPLE (follow this pattern exactly):
   elderly samurai standing on a stone bridge at golden hour::2.0, cherry blossoms falling through warm amber light and mist rising from the river below::1.4, cinematic concept art with ukiyo-e influences::1.2, wide establishing shot, weathered armour catching the last light, serene stillness across the valley --ar 16:9 --v 7 --s 500 --no modern buildings, cars, text, watermark, blurry, extra people (negatives appear exactly ONCE — never repeat this block)
 - Target: ~300 characters for creative text (before parameters). Richer inputs may need more space — prioritise completeness over brevity.
-- FINAL RULE FOR THIS TIER — NEVER DUPLICATE NEGATIVES. The --no block appears ONCE. Each negative term appears EXACTLY ONCE. If you have already written the negatives, STOP. Do not write them again. Repeating the negative list is the single most common structural error — check your output before finishing.
+- FINAL RULE FOR THIS TIER — SELF-CHECK BEFORE FINISHING: Count how many times "--no" appears in your Tier 2 output. If it appears more than ONCE, you have duplicated the negative block — delete everything after the FIRST "--no" block's final term. There must be EXACTLY ONE "--no" in the entire Tier 2 output. WRONG: "...--no text, watermark, blurry text, watermark, blurry" (the block repeated — you wrote it twice). RIGHT: "...--no text, watermark, blurry" (written once, stopped). This is the single most common structural error. Check your output NOW before returning it.
 
 TIER 3 — Natural Language (e.g., DALL·E, Adobe Firefly, Google Imagen):
 - CRITICAL LENGTH CONSTRAINT: Your output MUST be 250–350 characters (2–4 sentences). This means you MUST compress a long input — select the 4–5 most impactful visual elements, do not try to preserve everything. Exceeding 400 characters is a structural failure.
@@ -215,18 +217,21 @@ TIER 3 — Natural Language (e.g., DALL·E, Adobe Firefly, Google Imagen):
   WRONG (paraphrase — adds nothing): "An elderly samurai stands on a stone bridge at golden hour as cherry blossoms fall and mist rises from the river below, with a sense of quiet honour."
   RIGHT (engineered — adds expert value): "An elderly samurai stands at the centre of a stone bridge in warm golden-hour light, viewed from a low angle that frames him against falling cherry blossoms and the mist-wrapped valley beyond, with the weight of years visible in his weathered armour — captured in cinematic wide-angle detail with soft atmospheric haze."
   WHY THE RIGHT VERSION IS BETTER: It adds "low angle" (composition), "cinematic wide-angle detail" (style), "soft atmospheric haze" (atmosphere), and "centre of the frame" (framing) — four expert additions the user did NOT provide. It also converts "quiet honour and fading glory" into visual equivalents ("weight of years visible in his weathered armour") instead of dropping the mood.
-- MANDATORY: Weave an art style or medium reference naturally into the description — do NOT use explicit rendering directives. BANNED PHRASES: "rendered as", "in the style of", "should feel like", "meant to look like", "designed to resemble", "intended to appear as", "the image should", "the scene feels", "the scene is", "the mood is". Instead, integrate style as part of the scene itself (e.g., "a luminous digital fantasy scene of..." or "with the vivid clarity of underwater photography" or "in cinematic wide-angle detail"). The style must feel like a natural part of the description, never a meta-instruction to the model. Mood and atmosphere must be SHOWN through visual description, not STATED as meta-commentary. WRONG: "The scene feels emotionally quiet" (meta-commentary about mood). RIGHT: "...bathed in a hushed amber stillness, where the weight of time settles softly across the frame" (mood expressed through visual and sensory language). Do NOT drop mood entirely — always preserve the user's emotional intent through visual equivalents.
+- FIRST SENTENCE MUST RESTRUCTURE, NOT REPEAT. Your opening sentence must NOT begin with the same subject + location + time-of-day phrasing as the user's input. Restructure by leading with composition, time, or environment — then position the subject within it. WRONG opening (input says "A lone explorer at the edge of a frozen valley at first light"): "A lone explorer stands at the edge of a vast frozen valley at first light..." (this is the user's words with minor rewording — you have added nothing). RIGHT opening: "At the break of dawn, a solitary figure is framed low against towering ice cliffs at the mouth of a vast frozen valley..." (restructured: leads with time, repositions subject, adds composition cue). If your first 8 words closely match the user's first 8 words, you are paraphrasing — rewrite.
+- MANDATORY: Weave an art style or medium reference naturally into the description — do NOT use explicit rendering directives. BANNED PHRASES: "rendered as", "in the style of", "should feel like", "meant to look like", "designed to resemble", "intended to appear as", "the image should", "the scene feels", "the scene is", "the mood is", "that feels". Instead, integrate style as part of the scene itself (e.g., "a luminous digital fantasy scene of..." or "with the vivid clarity of underwater photography" or "in cinematic wide-angle detail"). The style must feel like a natural part of the description, never a meta-instruction to the model. Mood and atmosphere must be SHOWN through visual description, not STATED as meta-commentary. WRONG: "The scene feels emotionally quiet" (meta-commentary about mood). WRONG: "a clarity that feels immense and resolute" (meta-commentary — "that feels" tells the reader how to feel instead of showing them). RIGHT: "...bathed in a hushed amber stillness, where the weight of time settles softly across the frame" (mood expressed through visual and sensory language). RIGHT: "under an immense, hushed clarity" (the quality IS immense — stated directly, not via "feels"). Do NOT drop mood entirely — always preserve the user's emotional intent through visual equivalents.
 - MOOD CONVERSION IS MANDATORY. If the input contains emotional language ("sacred silence", "bittersweet hope", "defiant solitude", "fading glory"), you MUST convert it to visual equivalents in your output — never drop it. WRONG: drop "defiant solitude" entirely. ALSO WRONG: "The mood is defiant solitude." RIGHT: "...alone against the driving white expanse, her flare the only warm colour in a world stripped to ice and wind." Convert the feeling into something a camera could capture.
 - MANDATORY: Add at least one composition or camera cue NOT in the user's input (e.g., "viewed from below looking up toward the surface", "in a wide cinematic underwater scene", "with the subject centred in the frame").
 - MANDATORY: Add at least one atmospheric or lighting detail NOT in the user's input (e.g., "with luminous tropical clarity", "dappled caustic light patterns on the seabed", "god rays piercing the blue depths").
 - STRICT ORDERING across 2–4 sentences: Sentence 1 = subject + primary action + composition/style. Sentence 2 = secondary visual elements + lighting. Sentence 3 (if needed) = environment + atmosphere. Keep rendering style woven in, not stated as a separate directive.
+- GENDER NEUTRALITY: When the input uses gender-neutral language ("a person", "an explorer", "a figure", "someone"), your output MUST also be gender-neutral. Use "their" not "his" or "her". Only use gendered pronouns when the input explicitly specifies gender.
 
 TIER 4 — Plain Language (e.g., Canva, Bing, Freepik):
-- CRITICAL LENGTH CONSTRAINT: Maximum 200 characters total. If you exceed 200, cut the weakest sentence. This tier must be SHORT — casual users paste these directly.
+- CRITICAL LENGTH CONSTRAINT: Maximum 250 characters total. If you exceed 250, cut the weakest sentence. This tier must be SHORT — casual users paste these directly.
 - Simple, focused, short description
 - Minimal technical jargon — a non-expert should understand it
 - MUST be 2–3 short sentences: first sentence for the subject and action with key elements, second sentence for the environment, optional third sentence for mood/atmosphere if needed
 - Keep all key visual anchors from the input — do not over-compress. Include the subject and at least 3 supporting visual elements, but do NOT list more than 5 elements in a single sentence.
+- MANDATORY SCENE DEPTH: Every T4 output MUST include at least ONE of: motion (wind, flowing, drifting, sweeping), spatial depth (foreground/background layering, "distant" or "towering"), or atmospheric texture (mist, haze, glow, shimmer). Without this, the output reads as a flat inventory, not a scene. WRONG: "A lone explorer stands at the edge of a frozen valley at first light, with visible breath, fine snow, and towering ice cliffs." (static checklist of elements). RIGHT: "A lone explorer stands at the edge of a frozen valley at dawn, their breath drifting in the cold air as fine snow sweeps across the ground. Towering ice cliffs and distant peaks glow pale blue in the first light." (motion via "drifting" and "sweeps", depth via foreground breath + distant peaks, atmosphere via "glow").
 - ALWAYS state the primary setting EXPLICITLY. Do not rely on implication. Write "underwater" not just "in water". Write "in a dense forest" not just "with trees". Plain language platforms need direct, unambiguous setting cues.
 - NEVER include questions, self-corrections, or negation-then-correction patterns. State what the scene IS, never what it is NOT. WRONG: "Is this indoors? No, it is actually set outside in a meadow." (questions and self-correction are structurally broken — image generators cannot interpret "No, it is…"). RIGHT: "A knight stands in a sunlit meadow at dawn, holding a banner against the wind." (direct, positive statement of the scene).
 - STRICT ORDERING: Sentence 1 = subject + action + 3–4 key visual elements. Sentence 2 = explicit setting + environment details. Sentence 3 (optional) = lighting/atmosphere + mood.
@@ -235,7 +240,7 @@ TIER 4 — Plain Language (e.g., Canva, Bing, Freepik):
 ${providerBlock}
 
 Rules:
-1. PRESERVE the user's creative intent — their vision, metaphors, spatial descriptions, and poetic language. Do not paraphrase away the poetry. But DO restructure, reorder, and enhance for each platform's optimal interpretation.
+1. PRESERVE the user's creative intent — their vision, metaphors, spatial descriptions, and poetic language. Do not paraphrase away the poetry. But DO restructure, reorder, and enhance for each platform's optimal interpretation. EMOTIONAL ATMOSPHERE IS MANDATORY: if the input implies a mood or feeling (isolation, wonder, tension, peace, determination), your output MUST include at least one visual-equivalent mood token per tier — never drop the emotional layer entirely. T1: include one atmosphere keyword (e.g., "cold stillness", "vast solitude", "hushed dawn light"). T2: weave mood into a descriptive clause (not as a standalone weighted abstract term). T3: embed the feeling through sensory language. T4: use one plain-language mood phrase (e.g., "quiet and still", "vast and lonely").
 2. YOUR JOB IS TO ADD EXPERT PROMPT ENGINEERING VALUE. Every tier must contain at least one element the user did NOT provide: a composition term, a camera angle, a lighting technique, a style/medium reference, or an atmospheric detail. If you return something the user could have written themselves, you have failed. REFORMATTING IS NOT VALUE-ADD. If the user says "24mm lens" and you output "24mm lens", that is not your contribution — that is their knowledge reformatted. Your addition must be something the user did NOT mention at all: a complementary camera technique, an additional lighting effect, a spatial relationship they didn't describe.
 3. Each tier must feel NATIVE to its platform family — not like a reformatted version of another tier.
 4. Tier 1 must have clean, high-signal keyword assembly — no sentence fragments or orphaned verbs.
@@ -258,164 +263,9 @@ Return format:
 }
 
 // ============================================================================
-// POST-PROCESSING — catches engine mechanical errors before returning to client
+// POST-PROCESSING — imported from @/lib/harmony-post-processing
 // ============================================================================
 
-/**
- * P1+P7: Deduplicate T2 Midjourney parameter block.
- *
- * Handles TWO duplication patterns:
- * 1. Entire parameter block duplicated: ...prose --ar 16:9 --v 7 --no X --ar 16:9 --v 7 --no Y
- * 2. Single --no block with internally duplicated terms: --no X, Y, X, Y
- *
- * This function ALWAYS rebuilds the parameter block to catch both patterns.
- */
-function deduplicateMjParams(prompt: string): string {
-  // Find where parameters start (first -- flag)
-  const paramStart = prompt.search(/\s--(?:ar|v|s|no)\s/);
-  if (paramStart === -1) return prompt;
-
-  const prose = prompt.slice(0, paramStart).trimEnd();
-  const paramSection = prompt.slice(paramStart);
-
-  // Extract all --ar values (keep last)
-  let ar = '';
-  const arMatches = [...paramSection.matchAll(/--ar\s+(\d+:\d+)/g)];
-  if (arMatches.length > 0) ar = arMatches[arMatches.length - 1]?.[1] ?? '';
-
-  // Extract all --v values (keep last)
-  let v = '';
-  const vMatches = [...paramSection.matchAll(/--v\s+(\d+)/g)];
-  if (vMatches.length > 0) v = vMatches[vMatches.length - 1]?.[1] ?? '';
-
-  // Extract all --s values (keep last)
-  let s = '';
-  const sMatches = [...paramSection.matchAll(/--s\s+(\d+)/g)];
-  if (sMatches.length > 0) s = sMatches[sMatches.length - 1]?.[1] ?? '';
-
-  // Extract ALL --no terms across all --no blocks, deduplicate
-  const noBlocks = [...paramSection.matchAll(/--no\s+([^-]+?)(?=\s+--|$)/g)];
-  const allNoTerms: string[] = [];
-  const seen = new Set<string>();
-  for (const block of noBlocks) {
-    const terms = (block[1] ?? '').split(',').map(t => t.trim()).filter(Boolean);
-    for (const term of terms) {
-      const lower = term.toLowerCase();
-      if (!seen.has(lower)) {
-        seen.add(lower);
-        allNoTerms.push(term);
-      }
-    }
-  }
-
-  // Detect and remove run-on fusion artifacts.
-  // GPT sometimes duplicates the entire --no list without a comma separator:
-  //   --no A, B, C A, B, C  →  comma-split gives [..., "C A", ...]
-  // "C A" is a fusion of two real terms. Detect by checking if any term
-  // can be split into two parts where BOTH parts are already in the list.
-  const termSetLower = new Set(allNoTerms.map(t => t.toLowerCase()));
-  const fusionIndices: number[] = [];
-  for (let i = 0; i < allNoTerms.length; i++) {
-    const words = allNoTerms[i]!.toLowerCase().split(/\s+/);
-    if (words.length <= 2) continue; // 1-2 word terms can't be fusions
-    for (let splitAt = 1; splitAt < words.length; splitAt++) {
-      const firstPart = words.slice(0, splitAt).join(' ');
-      const secondPart = words.slice(splitAt).join(' ');
-      if (termSetLower.has(firstPart) && termSetLower.has(secondPart)) {
-        fusionIndices.push(i);
-        break;
-      }
-    }
-  }
-  // Remove fusions in reverse to preserve indices
-  for (let i = fusionIndices.length - 1; i >= 0; i--) {
-    allNoTerms.splice(fusionIndices[i]!, 1);
-  }
-
-  // Strip trailing punctuation from last negative term
-  if (allNoTerms.length > 0) {
-    const last = allNoTerms[allNoTerms.length - 1];
-    if (last) {
-      allNoTerms[allNoTerms.length - 1] = last.replace(/[.!?]+$/, '').trim();
-    }
-  }
-
-  // ALWAYS rebuild clean single block (catches both multi-block and intra-block dupes)
-  const parts = [prose];
-  if (ar) parts.push(`--ar ${ar}`);
-  if (v) parts.push(`--v ${v}`);
-  if (s) parts.push(`--s ${s}`);
-  if (allNoTerms.length > 0) parts.push(`--no ${allNoTerms.join(', ')}`);
-
-  return parts.join(' ');
-}
-
-/**
- * P2: Strip trailing sentence punctuation from CLIP prompts.
- * CLIP prompts are comma-separated keyword lists — no periods.
- */
-function stripTrailingPunctuation(prompt: string): string {
-  return prompt.replace(/[.!?]+\s*$/, '').trimEnd();
-}
-
-/**
- * P3: Catch T4 self-correction patterns (belt-and-braces for B1 system prompt fix).
- * The engine occasionally generates "The scene is X? No, it is Y..." in plain language tier.
- * This strips the question-correction fragment and keeps the corrected content.
- *
- * Pattern: "...sentence? No, it is <corrected>." → "...corrected content."
- * Also catches: "...sentence? No — it is <corrected>."
- */
-function fixT4SelfCorrection(prompt: string): string {
-  // Match "? No, it is..." or "? No — it is..." pattern
-  const selfCorrectionPattern = /[^.!?]*\?\s*No[,—–\s]+it\s+is\s+/gi;
-  if (!selfCorrectionPattern.test(prompt)) return prompt;
-
-  // Remove the question + "No, it is" prefix, keep the corrected content
-  // Split on sentences first, then fix the broken one
-  const sentences = prompt.split(/(?<=[.!?])\s+/).filter(Boolean);
-  const fixed: string[] = [];
-
-  for (const sentence of sentences) {
-    // Check if this sentence contains the self-correction pattern
-    const match = sentence.match(/^(.*?\?)\s*No[,—–\s]+it\s+is\s+(.+)$/i);
-    if (match) {
-      // Extract what the correction says the scene actually is
-      const corrected = match[2]?.trim();
-      if (corrected) {
-        // Capitalize first letter and ensure it ends with a period
-        const capitalised = corrected.charAt(0).toUpperCase() + corrected.slice(1);
-        fixed.push(capitalised.endsWith('.') ? capitalised : `${capitalised}.`);
-      }
-    } else {
-      fixed.push(sentence);
-    }
-  }
-
-  return fixed.join(' ').trim();
-}
-
-/**
- * Run all post-processing on validated tier prompts.
- * Mutates nothing — returns a new object.
- */
-function postProcessTiers(tiers: z.infer<typeof ResponseSchema>): z.infer<typeof ResponseSchema> {
-  return {
-    tier1: {
-      positive: stripTrailingPunctuation(tiers.tier1.positive),
-      negative: stripTrailingPunctuation(tiers.tier1.negative),
-    },
-    tier2: {
-      positive: deduplicateMjParams(tiers.tier2.positive),
-      negative: tiers.tier2.negative,
-    },
-    tier3: tiers.tier3,
-    tier4: {
-      positive: fixT4SelfCorrection(tiers.tier4.positive),
-      negative: tiers.tier4.negative,
-    },
-  };
-}
 
 // ============================================================================
 // HANDLER
