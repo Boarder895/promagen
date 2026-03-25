@@ -1,33 +1,34 @@
 // src/types/category-assessment.ts
 // ============================================================================
-// Category Assessment Types — Prompt Lab v4 Flow
+// Category Assessment Types — Call 1 Coverage + Matched Phrases
 // ============================================================================
-// Types for Call 1's new role: category coverage assessment (not term extraction).
-// Used by: parse-sentence/route.ts (mode: "assess"), use-category-assessment.ts
+// Call 1 returns per-category coverage (covered/not) with the exact phrases
+// from the user's text that address each category. Used for:
+// 1. Text colouring — matched phrases build the termIndex for colour overlay
+// 2. Category pills — covered categories shown bright, uncovered faded
+// 3. Gap education — uncovered pills show hover hints from vocabulary
 //
-// Authority: prompt-lab-v4-flow.md §8, §9, §13
+// Used by: parse-sentence/route.ts (mode: "assess"), use-category-assessment.ts
+// Authority: prompt-lab.md, code-standard.md
 // ============================================================================
 
 import type { PromptCategory } from '@/types/prompt-builder';
 
 // ============================================================================
-// CALL 1 — COVERAGE ASSESSMENT OUTPUT (§8)
+// CALL 1 — COVERAGE + MATCHED PHRASES
 // ============================================================================
-
-/** Confidence of the engine's assessment for a single category */
-export type AssessmentConfidence = 'high' | 'medium';
 
 /** Coverage result for a single category */
 export interface CategoryCoverage {
   /** Whether the category is covered by the human text */
   covered: boolean;
-  /** How confident the engine is in the assessment */
-  confidence: AssessmentConfidence;
+  /** Exact phrases from the user's text that address this category */
+  matchedPhrases: string[];
 }
 
 /** Full coverage map returned by Call 1 in assess mode */
 export interface CoverageAssessment {
-  /** Per-category coverage results */
+  /** Per-category coverage results with matched phrases */
   coverage: Record<PromptCategory, CategoryCoverage>;
   /** Number of categories covered (convenience field, derived from coverage) */
   coveredCount: number;
@@ -38,84 +39,8 @@ export interface CoverageAssessment {
 }
 
 // ============================================================================
-// CALL 2 — CATEGORY DECISIONS (§9)
+// ERROR TYPES (for hook error classification)
 // ============================================================================
-
-/** One decision per missing category */
-export interface CategoryDecision {
-  /**
-   * Must be a valid PromptCategory AND must be a category
-   * Call 1 reported as NOT covered.
-   */
-  category: PromptCategory;
-  /**
-   * "engine" = the engine fills this.
-   * A string value = user's chosen term (side note).
-   *
-   * String validation (enforced by Zod):
-   * - Trimmed (leading/trailing whitespace stripped)
-   * - Minimum 1 character after trim
-   * - Maximum 100 characters
-   * - Not the literal "engine" (reserved keyword)
-   */
-  fill: 'engine' | string;
-}
-
-/**
- * Gap intent — why Call 2 is receiving this shape of input.
- * "all-satisfied": all 12 covered, no decisions needed.
- * "skipped": user acknowledged gaps but chose to ignore them.
- * "user-decided": user made active decisions about missing categories.
- */
-export type GapIntent = 'all-satisfied' | 'skipped' | 'user-decided';
-
-// ============================================================================
-// SIDE NOTES (§7)
-// ============================================================================
-
-/** A user-chosen term for a missing category */
-export interface SideNote {
-  /** The category this side note fills */
-  category: PromptCategory;
-  /** The user's chosen term (from Manual dropdown) */
-  term: string;
-}
-
-// ============================================================================
-// CLIENT STATE MACHINE (§13)
-// ============================================================================
-
-/** Valid states for the Prompt Lab client */
-export type PromptLabPhase =
-  | 'idle'
-  | 'checking'
-  | 'assessed-all-good'
-  | 'deciding'
-  | 'generating'
-  | 'generated'
-  | 'failed-check'
-  | 'failed-generate';
 
 /** Error types for failed states */
 export type PromptLabErrorType = 'network' | 'rate-limit' | 'content-policy' | 'unknown';
-
-/** Error metadata carried by failed-* states */
-export interface PromptLabError {
-  type: PromptLabErrorType;
-  message: string;
-}
-
-/** Full client state shape (§13 reducer) */
-export interface PromptLabState {
-  phase: PromptLabPhase;
-  /** The text that was sent to Call 1 (for stale-check on return) */
-  sentText: string | null;
-  /** Call 1 result — null until checking completes */
-  assessment: CoverageAssessment | null;
-  /** User's category decisions — persists across retry */
-  decisions: CategoryDecision[];
-  /** Side notes created from manual decisions — persists across re-assessment */
-  sideNotes: SideNote[];
-  /** Error metadata when in failed-* states */
-  error: PromptLabError | null;
-}

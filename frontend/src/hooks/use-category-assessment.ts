@@ -1,16 +1,16 @@
 // src/hooks/use-category-assessment.ts
 // ============================================================================
-// useCategoryAssessment — Prompt Lab v4 Phase 1 (Check)
+// useCategoryAssessment — Call 1 Coverage + Matched Phrases
 // ============================================================================
 // Calls POST /api/parse-sentence with mode: "assess".
-// Returns a CoverageAssessment with per-category covered/confidence data.
+// Returns per-category coverage (covered/not) with matched phrases from
+// the user's text. Used for text colouring and category coverage pills.
 //
-// This hook is used ONLY by the Prompt Lab v4 flow. The standard builder
+// This hook is used ONLY by the Prompt Lab. The standard builder
 // continues to use useSentenceConversion (mode: "extract").
 //
-// Authority: prompt-lab-v4-flow.md §8, §13
-// Non-regression rule #1: Call 2 NEVER fires during Phase 1.
-// Non-regression rule #5: Call 1 only assesses raw human text (no side notes).
+// Security: No "AI", "GPT", "OpenAI" in any client-facing string.
+// Authority: prompt-lab.md
 // ============================================================================
 
 'use client';
@@ -42,8 +42,8 @@ export interface CategoryAssessmentResult {
 // ============================================================================
 
 /**
- * Map API error codes to PromptLabErrorType for state machine routing.
- * §13: error.type determines user-facing message.
+ * Map error codes to PromptLabErrorType.
+ * All user-facing messages use neutral language — no backend references.
  */
 function classifyError(
   status: number,
@@ -65,13 +65,13 @@ export function useCategoryAssessment(): CategoryAssessmentResult {
   const [error, setError] = useState<{ type: PromptLabErrorType; message: string } | null>(null);
   const [sentText, setSentText] = useState<string | null>(null);
 
-  // ── Abort controller for cancellation (Clear All, text edit during check) ──
+  // Abort controller for cancellation (Clear All, double-click)
   const abortRef = useRef<AbortController | null>(null);
 
   const assess = useCallback(async (sentence: string): Promise<CoverageAssessment | null> => {
     const trimmed = sentence.trim();
 
-    // ── Client-side validation ──────────────────────────────────────
+    // Client-side validation
     if (!trimmed) {
       setError({ type: 'unknown', message: 'Please enter a description.' });
       return null;
@@ -81,14 +81,14 @@ export function useCategoryAssessment(): CategoryAssessmentResult {
       return null;
     }
 
-    // ── Cancel any in-flight request (§13 race condition: double-click) ──
+    // Cancel any in-flight request (race condition: double-click)
     if (abortRef.current) {
       abortRef.current.abort();
     }
     const controller = new AbortController();
     abortRef.current = controller;
 
-    // ── Set state to checking ───────────────────────────────────────
+    // Set state to checking
     setIsChecking(true);
     setError(null);
     setAssessment(null);
@@ -102,7 +102,7 @@ export function useCategoryAssessment(): CategoryAssessmentResult {
         signal: controller.signal,
       });
 
-      // ── Handle error responses ──────────────────────────────────────
+      // Handle error responses
       if (!res.ok) {
         let data: { error?: string; message?: string } = {};
         try {
@@ -112,7 +112,7 @@ export function useCategoryAssessment(): CategoryAssessmentResult {
         }
 
         const errorType = classifyError(res.status, data.error);
-        const message = data.message ?? 'Failed to check your description. Please try again.';
+        const message = data.message ?? 'Failed to analyse your description. Please try again.';
 
         setError({ type: errorType, message });
         setIsChecking(false);
@@ -120,12 +120,12 @@ export function useCategoryAssessment(): CategoryAssessmentResult {
         return null;
       }
 
-      // ── Parse successful response ───────────────────────────────────
+      // Parse successful response
       const data = await res.json();
       const result = data.assessment as CoverageAssessment;
 
       if (!result || !result.coverage) {
-        setError({ type: 'unknown', message: 'No assessment returned. Please try again.' });
+        setError({ type: 'unknown', message: 'No analysis returned. Please try again.' });
         setIsChecking(false);
         abortRef.current = null;
         return null;
@@ -136,16 +136,14 @@ export function useCategoryAssessment(): CategoryAssessmentResult {
       abortRef.current = null;
       return result;
     } catch (err: unknown) {
-      // ── Handle abort (not an error — user cancelled) ────────────────
+      // Handle abort (not an error — user cancelled)
       if (err instanceof DOMException && err.name === 'AbortError') {
-        // Request was cancelled (Clear All, new request, text edit during check)
-        // Don't set error state — the cancellation was intentional
         setIsChecking(false);
         abortRef.current = null;
         return null;
       }
 
-      // ── Handle network errors ───────────────────────────────────────
+      // Handle network errors
       setError({ type: 'network', message: 'Connection failed. Please check your network and try again.' });
       setIsChecking(false);
       abortRef.current = null;
@@ -154,7 +152,7 @@ export function useCategoryAssessment(): CategoryAssessmentResult {
   }, []);
 
   const clear = useCallback(() => {
-    // Cancel any in-flight request (§13: Clear All cancels everything)
+    // Cancel any in-flight request
     if (abortRef.current) {
       abortRef.current.abort();
       abortRef.current = null;

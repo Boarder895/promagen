@@ -5,13 +5,12 @@
 // TWO MODES (backward compatible):
 //   mode: "extract" (default) — Original behaviour. Returns 12-category term
 //     arrays for dropdown population. Used by standard builder.
-//   mode: "assess" — New v4 behaviour. Returns coverage map with confidence.
-//     Used by Prompt Lab's Check → Assess → Decide → Generate flow.
+//   mode: "assess" — Returns coverage map with matched phrases from user's text.
+//     Used by Prompt Lab for text colouring + category coverage pills.
 //
-// Authority: prompt-lab-v4-flow.md §8, human-sentence-conversion.md
+// Authority: prompt-lab.md, human-sentence-conversion.md
 // One Brain rule: API parses/assesses, engine optimises. Never merge them.
-// Non-regression rule #1: Call 2 NEVER fires during Phase 1.
-// Non-regression rule #7: No "AI", "GPT", "OpenAI", "LLM" in user-facing strings.
+// Security: No "AI", "GPT", "OpenAI", "LLM" in user-facing strings or client logs.
 // ============================================================================
 
 import 'server-only';
@@ -82,19 +81,18 @@ Return format:
 }`;
 
 /**
- * ASSESS mode — new v4 category assessment prompt.
- * Returns coverage map with confidence per category.
- * Authority: prompt-lab-v4-flow.md §8
+ * ASSESS mode — category coverage + matched phrases.
+ * Returns which categories are covered and the exact phrases from the
+ * user's text that address each one. Used for text colouring and gap display.
  *
- * Key differences from extract:
- * - Does NOT extract terms — only assesses coverage (yes/no + confidence)
- * - Returns structured coverage object, not arrays
- * - Recognises implied content (e.g., "sunset" implies lighting at medium confidence)
+ * Key difference from extract mode:
+ * - Returns the user's own words (not vocabulary-matched terms)
+ * - matchedPhrases are the exact substrings from the input
  * - Handles CLIP tokens and MJ parameters, not just natural English
  */
-const ASSESS_SYSTEM_PROMPT = `You are a prompt assessment engine for AI image generation.
+const ASSESS_SYSTEM_PROMPT = `You are a prompt analysis engine for AI image generation.
 
-Given a natural language description of an image, assess which of these 12 categories the text covers. You are NOT extracting terms — you are judging whether each category is addressed by the user's text.
+Given a natural language description of an image, determine which of these 12 categories the text covers. For each covered category, return the exact phrases from the user's text that address it.
 
 The 12 categories:
 - subject: The main focus — people, animals, objects, landscapes, architecture, abstract concepts.
@@ -110,42 +108,39 @@ The 12 categories:
 - fidelity: Quality descriptors — resolution, detail level, sharpness, "masterpiece", "8K".
 - negative: Explicit exclusions — "no people", "no text", "without watermarks".
 
-Rules for assessment:
+Rules:
 1. A category is "covered: true" if the text explicitly or clearly implies content for that category.
-2. confidence is "high" when the category is explicitly stated or unmistakably present.
-   WRONG: "sunset" → lighting confidence "high" (sunset is a time/atmosphere, lighting is only implied)
-   RIGHT: "sunset" → lighting confidence "medium" (lighting is implied, not stated)
-   WRONG: "a red car" → colour confidence "medium" (red is an explicit colour)
-   RIGHT: "a red car" → colour confidence "high" (colour is explicitly stated)
-3. confidence is "medium" when the category is implied but not directly stated. Examples:
-   - "sunset" implies lighting (warm, directional) but doesn't state it → lighting: covered true, confidence medium
-   - "rainy street" implies materials (wet surfaces) but doesn't state it → materials: covered true, confidence medium
-   - "vintage photograph" implies colour (desaturated, warm tones) but doesn't state it → colour: covered true, confidence medium
-4. A category is "covered: false" when the text provides no content for it, even implied.
-   Use confidence "high" for clearly absent categories (the normal case).
-   Use confidence "medium" only if genuinely uncertain — this should be rare for absent categories.
-5. Do NOT over-infer. "A dog running in a park" does NOT imply camera, lighting, composition, style, fidelity, colour, materials, or negative. Only subject (dog), action (running), and environment (park) are covered.
-6. Handle structured input: CLIP tokens like "(sunset:1.2), (golden hour:0.8)" and Midjourney parameters like "--ar 16:9 --v 6" count as coverage for their respective categories.
-7. "negative" is ONLY covered if the text explicitly mentions exclusions (no/without/excluding). Implied absence does not count.
-8. Preserve user intent — assess what they wrote, not what a good prompt "should" have.
+2. For covered categories, return the exact phrases from the user's input that address it. Use the user's own words — do NOT paraphrase, do NOT add words, do NOT reinterpret.
+   WRONG: User wrote "blue hour" → matchedPhrases: ["cool blue twilight lighting"] (paraphrased)
+   RIGHT: User wrote "blue hour" → matchedPhrases: ["blue hour"] (exact words from input)
+3. A single phrase may be short ("8K") or multi-word ("weathered white suit standing on the roof"). Extract the meaningful chunk, not individual words.
+   WRONG: "a lone astronaut in a weathered white suit" → subject matchedPhrases: ["lone", "astronaut", "white", "suit"]
+   RIGHT: "a lone astronaut in a weathered white suit" → subject matchedPhrases: ["lone astronaut in a weathered white suit"]
+4. A category may have multiple matched phrases. Return all of them.
+   Example: lighting matchedPhrases: ["blue hour", "last orange sunset", "first city lights"]
+5. For uncovered categories, return an empty matchedPhrases array.
+6. Do NOT over-infer. "A dog running in a park" does NOT imply camera, lighting, composition, style, fidelity, colour, materials, or negative. Only subject, action, and environment are covered.
+7. "negative" is ONLY covered if the text explicitly mentions exclusions (no/without/excluding).
+8. Handle structured input: CLIP tokens like "(sunset:1.2)" and Midjourney parameters like "--ar 16:9 --v 6" count as coverage. Extract the meaningful part as the matchedPhrase.
+9. Preserve user intent — analyse what they wrote, not what a good prompt "should" have.
 
 Return ONLY valid JSON with no preamble, no markdown, no explanation:
 {
   "coverage": {
-    "subject": { "covered": true, "confidence": "high" },
-    "action": { "covered": false, "confidence": "high" },
-    "style": { "covered": true, "confidence": "medium" },
-    "environment": { "covered": true, "confidence": "high" },
-    "composition": { "covered": false, "confidence": "high" },
-    "camera": { "covered": false, "confidence": "high" },
-    "lighting": { "covered": true, "confidence": "medium" },
-    "colour": { "covered": false, "confidence": "high" },
-    "atmosphere": { "covered": true, "confidence": "high" },
-    "materials": { "covered": false, "confidence": "high" },
-    "fidelity": { "covered": false, "confidence": "high" },
-    "negative": { "covered": false, "confidence": "high" }
+    "subject": { "covered": true, "matchedPhrases": ["lone astronaut in a weathered white suit"] },
+    "action": { "covered": true, "matchedPhrases": ["stands on the roof", "holding a glowing red umbrella"] },
+    "style": { "covered": true, "matchedPhrases": ["cinematic, photorealistic"] },
+    "environment": { "covered": true, "matchedPhrases": ["flooded neon lit Tokyo train station"] },
+    "composition": { "covered": false, "matchedPhrases": [] },
+    "camera": { "covered": false, "matchedPhrases": [] },
+    "lighting": { "covered": true, "matchedPhrases": ["blue hour", "last orange sunset"] },
+    "colour": { "covered": false, "matchedPhrases": [] },
+    "atmosphere": { "covered": true, "matchedPhrases": ["rain falls through drifting steam"] },
+    "materials": { "covered": true, "matchedPhrases": ["reflective surfaces"] },
+    "fidelity": { "covered": true, "matchedPhrases": ["sharp subject focus", "8K"] },
+    "negative": { "covered": false, "matchedPhrases": [] }
   },
-  "coveredCount": 4,
+  "coveredCount": 8,
   "totalCategories": 12,
   "allSatisfied": false
 }
@@ -196,7 +191,7 @@ const VALID_CATEGORIES = [
 
 const CategoryCoverageSchema = z.object({
   covered: z.boolean(),
-  confidence: z.enum(['high', 'medium']),
+  matchedPhrases: z.array(z.string().max(200)).max(20),
 });
 
 const CoverageMapSchema = z.object({
@@ -345,7 +340,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       body: JSON.stringify({
         model: 'gpt-5.4-mini',
         temperature: 0.15,
-        max_completion_tokens: mode === 'assess' ? 800 : 1200,
+        max_completion_tokens: mode === 'assess' ? 1200 : 1200,
         response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: systemPrompt },

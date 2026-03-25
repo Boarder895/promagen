@@ -22,7 +22,7 @@
 
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import type { GeneratedPrompts, PlatformTier } from '../../types/prompt-intelligence';
 import { TIER_CONFIGS } from '../../types/prompt-intelligence';
@@ -288,6 +288,123 @@ function TierCard({
 }: TierCardProps) {
   const [copied, setCopied] = useState(false);
   const config = TIER_CONFIGS[tier];
+
+  // ── Typewriter reveal ─────────────────────────────────────────────
+  // Fresh generation (prev empty → new text): 10ms/char with tier stagger
+  // Regeneration (prev had text → new text): 2ms/char with small stagger
+  // Clear (text → empty): instant reset
+  const [visibleChars, setVisibleChars] = useState(0);
+  const prevPositiveRef = useRef('');
+  const typewriterTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const staggerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const prev = prevPositiveRef.current;
+    prevPositiveRef.current = positive;
+
+    // Clean up any existing timers
+    if (typewriterTimerRef.current) { clearInterval(typewriterTimerRef.current); typewriterTimerRef.current = null; }
+    if (staggerTimerRef.current) { clearTimeout(staggerTimerRef.current); staggerTimerRef.current = null; }
+
+    // No text → instant reset
+    if (!positive) {
+      setVisibleChars(0);
+      return;
+    }
+
+    // Same text → show all (no re-animation)
+    if (positive === prev) {
+      setVisibleChars(positive.length);
+      return;
+    }
+
+    // Determine speed: fresh (prev empty) vs regen (prev had content)
+    const isFresh = !prev;
+    const speed = isFresh ? 25 : 5;
+    const delay = isFresh ? (tier - 1) * 500 : (tier - 1) * 80;
+
+    setVisibleChars(0);
+
+    const startTyping = () => {
+      let chars = 0;
+      typewriterTimerRef.current = setInterval(() => {
+        chars += 1;
+        if (chars >= positive.length) {
+          setVisibleChars(positive.length);
+          if (typewriterTimerRef.current) { clearInterval(typewriterTimerRef.current); typewriterTimerRef.current = null; }
+        } else {
+          setVisibleChars(chars);
+        }
+      }, speed);
+    };
+
+    if (delay > 0) {
+      staggerTimerRef.current = setTimeout(startTyping, delay);
+    } else {
+      startTyping();
+    }
+
+    return () => {
+      if (typewriterTimerRef.current) clearInterval(typewriterTimerRef.current);
+      if (staggerTimerRef.current) clearTimeout(staggerTimerRef.current);
+    };
+  }, [positive, tier]);
+
+  // The text to display — typewriter-sliced
+  const displayText = positive.slice(0, visibleChars);
+  const isTyping = visibleChars < positive.length && positive.length > 0;
+
+  // ── Negative text typewriter (Tier 2 only) ────────────────────────
+  // Starts after positive typewriter completes. Same speed, no stagger.
+  const [negVisibleChars, setNegVisibleChars] = useState(0);
+  const negTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const negStartedRef = useRef(false);
+  const prevNegativeRef = useRef('');
+
+  useEffect(() => {
+    const prevNeg = prevNegativeRef.current;
+    prevNegativeRef.current = negative ?? '';
+
+    // Clean up
+    if (negTimerRef.current) { clearInterval(negTimerRef.current); negTimerRef.current = null; }
+
+    // Reset when no text or negative changed (new generation)
+    if (!negative || !positive || negative !== prevNeg) {
+      setNegVisibleChars(0);
+      negStartedRef.current = false;
+    }
+
+    // Also reset when positive is still typing (new generation in progress)
+    if (visibleChars < (positive?.length ?? 0)) {
+      negStartedRef.current = false;
+      setNegVisibleChars(0);
+      return;
+    }
+
+    // Start negative typing when positive finishes
+    if (visibleChars >= positive.length && positive.length > 0 && negative && !negStartedRef.current) {
+      negStartedRef.current = true;
+      const speed = prevPositiveRef.current === positive ? 25 : 5;
+      let chars = 0;
+
+      negTimerRef.current = setInterval(() => {
+        chars += 1;
+        if (chars >= negative.length) {
+          setNegVisibleChars(negative.length);
+          if (negTimerRef.current) { clearInterval(negTimerRef.current); negTimerRef.current = null; }
+        } else {
+          setNegVisibleChars(chars);
+        }
+      }, speed);
+    }
+
+    return () => {
+      if (negTimerRef.current) clearInterval(negTimerRef.current);
+    };
+  }, [visibleChars, positive, negative]);
+
+  const negDisplayText = negative ? negative.slice(0, negVisibleChars) : '';
+  const isNegTyping = negative ? negVisibleChars > 0 && negVisibleChars < negative.length : false;
   
   const handleCopy = useCallback(async () => {
     const text = tier === 2 && negative
@@ -404,13 +521,11 @@ function TierCard({
             ? 'Select options to generate prompt...'
             : isPro && termIndex && termIndex.size > 0
               ? (() => {
-                  const segments = parsePromptIntoSegments(positive, termIndex);
+                  const segments = parsePromptIntoSegments(displayText, termIndex);
                   const hasAnatomy = segments.some((s) => s.category !== 'structural');
-                  if (!hasAnatomy) return positive;
+                  if (!hasAnatomy) return displayText;
                   return segments.map((seg, i) => {
                     const c = CATEGORY_COLOURS[seg.category] ?? CATEGORY_COLOURS.structural;
-                    // Structural text inherits the <p> base colour (white/slate-200)
-                    // Only category-matched text gets coloured inline
                     const isStructural = seg.category === 'structural';
                     return (
                       <span
@@ -425,14 +540,21 @@ function TierCard({
                     );
                   });
                 })()
-              : positive
+              : displayText
           }
+          {/* Typewriter cursor */}
+          {isTyping && (
+            <span className="animate-pulse" style={{ color: '#94A3B8' }}>▌</span>
+          )}
         </p>
         
-        {/* Negative for tier 2 (inline) */}
-        {tier === 2 && negative && (
+        {/* Negative for tier 2 — typewriter in after positive completes */}
+        {tier === 2 && negative && !isTyping && negVisibleChars > 0 && (
           <p className="mt-2 text-red-400/80 break-words">
-            {negative}
+            {negDisplayText}
+            {isNegTyping && (
+              <span className="animate-pulse" style={{ color: '#F87171' }}>▌</span>
+            )}
           </p>
         )}
       </div>

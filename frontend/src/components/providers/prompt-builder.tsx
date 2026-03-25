@@ -229,21 +229,13 @@ export interface PromptBuilderProps {
   isTierGenerating?: boolean;
   /** Provider name the AI tiers were generated for */
   generatedForProvider?: string | null;
-  // ── Prompt Lab v4 pass-through ────────────────────────────────────
-  /** Assessment UI element to render between DescribeYourImage and category grid */
-  assessmentElement?: React.ReactNode;
+  // ── Coverage data pass-through ──────────────────────────────────
   /** When true, DescribeYourImage skips internal Call 1 (extract) — orchestrator handles it */
   skipInternalParse?: boolean;
-  /** Whether external assessment is loading (v4: Call 1 in assess mode) */
+  /** Whether external assessment is loading */
   externalLoading?: boolean;
-  /** Side notes to display alongside textarea */
-  sideNotes?: import('@/types/category-assessment').SideNote[];
-  /** Called when user removes a side note pill */
-  onRemoveSideNote?: (category: import('@/types/prompt-builder').PromptCategory) => void;
-  /** OD-6: Pulse key for side note pills after re-assessment */
-  sideNotePulseKey?: number;
-  /** When true, DYI Generate Prompt button is disabled (assessment exists, no drift) */
-  generateDisabled?: boolean;
+  /** Coverage assessment with matched phrases per category */
+  coverageData?: import('@/types/category-assessment').CoverageAssessment | null;
 }
 
 // Platforms that use --no inline for negatives
@@ -970,13 +962,9 @@ export function PromptBuilder({
   aiTierPrompts: _aiTierPrompts,
   isTierGenerating: _isTierGenerating,
   generatedForProvider: _generatedForProvider,
-  assessmentElement,
   skipInternalParse,
   externalLoading,
-  sideNotes,
-  onRemoveSideNote,
-  sideNotePulseKey,
-  generateDisabled,
+  coverageData,
 }: PromptBuilderProps) {
   // ============================================================================
   // Platform ID (computed first for hook dependency)
@@ -2755,22 +2743,11 @@ export function PromptBuilder({
               driftChangeCount={driftChangeCount}
               skipInternalParse={skipInternalParse}
               externalLoading={externalLoading}
-              sideNotes={sideNotes}
-              onRemoveSideNote={onRemoveSideNote}
-              sideNotePulseKey={sideNotePulseKey}
-              generateDisabled={generateDisabled}
+              coverageData={coverageData}
               hidden={activeInput === 'scene'}
               onExpandChange={handleDescribeExpandChange}
             />
           )}
-
-          {/* ════════════════════════════════════════════════════════ */}
-          {/* Assessment Box — Prompt Lab v4 Phase 2 (Assess)         */}
-          {/* Rendered between text input and category grid.          */}
-          {/* Only present when orchestrator provides it.             */}
-          {/* Authority: prompt-lab-v4-flow.md §4                     */}
-          {/* ════════════════════════════════════════════════════════ */}
-          {assessmentElement}
 
           {/* Category dropdowns grid */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

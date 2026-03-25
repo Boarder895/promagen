@@ -113,21 +113,13 @@ export interface EnhancedEducationalPreviewProps {
   isTierGenerating?: boolean;
   /** Provider name the AI tiers were generated for */
   generatedForProvider?: string | null;
-  // ── Prompt Lab v4 pass-through ────────────────────────────────────
-  /** Assessment UI element to render after DescribeYourImage */
-  assessmentElement?: React.ReactNode;
+  // ── Coverage data from Call 1 (matched phrases for text colouring) ──
   /** When true, DescribeYourImage skips internal Call 1 — orchestrator handles it */
   skipInternalParse?: boolean;
-  /** Whether external assessment is loading (v4: Call 1 in assess mode) */
+  /** Whether external assessment is loading */
   externalLoading?: boolean;
-  /** Side notes to display alongside textarea */
-  sideNotes?: import('@/types/category-assessment').SideNote[];
-  /** Called when user removes a side note pill */
-  onRemoveSideNote?: (category: PromptCategory) => void;
-  /** OD-6: Pulse key for side note pills after re-assessment */
-  sideNotePulseKey?: number;
-  /** When true, DYI Generate Prompt button is disabled (assessment exists, no drift) */
-  generateDisabled?: boolean;
+  /** Coverage assessment with matched phrases per category */
+  coverageData?: import('@/types/category-assessment').CoverageAssessment | null;
 }
 
 // ============================================================================
@@ -353,13 +345,9 @@ export default function EnhancedEducationalPreview({
   aiTierPrompts,
   isTierGenerating,
   generatedForProvider,
-  assessmentElement,
   skipInternalParse,
   externalLoading,
-  sideNotes,
-  onRemoveSideNote,
-  sideNotePulseKey,
-  generateDisabled,
+  coverageData,
 }: EnhancedEducationalPreviewProps) {
   // State
   const [selections, setSelections] = useState<PromptSelections>(EMPTY_SELECTIONS);
@@ -403,11 +391,98 @@ export default function EnhancedEducationalPreview({
   });
   const isPro = userTier === 'paid';
 
-  // Build term → category index for colour coding (same as standard builder)
+  // Build term → category index for colour coding
+  // TWO LAYERS for maximum colour coverage:
+  //   Layer 1: coverageData.matchedPhrases — user's exact words from Call 1
+  //   Layer 2: Vocabulary terms — known terms the AI might add (expert value-add)
+  // Combined index colours both human-written and AI-generated text.
   const colourTermIndex = useMemo(() => {
+    // Prompt Lab: build from coverageData matched phrases (all users see colour)
+    if (coverageData) {
+      const index = new Map<string, PromptCategory>();
+      const STOP_WORDS = new Set([
+        'a', 'an', 'the', 'in', 'on', 'at', 'of', 'to', 'for', 'by',
+        'as', 'and', 'or', 'but', 'with', 'from', 'into', 'through',
+        'is', 'are', 'was', 'were', 'be', 'been', 'being',
+        'that', 'this', 'it', 'its', 'should', 'feel',
+      ]);
+
+      // ── Layer 1: Call 1 matched phrases (user's own words) ──────────
+      for (const [cat, data] of Object.entries(coverageData.coverage)) {
+        if (!data.matchedPhrases) continue;
+        const category = cat as PromptCategory;
+
+        for (const phrase of data.matchedPhrases) {
+          const key = phrase.toLowerCase().trim();
+          if (!key) continue;
+
+          // Always add the full phrase
+          index.set(key, category);
+
+          // Split long phrases (4+ words) into meaningful sub-chunks
+          const words = key.split(/\s+/);
+          if (words.length >= 4) {
+            let chunk: string[] = [];
+            for (const word of words) {
+              if (STOP_WORDS.has(word)) {
+                if (chunk.length >= 2) {
+                  index.set(chunk.join(' '), category);
+                }
+                chunk = [];
+              } else {
+                chunk.push(word);
+              }
+            }
+            if (chunk.length >= 2) {
+              index.set(chunk.join(' '), category);
+            }
+          }
+
+          // Individual meaningful words (3+ chars, not stop words)
+          for (const word of words) {
+            if (word.length >= 3 && !STOP_WORDS.has(word)) {
+              index.set(word, category);
+            }
+          }
+        }
+      }
+
+      // ── Layer 2: Vocabulary terms (AI expert value-add terms) ────────
+      // Top 50 dropdown terms per category. Only add multi-word terms
+      // (2+ words) or specific single words (5+ chars) to avoid
+      // false-matching common short words like "dark", "soft", "blue".
+      const VOCAB_CATEGORIES: CategoryKey[] = [
+        'subject', 'action', 'style', 'environment', 'composition',
+        'camera', 'lighting', 'colour', 'atmosphere', 'materials',
+        'fidelity', 'negative',
+      ];
+      for (const cat of VOCAB_CATEGORIES) {
+        try {
+          const vocab = loadCategoryVocabulary(cat);
+          const terms = vocab.dropdownOptions.slice(0, 50);
+          for (const term of terms) {
+            const key = term.toLowerCase().trim();
+            if (!key) continue;
+            // Skip if already in index (user phrases take priority)
+            if (index.has(key)) continue;
+            const wordCount = key.split(/\s+/).length;
+            // Multi-word terms always safe (e.g., "golden hour", "wide angle")
+            // Single words only if 4+ chars (e.g., "neon", "haze", not "red")
+            if (wordCount >= 2 || key.length >= 4) {
+              index.set(key, cat as PromptCategory);
+            }
+          }
+        } catch {
+          // Vocabulary load failure is non-fatal — colours just won't match
+        }
+      }
+
+      return index;
+    }
+    // Standard builder: build from dropdown selections (Pro only)
     if (!isPro) return new Map<string, PromptCategory>();
     return buildTermIndexFromSelections(selections);
-  }, [isPro, selections]);
+  }, [coverageData, isPro, selections]);
 
   // ── CategoryState adapter for DescribeYourImage ──
   // DescribeYourImage reads/writes Record<PromptCategory, CategoryState>.
@@ -522,6 +597,50 @@ export default function EnhancedEducationalPreview({
     const source = aiTierPrompts ?? generatedPrompts;
     return source[tierKey] ?? '';
   }, [generatedPrompts, aiTierPrompts, activeTier]);
+
+  // ── Assembled prompt typewriter ─────────────────────────────────────
+  // Same speed logic as tier cards: fresh 25ms, regen 5ms
+  const [assembledVisibleChars, setAssembledVisibleChars] = useState(0);
+  const prevAssembledRef = useRef('');
+  const assembledTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    const prev = prevAssembledRef.current;
+    prevAssembledRef.current = activeTierPromptText;
+
+    if (assembledTimerRef.current) { clearInterval(assembledTimerRef.current); assembledTimerRef.current = null; }
+
+    if (!activeTierPromptText) {
+      setAssembledVisibleChars(0);
+      return;
+    }
+    if (activeTierPromptText === prev) {
+      setAssembledVisibleChars(activeTierPromptText.length);
+      return;
+    }
+
+    const isFresh = !prev;
+    const speed = isFresh ? 25 : 5;
+    setAssembledVisibleChars(0);
+
+    let chars = 0;
+    assembledTimerRef.current = setInterval(() => {
+      chars += 1;
+      if (chars >= activeTierPromptText.length) {
+        setAssembledVisibleChars(activeTierPromptText.length);
+        if (assembledTimerRef.current) { clearInterval(assembledTimerRef.current); assembledTimerRef.current = null; }
+      } else {
+        setAssembledVisibleChars(chars);
+      }
+    }, speed);
+
+    return () => {
+      if (assembledTimerRef.current) clearInterval(assembledTimerRef.current);
+    };
+  }, [activeTierPromptText]);
+
+  const assembledDisplayText = activeTierPromptText.slice(0, assembledVisibleChars);
+  const isAssembledTyping = assembledVisibleChars < activeTierPromptText.length && activeTierPromptText.length > 0;
 
   // Live Diff REMOVED — was for Static↔Dynamic toggle comparison
 
@@ -691,7 +810,7 @@ export default function EnhancedEducationalPreview({
   // handleCategoryChange REMOVED — no dropdown UI in Prompt Lab
 
   // Handle randomise — still works via SceneSelector / selections state
-  const handleRandomise = useCallback(() => {
+  const _handleRandomise = useCallback(() => {
     const newSelections: PromptSelections = { ...EMPTY_SELECTIONS };
 
     for (const category of DISPLAY_CATEGORIES) {
@@ -875,19 +994,8 @@ export default function EnhancedEducationalPreview({
           clearSignal={clearSignal}
           skipInternalParse={skipInternalParse}
           externalLoading={externalLoading}
-          sideNotes={sideNotes}
-          onRemoveSideNote={onRemoveSideNote}
-          sideNotePulseKey={sideNotePulseKey}
-          generateDisabled={generateDisabled}
+          coverageData={coverageData}
         />
-
-        {/* ════════════════════════════════════════════════════════ */}
-        {/* Assessment Box — Prompt Lab v4 Phase 2 (Assess)         */}
-        {/* Rendered between text input and content grid.            */}
-        {/* Only present when orchestrator provides it.              */}
-        {/* Authority: prompt-lab-v4-flow.md §4                      */}
-        {/* ════════════════════════════════════════════════════════ */}
-        {assessmentElement}
 
         {/* Full-width single column */}
         <div className="space-y-4">
@@ -949,11 +1057,11 @@ export default function EnhancedEducationalPreview({
                   <pre className={`whitespace-pre-wrap font-sans text-[0.8rem] leading-relaxed ${
                     isOptimizerEnabled && selectedProviderId && !effectiveWasOptimized ? 'text-emerald-100' : 'text-slate-100'
                   }`}>
-                    {isPro && colourTermIndex.size > 0
+                    {colourTermIndex.size > 0
                       ? (() => {
-                          const segments = parsePromptIntoSegments(activeTierPromptText, colourTermIndex);
+                          const segments = parsePromptIntoSegments(assembledDisplayText, colourTermIndex);
                           const hasAnatomy = segments.some((s) => s.category !== 'structural');
-                          if (!hasAnatomy) return activeTierPromptText;
+                          if (!hasAnatomy) return assembledDisplayText;
                           return segments.map((seg, i) => {
                             const c = CATEGORY_COLOURS[seg.category] ?? CATEGORY_COLOURS.structural;
                             return (
@@ -963,8 +1071,12 @@ export default function EnhancedEducationalPreview({
                             );
                           });
                         })()
-                      : activeTierPromptText
+                      : assembledDisplayText
                     }
+                    {/* Typewriter cursor */}
+                    {isAssembledTyping && (
+                      <span className="animate-pulse" style={{ color: '#94A3B8' }}>▌</span>
+                    )}
                     {/* Inline copy + save icons — flows after last character, floats right */}
                     <span className="ml-1 inline-flex float-right gap-1">
                       <SaveIcon
@@ -1014,7 +1126,7 @@ export default function EnhancedEducationalPreview({
                 compact={false}
                 showNegative={true}
                 singleTierMode={singleTierMode}
-                isPro={isPro}
+                isPro={isPro || colourTermIndex.size > 0}
                 termIndex={colourTermIndex}
                 isTierGenerating={isTierGenerating}
                 generatedForProvider={generatedForProvider}
@@ -1128,7 +1240,7 @@ export default function EnhancedEducationalPreview({
                       </div>
                       <div className="min-h-[60px] max-h-[150px] overflow-y-auto rounded-xl border border-emerald-600/50 bg-emerald-950/20 p-3 text-sm scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30">
                         <pre className="whitespace-pre-wrap font-sans text-[0.8rem] leading-relaxed text-emerald-100">
-                          {isPro && colourTermIndex.size > 0
+                          {colourTermIndex.size > 0
                             ? (() => {
                                 const segments = parsePromptIntoSegments(effectiveOptimisedText, colourTermIndex);
                                 const hasAnatomy = segments.some((s) => s.category !== 'structural');
@@ -1265,16 +1377,6 @@ export default function EnhancedEducationalPreview({
                 {isOptimizerEnabled && effectiveWasOptimized ? 'Copy optimized prompt' : 'Copy prompt'}
               </>
             )}
-          </button>
-
-          {/* Randomise button */}
-          <button
-            type="button"
-            onClick={handleRandomise}
-            className="inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition-all focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80 border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-100 hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 cursor-pointer"
-          >
-            <span className="text-base">🎲</span>
-            Randomise
           </button>
 
           {/* Clear All button — purple gradient matching Dynamic/Randomise, white text */}
