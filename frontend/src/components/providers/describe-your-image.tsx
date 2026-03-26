@@ -201,6 +201,8 @@ export interface DescribeYourImageProps {
   hidden?: boolean;
   /** Called when expand state changes (for parent coordination) */
   onExpandChange?: (expanded: boolean) => void;
+  /** When true, the panel starts expanded on mount. Default: false (standard builder). */
+  defaultExpanded?: boolean;
 }
 
 // ============================================================================
@@ -280,8 +282,9 @@ export function DescribeYourImage({
   coverageData = null,
   hidden = false,
   onExpandChange,
+  defaultExpanded = false,
 }: DescribeYourImageProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [inputText, setInputText] = useState("");
   const [hasGenerated, setHasGenerated] = useState(false);
   const [formatWarning, setFormatWarning] = useState<FormatDetection>({

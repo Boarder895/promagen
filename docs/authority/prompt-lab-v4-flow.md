@@ -1,19 +1,19 @@
 # Prompt Lab v4.0 — Check → Assess → Decide → Generate
 
-**Version:** 1.2.1  
+**Version:** 1.3.0  
 **Created:** 24 March 2026  
-**Updated:** 24 March 2026  
+**Updated:** 25 March 2026  
 **Owner:** Promagen  
-**Status:** APPROVED — ready to build  
+**Status:** APPROVED — ready to build. Backend contract (Call 2 gapIntent/categoryDecisions) already deployed. Client-side 4-phase UI not yet built.  
 **Scope:** Prompt Lab (`/studio/playground`) ONLY. Standard builder (`/providers/[id]`) is untouched.  
 **Authority:** This document defines the agreed architecture for the Prompt Lab's new intelligent flow. No code is written until this doc is approved.
 
 > **Cross-references:**
 >
-> - `ai-disguise.md` v3.0.0 — Disguise principle, naming conventions, security hardening
+> - `ai-disguise.md` v4.0.0 — Disguise principle, naming conventions, security hardening, post-processing layer (§7)
 > - `prompt-lab.md` v3.1.0 — Current Prompt Lab architecture (superseded by this doc on completion)
 > - `human-sentence-conversion.md` v2.0.0 — Call 1 current spec (to be rewritten per §3)
-> - `harmonizing-claude-openai.md` v1.0.0 — Harmony methodology for system prompt engineering
+> - `harmonizing-claude-openai.md` v2.0.0 — Harmony methodology for system prompt engineering, 30-rule inventory, 7 post-processing functions
 > - `human-factors.md` v1.1.0 — Curiosity Gap, Cognitive Load, Anticipatory Dopamine, Temporal Compression
 > - `code-standard.md` v4.0 — All code standards (clamp, no grey text, co-located animations, cursor-pointer)
 > - `best-working-practice.md` — Docs-first gate, SSOT discipline, security-first development
@@ -209,8 +209,9 @@ When a toggle is set to Manual, the dropdown shows keyword/phrase choices releva
 ### What happens
 
 1. Call 2 fires with the composite input: human text + side notes + engine-fill instructions
-2. The 4 tier boxes populate with intelligent prompts
-3. If a provider is selected, Call 3 is available for platform-specific optimisation (unchanged from current behaviour)
+2. **Server-side:** GPT response passes through `postProcessTiers()` pipeline (P1–P12) before reaching the client — catches mechanical artefacts like duplicate negatives, meta-language openers, CLIP-unfriendly adjectives. See `ai-disguise.md` §7 for the full pipeline.
+3. The 4 tier boxes populate with intelligent, post-processed prompts
+4. If a provider is selected, Call 3 is available for platform-specific optimisation (unchanged from current behaviour)
 
 ### What the engine receives
 
@@ -450,7 +451,9 @@ The system prompt for Call 2 must be updated to understand the composite input:
 
 ### Harmony requirement
 
-The updated Call 2 system prompt must be harmony-tested with the new input format. The existing 18 rules remain; additional rules are needed for the `categoryDecisions` handling. The rule ceiling (currently 27, per `harmony-compliance.ts`) may need raising — this requires explicit approval.
+The updated Call 2 system prompt must be harmony-tested with the new input format. The existing 30 rules remain; additional rules for `categoryDecisions` handling may be needed. The rule ceiling is 30 (per `harmony-compliance.ts`, test-enforced). Raising requires explicit Martin approval.
+
+**Post-processing note:** Call 2 output passes through `postProcessTiers()` (imported from `src/lib/harmony-post-processing.ts`) before reaching the client. The 7 post-processing functions (P1, P2, P3, P8, P10, P11, P12) handle GPT mechanical artefacts. The v4 flow does not change this pipeline — it runs on all Call 2 responses regardless of gapIntent. The 115-test lockdown suite (`harmony-post-processing.test.ts` + `harmony-compliance.test.ts`) must pass before shipping any changes.
 
 ---
 
@@ -798,15 +801,16 @@ Remove-Item -Path "src\app\api\parse-sentence\__tests__\parse-sentence.test.ts",
 
 ### Modified (existing files)
 
-| File                                                      | Current lines | Change                                            |
-| --------------------------------------------------------- | ------------- | ------------------------------------------------- |
-| `src/app/api/parse-sentence/route.ts`                     | 244           | System prompt rewrite, response schema change     |
-| `src/app/api/generate-tier-prompts/route.ts`              | 588           | Request schema update, system prompt additions    |
-| `src/hooks/use-sentence-conversion.ts`                    | 260           | Rewrite or replace for new Call 1 response format |
-| `src/hooks/use-tier-generation.ts`                        | 224           | Add `categoryDecisions` to generate call          |
-| `src/components/providers/describe-your-image.tsx`        | 712           | Side note pills, assessment box integration       |
-| `src/components/prompts/playground-workspace.tsx`         | 313           | Orchestrate 4-phase flow, side note state         |
-| `src/components/prompts/enhanced-educational-preview.tsx` | 2,014         | Wire new flow when no provider selected           |
+| File                                                      | Current lines | Change                                                                                        |
+| --------------------------------------------------------- | ------------- | --------------------------------------------------------------------------------------------- |
+| `src/app/api/parse-sentence/route.ts`                     | 244           | System prompt rewrite, response schema change                                                 |
+| `src/app/api/generate-tier-prompts/route.ts`              | **523**       | Request schema update (gapIntent/categoryDecisions already deployed), system prompt additions |
+| `src/lib/harmony-post-processing.ts`                      | **342**       | **No change expected** — post-processing pipeline is independent of v4 flow                   |
+| `src/hooks/use-sentence-conversion.ts`                    | 260           | Rewrite or replace for new Call 1 response format                                             |
+| `src/hooks/use-tier-generation.ts`                        | 224           | Add `categoryDecisions` to generate call                                                      |
+| `src/components/providers/describe-your-image.tsx`        | 712           | Side note pills, assessment box integration                                                   |
+| `src/components/prompts/playground-workspace.tsx`         | 313           | Orchestrate 4-phase flow, side note state (currently stripped — "Stripped v4 decision UI")    |
+| `src/components/prompts/enhanced-educational-preview.tsx` | 2,014         | Wire new flow when no provider selected                                                       |
 
 ### New files
 
@@ -818,11 +822,12 @@ Remove-Item -Path "src\app\api\parse-sentence\__tests__\parse-sentence.test.ts",
 
 ### Deleted (tests — rebuild later)
 
-| File                                                          | Lines |
-| ------------------------------------------------------------- | ----- |
-| `src/app/api/parse-sentence/__tests__/parse-sentence.test.ts` | 275   |
-| `src/hooks/__tests__/use-sentence-conversion.test.ts`         | 107   |
-| `src/lib/__tests__/harmony-compliance.test.ts`                | 415   |
+| File                                                          | Lines | Notes                        |
+| ------------------------------------------------------------- | ----- | ---------------------------- |
+| `src/app/api/parse-sentence/__tests__/parse-sentence.test.ts` | 275   | Rebuild after Call 1 rewrite |
+| `src/hooks/__tests__/use-sentence-conversion.test.ts`         | 107   | Rebuild after hook rewrite   |
+
+> **⚠️ DO NOT DELETE `src/lib/__tests__/harmony-compliance.test.ts` (453 lines) or `src/lib/__tests__/harmony-post-processing.test.ts` (601 lines).** These are part of the 115-test harmony lockdown suite and are NOT affected by the v4 flow. They test post-processing functions that are independent of the v4 client-side flow.
 
 ---
 
@@ -855,12 +860,15 @@ Remove-Item -Path "src\app\api\parse-sentence\__tests__\parse-sentence.test.ts",
 17. **No `hover:scale` transforms** causing layout reflow.
 18. **No question mark icons** on tooltips.
 
-### Harmony rules (carried from harmonizing-claude-openai.md)
+### Harmony rules (carried from harmonizing-claude-openai.md v2.0.0)
 
 19. **Dual assessment mandatory** — no system prompt ships without testing through both Claude and ChatGPT.
 20. **Concrete examples in every system prompt** — no rule without a WRONG/RIGHT pair.
-21. **Post-processing cannot be removed** — safety nets are permanent.
+21. **Post-processing cannot be removed** — all 7 functions (P1, P2, P3, P8, P10, P11, P12) in `harmony-post-processing.ts` are permanent safety nets. The v4 flow does not change this pipeline.
 22. **Martin approves all changes before implementation** — ideas proposed, not built.
+23. **Post-processing extraction is permanent** — all functions live in `src/lib/harmony-post-processing.ts`, imported by route.ts. Do not move them back into route.ts.
+24. **115-test harmony lockdown suite must pass before shipping** — `harmony-post-processing.test.ts` (72 tests) + `harmony-compliance.test.ts` (43 tests). Any red test = post-processing drift.
+25. **Rule ceiling is 30** — raising requires explicit approval. Tracked in `harmony-compliance.ts` with test assertion.
 
 ---
 
@@ -909,6 +917,8 @@ These items are explicitly parked for after the core Check → Assess → Decide
 
 ## Changelog
 
+- **25 Mar 2026 (v1.3.0):** **HARMONY INFRASTRUCTURE SYNC.** Cross-references updated: ai-disguise.md v3.0.0→v4.0.0, harmonizing-claude-openai.md v1.0.0→v2.0.0. Status clarified: backend contract (gapIntent/categoryDecisions) deployed, client-side 4-phase UI not yet built. §6 Phase 4: added post-processing pipeline step (postProcessTiers runs P1–P12 server-side before client delivery). §9 Harmony requirement: rule count 18→30, rule ceiling 27→30, added post-processing pipeline note and 115-test lockdown requirement. §17 Files Affected: route.ts line count 588→523 (refactored — post-processing extracted), added harmony-post-processing.ts (342 lines) to modified files, removed harmony-compliance.test.ts from delete list (part of 115-test lockdown suite — DO NOT DELETE), added warning about protecting test files. §18 Non-Regression Rules: harmony rules expanded from 4 to 7 — added extraction permanent, 115-test lockdown, rule ceiling 30. Non-regression rule count: 22→25.
+
 - **24 Mar 2026 (v1.2.1):** **POST-HARMONY CLEANUP — BUILD APPROVED.** 3 cleanup items from final ChatGPT 89/100 review. (1) §15: Fixed stale "backward compatibility with null decisions" wording in rebuild tests table — replaced with discriminated union validation. (2) §19: Updated D11 wording to reflect high-confidence-only auto-clear rule (aligned with D20). (3) §9: Added same-cycle integrity note to Zod invariants — uncovered category set must come from the same Call 1 assessment cycle, never a stale snapshot. Status changed from AGREED to APPROVED — ready to build. Dual-assessor harmony complete: Claude 85/100, ChatGPT 89/100.
 
 - **24 Mar 2026 (v1.2.0):** **SECOND HARMONY PASS — CONTRACT + STATE MACHINE + SAFETY.** 6 precision fixes from second dual-assessor review. (1) §9: `GenerateTierRequest` rewritten as discriminated union — `gapIntent` value now determines the shape, making contradictions structurally impossible at both TypeScript compile time and Zod runtime validation. (2) §9: Added Zod invariants table with 6 server-side enforcement rules: no duplicate categories, validated fill strings (trimmed, min 1, max 100, not reserved "engine"), decisions only for categories Call 1 reported as uncovered. (3) §7: Side note auto-clear now only fires on `confidence: "high"`. Medium-confidence coverage preserves user's manual side note — deliberate expert terms are stronger than vague implications. Contradiction handling table updated with new "sunset vs hard rim-lit" scenario. (4) §13: State machine rewritten. Collapsed `assessed-with-gaps` and `deciding` into single `deciding` state. Added text-edit-by-state table defining behaviour for edits in every state. Fixed `failed-generate` retry transition (now returns to `deciding`, not directly to `generating`). Added provider-change-after-generated-before-Call-3 race condition. Added `PromptLabState` reducer interface with error metadata typed as `'network' | 'rate-limit' | 'content-policy' | 'unknown'`. Removed policy-specific sub-state — existing error states handle all failure types via metadata. (5) §11: Removed "new error sub-state" wording. Added "v1-sufficient" framing with explicit deferred list: correlation IDs, structured logging, abuse detection, SDK response shape drift. (6) §15: Strengthened test deletion rationale with three-point justification over quarantine approach. Decisions log expanded from D16 to D22. Non-regression rules unchanged at 22.
@@ -919,6 +929,6 @@ These items are explicitly parked for after the core Check → Assess → Decide
 
 ---
 
-_This document is the authority for the Prompt Lab v4 flow. No code is written until this doc is approved._
+_This document is the authority for the Prompt Lab v4 flow. Backend contract (Call 2 gapIntent/categoryDecisions) is deployed. Client-side 4-phase UI is approved and ready to build._
 
 _**Key principle:** The engine cares about the user's intent. Check → Assess → Decide → Generate is a conversation, not a function call._

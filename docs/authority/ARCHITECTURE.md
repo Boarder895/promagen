@@ -1,18 +1,18 @@
 # Promagen Architecture Overview
 
-> **30-Second Guide** | Start here to understand Promagen's data architecture  
+> **30-Second Guide** | Start here to understand Promagen's full architecture  
 > **Location:** `docs/authority/ARCHITECTURE.md`  
-> **Last updated:** 7 February 2026 — Full audit, all feeds verified against code
+> **Last updated:** 25 March 2026 — Added AI Intelligence Engine, Auth (Clerk), Payments (Stripe), Prompt Assembly pipeline
 
 ---
 
 ## The Big Picture
 
-Promagen displays live financial data across **four feeds**, served through a **three-layer calming architecture** with **provider-based gateway modules**:
+Promagen has **five architectural layers**: live financial data (four feeds), a **prompt intelligence engine** (AI-powered text→image prompt generation), a **prompt assembly pipeline** (One Brain), **authentication** (Clerk), and **payments** (Stripe). The data feeds are served through a **three-layer calming architecture** with **provider-based gateway modules**:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                        PROMAGEN DATA ARCHITECTURE                           │
+│                        PROMAGEN ARCHITECTURE                                │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │   USER BROWSER                                                              │
@@ -20,36 +20,44 @@ Promagen displays live financial data across **four feeds**, served through a **
 │   │  FX Ribbon    │  Exchange Cards  │  Commodities   │  Weather       │   │
 │   │  (8 pairs)    │  (16 exchanges)  │  (7 windows)   │  (48 cities)   │   │
 │   │  ✅ LIVE      │  ✅ LIVE         │  ✅ LIVE       │  ✅ LIVE       │   │
-│   └───────┬───────┴────────┬─────────┴───────┬────────┴────────┬───────┘   │
-│           │                │                 │                 │           │
-│   LAYER 1: FRONTEND (Vercel)                                               │
-│   ┌───────▼───────┬────────▼─────────┬───────▼────────┬────────▼───────┐   │
-│   │  /api/fx      │  /api/indices    │/api/commodities│  /api/weather  │   │
-│   │  :00, :30     │ :05,:20,:35,:50  │  rolling 5-min │  :10, :40     │   │
-│   └───────┬───────┴────────┬─────────┴───────┬────────┴────────┬───────┘   │
-│           │                │                 │                 │           │
-│   LAYER 2: GATEWAY (Fly.io) — PROVIDER-BASED MODULES                       │
-│   ┌─────────────────────────────────────────────────────────────────────┐   │
-│   │  ┌──────────────┐  ┌──────────────────────┐  ┌──────────────────┐  │   │
-│   │  │ twelvedata/  │  │ marketstack/         │  │ openweathermap/  │  │   │
-│   │  │ ├── budget   │  │ ├── budget.ts        │  │ ├── handler.ts   │  │   │
-│   │  │ ├── scheduler│  │ ├── scheduler.ts     │  │ └── (1,000/day)  │  │   │
-│   │  │ └── fx.ts ✅ │  │ ├── commodities-     │  │     ✅ LIVE      │  │   │
-│   │  │  (800/day)   │  │ │   scheduler.ts     │  │                  │  │   │
-│   │  │  FX only     │  │ ├── indices.ts ✅    │  └──────────────────┘  │   │
-│   │  └──────────────┘  │ └── commodities.ts ✅│                        │   │
-│   │                    │  (3,333/day shared)   │                        │   │
-│   │                    └──────────────────────┘                        │   │
-│   └─────────────────────────────────────────────────────────────────────┘   │
+│   ├─────────────────────────────────────────────────────────────────────┤   │
+│   │  Prompt Lab (/studio/playground)  │  Standard Builder (/providers) │   │
+│   │  AI tier generation (Call 2)      │  One Brain assemblePrompt()    │   │
+│   │  AI optimisation (Call 3)         │  Client-side optimizer         │   │
+│   │  ✅ LIVE (Pro only)              │  ✅ LIVE (all users)           │   │
+│   └───────┬───────┬────────┬─────────┬───────┬────────┬────────┬──────┘   │
+│           │       │        │         │       │        │        │          │
+│   LAYER 1: FRONTEND (Vercel, Next.js 16, TypeScript)                       │
+│   ┌───────▼──┬────▼────┬───▼─────┬───▼───┬───▼──────┬─▼──────┬─▼──────┐   │
+│   │ /api/fx  │/api/    │/api/    │/api/  │/api/     │/api/   │/api/   │   │
+│   │          │indices  │commod.  │weather│generate- │optimise│parse-  │   │
+│   │ :00,:30  │:05,:20  │rolling  │:10,:40│tier-     │-prompt │sentence│   │
+│   │          │:35,:50  │5-min    │       │prompts   │        │        │   │
+│   └────┬─────┴────┬────┴────┬────┴───┬───┴────┬─────┴───┬────┴────────┘   │
+│        │          │         │        │        │         │                  │
+│   LAYER 2a: GATEWAY (Fly.io) — MARKET DATA        │                       │
+│   ┌────▼────┬─────▼─────────┬────▼───┐             │                       │
+│   │12data/  │ marketstack/  │ owm/   │             │                       │
+│   │FX only  │ IDX + COM     │Weather │             │                       │
+│   │800/day  │ 3,333/day     │1K/day  │             │                       │
+│   └─────────┴───────────────┴────────┘             │                       │
+│                                                     │                       │
+│   LAYER 2b: AI ENGINE (OpenAI) — PROMPT GENERATION  │                      │
+│   ┌─────────────────────────────────────────────────▼──────────────────┐   │
+│   │  GPT-5.4-mini (temp 0.5)          │  Post-Processing Pipeline     │   │
+│   │  Call 1: Category assessment      │  P1–P12 (7 active functions)  │   │
+│   │  Call 2: 4-tier prompt generation │  harmony-post-processing.ts   │   │
+│   │  Call 3: Platform optimisation    │  harmony-compliance.ts        │   │
+│   │  30 system prompt rules           │  115-test lockdown suite      │   │
+│   └───────────────────────────────────┴───────────────────────────────┘   │
 │                                                                             │
-│   LAYER 3: PROVIDERS (Completely Separate Budgets)                         │
-│   ┌─────────────────┬──────────────────────────┬───────────────────────┐   │
-│   │ TwelveData      │ Marketstack              │ OpenWeatherMap        │   │
-│   │ (800/day)       │ (3,333/day shared)       │ (1,000/day)           │   │
-│   │ FX only ✅ LIVE │ Indices + Commodities ✅ │ Weather ✅ LIVE       │   │
-│   │ :00, :30        │ IDX: :05/:20/:35/:50     │ :10, :40              │   │
-│   │                 │ COM: rolling 5-min       │                       │   │
-│   └─────────────────┴──────────────────────────┴───────────────────────┘   │
+│   LAYER 3: AUTH + PAYMENTS + DATABASE                                      │
+│   ┌─────────────────┬──────────────────┬──────────────────────────────┐   │
+│   │ Clerk (Auth)    │ Stripe (Payments)│ Postgres (Vercel)            │   │
+│   │ Sign-in/up      │ Pro subscription │ Learning pipeline, telemetry │   │
+│   │ Session mgmt    │ Checkout/portal  │ Scoring, feedback, prompts   │   │
+│   │ User identity   │ Webhook events   │ Usage tracking               │   │
+│   └─────────────────┴──────────────────┴──────────────────────────────┘   │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -232,6 +240,60 @@ All active feeds share **17 core techniques** (see `api-calming-efficiency.md` f
 
 ---
 
+## AI Intelligence Engine (Prompt Lab)
+
+**Scope:** Prompt Lab (`/studio/playground`) only. The standard builder uses the client-side One Brain pipeline.
+
+The Prompt Lab uses a **split-brain architecture**: Claude (Anthropic) writes the system prompt rules at development time, GPT-5.4-mini (OpenAI) executes them at runtime. Three server-side API calls power the flow:
+
+| Call   | Route                                    | Purpose                                              | Model        | Temp | Post-processing |
+| ------ | ---------------------------------------- | ---------------------------------------------------- | ------------ | ---- | --------------- |
+| Call 1 | `/api/parse-sentence` (455 lines)        | Category assessment — what's in the user's text      | GPT-5.4-mini | 0.5  | None            |
+| Call 2 | `/api/generate-tier-prompts` (523 lines) | Generate 4 tier prompts (CLIP, MJ, NL, Plain)        | GPT-5.4-mini | 0.5  | P1–P12 pipeline |
+| Call 3 | `/api/optimise-prompt` (336 lines)       | Platform-specific optimisation for selected provider | GPT-5.4-mini | 0.2  | None (planned)  |
+
+**Post-processing pipeline** (`src/lib/harmony-post-processing.ts`, 342 lines): 7 functions catch GPT mechanical artefacts server-side before the response reaches the client. Catches duplicate MJ negatives, meta-language openers, CLIP-unfriendly adjectives, self-correction hallucinations, and short sentence checklists. All functions are deterministic string operations — zero latency cost.
+
+**Compliance gate** (`src/lib/harmony-compliance.ts`, 486 lines): Deterministic syntax validation. Enforces provider-specific weight syntax, adds missing MJ parameters, detects banned phrases. Rule ceiling tracked here (30 rules, test-enforced).
+
+**Test lockdown:** 115 tests across `harmony-post-processing.test.ts` (72) + `harmony-compliance.test.ts` (43). Drift detection asserts lookup set sizes.
+
+**AI Disguise principle:** No user-facing string references "AI", "GPT", "OpenAI", or "LLM". All API calls are server-side — browser Network tab shows only Promagen routes. Users see "Prompt Intelligence Engine" and "algorithms."
+
+> **Deep dive:** `ai-disguise.md` v4.0.0, `harmonizing-claude-openai.md` v2.0.0, `prompt-lab-v4-flow.md` v1.3.0
+
+---
+
+## Prompt Assembly Pipeline (Standard Builder)
+
+The standard builder (`/providers/[id]`) uses a client-side prompt assembly pipeline:
+
+| Component    | File                                     | Lines | Purpose                                                                      |
+| ------------ | ---------------------------------------- | ----- | ---------------------------------------------------------------------------- |
+| One Brain    | `src/lib/prompt-builder.ts`              | 2,196 | Single `assemblePrompt()` function — all prompt assembly routes through this |
+| Optimizer    | `src/lib/prompt-optimizer.ts`            | 1,789 | 4-phase client-side optimisation                                             |
+| Intelligence | `src/lib/prompt-builder/intelligence.ts` | —     | Scoring, conflict detection, smart suggestions                               |
+
+**One Brain rule:** All prompt assembly routes through `assemblePrompt()`. Never build parallel assembly paths.
+
+> **Deep dive:** `unified-prompt-brain.md` v3.0.0, `prompt-optimizer.md` v5.0.0, `prompt-builder-page.md`
+
+---
+
+## Auth + Payments
+
+| Service      | Provider          | Purpose                                                         | Key files                                                           |
+| ------------ | ----------------- | --------------------------------------------------------------- | ------------------------------------------------------------------- |
+| **Auth**     | Clerk             | Sign-in/up, session management, user identity                   | `@clerk/nextjs` in layout.tsx, `/api/auth/*` routes                 |
+| **Payments** | Stripe            | Pro subscription checkout, portal, webhook events               | `/api/stripe/checkout`, `/api/stripe/portal`, `/api/stripe/webhook` |
+| **Database** | Postgres (Vercel) | Learning pipeline, telemetry, scoring, feedback, usage tracking | `src/lib/db.ts`                                                     |
+
+**Tier structure:** Anonymous (3 prompts/day, optimizer locked), signed-in free (5 prompts/day, optimizer unlocked), Pro (unlimited).
+
+> **Deep dive:** `clerk-auth.md`, `stripe.md`, `paid_tier.md` v8.0.0, `vercel-pro-promagen-playbook.md`
+
+---
+
 ## Quick Health Check
 
 ```powershell
@@ -279,19 +341,27 @@ Fixed `encodeURIComponent()` for FX symbols containing `/`.
 
 ## Deep Dive Documents
 
-| Topic                           | Document                        |
-| ------------------------------- | ------------------------------- |
-| Gateway refactor blueprint      | `GATEWAY-REFACTOR.md`           |
-| Calming techniques & metrics    | `api-calming-efficiency.md`     |
-| Gateway architecture            | `promagen-api-brain-v2.md`      |
-| Fly.io deployment               | `fly-v2.md`                     |
-| Exchange cards & ribbons        | `ribbon-homepage.md`            |
-| **Engine Bay (left CTA)**       | `ignition.md`                   |
-| **Mission Control (right CTA)** | `mission-control.md`            |
-| Commodities system              | `commodities.md`                |
-| Benchmark mappings              | `EXPECTED-INDICES-REFERENCE.md` |
-| Free vs paid features           | `paid_tier.md`                  |
-| Frontend code standards         | `code-standard.md`              |
+| Topic                            | Document                                         |
+| -------------------------------- | ------------------------------------------------ |
+| **AI Intelligence Engine**       | `ai-disguise.md` v4.0.0                          |
+| **Harmony Engineering Playbook** | `harmonizing-claude-openai.md` v2.0.0            |
+| **Prompt Lab v4 Flow**           | `prompt-lab-v4-flow.md` v1.3.0                   |
+| **Post-processing pipeline**     | `harmony-post-processing.ts` (code is authority) |
+| **One Brain assembly**           | `unified-prompt-brain.md`                        |
+| **Prompt optimizer**             | `prompt-optimizer.md`                            |
+| Gateway refactor blueprint       | `gateway-refactor.md`                            |
+| Calming techniques & metrics     | `api-calming-efficiency.md`                      |
+| Gateway architecture             | `promagen-api-brain-v2.md`                       |
+| Fly.io deployment                | `fly-v2.md`                                      |
+| Exchange cards & ribbons         | `ribbon-homepage.md`                             |
+| **Engine Bay (left CTA)**        | `ignition.md`                                    |
+| **Mission Control (right CTA)**  | `mission-control.md`                             |
+| Commodities system               | `commodities.md`                                 |
+| Benchmark mappings               | `EXPECTED-INDICES-REFERENCE.md`                  |
+| **Free vs paid features**        | `paid_tier.md` v8.0.0                            |
+| **Auth (Clerk)**                 | `clerk-auth.md`                                  |
+| **Payments (Stripe)**            | `stripe.md`                                      |
+| Frontend code standards          | `code-standard.md`                               |
 
 ---
 
@@ -303,47 +373,62 @@ Fixed `encodeURIComponent()` for FX symbols containing `/`.
 | TwelveData usage  | https://twelvedata.com/account/api-usage |
 | Marketstack usage | https://marketstack.com/dashboard        |
 | OpenWeatherMap    | https://home.openweathermap.org/api_keys |
+| OpenAI (GPT)      | https://platform.openai.com/usage        |
+| Clerk (Auth)      | https://dashboard.clerk.com              |
+| Stripe (Payments) | https://dashboard.stripe.com             |
 | Frontend (Vercel) | https://vercel.com/promagen              |
 
 ---
 
 ## Changelog
 
-| Date       | Change                                                     |
-| ---------- | ---------------------------------------------------------- |
-| 2026-02-07 | **Full audit: doc corrected to match reality**             |
-|            | REMOVED: Crypto feed (entirely removed from codebase)      |
-|            | UPDATED: Commodities → ✅ LIVE on Marketstack v2           |
-|            | ADDED: Weather feed (OpenWeatherMap, :10/:40)              |
-|            | ADDED: openweathermap/ provider folder to architecture     |
-|            | FIXED: Indices schedule → :05/:20/:35/:50 (4×/hr)          |
-|            | FIXED: Marketstack budget → 3,333/day (Professional tier)  |
-|            | FIXED: Commodities moved from fallback/ → marketstack/     |
-|            | FIXED: TwelveData serves FX only (was FX + Crypto)         |
-|            | UPDATED: Timing stagger diagram (4 feeds, 3 providers)     |
-|            | UPDATED: Calming techniques 7 → 17                         |
-|            | UPDATED: Gateway file structure to reflect current state   |
-|            | UPDATED: SSOT table (commodities catalog, weather derived) |
-|            | UPDATED: Deep Dive table (replaced stale MARKETSTACK ref)  |
-|            | ADDED: OpenWeatherMap to Key Contacts                      |
-| 2026-01-14 | **PM: All feeds verified LIVE**                            |
-|            | FX: TwelveData → mode: cached ✅                           |
-|            | Indices: Marketstack → mode: live ✅                       |
-|            | Crypto: TwelveData → mode: cached ✅                       |
-|            | Commodities: Parked → returns null (no demo ever)          |
-|            | Fixed benchmark aliases (djia, tsx, russell_2000)          |
-|            | Fixed crypto route key mismatch                            |
-|            | Removed ALL demo prices from gateway                       |
-| 2026-01-14 | Added provider-based gateway architecture                  |
-|            | Updated diagram to show provider folders                   |
-|            | Added gateway file structure section                       |
-|            | Added clock-aligned scheduler explanation                  |
-| 2026-01-13 | Initial architecture overview document                     |
+| Date       | Change                                                                                                                                                  |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-03-25 | **Architecture expansion: AI Engine + Auth + Payments**                                                                                                 |
+|            | ADDED: AI Intelligence Engine section (Prompt Lab, 3 API calls, post-processing pipeline, compliance gate, 115-test lockdown)                           |
+|            | ADDED: Prompt Assembly Pipeline section (One Brain, optimizer, intelligence)                                                                            |
+|            | ADDED: Auth + Payments section (Clerk, Stripe, Postgres, tier structure)                                                                                |
+|            | UPDATED: Big Picture diagram — added Prompt Lab, AI Engine (Layer 2b), Auth/Payments/DB (Layer 3)                                                       |
+|            | UPDATED: Deep Dive table — added 8 new entries (ai-disguise, harmonizing, prompt-lab-v4, post-processing, unified-brain, optimizer, clerk-auth, stripe) |
+|            | UPDATED: Key Contacts — added OpenAI, Clerk, Stripe dashboards                                                                                          |
+|            | Platform stats: 104 API routes, 35 pages, 161 test files                                                                                                |
+| 2026-02-07 | **Full audit: doc corrected to match reality**                                                                                                          |
+|            | REMOVED: Crypto feed (entirely removed from codebase)                                                                                                   |
+|            | UPDATED: Commodities → ✅ LIVE on Marketstack v2                                                                                                        |
+|            | ADDED: Weather feed (OpenWeatherMap, :10/:40)                                                                                                           |
+|            | ADDED: openweathermap/ provider folder to architecture                                                                                                  |
+|            | FIXED: Indices schedule → :05/:20/:35/:50 (4×/hr)                                                                                                       |
+|            | FIXED: Marketstack budget → 3,333/day (Professional tier)                                                                                               |
+|            | FIXED: Commodities moved from fallback/ → marketstack/                                                                                                  |
+|            | FIXED: TwelveData serves FX only (was FX + Crypto)                                                                                                      |
+|            | UPDATED: Timing stagger diagram (4 feeds, 3 providers)                                                                                                  |
+|            | UPDATED: Calming techniques 7 → 17                                                                                                                      |
+|            | UPDATED: Gateway file structure to reflect current state                                                                                                |
+|            | UPDATED: SSOT table (commodities catalog, weather derived)                                                                                              |
+|            | UPDATED: Deep Dive table (replaced stale MARKETSTACK ref)                                                                                               |
+|            | ADDED: OpenWeatherMap to Key Contacts                                                                                                                   |
+| 2026-01-14 | **PM: All feeds verified LIVE**                                                                                                                         |
+|            | FX: TwelveData → mode: cached ✅                                                                                                                        |
+|            | Indices: Marketstack → mode: live ✅                                                                                                                    |
+|            | Crypto: TwelveData → mode: cached ✅                                                                                                                    |
+|            | Commodities: Parked → returns null (no demo ever)                                                                                                       |
+|            | Fixed benchmark aliases (djia, tsx, russell_2000)                                                                                                       |
+|            | Fixed crypto route key mismatch                                                                                                                         |
+|            | Removed ALL demo prices from gateway                                                                                                                    |
+| 2026-01-14 | Added provider-based gateway architecture                                                                                                               |
+|            | Updated diagram to show provider folders                                                                                                                |
+|            | Added gateway file structure section                                                                                                                    |
+|            | Added clock-aligned scheduler explanation                                                                                                               |
+| 2026-01-13 | Initial architecture overview document                                                                                                                  |
 
 ---
 
 _This document is the entry point. For details, follow the deep dive links above._
 
-_**Key principle:** Always update docs FIRST before writing any code. Docs are the single source of truth._
+_**Key principles:**_
 
-_**Critical rule:** NEVER use demo/synthetic prices. Fallback returns null, renders as "—"._
+- _Always update docs FIRST before writing any code. Docs are the single source of truth._
+- _NEVER use demo/synthetic prices. Fallback returns null, renders as "—"._
+- _All prompt assembly routes through `assemblePrompt()` (One Brain). Never build parallel assembly paths._
+- _AI Disguise: no user-facing string references "AI", "GPT", "OpenAI", or "LLM"._
+- _115-test harmony lockdown suite must pass before shipping post-processing changes._

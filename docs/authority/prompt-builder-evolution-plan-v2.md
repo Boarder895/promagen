@@ -1,14 +1,15 @@
 # Prompt Builder Evolution Plan v2.0
 
-**Version:** 2.4.0
+**Version:** 2.5.0
 **Created:** 2026-02-24
-**Last Updated:** 2026-03-07
+**Last Updated:** 2026-03-25
 **Status:** ✅ ALL PHASES COMPLETE — Phases 0–7.12 delivered
 
 > **Next phase:** The Unified Prompt Brain initiative builds on top of this evolution plan. It consolidates the weather generator's assembly path into the prompt builder's `assemblePrompt()` — one brain for all prompt paths. See `unified-prompt-brain.md` for full architecture, implementation details, and the 10 post-integration fixes shipped.
+> **AI Intelligence Engine:** The Prompt Lab's AI tier generation system (Call 2) was built on top of this evolution plan. See `ai-disguise.md` v4.0.0 for the full specification (30-rule system prompt, P1–P12 post-processing pipeline, 115-test lockdown suite, 6+ rounds + 3 stress tests scoring 96/100).
 > **Authority:** This document is the single source of truth for the prompt builder evolution.
 > **Admin Route:** `/admin` (live), `/admin/scoring-health` (live — 12 dashboard sections)
-> **Tests:** 131 test files across 8 Jest projects. See `test-in-place.md` for inventory. This document references test files but does not include test source.
+> **Tests:** 161 test files across 8 Jest projects (136 running, 25 orphaned — see `test.md` for inventory and orphan fix). This document references test files but does not include test source.
 
 ---
 
@@ -647,7 +648,7 @@ Each term gets per-tier quality score. High-quality terms boosted in dropdown or
 
 ### 10.6 Tests
 
-24 test files in `src/lib/learning/__tests__/`:
+24 test files in `src/lib/learning/__tests__/` at Phase 6 completion (now 30 — 6 added in Phases 7.8–7.10: temporal-intelligence, compression-intelligence, compression-lookup, compression-overrides, feedback-credibility, feedback-streaks):
 
 - `weight-recalibration.test.ts` (499 lines)
 - `threshold-discovery.test.ts` (314 lines)
@@ -1017,18 +1018,18 @@ Users select fidelity and negative terms on every platform. They don't know abou
 
 **10-Part Build:**
 
-| Part | Name                      | File                                    | Lines | What It Does                                                           |
-| ---- | ------------------------- | --------------------------------------- | ----- | ---------------------------------------------------------------------- |
-| 1    | Conversion Cost Registry  | `conversion-costs.ts`                   | 358   | Pre-computed cost of every conversion output (word count + parametric)  |
-| 2    | Budget Calculator         | `conversion-budget.ts`                  | 371   | `remaining = ceiling - core - prefix - suffix` with learned fallback   |
-| 3    | Cold-Start Affinity Map   | `conversion-affinities.ts`              | 886   | 47 outputs × 329 curated affinity pairs for day-1 coherence scoring    |
-| 4    | Conversion Scorer         | `conversion-scorer.ts`                  | 640   | 3-dimension scoring: coherence(0.4) + costEfficiency(0.35) + impact(0.25) |
-| 5    | Assembly Integration      | `prompt-builder.ts`                     | +272  | Pipeline: strip pool → sub-assemble → score → greedily include → append |
-| 6    | Type Extension            | `types/prompt-builder.ts`               | +48   | `ConversionResultMeta` + `AssembledPrompt.conversions`                 |
-| 7    | Limits Update             | `lib/usage/constants.ts`                | +55   | 23 platforms get conversion-aware fidelity/negative UI limits          |
-| 8    | Telemetry Integration     | 4 files                                 | +40   | `conversionMeta` JSONB through Zod → client → DB → SELECT             |
-| 9    | Learning Feedback Loop    | 2 files                                 | +75   | Term quality + co-occurrence index conversion output terms             |
-| 10   | Transparency + Tests      | panel + 7 test files                    | +1500 | Conversions section in panel + ~125 tests across all parts             |
+| Part | Name                     | File                       | Lines | What It Does                                                              |
+| ---- | ------------------------ | -------------------------- | ----- | ------------------------------------------------------------------------- |
+| 1    | Conversion Cost Registry | `conversion-costs.ts`      | 358   | Pre-computed cost of every conversion output (word count + parametric)    |
+| 2    | Budget Calculator        | `conversion-budget.ts`     | 371   | `remaining = ceiling - core - prefix - suffix` with learned fallback      |
+| 3    | Cold-Start Affinity Map  | `conversion-affinities.ts` | 886   | 47 outputs × 329 curated affinity pairs for day-1 coherence scoring       |
+| 4    | Conversion Scorer        | `conversion-scorer.ts`     | 640   | 3-dimension scoring: coherence(0.4) + costEfficiency(0.35) + impact(0.25) |
+| 5    | Assembly Integration     | `prompt-builder.ts`        | +272  | Pipeline: strip pool → sub-assemble → score → greedily include → append   |
+| 6    | Type Extension           | `types/prompt-builder.ts`  | +48   | `ConversionResultMeta` + `AssembledPrompt.conversions`                    |
+| 7    | Limits Update            | `lib/usage/constants.ts`   | +55   | 23 platforms get conversion-aware fidelity/negative UI limits             |
+| 8    | Telemetry Integration    | 4 files                    | +40   | `conversionMeta` JSONB through Zod → client → DB → SELECT                 |
+| 9    | Learning Feedback Loop   | 2 files                    | +75   | Term quality + co-occurrence index conversion output terms                |
+| 10   | Transparency + Tests     | panel + 7 test files       | +1500 | Conversions section in panel + ~125 tests across all parts                |
 
 ### 13.2 Assembly Pipeline (inside `assembleTierAware()`)
 
@@ -1050,11 +1051,11 @@ Users select fidelity and negative terms on every platform. They don't know abou
 
 ### 13.3 Conversion Routing
 
-| negativeSupport | Fidelity pool?                     | Negative pool?                           |
-| --------------- | ---------------------------------- | ---------------------------------------- |
-| `'separate'`    | Only on conversion platforms       | **No** — separate field (Gap 3)          |
-| `'none'`        | Only on conversion platforms       | **Yes** — known terms enter pool         |
-| `'inline'`      | Only on conversion platforms       | **Yes** — known convert, unknown → --no  |
+| negativeSupport | Fidelity pool?               | Negative pool?                          |
+| --------------- | ---------------------------- | --------------------------------------- |
+| `'separate'`    | Only on conversion platforms | **No** — separate field (Gap 3)         |
+| `'none'`        | Only on conversion platforms | **Yes** — known terms enter pool        |
+| `'inline'`      | Only on conversion platforms | **Yes** — known convert, unknown → --no |
 
 ### 13.4 Cold-Start → Learned Data Progression
 
@@ -1090,48 +1091,48 @@ UI copy → sendPromptTelemetry({ conversionMeta }) → POST /api/prompt-telemet
 | `src/lib/learning/term-quality-scoring.ts`        | 461   | Modified     |
 | `src/lib/learning/platform-co-occurrence.ts`      | 476   | Modified     |
 | `src/app/api/prompt-telemetry/route.ts`           | 268   | Modified     |
-| `src/components/providers/prompt-builder.tsx`      | 3,125 | Modified     |
-| `optimization-transparency-panel.tsx`              | 610   | Modified     |
-| 7 test files in `src/__tests__/`                   | 1,321 | NEW          |
+| `src/components/providers/prompt-builder.tsx`     | 3,125 | Modified     |
+| `optimization-transparency-panel.tsx`             | 610   | Modified     |
+| 7 test files in `src/__tests__/`                  | 1,321 | NEW          |
 
 ### 13.7 Tests
 
 7 test files, ~125 tests:
 
-| Test File                                   | Tests | Covers                                              |
-| ------------------------------------------- | ----- | --------------------------------------------------- |
-| `conversion-costs.test.ts`                  | ~15   | Registry structure, MJ parametric, lookups           |
-| `conversion-budget.test.ts`                 | ~20   | Gap 2 formula, floor, per-platform, CLIP tokens      |
-| `conversion-affinities.test.ts`             | ~15   | Coverage, high/low pairs, blending, inheritance       |
-| `conversion-scorer.test.ts`                 | ~25   | Weighted sum, parametric, dedup, explanations         |
-| `conversion-assembly-integration.test.ts`   | ~30   | MJ params, Flux NL, DALL-E neg, Gap 3, metadata      |
-| `conversion-telemetry.test.ts`              | ~10   | Zod accept/reject, backward compat                    |
-| `conversion-learning.test.ts`               | ~10   | Term indexing, source tagging, neg conversion outputs  |
+| Test File                                 | Tests | Covers                                                |
+| ----------------------------------------- | ----- | ----------------------------------------------------- |
+| `conversion-costs.test.ts`                | ~15   | Registry structure, MJ parametric, lookups            |
+| `conversion-budget.test.ts`               | ~20   | Gap 2 formula, floor, per-platform, CLIP tokens       |
+| `conversion-affinities.test.ts`           | ~15   | Coverage, high/low pairs, blending, inheritance       |
+| `conversion-scorer.test.ts`               | ~25   | Weighted sum, parametric, dedup, explanations         |
+| `conversion-assembly-integration.test.ts` | ~30   | MJ params, Flux NL, DALL-E neg, Gap 3, metadata       |
+| `conversion-telemetry.test.ts`            | ~10   | Zod accept/reject, backward compat                    |
+| `conversion-learning.test.ts`             | ~10   | Term indexing, source tagging, neg conversion outputs |
 
 ---
 
 ## 14. The 4 Optimizer Tiers — Cross-Feature Matrix
 
-| Feature                    | Tier 1 (CLIP, 13 platforms)                                            | Tier 2 (MJ, 2 platforms)                                | Tier 3 (NL, 10 platforms)                         | Tier 4 (Plain, 17 platforms)                                 |
-| -------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------ |
-| **Scene Starters**         | Full 8-category pre-fill. Auto-adds fidelity. CLIP affinity score.     | Full pre-fill. Suggests MJ params. MJ affinity score.   | Full pre-fill. Narrative seed. NL affinity score. | Reduced 3–5 categories. Simplified core. Complexity warning. |
-| **Cascading Intelligence** | Full cascade. Extra tier1Boost weight. Quality terms always suggested. | Full cascade. MJ affinities (--niji, --weird).          | Full cascade. Favours tier3Phrase variants.       | Dampened cascade (0.5×). Fewer options. "Keep simple" bias.  |
-| **Explore Drawer**         | CLIP weight badges (★1.3). Full depth.                                 | Parameter hints (◆ sweet-spot). Full depth.             | NL tooltips (💬 descriptive). Full depth.         | ⚡ simple / ⚠ complex badges. Collapsed by default.          |
-| **Vocabulary Merge**       | All merged. CLIP-friendly boosted.                                     | All merged. MJ-compatible highlighted.                  | All merged. NL-friendly prioritised.              | Reduced set. Only tier4Simple terms.                         |
-| **Co-occurrence Learning** | Per Tier 1 model. Keyword coherence patterns.                          | Per Tier 2 model. MJ-specific combos.                   | Per Tier 3 model. Narrative flow patterns.        | Per Tier 4 model. Simplicity patterns.                       |
-| **Scoring Model**          | keywordDensity HIGH, fidelityTerms HIGH, negativePresent HIGH.         | coherence HIGH, tierFormatting HIGH, fidelityTerms LOW. | coherence HIGHEST, categoryCount LOW.             | promptLength HIGH INVERTED, fidelityTerms ZERO.              |
-| **Term Quality**           | Per Tier 1 scores.                                                     | Per Tier 2 scores.                                      | Per Tier 3 scores.                                | Per Tier 4 scores.                                           |
-| **Compression**            | Gentle. 15+ terms OK.                                                  | Medium. 8–12 + params.                                  | 2–3 sentences.                                    | Brutal. 5–8 words max.                                       |
-| **Conversions (7.12)**     | Pass-through (fidelity kept verbatim). Negatives via separate field.   | Parametric (--quality/--stylize, free). Neg via --no.   | Budget-gated NL clauses. Neg → positive convert.  | Neg → positive convert (tight budget). Fidelity pass-through.|
+| Feature                    | Tier 1 (CLIP, 13 platforms)                                            | Tier 2 (MJ, 2 platforms)                                | Tier 3 (NL, 10 platforms)                         | Tier 4 (Plain, 17 platforms)                                  |
+| -------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------- |
+| **Scene Starters**         | Full 8-category pre-fill. Auto-adds fidelity. CLIP affinity score.     | Full pre-fill. Suggests MJ params. MJ affinity score.   | Full pre-fill. Narrative seed. NL affinity score. | Reduced 3–5 categories. Simplified core. Complexity warning.  |
+| **Cascading Intelligence** | Full cascade. Extra tier1Boost weight. Quality terms always suggested. | Full cascade. MJ affinities (--niji, --weird).          | Full cascade. Favours tier3Phrase variants.       | Dampened cascade (0.5×). Fewer options. "Keep simple" bias.   |
+| **Explore Drawer**         | CLIP weight badges (★1.3). Full depth.                                 | Parameter hints (◆ sweet-spot). Full depth.             | NL tooltips (💬 descriptive). Full depth.         | ⚡ simple / ⚠ complex badges. Collapsed by default.           |
+| **Vocabulary Merge**       | All merged. CLIP-friendly boosted.                                     | All merged. MJ-compatible highlighted.                  | All merged. NL-friendly prioritised.              | Reduced set. Only tier4Simple terms.                          |
+| **Co-occurrence Learning** | Per Tier 1 model. Keyword coherence patterns.                          | Per Tier 2 model. MJ-specific combos.                   | Per Tier 3 model. Narrative flow patterns.        | Per Tier 4 model. Simplicity patterns.                        |
+| **Scoring Model**          | keywordDensity HIGH, fidelityTerms HIGH, negativePresent HIGH.         | coherence HIGH, tierFormatting HIGH, fidelityTerms LOW. | coherence HIGHEST, categoryCount LOW.             | promptLength HIGH INVERTED, fidelityTerms ZERO.               |
+| **Term Quality**           | Per Tier 1 scores.                                                     | Per Tier 2 scores.                                      | Per Tier 3 scores.                                | Per Tier 4 scores.                                            |
+| **Compression**            | Gentle. 15+ terms OK.                                                  | Medium. 8–12 + params.                                  | 2–3 sentences.                                    | Brutal. 5–8 words max.                                        |
+| **Conversions (7.12)**     | Pass-through (fidelity kept verbatim). Negatives via separate field.   | Parametric (--quality/--stylize, free). Neg via --no.   | Budget-gated NL clauses. Neg → positive convert.  | Neg → positive convert (tight budget). Fidelity pass-through. |
 
 ### Tier Platform Lists (45 platforms)
 
-| Tier | Name              | Count | Platforms                                                                                                                                                  |
-| ---- | ----------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1    | CLIP-Based        | 13    | artguru, clipdrop, dreamlike, dreamstudio, getimg, leonardo, lexica, nightcafe, novelai, openart, playground, stability, tensor-art                        |
-| 2    | Midjourney Family | 2     | bluewillow, midjourney                                                                                                                                     |
-| 3    | Natural Language  | 14    | adobe-firefly, bing, flux, google-imagen, hotpot, ideogram, imagine-meta, jasper-art, kling, luma-ai, microsoft-designer, openai, recraft, runway          |
-| 4    | Plain Language    | 16    | 123rf, artbreeder, artistly, canva, craiyon, deepai, fotor, freepik, myedit, photoleap, picsart, picwish, pixlr, simplified, visme, vistacreate            |
+| Tier | Name              | Count | Platforms                                                                                                                                         |
+| ---- | ----------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | CLIP-Based        | 13    | artguru, clipdrop, dreamlike, dreamstudio, getimg, leonardo, lexica, nightcafe, novelai, openart, playground, stability, tensor-art               |
+| 2    | Midjourney Family | 2     | bluewillow, midjourney                                                                                                                            |
+| 3    | Natural Language  | 14    | adobe-firefly, bing, flux, google-imagen, hotpot, ideogram, imagine-meta, jasper-art, kling, luma-ai, microsoft-designer, openai, recraft, runway |
+| 4    | Plain Language    | 16    | 123rf, artbreeder, artistly, canva, craiyon, deepai, fotor, freepik, myedit, photoleap, picsart, picwish, pixlr, simplified, visme, vistacreate   |
 
 ---
 
@@ -1159,7 +1160,11 @@ UI copy → sendPromptTelemetry({ conversionMeta }) → POST /api/prompt-telemet
     "materials": ["chrome reflection"]
   },
   "tierGuidance": {
-    "1": { "affinity": 9, "boostFidelity": true, "note": "Strong CLIP on cyberpunk+neon" },
+    "1": {
+      "affinity": 9,
+      "boostFidelity": true,
+      "note": "Strong CLIP on cyberpunk+neon"
+    },
     "2": {
       "affinity": 10,
       "params": "--ar 21:9 --s 750 --v 6",
@@ -1182,8 +1187,15 @@ UI copy → sendPromptTelemetry({ conversionMeta }) → POST /api/prompt-telemet
       "neon reflected on wet asphalt",
       "holographic billboard flicker"
     ],
-    "atmosphere": ["electric tension in the air", "steam rising from vents", "distant sirens"],
-    "environment": ["rain-slicked concrete canyon", "towering megastructure shadows"]
+    "atmosphere": [
+      "electric tension in the air",
+      "steam rising from vents",
+      "distant sirens"
+    ],
+    "environment": [
+      "rain-slicked concrete canyon",
+      "towering megastructure shadows"
+    ]
   }
 }
 ```
@@ -1356,7 +1368,24 @@ Every file is JSON. Code reads them. Code never changes. Data gets smarter night
 | `src/app/api/learning/*/route.ts` (17 routes) | Learning API endpoints |
 | `src/app/api/prompt-telemetry/route.ts` (264 lines) | Telemetry endpoint |
 | `src/lib/telemetry/*.ts` (3 files, 420 lines) | Client telemetry + A/B hashing |
-| `src/lib/learning/__tests__/*.ts` (24 test files) | Comprehensive test suite |
+| `src/lib/learning/__tests__/*.ts` (30 test files) | Comprehensive test suite |
+
+**Phase 7.12 + AI Intelligence Engine (built on top of evolution plan):**
+| File | Purpose |
+| ---- | ------- |
+| `src/app/api/generate-tier-prompts/route.ts` (523 lines) | Call 2 — AI tier generation (30-rule system prompt, imports postProcessTiers) |
+| `src/app/api/optimise-prompt/route.ts` (336 lines) | Call 3 — AI prompt optimisation |
+| `src/app/api/parse-sentence/route.ts` (455 lines) | Call 1 — Category assessment + matched phrases |
+| `src/lib/harmony-post-processing.ts` (342 lines) | P1–P12 post-processing pipeline (7 active functions) |
+| `src/lib/harmony-compliance.ts` (486 lines) | Compliance gate + rule ceiling tracking (RULE_CEILING=30) |
+| `src/lib/__tests__/harmony-post-processing.test.ts` (601 lines) | 72-test lockdown suite — real GPT fixtures |
+| `src/lib/__tests__/harmony-compliance.test.ts` (453 lines) | 43-test compliance suite — drift detection |
+| `src/hooks/use-tier-generation.ts` (224 lines) | Call 2 hook — AbortController for provider-switch cancellation |
+| `src/hooks/use-ai-optimisation.ts` (335 lines) | Call 3 hook — 3-phase animation timing |
+| `src/hooks/use-drift-detection.ts` (165 lines) | Word-level diff, zero API calls |
+| `src/data/algorithm-names.ts` (187 lines) | 101 cycling names + 3 finale + Fisher-Yates shuffle |
+| `src/components/prompt-lab/algorithm-cycling.tsx` (256 lines) | Cycling animation (amber→emerald) |
+| `src/components/prompt-lab/drift-indicator.tsx` (136 lines) | "N changes detected" badge |
 
 **Phase 7.7 — Vocabulary Crowdsourcing:**
 | File | Purpose |
@@ -1430,15 +1459,15 @@ Every file is JSON. Code reads them. Code never changes. Data gets smarter night
 
 ### Modified Files
 
-| File                                                                 | Phase        | Changes                                                              |
-| -------------------------------------------------------------------- | ------------ | -------------------------------------------------------------------- |
-| `lib/vocabulary/vocabulary-loader.ts`                                | 0+1+5        | Load merged vocab. Family imports. Core first, merged appended.      |
-| `components/providers/prompt-builder.tsx` (2,015 lines)              | 1+2+3+5+7.10 | SceneSelector, ExploreDrawer, Telemetry, feedback memory integration |
-| `components/providers/scene-selector.tsx` (1,233 lines)              | 2+4+7.10b    | Confidence halos from feedback memory, CSS halo animations           |
-| `components/providers/explore-drawer.tsx` (852 lines)                | 3+4          | Tier badges (all 4 tiers), cascade relevance ordering                |
-| `lib/prompt-intelligence/engines/suggestion-engine.ts` (1,450 lines) | 1+7.2        | Weak term penalty integration from iteration tracking                |
-| `hooks/use-learned-weights.ts`                                       | 7.2          | Parallel fetch of iteration insights + weak term lookup building     |
-| `lib/learning/constants.ts`                                          | 5+6+7.x      | Learning pipeline configuration constants (expanded for each phase)  |
+| File                                                                 | Phase           | Changes                                                                     |
+| -------------------------------------------------------------------- | --------------- | --------------------------------------------------------------------------- |
+| `lib/vocabulary/vocabulary-loader.ts`                                | 0+1+5           | Load merged vocab. Family imports. Core first, merged appended.             |
+| `components/providers/prompt-builder.tsx` (3,670 lines)              | 1+2+3+5+7.10+AI | SceneSelector, ExploreDrawer, Telemetry, feedback memory, AI Disguise props |
+| `components/providers/scene-selector.tsx` (1,260 lines)              | 2+4+7.10b       | Confidence halos from feedback memory, CSS halo animations                  |
+| `components/providers/explore-drawer.tsx` (865 lines)                | 3+4             | Tier badges (all 4 tiers), cascade relevance ordering                       |
+| `lib/prompt-intelligence/engines/suggestion-engine.ts` (1,450 lines) | 1+7.2           | Weak term penalty integration from iteration tracking                       |
+| `hooks/use-learned-weights.ts`                                       | 7.2             | Parallel fetch of iteration insights + weak term lookup building            |
+| `lib/learning/constants.ts`                                          | 5+6+7.x         | Learning pipeline configuration constants (expanded for each phase)         |
 
 ### Untouched Files
 
@@ -1480,20 +1509,23 @@ Every file is JSON. Code reads them. Code never changes. Data gets smarter night
 
 All phases are feature-complete. The main outstanding work is test coverage expansion:
 
-| Area                                                      | Status                         | Gap                                                                         |
-| --------------------------------------------------------- | ------------------------------ | --------------------------------------------------------------------------- |
-| Learning engines (`lib/learning/`)                        | 24 test files, strong coverage | Temporal, compression, feedback-streaks need dedicated tests                |
-| Admin dashboard (`__tests__/admin/`)                      | 11 test files                  | Coverage for weight-editor-modal, weight-tuning-sandbox integration         |
-| Weather engine (`lib/weather/`, 7,859 lines)              | No test files                  | ~200 test cases estimated                                                   |
-| Prompt optimizer (`lib/prompt-optimizer.ts`, 1,604 lines) | No test file                   | ~60 test cases estimated                                                    |
-| API routes (17 learning + 18 admin)                       | Aggregate route tested         | Individual route tests needed                                               |
-| Hooks (35+ untested)                                      | Partial coverage               | `use-learned-weights`, `use-platform-learning` tested; others need coverage |
+| Area                                                      | Status                         | Gap                                                                                                                                                               |
+| --------------------------------------------------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Learning engines (`lib/learning/`)                        | 30 test files, strong coverage | Temporal, compression, feedback-streaks have dedicated tests now                                                                                                  |
+| Admin dashboard (`__tests__/admin/`)                      | 11 test files                  | Coverage for weight-editor-modal, weight-tuning-sandbox integration. **NOTE: admin tests are orphaned from jest.config.cjs — never run in CI. See `test.md` §3.** |
+| **Harmony post-processing pipeline (NEW)**                | **115 tests (72+43)**          | **✅ CLOSED** — lockdown suite with drift detection. See `ai-disguise.md` v4.0.0 §7.                                                                              |
+| Weather engine (`lib/weather/`, 7,859 lines)              | No test files                  | ~200 test cases estimated                                                                                                                                         |
+| Prompt optimizer (`lib/prompt-optimizer.ts`, 1,604 lines) | No test file                   | ~60 test cases estimated                                                                                                                                          |
+| API routes (17 learning + 18 admin)                       | Aggregate route tested         | Individual route tests needed                                                                                                                                     |
+| Hooks (34+ untested)                                      | Partial coverage               | `use-sentence-conversion` added; others still need coverage                                                                                                       |
+| **Orphaned test files (NEW)**                             | **25 files not running**       | **jest.config.cjs patterns don't match 12 `__tests__/` files + 11 admin/ files**                                                                                  |
 
-See `test-gap-analysis.md` for the full 6-phase build order with specific file names, estimated test case counts, and effort estimates (~9 days total).
+See `test.md` v1.0.0 for the full inventory, orphan analysis, and gap closure build order.
 
 ### Parallel Work Opportunities
 
-- Test coverage expansion (see `test-gap-analysis.md`) can run in parallel with any new feature work
+- Test coverage expansion (see `test.md`) can run in parallel with any new feature work
+- **Orphan fix** (jest.config.cjs patterns) is 30 minutes of work for ~290 free test cases
 - Scene data authoring for new worlds can run at any time
 - Learning data accumulation is ongoing — system gets smarter every day as telemetry flows in
 - Admin dashboard refinements (UX polish, performance) are low-risk independent work
@@ -1564,4 +1596,6 @@ This data is the product. The vocabulary, the scenes, the cascading intelligence
 
 ---
 
-_End of document. Version 2.4.0. Updated 2026-03-07. Previous version: 2.3.0 (2026-03-07)._
+_End of document. Version 2.5.0. Updated 2026-03-25. Previous version: 2.4.0 (2026-03-07)._
+
+**Changelog (v2.5.0):** Updated test count 131→161 (136 running, 25 orphaned). Added AI Intelligence Engine to header and §17 file impact map: 13 new files (3 API routes, 2 harmony modules, 2 test files, 3 hooks, 2 components, 1 data file). Updated learning test count 24→30. Updated prompt-builder.tsx 2,015→3,670 lines, scene-selector 1,233→1,260, explore-drawer 852→865. Updated §18 Remaining Work: harmony pipeline closed (115 tests), admin orphan issue flagged, references changed from test-in-place.md/test-gap-analysis.md to test.md v1.0.0. Cross-references: ai-disguise v4.0.0, harmonizing v2.0.0.

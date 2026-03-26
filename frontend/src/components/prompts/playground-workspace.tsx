@@ -339,6 +339,8 @@ export default function PlaygroundWorkspace({ providers, onProviderChange }: Pla
           skipInternalParse
           externalLoading={isChecking}
           coverageData={assessment}
+          // Human text for Call 3 cross-referencing
+          humanText={humanText}
         />
       )}
 

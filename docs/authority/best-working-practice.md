@@ -1,6 +1,6 @@
 # Best Working Practice
 
-**Last updated:** 19 March 2026
+**Last updated:** 25 March 2026
 
 ---
 
@@ -583,12 +583,13 @@ const COMPONENT_STYLES = `
 2. **One `GRID_GAP` constant** — A single `clamp()` value controls ALL spacing between cells (column gaps between left/centre/right AND vertical gaps between stacked panels within each column). Defined once in `homepage-grid.tsx`, never overridden by child components.
 
 ```tsx
-const GRID_GAP = 'clamp(6px, 0.5vw, 10px)';
+const GRID_GAP = "clamp(6px, 0.5vw, 10px)";
 
 <div
   className="grid"
   style={{
-    gridTemplateColumns: 'clamp(180px, 15vw, 260px) 1fr clamp(180px, 15vw, 260px)',
+    gridTemplateColumns:
+      "clamp(180px, 15vw, 260px) 1fr clamp(180px, 15vw, 260px)",
     gap: GRID_GAP,
   }}
 >
@@ -605,7 +606,8 @@ const GRID_GAP = 'clamp(6px, 0.5vw, 10px)';
 ```tsx
 <div className="flex min-h-0 flex-1 flex-col" style={{ gap: GRID_GAP }}>
   <EngineBay /> {/* shrink-0 — takes its natural height */}
-  <ExchangeRailEast /> {/* flex-1 — fills remaining space, scrolls internally */}
+  <ExchangeRailEast />{" "}
+  {/* flex-1 — fills remaining space, scrolls internally */}
 </div>
 ```
 
@@ -680,24 +682,44 @@ When you ask "does anything need updating in the docs?" or "tell me which lines 
 
 **Core authority docs:**
 
-- `docs/authority/code-standard.md` ← Frontend code rules (v3.0 — Universal clamp(), Unified Grid, Window Containment)
+- `docs/authority/code-standard.md` ← Frontend code rules (v4.0 — Universal clamp(), Unified Grid, Window Containment, No Grey Text)
 - `docs/authority/best-working-practice.md` ← This file
+- `docs/authority/architecture.md` ← Full architecture overview (data feeds + AI engine + auth/payments)
+- `docs/authority/paid_tier.md` v8.0.0 ← Monetisation boundary SSOT
+- `docs/authority/test.md` ← Master test document (replaces test-in-place, test-strategy-plan, test-groups, test-gap-analysis)
+
+**AI Intelligence Engine docs:**
+
+- `docs/authority/ai-disguise.md` v4.0.0 ← Prompt Lab AI engine, 30-rule system prompt, P1–P12 post-processing, harmony scoring
+- `docs/authority/harmonizing-claude-openai.md` v2.0.0 ← Dual-assessor harmony engineering playbook, 7 proven patterns
+- `docs/authority/prompt-lab-v4-flow.md` v1.3.0 ← Check→Assess→Decide→Generate four-phase flow
+- `docs/authority/prompt-lab.md` v3.1.0 ← Studio section routes, Prompt Lab architecture
+- `docs/authority/unified-prompt-brain.md` ← One Brain assembly architecture
+- `docs/authority/prompt-optimizer.md` ← Client-side 4-phase optimizer
+- `docs/authority/prompt-intelligence.md` ← Intelligence layer, 12 categories, DNA scoring
+- `docs/authority/human-sentence-conversion.md` ← Call 1 spec
+
+**Data feed and gateway docs:**
+
 - `docs/authority/promagen-api-brain-v2.md` ← API system document
-- `docs/authority/paid_tier.md` ← Monetisation boundary SSOT
 - `docs/authority/ribbon-homepage.md` ← Finance ribbon architecture
-- `docs/authority/ai providers.md` ← AI providers catalogue and leaderboard
-- `docs/authority/ai providers affiliate & links.md` ← Affiliate and referral rules
-- `docs/authority/prompt-builder-page.md` ← Prompt builder page architecture
-- `docs/authority/ga4-gtm-nextjs-vercel.md` ← Analytics integration
-- `docs/authority/vercel-pro-promagen-playbook.md` ← Vercel Pro guardrails
 - `docs/authority/fly-v2.md` ← Fly.io deployment
+- `docs/authority/api-calming-efficiency.md` ← 17 calming techniques
+- `docs/authority/commodities.md` ← Commodities system
 - `docs/authority/api-documentation-twelvedata.md` ← Vendor reference snapshot (read-only)
-- `docs/authority/TODO-api-integration.md` ← Deferred work and activation tasks
 
-**Frontend companion docs:**
+**Platform and provider docs:**
 
-- `frontend/docs/env.md`
-- `frontend/docs/promagen-global-standard.md`
+- `docs/authority/prompt-builder-page.md` ← Prompt builder page architecture
+- `docs/authority/ai_providers_affiliate.md` ← AI providers affiliate and referral rules
+
+**Infrastructure docs:**
+
+- `docs/authority/clerk-auth.md` ← Auth (Clerk) integration
+- `docs/authority/stripe.md` ← Payments (Stripe) integration
+- `docs/authority/vercel-pro-promagen-playbook.md` ← Vercel Pro guardrails
+- `docs/authority/ga4-gtm-nextjs-vercel.md` ← Analytics integration
+- `docs/authority/human-factors.md` ← 18 human factor principles
 
 ### No-duplication rule (prevents doc bloat)
 
@@ -728,8 +750,56 @@ A doc update is required whenever a change affects any of:
 - Deployment/runtime policy (Vercel/Fly env vars, secrets, headers, cache behaviour)
 - Provider integrations (rate limits, symbol formats, call limits, quotas, budget guard logic)
 - Testing invariants (new lock-in tests, renamed exports, type shape expectations)
+- **Harmony post-processing** (any change to P1–P12 functions, lookup set sizes, rule ceiling, or system prompt rules requires updating `ai-disguise.md` §7 and running the 115-test lockdown suite)
 - Prompt builder category options or platform format rules changed
 - Voting system mechanics or activation requirements changed
+
+---
+
+## Harmony Engineering Workflow (AI Tier Generation)
+
+**Purpose:** The Prompt Lab's AI tier generation system (Call 2) uses GPT-5.4-mini at runtime, with the system prompt written by Claude at development time. This creates a unique engineering challenge that requires specific workflows.
+
+**Authority:** `ai-disguise.md` v4.0.0 (§7 post-processing, §8 harmony engineering), `harmonizing-claude-openai.md` v2.0.0 (full methodology)
+
+### Read before modifying
+
+Before touching any post-processing code, read these files first:
+
+| File                                                | Lines | What it contains                                                                        |
+| --------------------------------------------------- | ----- | --------------------------------------------------------------------------------------- |
+| `src/lib/harmony-post-processing.ts`                | 342   | P1–P12 functions (7 active). This is the extracted module — route.ts imports from here. |
+| `src/lib/harmony-compliance.ts`                     | 486   | Compliance gate (P4/P5/P6/P9), rule ceiling tracking (`RULE_CEILING = 30`).             |
+| `src/app/api/generate-tier-prompts/route.ts`        | 523   | Call 2 route. System prompt lives in `buildSystemPrompt()` (lines 115–262).             |
+| `src/lib/__tests__/harmony-post-processing.test.ts` | 601   | 72-test lockdown suite. Real GPT fixtures.                                              |
+| `src/lib/__tests__/harmony-compliance.test.ts`      | 453   | 43-test compliance suite. Drift detection assertions.                                   |
+
+### 115-test lockdown suite
+
+All 115 harmony tests must pass before shipping any changes to the post-processing pipeline or system prompt rules. Run:
+
+```powershell
+# From: C:\Users\Proma\Projects\promagen\frontend
+pnpm test -- --testPathPattern="harmony" --verbose
+```
+
+Any red test = post-processing drift. **Fix the code, not the test.** The only exception is adding new lookup set entries (requires updating both code and drift detection count).
+
+### Extraction pattern
+
+All P1–P12 functions live in `src/lib/harmony-post-processing.ts`. The route file (`route.ts`) imports `postProcessTiers()` from this module. **Never move functions back into route.ts** — the extraction enables testability.
+
+### Rule ceiling
+
+The system prompt has 30 rules. The ceiling is enforced by `RULE_CEILING` in `harmony-compliance.ts` with a test assertion. Adding a new rule requires either:
+
+- Replacing an existing rule
+- Building a post-processing code fix instead (preferred for mechanical artefacts)
+- Explicit Martin approval to raise the ceiling
+
+### Dual-assessor methodology
+
+Any system prompt change must be tested through both Claude and ChatGPT independently scoring the output. This is not optional — single-assessor testing is an anti-pattern. See `harmonizing-claude-openai.md` v2.0.0 §2 for the full cycle.
 
 ---
 
@@ -822,7 +892,7 @@ Both layers should be active. Skew Protection prevents most issues; the error bo
 
 ```tsx
 // frontend/src/app/layout.tsx
-import { ChunkErrorBoundary } from '@/components/chunk-error-boundary';
+import { ChunkErrorBoundary } from "@/components/chunk-error-boundary";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
@@ -920,14 +990,14 @@ When hoverable cards trigger preview panels below them (e.g., Pro page Feature C
 
 **Correct approach (debounced intent, v5.0):**
 
-| State | Behaviour |
-| --- | --- |
-| No panel active | First card hover → switch immediately (0ms) |
-| Same card re-hovered | No action |
-| Different card hovered while panel active | 150ms debounce → switch if cursor stays |
-| Card leave (no other card entered) | 2-second linger timer → close if cursor doesn't enter preview |
-| Cursor enters preview panel | Cancel all timers (safe zone) |
-| Cursor leaves preview panel | Close immediately |
+| State                                     | Behaviour                                                     |
+| ----------------------------------------- | ------------------------------------------------------------- |
+| No panel active                           | First card hover → switch immediately (0ms)                   |
+| Same card re-hovered                      | No action                                                     |
+| Different card hovered while panel active | 150ms debounce → switch if cursor stays                       |
+| Card leave (no other card entered)        | 2-second linger timer → close if cursor doesn't enter preview |
+| Cursor enters preview panel               | Cancel all timers (safe zone)                                 |
+| Cursor leaves preview panel               | Close immediately                                             |
 
 **Why 150ms:** Fast enough to feel instant for deliberate hovers. Long enough to filter diagonal movement across a 3×3 card grid where cards are small and closely spaced.
 
@@ -955,6 +1025,7 @@ When content overflows a fixed-height container and needs to be showcased withou
 **Scroll distance:** Computed dynamically via `ResizeObserver` on content height minus container height. Stored as CSS custom property `--scroll-dist`.
 
 **Rules:**
+
 - Animation defined in `<style dangerouslySetInnerHTML>` (co-located, not globals.css)
 - `@media (prefers-reduced-motion: reduce)` disables the animation
 - Container uses `overflow: hidden` (no visible scrollbar)
@@ -978,7 +1049,7 @@ When multiple instances of the same React hook need to stay in sync on the same 
 
 ```typescript
 window.dispatchEvent(
-  new StorageEvent('storage', {
+  new StorageEvent("storage", {
     key: STORAGE_KEY,
     newValue: JSON.stringify(newValue),
   }),
@@ -988,6 +1059,7 @@ window.dispatchEvent(
 Every hook instance listening via `window.addEventListener('storage', ...)` picks it up — same tab and other tabs.
 
 **Rules:**
+
 - The hook that writes the value owns the dispatch — not the caller
 - Never use local `useState` for state that needs cross-component sync — always use the shared hook
 - The shared hook is the single source of truth — components never read localStorage directly
@@ -1006,7 +1078,7 @@ When designing preview panels or feature showcases, prefer showing **what the to
 
 **Example:** The Daily Prompts preview on the Pro page. Three other previews already show prompt output (Prompt Format shows 4-tier text, Prompt Lab shows category data + tier prompts, Saved shows saved prompt text). Adding another output view would be repetition. Instead, the Daily Prompts preview shows a miniaturised version of the standard builder — 12 colour-coded category rows with selected chips, assembled prompt box, optimized prompt box. Users see the cockpit, not the product.
 
-**When to apply:** Any time you're designing a feature showcase, onboarding element, or marketing preview. Ask: "Has the user already seen what this tool *produces* elsewhere?" If yes, show what it *looks like to use* instead.
+**When to apply:** Any time you're designing a feature showcase, onboarding element, or marketing preview. Ask: "Has the user already seen what this tool _produces_ elsewhere?" If yes, show what it _looks like to use_ instead.
 
 **Human factor:** Curiosity Gap — showing the tool creates "I want to try this" more effectively than showing the output, because the output is static but the tool is interactive.
 
@@ -1029,23 +1101,37 @@ When showcasing AI-generated images (or simulating image generation), use a CSS 
 
 ```css
 @keyframes imagegenReveal {
-  0% { filter: blur(18px) brightness(0.3) saturate(0.1); }
-  10% { filter: blur(12px) brightness(0.4) saturate(0.3); }
-  30% { filter: blur(6px) brightness(0.6) saturate(0.6); }
-  55% { filter: blur(1px) brightness(0.9) saturate(0.95); }
-  65%, 85% { filter: blur(0) brightness(1) saturate(1); }
-  100% { filter: blur(18px) brightness(0.3) saturate(0.1); }
+  0% {
+    filter: blur(18px) brightness(0.3) saturate(0.1);
+  }
+  10% {
+    filter: blur(12px) brightness(0.4) saturate(0.3);
+  }
+  30% {
+    filter: blur(6px) brightness(0.6) saturate(0.6);
+  }
+  55% {
+    filter: blur(1px) brightness(0.9) saturate(0.95);
+  }
+  65%,
+  85% {
+    filter: blur(0) brightness(1) saturate(1);
+  }
+  100% {
+    filter: blur(18px) brightness(0.3) saturate(0.1);
+  }
 }
 ```
 
 **Rules:**
+
 - Animation defined in `<style dangerouslySetInnerHTML>` (co-located, not globals.css)
 - `@media (prefers-reduced-motion: reduce)` disables the animation AND removes all filters
 - Pair with a fuchsia progress bar synced to the same cycle for visual feedback
 - Image uses `object-fit: cover` with `position: absolute; inset: 0`
 - When combined with crossfade rotation (see next pattern), use `key={activeIdx}` to reset the animation on card swap
 
-**Human factor:** Anticipatory Dopamine — the 10-second resolve creates the same suspense as waiting for a real image generation. The hold-at-sharp moment is the payoff. Research shows the moment *before* the reveal is more engaging than the reveal itself.
+**Human factor:** Anticipatory Dopamine — the 10-second resolve creates the same suspense as waiting for a real image generation. The hold-at-sharp moment is the payoff. Research shows the moment _before_ the reveal is more engaging than the reveal itself.
 
 **Reference implementation:** `ImageGenPreviewPanel` in `pro-promagen-client.tsx` (v6.0.0)
 
@@ -1060,6 +1146,7 @@ When a showcase has multiple items that should each get full visual space (e.g.,
 **When to use instead of auto-scroll:** When each card contains a large visual element (image, chart, map) that benefits from maximum display area. Auto-scroll works for text-heavy content that overflows. Crossfade rotation works for visual content that needs to fill the space.
 
 **Timing spec:**
+
 - Each card visible for N seconds (synced to any internal animation — e.g., 15s matches blur-to-sharp cycle)
 - 300ms fade-out (opacity 1 → 0)
 - Swap content (React state update)
@@ -1070,15 +1157,17 @@ When a showcase has multiple items that should each get full visual space (e.g.,
 
 ```typescript
 const [activeIdx, setActiveIdx] = useState(0);
-const [fadeState, setFadeState] = useState<'visible' | 'fading-out' | 'fading-in'>('visible');
+const [fadeState, setFadeState] = useState<
+  "visible" | "fading-out" | "fading-in"
+>("visible");
 
 useEffect(() => {
   const id = setInterval(() => {
-    setFadeState('fading-out');
+    setFadeState("fading-out");
     setTimeout(() => {
       setActiveIdx((prev) => (prev + 1) % items.length);
-      setFadeState('fading-in');
-      setTimeout(() => setFadeState('visible'), 300);
+      setFadeState("fading-in");
+      setTimeout(() => setFadeState("visible"), 300);
     }, 300);
   }, ROTATION_MS);
   return () => clearInterval(id);
@@ -1225,6 +1314,7 @@ OUTPUT FORMAT:
 
 ## Changelog
 
+- **25 Mar 2026:** Added "Harmony Engineering Workflow" section: read-before-modifying file table, 115-test lockdown suite command, extraction pattern rule, rule ceiling (30) enforcement, dual-assessor mandate. Updated authority docs list: restructured into 5 categories (Core, AI Intelligence Engine, Data feed/gateway, Platform/provider, Infrastructure), added 13 new docs (ai-disguise v4.0.0, harmonizing v2.0.0, prompt-lab-v4-flow v1.3.0, architecture, test.md, prompt-lab, unified-prompt-brain, prompt-optimizer, prompt-intelligence, human-sentence-conversion, api-calming-efficiency, clerk-auth, stripe). Removed stale entries (TODO-api-integration, frontend companion docs). Updated code-standard ref from v3.0 to v4.0. Updated "definition of needs a doc update" to include harmony post-processing changes as trigger. Cross-ref: ai-disguise.md v4.0.0, harmonizing-claude-openai.md v2.0.0, test.md v1.0.0.
 - **19 Mar 2026:** Added 3 new subsections under UI Consistency + UX Patterns. (1) Blur-to-sharp image reveal animation: 15s CSS filter cycle (blur(18px)→blur(0) over 10s, hold 3s, reset), paired with fuchsia progress bar, `prefers-reduced-motion` disables filter entirely. Reference: ImageGenPreviewPanel. (2) Single-card crossfade rotation: 300ms fade-out/fade-in, `key={activeIdx}` for animation reset, navigation dots. Replaces auto-scroll when cards need full panel height for visual content. Reference: ImageGenPreviewPanel + ScenesPreviewPanel. (3) Pro page no-grey-text rule: stricter than site-wide banned colours — `/pro-promagen` prohibits ALL grey text including `text-slate-400` and `text-white/30`. All text must be bright (white, brand colours, category colours). Cross-refs: paid_tier.md §5.10 v6.0.0.
 - **18 Mar 2026:** Major update — 7 new subsections under UI Consistency + UX Patterns. (1) Tooltip standards: 400ms close delay, solid `rgba(15,23,42,0.97)` bg, sign-in as plain `<a>` not `SignInButton mode="modal"`, no question mark icons. (2) Cursor-pointer on all interactive elements. (3) SSOT colour constants: `prompt-colours.ts` as sole source of truth for 13 category colours, 6 consumers listed. (4) Debounced intent pattern: 150ms hover panel switching replacing failed intent triangle, full state table. (5) Auto-scroll animation pattern: 17s cycle spec, ResizeObserver distance, CSS custom property. (6) Shared hook state sync: synthetic StorageEvent for same-tab cross-hook sync. (7) "Show the tool, not the output" principle for feature showcases. Updated minimum text size from 9px to 10px floor. Cross-refs: code-standard.md §6.0.4/6.0.5/6.11-6.14, paid_tier.md §5.14/5.16.
 - **15 Mar 2026:** Added "Equal-gap card spacing" subsection under UI Consistency. One vertical spacing system per card — never mix `padding` with `space-evenly`. Viewport-controlled cards use `paddingInline` only + `align-content: space-evenly`. Content-sized cards use `padding` + `flex-col`. Cross-ref code-standard.md § 6.10.

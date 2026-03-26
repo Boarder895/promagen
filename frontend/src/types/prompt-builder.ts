@@ -154,6 +154,9 @@ export interface PlatformFormat {
   // For CLIP: weighted categories. For MJ: subject + style + mood.
   // For NatLang: controls sentence clause order after the core subject+action nucleus.
   impactPriority?: PromptCategory[];
+  /** Call 3 group knowledge — short platform-specific trait injected into the optimisation system prompt.
+   *  Lives here (not in builder code) so all platform traits have one maintenance point. */
+  groupKnowledge?: string;
 }
 
 /** Full platform formats JSON structure */

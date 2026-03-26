@@ -1,14 +1,15 @@
 # Harmonizing Claude ↔ OpenAI — System Prompt Engineering Playbook
 
-**Version:** 1.0.0  
+**Version:** 2.0.0  
 **Created:** 23 March 2026  
+**Updated:** 25 March 2026  
 **Owner:** Promagen  
-**Status:** Active — proven methodology, applied to Call 2 (generic tiers), ready to apply to Call 3 (platform-specific)  
+**Status:** Active — proven methodology, applied to Call 2 (generic tiers) through 6 rounds + 3 stress tests. Ready to apply to Call 3 (platform-specific).  
 **Authority:** This document defines the repeatable methodology for engineering system prompts where Claude writes the instructions and GPT-5.4-mini executes them, with both Claude and ChatGPT independently scoring output quality.
 
 > **Cross-references:**
 >
-> - `ai-disguise.md` v3.0.0 — §6 (deployed system prompt), §7 (post-processing layer), §8 (harmony engineering summary)
+> - `ai-disguise.md` v4.0.0 — §6 (deployed system prompt SSoT reference), §7 (post-processing layer), §8 (harmony engineering summary)
 > - `prompt-lab.md` v3.1.0 — Prompt Lab architecture, component table
 > - `human-sentence-conversion.md` v2.0.0 — Call 1 (parse-sentence) specification
 > - `code-standard.md` — All code standards
@@ -35,7 +36,7 @@
 
 Promagen uses a split-brain architecture where **Claude** (Anthropic) writes the system prompts and code, and **GPT-5.4-mini** (OpenAI) executes them at runtime to generate image prompts for 42 AI platforms. This creates a unique engineering challenge: the author of the instructions never sees them executed, and the executor never participated in designing them.
 
-This document captures the repeatable methodology that took Call 2's generic tier output from **62/100 to 93/100** across 5 rounds of iterative refinement, with dual-assessor score convergence from a 20-point gap to a 1.75-point gap.
+This document captures the repeatable methodology that took Call 2's generic tier output from **62/100 to 96/100** across 6 rounds of iterative refinement + 3 stress tests (900-char complex inputs), with dual-assessor score convergence from a 20-point gap to a ≤1-point gap.
 
 ### Why this doc exists
 
@@ -44,9 +45,11 @@ Without it, the next developer (or future Martin) would have to rediscover throu
 - Why concrete examples work and abstract rules don't
 - Why instruction positioning matters (first and last bullets get attention)
 - Why GPT finds synonyms for banned terms and how to counter it
+- Why GPT rotates nouns to dodge code-level catches and how lookup sets fix it
 - Why some artefacts are unfixable via prompt and need code-level safety nets
 - Why temperature 0.5 is the right trade-off for this use case
-- What the 18 rules do and why each one exists
+- What the 30 rules do and why each one exists
+- Why the post-processing pipeline was extracted to a separate testable module
 
 This doc is also the **playbook for Call 3** — the same methodology applied to 42 platform-specific system prompts.
 
@@ -115,12 +118,13 @@ This doc is also the **playbook for Call 3** — the same methodology applied to
 
 ### Key insight: ChatGPT doesn't know about post-processing
 
-ChatGPT grades raw GPT output. It doesn't know P1 (deduplication) and P2 (punctuation strip) exist. This means:
+ChatGPT grades raw GPT output. It doesn't know P1–P12 exist (7 post-processing functions in `harmony-post-processing.ts` + 4 compliance functions in `harmony-compliance.ts`). This means:
 
 - ChatGPT's scores reflect the worst case the user could see (without safety nets)
 - Claude's scores reflect what the user actually sees (after safety nets)
 - The gap between them measures how much value the post-processing layer adds
 - Keeping ChatGPT unaware maintains pressure to improve the raw output
+- The biggest persistent gap is T2: ChatGPT scores raw (with duplicated negatives) while Claude scores post-P1 (clean). This gap is ~2–3 points per round and is expected.
 
 ---
 
@@ -165,8 +169,10 @@ GPT obeys the letter of a ban but finds synonyms for the spirit.
 | —                 | "designed to resemble"  | Added to ban list (S14) |
 | —                 | "intended to appear as" | Added to ban list (S14) |
 
-**Current banned phrases for T3 (Natural Language):**
-"rendered as", "in the style of", "should feel like", "meant to look like", "designed to resemble", "intended to appear as", "the image should"
+**Current banned phrases for T3 (Natural Language) — 11 phrases:**
+"rendered as", "in the style of", "should feel like", "meant to look like", "designed to resemble", "intended to appear as", "the image should", "the scene feels", "the scene is", "the mood is", "that feels"
+
+**v2.0.0 addition:** "that feels" added after R4 when GPT produced "a clarity that feels immense and resolute" — same meta-pattern as "the scene feels" with noun substitution.
 
 **Application to Call 3:** When banning a pattern, immediately brainstorm 3–5 synonyms GPT might use and ban those too. It's cheaper to over-ban than to discover workarounds in production.
 
@@ -177,12 +183,19 @@ Some GPT mechanical artefacts **cannot be eliminated via system prompt**. They a
 1. **System prompt rule** — reduces the error rate (e.g., from 100% to 50%)
 2. **Post-processing code** — catches remaining errors server-side before the user sees them (reduces user-visible rate to 0%)
 
-**Current belt-and-braces pairs:**
+**Current belt-and-braces pairs (v2.0.0):**
 
-| Artefact                  | System prompt rule                                                | Post-processing catch                                                                      |
-| ------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| T2 duplicate `--no` block | "FINAL RULE — NEVER DUPLICATE NEGATIVES" (last instruction in T2) | `deduplicateMjNegatives()` — splits on `--no`, deduplicates comma-separated terms, rejoins |
-| T1 trailing period        | "NO sentence-ending punctuation"                                  | `stripTrailingPunctuation()` — regex strips trailing `.!?`                                 |
+| Artefact                         | System prompt rule                          | Post-processing catch                                                   | Added  |
+| -------------------------------- | ------------------------------------------- | ----------------------------------------------------------------------- | ------ |
+| T2 duplicate `--no` block        | "FINAL RULE — NEVER DUPLICATE NEGATIVES"    | P1 `deduplicateMjParams()` — deduplicates all MJ params                 | R4     |
+| T1 trailing period               | "NO sentence-ending punctuation"            | P2 `stripTrailingPunctuation()` — regex strips trailing `.!?`           | R4     |
+| T4 self-correction hallucination | "NEVER include questions, self-corrections" | P3 `fixT4SelfCorrection()` — strips "? No, it is" patterns              | R2     |
+| T4 meta-language openers         | "Do not use meta-language"                  | P8 `fixT4MetaOpeners()` — 23 abstract nouns × 21 meta verbs             | R2/ST2 |
+| T4 short sentence checklists     | "Every sentence MUST be at least 10 words"  | P10 `mergeT4ShortSentences()` — em-dash merge into previous             | R3     |
+| T3 meta-commentary openers       | "BANNED PHRASES" list (11 phrases)          | P11 `fixT3MetaOpeners()` — 20 abstract nouns × 18 perception verbs      | R5     |
+| T1 CLIP-unfriendly adjectives    | "CLIP interprets LITERALLY"                 | P12 `stripClipQualitativeAdjectives()` — 10 adjectives, unweighted only | R5     |
+
+**File:** All functions extracted to `src/lib/harmony-post-processing.ts` (342 lines). Tested by `src/lib/__tests__/harmony-post-processing.test.ts` (72 tests).
 
 **Application to Call 3:** After the first round of testing, identify which errors persist despite rules. Build post-processing for those immediately — don't waste rounds trying to fix them via prompt alone.
 
@@ -210,6 +223,21 @@ This produced paraphrased output that added zero expert value. The fix **inverte
 
 **Application to Call 3:** The optimisation prompt must also be explicit that "making it shorter" is not enough — the AI must add platform-specific knowledge the user doesn't have.
 
+### Pattern 7: Noun-Substitution Evasion (v2.0.0)
+
+GPT doesn't just find synonym verbs for banned phrases — it rotates **nouns** to dodge both prompt bans and code catches. Proven across R3–R6 + stress tests:
+
+| What was banned                | What GPT tried next              | What GPT tried after that        |
+| ------------------------------ | -------------------------------- | -------------------------------- |
+| "The scene feels" (prompt ban) | "The scene carries" (new verb)   | "The stillness feels" (new noun) |
+| P11 catches "The scene [verb]" | GPT switches to "The room feels" | "The atmosphere carries"         |
+
+**The fix:** Don't ban individual nouns or verbs. Build lookup sets: a set of abstract nouns (scene, room, stillness, atmosphere, void, silence, mood, etc.) crossed with a set of perception/meta verbs (feels, carries, holds, evokes, captures, etc.). The code catch matches `"The [any noun in set] [any verb in set]"` and strips it.
+
+**Implementation:** P8 (T4, 23 nouns × 21 verbs) and P11 (T3, 20 nouns × 18 verbs) both use this pattern. The lookup sets are exported from `harmony-post-processing.ts` and their sizes are tested by drift-detection assertions in the 115-test lockdown suite.
+
+**Application to Call 3:** Any banned pattern will need a lookup-set code catch from day one. GPT will find evasion routes faster than you can add prompt rules.
+
 ---
 
 ## 4. Anti-Patterns
@@ -222,9 +250,11 @@ ChatGPT gave itself 88/100 in Round 1 while Claude gave 62/100. The actual quali
 
 ### Anti-Pattern 2: Fixing prompt issues with more prompt
 
-After 3 rounds, the system prompt had 18 rules. Adding more rules has diminishing returns — GPT's attention budget is finite. If a rule isn't working after 2 rounds of refinement, the fix is **post-processing code**, not a 19th rule.
+After 3 rounds, the system prompt had 18 rules. By the end of 6 rounds, it reached 30 rules — the approved ceiling. Adding more rules has diminishing returns — GPT's attention budget is finite. If a rule isn't working after 2 rounds of refinement, the fix is **post-processing code**, not a 31st rule.
 
 **Threshold:** If GPT violates a rule >30% of the time after the rule has been strengthened with examples and repositioned, stop prompt-engineering and build a code-level catch.
+
+**v2.0.0 evidence:** The T2 negative duplication was unfixable via prompt across 8 consecutive rounds (R1–R6 + 2 stress test reruns). Every prompt variant failed — abstract prohibition, mechanical counting self-check, WRONG/RIGHT examples. P1 catches it 100% of the time in code. Similarly, T3/T4 meta-language noun-substitution was unfixable via banned phrases — GPT rotated nouns faster than we could ban them. P8/P11 lookup-set catches work 100% at sentence-start patterns.
 
 ### Anti-Pattern 3: Scoring before convergence
 
@@ -240,81 +270,106 @@ T4 (Plain Language) dropped from 94 to 82 between rounds — not because of a ru
 
 ---
 
-## 5. System Prompt Evolution — The 18 Rules
+## 5. System Prompt Evolution — The 30 Rules
 
-### Rule Inventory (deployed in `route.ts` lines 117–199)
+**SSoT:** `buildSystemPrompt()` in `src/app/api/generate-tier-prompts/route.ts` (lines 115–262). The function is dynamic — it adapts to provider context. Always read the code for current rules.
+
+**Rule ceiling:** 30 (enforced by `RULE_CEILING` in `harmony-compliance.ts` with test assertion). Raising requires explicit Martin approval.
+
+### Rule Inventory (tracked in `harmony-compliance.ts`)
 
 #### Tier-specific rules (embedded in tier sections)
 
-| ID   | Tier | Rule                                                         | Round added              | Impact       |
-| ---- | ---- | ------------------------------------------------------------ | ------------------------ | ------------ |
-| T1-1 | T1   | Parenthetical syntax with concrete examples when no provider | R2 (B1)                  | +23 on T1    |
-| T1-2 | T1   | Subject must carry highest weight                            | R2 (B3)                  | +5 on T1     |
-| T1-3 | T1   | Never weight-wrap isolated colour words                      | R2 (S4)                  | +3 on T1     |
-| T1-4 | T1   | CLIP interprets literally — no metaphorical language         | R3 (S10)                 | +3 on T1     |
-| T1-5 | T1   | Mandatory composition/camera term                            | R2 (S1)                  | +8 on T1     |
-| T1-6 | T1   | Strict ordering template                                     | R3 (S13)                 | +4 on T1     |
-| T1-7 | T1   | No sentence-ending punctuation                               | R4 (B7)                  | Caught by P2 |
-| T2-1 | T2   | Subject must carry highest :: weight                         | R2 (B3)                  | +30 on T2    |
-| T2-2 | T2   | :: at end of complete clauses (WRONG/RIGHT)                  | R3 (B5)                  | +5 on T2     |
-| T2-3 | T2   | --no flag mandatory (CRITICAL warning)                       | R3 (B4)                  | +30 on T2    |
-| T2-4 | T2   | Scene-specific negatives, not boilerplate                    | R2 (S8)                  | +5 on T2     |
-| T2-5 | T2   | Mandatory art style reference                                | R2 (S7)                  | +3 on T2     |
-| T2-6 | T2   | Strict ordering template                                     | R3 (S13)                 | +5 on T2     |
-| T2-7 | T2   | Structural example (full prompt)                             | R3 (S9)                  | +10 on T2    |
-| T2-8 | T2   | FINAL RULE — never duplicate negatives                       | R4 (B6) + R5 positioning | Caught by P1 |
-| T3-1 | T3   | Not a paraphraser — add expert value                         | R2 (S5)                  | +30 on T3    |
-| T3-2 | T3   | Banned directive phrases (7 phrases)                         | R3 (S11) + R4 (S14)      | +7 on T3     |
-| T3-3 | T3   | Mandatory composition + atmosphere additions                 | R2 (S1)                  | +5 on T3     |
-| T3-4 | T3   | Style woven naturally, not as directive                      | R3 (S11)                 | +3 on T3     |
-| T3-5 | T3   | Strict ordering template (2–4 sentences)                     | R3 (S13)                 | +3 on T3     |
-| T4-1 | T4   | 2–3 sentences (relaxed from exactly 2)                       | R4 (S15)                 | +2 on T4     |
-| T4-2 | T4   | Explicit primary setting                                     | R3 (S12)                 | +8 on T4     |
-| T4-3 | T4   | 10-word sentence minimum (WRONG/RIGHT)                       | R5 (S17)                 | +11 on T4    |
-| T4-4 | T4   | No meta-language                                             | R4 (S18)                 | +2 on T4     |
+| ID   | Tier | Rule                                                         | Round added                 | Impact        |
+| ---- | ---- | ------------------------------------------------------------ | --------------------------- | ------------- |
+| T1-1 | T1   | Parenthetical syntax with concrete examples when no provider | R2 (B1)                     | +23 on T1     |
+| T1-2 | T1   | Subject must carry highest weight                            | R2 (B3)                     | +5 on T1      |
+| T1-3 | T1   | Never weight-wrap isolated colour words                      | R2 (S4)                     | +3 on T1      |
+| T1-4 | T1   | CLIP interprets literally — no metaphorical/sensory language | R3 (S10) + R2 v2            | +3 on T1      |
+| T1-5 | T1   | Mandatory composition/camera term                            | R2 (S1)                     | +8 on T1      |
+| T1-6 | T1   | Strict ordering + time-of-day MUST be weighted               | R3 (S13) + R3 v2            | +4 on T1      |
+| T1-7 | T1   | No sentence-ending punctuation                               | R4 (B7)                     | Caught by P2  |
+| T1-8 | T1   | Semantic clustering + concept dedup + interaction merging    | R2 v2 + R4 v2 + ST1 rerun   | +5 on T1      |
+| T2-1 | T2   | Subject must carry highest :: weight                         | R2 (B3)                     | +30 on T2     |
+| T2-2 | T2   | :: at end of complete clauses (WRONG/RIGHT)                  | R3 (B5)                     | +5 on T2      |
+| T2-3 | T2   | --no flag mandatory (CRITICAL warning)                       | R3 (B4)                     | +30 on T2     |
+| T2-4 | T2   | Scene-specific negatives, not boilerplate                    | R2 (S8)                     | +5 on T2      |
+| T2-5 | T2   | Abstract-to-visual conversion for weighted terms             | R2 (S7) + R3 v2             | +3 on T2      |
+| T2-6 | T2   | Mandatory parameters (--ar, --v, --s, --no)                  | R3 (S9)                     | +10 on T2     |
+| T3-1 | T3   | Not a paraphraser — add expert value                         | R2 (S5)                     | +30 on T3     |
+| T3-2 | T3   | Banned directive phrases (11 phrases)                        | R3 (S11) + R4 (S14) + R4 v2 | +7 on T3      |
+| T3-3 | T3   | Mandatory composition + atmosphere additions                 | R2 (S1)                     | +5 on T3      |
+| T3-4 | T3   | Mood conversion mandatory                                    | R3 v2                       | +3 on T3      |
+| T3-5 | T3   | Opening sentence must restructure, not repeat                | R2 v2                       | +5 on T3      |
+| T4-1 | T4   | Explicit primary setting                                     | R3 (S12)                    | +8 on T4      |
+| T4-2 | T4   | No self-correction patterns                                  | R1 (B1)                     | Caught by P3  |
+| T4-3 | T4   | Meta-language ban                                            | R4 (S18)                    | Caught by P8  |
+| T4-4 | T4   | 10-word sentence minimum (WRONG/RIGHT)                       | R5 (S17)                    | Caught by P10 |
+| T4-5 | T4   | Mandatory scene depth (motion/depth/atmosphere)              | R2 v2                       | +9 on T4      |
 
-#### Global rules (Rules section, lines 179–191)
+#### Global rules (Rules section)
 
-| #   | Rule                                                 | Purpose                                            |
-| --- | ---------------------------------------------------- | -------------------------------------------------- |
-| 1   | Preserve creative intent BUT restructure and enhance | Balance preservation with transformation           |
-| 2   | Add expert prompt engineering value                  | Inverted from "don't add" (the biggest single fix) |
-| 3   | Each tier must feel native to its platform family    | Prevents reformatting one tier into another        |
-| 4   | T1: clean keyword assembly                           | No sentence fragments                              |
-| 5   | T2: prose + mandatory --no flag                      | Reinforces T2-3                                    |
-| 6   | T3: spatial flow + no meta-instructions              | Reinforces T3-2                                    |
-| 7   | T4: short but complete + explicit setting            | Reinforces T4-2                                    |
-| 8   | Scene-specific negatives + --no mandatory for T2     | Reinforces T2-3/T2-4                               |
-| 9   | Weight hierarchy — subject highest                   | Reinforces T1-2/T2-1                               |
-| 10  | Provider-specific syntax                             | The original fix (B1)                              |
-| 11  | Quality suffix for T1                                | Standard CLIP anchors                              |
-| 12  | Convert abstract emotions to visual equivalents      | "Beauty" → "ethereal light"                        |
+| #   | Rule                                                      | Purpose                                         |
+| --- | --------------------------------------------------------- | ----------------------------------------------- |
+| G1  | Preserve creative intent + EMOTIONAL ATMOSPHERE MANDATORY | Balance preservation with transformation + mood |
+| G2  | Add expert prompt engineering value (inverted)            | Reformatting is not value-add                   |
+| G3  | Each tier must feel native to its platform family         | Prevents reformatting one tier into another     |
+| G4  | Weight hierarchy — subject highest                        | Reinforces T1-2/T2-1                            |
+| G5  | Provider-specific syntax                                  | The original fix (B1)                           |
+| G6  | Convert abstract emotions to visual equivalents           | "Beauty" → "ethereal light"                     |
 
 ---
 
 ## 6. Post-Processing Layer
 
-**File:** `src/app/api/generate-tier-prompts/route.ts` (lines 202–258)
+**File:** `src/lib/harmony-post-processing.ts` (342 lines) — extracted from route.ts in v2.0.0 for testability.  
+**Test:** `src/lib/__tests__/harmony-post-processing.test.ts` (601 lines, 72 tests).  
+**Import:** `route.ts` imports `postProcessTiers()` from the extracted module.
 
-### Functions
+### Functions (7 active)
 
-| Function                     | Target                 | What it does                                                                     | Why needed                                                                                      |
-| ---------------------------- | ---------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `deduplicateMjNegatives()`   | T2 positive            | Splits on `--no`, deduplicates comma-separated terms case-insensitively, rejoins | GPT duplicates `--no` block ~50% at temp 0.5. System prompt rule reduces but doesn't eliminate. |
-| `stripTrailingPunctuation()` | T1 positive + negative | Regex strips trailing `.!?`                                                      | GPT adds periods despite B7 rule. CLIP prompts must not have sentence punctuation.              |
-| `postProcessTiers()`         | All tiers              | Orchestrator: P1 on tier2, P2 on tier1, pass-through tier3/tier4                 | Single call point after Zod validation, before JSON response.                                   |
+| ID  | Function                           | Tier | What it does                                                                 | Catch rate               |
+| --- | ---------------------------------- | ---- | ---------------------------------------------------------------------------- | ------------------------ |
+| P1  | `deduplicateMjParams()`            | T2   | Merges all --no/--ar/--v/--s blocks, deduplicates terms, removes fusions     | 100%                     |
+| P2  | `stripTrailingPunctuation()`       | T1   | Strips trailing `.!?` from CLIP prompts                                      | 100%                     |
+| P3  | `fixT4SelfCorrection()`            | T4   | Strips "? No, it is" self-correction hallucinations                          | 100%                     |
+| P8  | `fixT4MetaOpeners()`               | T4   | Strips "The [abstract noun] [meta verb]" openers (23 nouns × 21 verbs)       | 100% (start of sentence) |
+| P10 | `mergeT4ShortSentences()`          | T4   | Merges final sentences under 10 words into previous via em-dash              | 100%                     |
+| P11 | `fixT3MetaOpeners()`               | T3   | Strips "The [abstract noun] [perception verb]" openers (20 nouns × 18 verbs) | 100% (start of sentence) |
+| P12 | `stripClipQualitativeAdjectives()` | T1   | Strips 10 CLIP-unfriendly adjectives from unweighted segments only           | 100% (unweighted)        |
+
+### Compliance gate (separate file)
+
+**File:** `src/lib/harmony-compliance.ts` (486 lines) — deterministic syntax validation.
+
+| ID  | Function                   | Tier | Purpose                                            |
+| --- | -------------------------- | ---- | -------------------------------------------------- |
+| P4  | `enforceT1Syntax()`        | T1   | Converts wrong weight syntax for selected provider |
+| P5  | `enforceMjParameters()`    | T2   | Adds missing --ar/--v/--s/--no params              |
+| P6  | `detectT4MetaLanguage()`   | T4   | Flags meta-language (detection only)               |
+| P9  | `detectT4ShortSentences()` | T4   | Flags under-10-word sentences (detection only)     |
+
+### Pipeline per tier
+
+```
+T1: P12 (strip CLIP adjectives) → P2 (strip punctuation)
+T2: P1 (dedup MJ params) → [P5 in compliance gate adds missing params]
+T3: P11 (strip abstract meta-openers)
+T4: P3 (self-correction) → P8 (meta-openers) → P10 (short sentence merge)
+```
 
 ### Integration point
 
 ```typescript
-// After Zod validation (line 387):
+import { postProcessTiers } from "@/lib/harmony-post-processing";
+
+// After Zod validation:
 const processed = postProcessTiers(validated.data);
-return NextResponse.json({ tiers: processed }, { ... });
 ```
 
 ### Non-regression rule
 
-`postProcessTiers()` MUST run on all Call 2 responses. Do not bypass, remove, or make conditional. The post-processing is invisible to the user and costs zero latency (string operations only).
+`postProcessTiers()` MUST run on all Call 2 responses. Do not bypass, remove, or make conditional. All 7 functions are permanent safety nets. The 115-test lockdown suite (`harmony-post-processing.test.ts` + `harmony-compliance.test.ts`) must pass before shipping any changes.
 
 ---
 
@@ -446,7 +501,7 @@ return NextResponse.json({ tiers: processed }, { ... });
 
 **Assessor gap:** 1.75 points. **Converged.**
 
-### Score trajectory
+### Score trajectory (v1.0.0 — Rounds 1–5)
 
 ```
 100 ┤
@@ -464,20 +519,53 @@ return NextResponse.json({ tiers: processed }, { ... });
 
 ---
 
+### v2.0.0 — Rounds R1–R6 (25 March 2026)
+
+New test input: "A lone explorer stands at the edge of a vast frozen valley at first light..." (frozen valley scene). Six rounds of refinement with the same dual-assessor methodology.
+
+| Round | T1  | T2 (prod) | T3  | T4  | Average   | Key Fix                                                                     |
+| ----- | --- | --------- | --- | --- | --------- | --------------------------------------------------------------------------- |
+| R1 v2 | 88  | 93        | 90  | 74  | **86**    | Baseline with 27 rules                                                      |
+| R2 v2 | 93  | 94        | 96  | 82  | **91**    | T1-8 clustering, T1-4 sensory, T3-5 opening diversity, T4-5 scene depth, P8 |
+| R3 v2 | 95  | 95        | 97  | 93  | **95**    | G1 emotional mandate, T1-6 time-of-day weighting, P10                       |
+| R4 v2 | 97  | 95        | 96  | 94  | **95.5**  | T1-8 concept dedup trap, T3 "that feels" ban, T4 limit 200→250              |
+| R5 v2 | 97  | 96        | 95  | 95  | **95.75** | P11 broadened, P12 CLIP adjective stripper                                  |
+| R6 v2 | 97  | 96        | 95  | 95  | **95.75** | Prompt trim (removed 150-token T3 ban — P11 handles in code)                |
+
+**Assessor gap:** ≤1 point for 4 consecutive rounds (R3–R6). **Formally converged.**
+
+### v2.0.0 — Stress Tests (900-char complex inputs)
+
+Three curated 900-char inputs designed to expose specific weaknesses. Each run through the Prompt Lab and scored by both assessors.
+
+| Test | Scene                                                                       | T1    | T2 prod | T3    | T4    | Avg       | Key Finding                                                                                            |
+| ---- | --------------------------------------------------------------------------- | ----- | ------- | ----- | ----- | --------- | ------------------------------------------------------------------------------------------------------ |
+| ST1  | Lighthouse: dual lighting, 5 focal planes, storm, abstract emotion          | 92–95 | 95–96   | 96–97 | 88–94 | **93–95** | Dual-lighting interaction gap (not merged), T4 under-compression → triggered P8 broadening             |
+| ST2  | Cellist: abstract emotion, fine detail, period interior decay               | 95    | 95–96   | 96–97 | 88–94 | **94–95** | "The room feels" → confirmed P8 needed broadening, T1 over-tokenisation on complex inputs              |
+| ST3  | Deep-sea diver: technical photography terms, extreme scale, bioluminescence | 93–94 | 96      | 95–98 | 92–95 | **94–96** | First clean T2 raw output (no dupes!), G2 user-term reformatting gap, "eighty metres depth" non-visual |
+
+### Known ceiling
+
+**Moderate inputs:** 96/100 average. **Complex inputs:** 94.5/100 average.
+
+The remaining gap on complex scenes is **compositional intelligence** — GPT lists elements side-by-side instead of composing them into unified visual systems (e.g., "copper-orange sunset" + "cold blue mist" as separate tokens instead of one lighting-interaction token). Both assessors independently identified this across all 3 stress tests. This is an architectural limitation, not fixable via prompt rules or post-processing — it would require a pre-processing step that identifies the dominant visual truth before GPT sees the input.
+
+---
+
 ## 9. Applying to Call 3 — Platform-Specific Optimisation
 
 Call 3 (`POST /api/optimise-prompt`) takes an assembled prompt + provider context and returns a platform-optimised version. The same harmony methodology applies with these adjustments:
 
 ### Differences from Call 2
 
-| Aspect          | Call 2 (generic tiers)                 | Call 3 (platform-specific)                     |
-| --------------- | -------------------------------------- | ---------------------------------------------- |
-| Input           | Human text (creative, variable length) | Assembled prompt (structured, predictable)     |
-| Output          | 4 tier prompts (4 families)            | 1 optimised prompt (1 specific platform)       |
-| Temperature     | 0.5 (creative restructuring)           | 0.2 (precision, deterministic feel)            |
-| System prompt   | 18 rules for 4 families                | Per-platform rules (~5–10 per platform)        |
-| Post-processing | P1 + P2                                | TBD — build after Round 1 identifies artefacts |
-| Test matrix     | 1 input × 4 outputs                    | 1 input × 42 platforms                         |
+| Aspect          | Call 2 (generic tiers)                   | Call 3 (platform-specific)                     |
+| --------------- | ---------------------------------------- | ---------------------------------------------- |
+| Input           | Human text (creative, variable length)   | Assembled prompt (structured, predictable)     |
+| Output          | 4 tier prompts (4 families)              | 1 optimised prompt (1 specific platform)       |
+| Temperature     | 0.5 (creative restructuring)             | 0.2 (precision, deterministic feel)            |
+| System prompt   | 30 rules for 4 families                  | Per-platform rules (~5–10 per platform)        |
+| Post-processing | P1–P12 (7 functions in extracted module) | TBD — build after Round 1 identifies artefacts |
+| Test matrix     | 1 input × 4 outputs                      | 1 input × 42 platforms                         |
 
 ### Recommended approach
 
@@ -521,10 +609,10 @@ Call 3 (`POST /api/optimise-prompt`) takes an assembled prompt + provider contex
 
 ### When to stop iterating
 
-- Dual-assessor gap < 5 points for 2 consecutive rounds
-- Average score > 90
-- Remaining improvements are aesthetic, not structural
-- The next meaningful jump requires a different approach (platform-specific)
+- Dual-assessor gap < 5 points for 2 consecutive rounds (achieved: ≤1 point for 4 consecutive rounds)
+- Average score > 90 (achieved: 96 on moderate, 94.5 on complex)
+- Remaining improvements are aesthetic, not structural (achieved: compositional intelligence is the only remaining gap)
+- The next meaningful jump requires a different approach (confirmed: pre-processing architecture, not prompt rules)
 
 ---
 
@@ -532,14 +620,20 @@ Call 3 (`POST /api/optimise-prompt`) takes an assembled prompt + provider contex
 
 1. **This methodology is the standard for all GPT system prompt work** — Call 3, future Call 2 updates, any new API routes that use GPT
 2. **Dual assessment is mandatory** — never ship a system prompt change without testing through both Claude and ChatGPT
-3. **Post-processing cannot be removed** — even if GPT appears to stop producing artefacts, the safety net costs nothing and catches edge cases
+3. **Post-processing cannot be removed** — even if GPT appears to stop producing artefacts, the safety net costs nothing and catches edge cases. All 7 functions (P1, P2, P3, P8, P10, P11, P12) are permanent.
 4. **Temperature must be documented and justified** — every API route must record its temperature and the rationale in the route file header
 5. **Concrete examples in every system prompt** — no rule without a WRONG/RIGHT pair or a structural example
 6. **Martin approves all changes before implementation** — ideas are proposed, not built. "Put it forward but don't implement it until I say so."
+7. **Post-processing extraction is permanent** — all functions live in `src/lib/harmony-post-processing.ts`, not in route.ts. Do not move them back.
+8. **115-test lockdown suite must pass before shipping** — `harmony-post-processing.test.ts` (72 tests) + `harmony-compliance.test.ts` (43 tests). Any red test = drift. Fix the code, not the test.
+9. **Rule ceiling is 30** — raising requires explicit approval. Tracked in `harmony-compliance.ts` with test assertion.
+10. **Lookup set sizes are tested** — T3 (20 nouns × 18 verbs), T4 (23 nouns × 21 verbs), CLIP (10 adjectives). Drift detection tests assert exact counts.
 
 ---
 
 ## Changelog
+
+- **25 Mar 2026 (v2.0.0):** **HARMONY ENGINEERING v2 + POST-PROCESSING EXTRACTION + TEST LOCKDOWN.** Six additional rounds (R1–R6 v2) with frozen valley test input, converged to ≤1 point dual-assessor gap across all tiers. Three 900-char stress tests (lighthouse, cellist, deep-sea diver) validated system at 94.5–96/100. Rule inventory expanded from 18 to 30: +T1-8 (semantic clustering + interaction merging), +T3-5 (opening diversity), +T4-5 (scene depth), +G1 emotional mandate, +T1-6 time-of-day weighting, +T3 "that feels" ban, +T4 limit 200→250. Post-processing expanded from P1+P2 to 7 functions (P1,P2,P3,P8,P10,P11,P12), all extracted to `harmony-post-processing.ts` (342 lines). P8/P11 broadened with abstract-noun × perception-verb lookup sets to counter GPT noun-substitution evasion (Pattern 7). 115-test lockdown suite: 72 post-processing + 43 compliance tests with drift detection. Added Pattern 7 (noun-substitution evasion), updated Patterns 3–4, expanded Anti-Pattern 2, updated §5 rule inventory, rewrote §6 post-processing, added v2 rounds + stress tests to §8, updated §9 Call 3 table, §10 exit criteria, §11 non-regression rules 7–10.
 
 - **23 Mar 2026 (v1.0.0):** Initial document. Captures the complete methodology from 5 rounds of Call 2 harmony engineering (62→93/100). Documents all 6 proven patterns, 4 anti-patterns, the 18-rule system prompt inventory, the post-processing layer, scoring methodology with per-tier criteria, the round-by-round journey with score trajectory, and the application playbook for Call 3 platform-specific optimisation.
 

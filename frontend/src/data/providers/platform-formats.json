@@ -1,7 +1,7 @@
 {
   "_meta": {
     "version": "3.5.0",
-    "description": "Platform-specific prompt assembly rules with tier-aware config and intent reordering. impactPriority defines which categories to front-load for maximum platform impact. v3.2.0: Normalised quality prefixes across SD family, added weight syntax to Artguru, subject emphasis for SD platforms. v3.3.0: Aligned all Tier 3/4 platform categoryOrders with reference platforms for parity. v3.4.0: hotpot ss=100 +composition/camera/materials; imagine-meta +materials; canva ref +environment/atmosphere/composition; all T4 aligned; flux qualitySuffix cleared; expanded NEGATIVE_TO_POSITIVE map. v3.5.0: All 42 platforms configured. clipdrop reconfigured as T1 CLIP; getimg +materials/composition; stability ss\u219270; bluewillow +camera/materials; 11 missing T4 platforms added. novelai ss=80\u2192100.",
+    "description": "Platform-specific prompt assembly rules with tier-aware config and intent reordering. impactPriority defines which categories to front-load for maximum platform impact. v3.2.0: Normalised quality prefixes across SD family, added weight syntax to Artguru, subject emphasis for SD platforms. v3.3.0: Aligned all Tier 3/4 platform categoryOrders with reference platforms for parity. v3.4.0: hotpot ss=100 +composition/camera/materials; imagine-meta +materials; canva ref +environment/atmosphere/composition; all T4 aligned; flux qualitySuffix cleared; expanded NEGATIVE_TO_POSITIVE map. v3.5.0: All 42 platforms configured. clipdrop reconfigured as T1 CLIP; getimg +materials/composition; stability ss→70; bluewillow +camera/materials; 11 missing T4 platforms added. novelai ss=80→100.",
     "updated": "2026-03-03"
   },
   "_defaults": {
@@ -78,7 +78,8 @@
         "text",
         "bad quality",
         "worst quality"
-      ]
+      ],
+      "groupKnowledge": "Proprietary encoder. :: multi-prompt weighting, --ar/--v/--s/--no parameter flags. Prose sections, not keywords. ~40 words effective influence. Excels at atmosphere, mood, cinematic compositions."
     },
     "bluewillow": {
       "promptStyle": "keywords",
@@ -188,7 +189,8 @@
         "sharp focus",
         "8K",
         "intricate textures"
-      ]
+      ],
+      "groupKnowledge": "Canonical CLIP platform. 77-token CLIP limit per chunk. Quality boosters essential. Front-load subject in first chunk."
     },
     "dreamstudio": {
       "promptStyle": "keywords",
@@ -254,7 +256,8 @@
         "sharp focus",
         "8K",
         "intricate textures"
-      ]
+      ],
+      "groupKnowledge": "Stability API wrapper. SD3/Ultra/Core strip parenthetical weights. SDXL supports full (term:weight)."
     },
     "lexica": {
       "promptStyle": "keywords",
@@ -319,7 +322,8 @@
         "sharp focus",
         "8K",
         "intricate textures"
-      ]
+      ],
+      "groupKnowledge": "Aperture v4 model. Responds well to photographic terms. Front-load camera and lens references."
     },
     "playground": {
       "promptStyle": "keywords",
@@ -384,7 +388,8 @@
         "sharp focus",
         "8K",
         "intricate textures"
-      ]
+      ],
+      "groupKnowledge": "Hosts SD models alongside Playground v3. This targets SD mode only."
     },
     "nightcafe": {
       "promptStyle": "keywords",
@@ -449,7 +454,8 @@
         "sharp focus",
         "8K",
         "intricate textures"
-      ]
+      ],
+      "groupKnowledge": "Multi-engine aggregator. This targets SD/SDXL engine. VQGAN+CLIP uses different syntax."
     },
     "getimg": {
       "promptStyle": "keywords",
@@ -514,7 +520,8 @@
         "sharp focus",
         "8K",
         "intricate textures"
-      ]
+      ],
+      "groupKnowledge": "Multi-model host. SD/SDXL use standard CLIP syntax. Flux models need natural language."
     },
     "openart": {
       "promptStyle": "keywords",
@@ -579,7 +586,8 @@
         "sharp focus",
         "8K",
         "intricate textures"
-      ]
+      ],
+      "groupKnowledge": "Multi-model host. SD/SDXL use standard CLIP syntax."
     },
     "clipdrop": {
       "promptStyle": "keywords",
@@ -644,7 +652,8 @@
         "sharp focus",
         "8K",
         "intricate textures"
-      ]
+      ],
+      "groupKnowledge": "Stability-backed. Same CLIP behaviour as Stability. SDXL Turbo for fast generation."
     },
     "jasper-art": {
       "promptStyle": "natural",
@@ -694,7 +703,8 @@
         "lighting",
         "environment"
       ],
-      "qualitySuffix": []
+      "qualitySuffix": [],
+      "groupKnowledge": "DALL-E 2 wrapper. 400 char limit. Mood/medium/style dropdowns available."
     },
     "artguru": {
       "promptStyle": "keywords",
@@ -760,7 +770,8 @@
         "sharp focus",
         "8K",
         "intricate textures"
-      ]
+      ],
+      "groupKnowledge": "SD-based. Shorter prompts work better — stay under 200 tokens."
     },
     "leonardo": {
       "promptStyle": "keywords",
@@ -826,7 +837,8 @@
         "sharp focus",
         "8K",
         "intricate textures"
-      ]
+      ],
+      "groupKnowledge": "CLIP encoder with double-colon weight syntax term::weight. \"Elements\" = LoRAs (max 4, combined weight ≤1.00). ~1,000-char limit. Front-loading emphasis critical."
     },
     "flux": {
       "promptStyle": "keywords",
@@ -997,7 +1009,7 @@
       "negativeWrapPrefix": "without ",
       "tokenLimit": 400,
       "sweetSpot": 250,
-      "tips": "DALL\u00b7E prefers full sentences. Avoid technical jargon. Be descriptive.",
+      "tips": "DALL·E prefers full sentences. Avoid technical jargon. Be descriptive.",
       "exampleOutput": "A portrait of a samurai warrior in a fighting stance with dramatic cinematic lighting, golden hour atmosphere, without blur or text",
       "impactPriority": [
         "subject",
@@ -1005,7 +1017,8 @@
         "environment",
         "style",
         "lighting"
-      ]
+      ],
+      "groupKnowledge": "DALL-E 3 via GPT-4 rewriting. Quality (standard/hd) and style (vivid/natural) are API params — do not include in prompt. Prompt is always rewritten by GPT-4 before generation."
     },
     "adobe-firefly": {
       "promptStyle": "natural",
@@ -1036,7 +1049,8 @@
         "style",
         "environment",
         "lighting"
-      ]
+      ],
+      "groupKnowledge": "Style auto-detection from prompt text. No artist names allowed. UI presets for content type, lighting, composition."
     },
     "google-imagen": {
       "promptStyle": "natural",
@@ -1068,7 +1082,8 @@
         "environment",
         "style",
         "lighting"
-      ]
+      ],
+      "groupKnowledge": "Expressive Chips for style. Seed lock toggle. Prompt rewriting enabled by default."
     },
     "microsoft-designer": {
       "promptStyle": "natural",
@@ -1091,7 +1106,7 @@
       "wrapNegativeInPrompt": false,
       "tokenLimit": 400,
       "sweetSpot": 200,
-      "tips": "Microsoft Designer uses DALL\u00b7E. Keep prompts simple and descriptive.",
+      "tips": "Microsoft Designer uses DALL·E. Keep prompts simple and descriptive.",
       "exampleOutput": "A dramatic portrait of a samurai warrior in a fighting stance with cinematic golden hour lighting",
       "impactPriority": [
         "subject",
@@ -1099,7 +1114,8 @@
         "style",
         "environment",
         "lighting"
-      ]
+      ],
+      "groupKnowledge": "Bracket templates [color], [animal], [style] for guided creation. Design workflow integration."
     },
     "imagine-meta": {
       "promptStyle": "natural",
@@ -1130,7 +1146,8 @@
         "environment",
         "style",
         "lighting"
-      ]
+      ],
+      "groupKnowledge": "Square output only. /imagine prefix in Meta AI chat. Simple descriptions work best."
     },
     "runway": {
       "promptStyle": "natural",
@@ -1191,7 +1208,8 @@
         "environment",
         "style",
         "lighting"
-      ]
+      ],
+      "groupKnowledge": "AI image generator with style presets. Short descriptive prompts preferred."
     },
     "fotor": {
       "promptStyle": "natural",
@@ -1220,7 +1238,8 @@
         "environment",
         "style",
         "lighting"
-      ]
+      ],
+      "groupKnowledge": "AI image generator with style options. Concise descriptions work best."
     },
     "deepai": {
       "promptStyle": "natural",
@@ -1249,7 +1268,8 @@
         "environment",
         "style",
         "lighting"
-      ]
+      ],
+      "groupKnowledge": "Simple text-to-image. Short focused prompts work best. Multiple style models available."
     },
     "craiyon": {
       "promptStyle": "natural",
@@ -1278,7 +1298,8 @@
         "environment",
         "style",
         "lighting"
-      ]
+      ],
+      "groupKnowledge": "9 images per generation. Pipe | syntax for concept combining. Raw mode available."
     },
     "artistly": {
       "promptStyle": "keywords",
@@ -1341,7 +1362,8 @@
         "watermark",
         "username",
         "blurry"
-      ]
+      ],
+      "groupKnowledge": "SD-based. Good with artistic style descriptors."
     },
     "bing": {
       "promptStyle": "natural",
@@ -1371,8 +1393,9 @@
         "style",
         "lighting"
       ],
-      "tips": "Bing uses DALL\u00b7E. Keep prompts simple and descriptive.",
-      "exampleOutput": "A dramatic portrait of a samurai warrior in a fighting stance with cinematic golden hour lighting"
+      "tips": "Bing uses DALL·E. Keep prompts simple and descriptive.",
+      "exampleOutput": "A dramatic portrait of a samurai warrior in a fighting stance with cinematic golden hour lighting",
+      "groupKnowledge": "Model selector (DALL-E 3, GPT-4o, MAI-Image-1). ~480 char limit. 5 aspect ratios via UI."
     },
     "canva": {
       "promptStyle": "natural",
@@ -1401,7 +1424,8 @@
         "lighting"
       ],
       "tips": "Canva works best with short, focused prompts. Use UI style presets.",
-      "exampleOutput": "samurai warrior, fighting, dramatic lighting"
+      "exampleOutput": "samurai warrior, fighting, dramatic lighting",
+      "groupKnowledge": "Powered by Leonardo Phoenix. Three output types (image/graphic/video). Style and aspect ratio set via UI controls, not in prompt. Prefers clear descriptive natural language with visual specifics — subject, setting, mood, lighting, colour."
     },
     "hotpot": {
       "promptStyle": "natural",
@@ -1497,7 +1521,8 @@
         "sharp focus",
         "8K",
         "intricate textures"
-      ]
+      ],
+      "groupKnowledge": "Fine-tuned SD models. Responds well to artistic style terms."
     },
     "artbreeder": {
       "promptStyle": "natural",
@@ -1613,7 +1638,8 @@
       "exampleOutput": "atmospheric cityscape, warm tones, dramatic lighting",
       "sweetSpot": 30,
       "tokenLimit": 75,
-      "tips": "Photoleap is mobile-first \u2014 use short, punchy prompts focused on subject and style."
+      "tips": "Photoleap is mobile-first — use short, punchy prompts focused on subject and style.",
+      "groupKnowledge": "Mobile-first AI image generator. Short, vivid descriptions preferred."
     },
     "picwish": {
       "promptStyle": "natural",
@@ -1941,7 +1967,8 @@
       "exampleOutput": "masterpiece, best quality, highly detailed, cyberpunk city street, neon lights, rain-slicked asphalt, cinematic, sharp focus, 8K",
       "sweetSpot": 80,
       "tokenLimit": 150,
-      "tips": "Multi-model platform running SD, SDXL, and Flux. Use keyword syntax with CLIP weighting for SD/SDXL models."
+      "tips": "Multi-model platform running SD, SDXL, and Flux. Use keyword syntax with CLIP weighting for SD/SDXL models.",
+      "groupKnowledge": "Dual CLIP encoder (CLIP-L + CLIP-G on SDXL). LoRA references supported. Weight-sensitive — keep 0.8–1.4."
     }
   }
 }

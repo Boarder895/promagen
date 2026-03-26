@@ -211,10 +211,17 @@ export function enforceMjParameters(
       for (const block of noBlocks) {
         const terms = (block[1] ?? '').split(',').map(t => t.trim()).filter(Boolean);
         for (const term of terms) {
-          const lower = term.toLowerCase();
+          // Strip consecutive duplicate words within a term: "blurry blurry" → "blurry"
+          const dedupedWords = term.split(/\s+/).reduce<string[]>((acc, word) => {
+            if (acc.length === 0 || acc[acc.length - 1]!.toLowerCase() !== word.toLowerCase()) {
+              acc.push(word);
+            }
+            return acc;
+          }, []).join(' ');
+          const lower = dedupedWords.toLowerCase();
           if (!seen.has(lower)) {
             seen.add(lower);
-            allNoTerms.push(term);
+            allNoTerms.push(dedupedWords);
           }
         }
       }
@@ -236,6 +243,93 @@ export function enforceMjParameters(
 
       text = parts.join(' ');
       fixes.push(`Deduplicated MJ parameters (${arMatches.length} --ar, ${vMatches.length} --v, ${sMatches.length} --s, ${noBlocks.length} --no blocks → 1 each)`);
+    }
+  }
+
+  // ── STEP 1b: DEDUP WITHIN --no — always runs ──────────────────────
+  // GPT sometimes produces one --no block with every term listed twice:
+  // --no blurry, text, watermark, blurry, text, watermark
+  // Step 1 only catches multiple --no BLOCKS. This catches duplicate
+  // TERMS within a single block.
+  const noMatch = text.match(/--no\s+(.+)$/);
+  if (noMatch && noMatch[1]) {
+    const beforeNo = text.slice(0, text.indexOf('--no')).trimEnd();
+    const rawTerms = noMatch[1].split(',').map(t => t.trim()).filter(Boolean);
+    const seen = new Set<string>();
+    const uniqueTerms: string[] = [];
+    for (const term of rawTerms) {
+      // Strip consecutive duplicate words: "blurry blurry" → "blurry"
+      const dedupedWords = term.split(/\s+/).reduce<string[]>((acc, word) => {
+        if (acc.length === 0 || acc[acc.length - 1]!.toLowerCase() !== word.toLowerCase()) {
+          acc.push(word);
+        }
+        return acc;
+      }, []).join(' ');
+      const lower = dedupedWords.toLowerCase();
+      if (lower && !seen.has(lower)) {
+        seen.add(lower);
+        uniqueTerms.push(dedupedWords);
+      }
+    }
+    // Strip trailing punctuation from last term
+    if (uniqueTerms.length > 0) {
+      const last = uniqueTerms[uniqueTerms.length - 1];
+      if (last) {
+        uniqueTerms[uniqueTerms.length - 1] = last.replace(/[.!?]+$/, '').trim();
+      }
+    }
+
+    // Detect fused terms: GPT sometimes concatenates list copies without commas,
+    // creating "warped railing blurry" from "warped railing" + "blurry".
+    // If a multi-word term ends with words that match a standalone term already
+    // in the list, strip the suffix. If what remains is also already in the list,
+    // the fused term is entirely redundant — remove it.
+    const lowerSet = new Set(uniqueTerms.map(t => t.toLowerCase()));
+    const fusionFixed: string[] = [];
+    for (const term of uniqueTerms) {
+      const words = term.split(/\s+/);
+      if (words.length < 2) {
+        fusionFixed.push(term);
+        continue;
+      }
+      // Check if trailing 1 or 2 words match a standalone term in the list
+      let wasFused = false;
+      for (let suffixLen = 1; suffixLen <= Math.min(2, words.length - 1); suffixLen++) {
+        const suffix = words.slice(-suffixLen).join(' ').toLowerCase();
+        const prefix = words.slice(0, -suffixLen).join(' ').toLowerCase();
+        if (lowerSet.has(suffix) && suffix !== term.toLowerCase()) {
+          // The suffix is already a standalone term — this is a fusion
+          if (lowerSet.has(prefix)) {
+            // Both halves exist as standalone terms — entire term is redundant
+            wasFused = true;
+            break;
+          } else {
+            // Prefix is unique — keep it without the suffix
+            fusionFixed.push(words.slice(0, -suffixLen).join(' '));
+            wasFused = true;
+            break;
+          }
+        }
+      }
+      if (!wasFused) {
+        fusionFixed.push(term);
+      }
+    }
+
+    // Final dedup after fusion cleanup (prefix might now match an existing term)
+    const finalSeen = new Set<string>();
+    const finalTerms: string[] = [];
+    for (const term of fusionFixed) {
+      const lower = term.toLowerCase();
+      if (lower && !finalSeen.has(lower)) {
+        finalSeen.add(lower);
+        finalTerms.push(term);
+      }
+    }
+
+    if (finalTerms.length < rawTerms.length) {
+      text = `${beforeNo} --no ${finalTerms.join(', ')}`;
+      fixes.push(`Deduplicated --no terms: ${rawTerms.length} → ${finalTerms.length}`);
     }
   }
 
@@ -281,6 +375,150 @@ export function enforceMjParameters(
   }
 
   return { text, wasFixed: fixes.length > 0, fixes, missingParams };
+}
+
+// ============================================================================
+// CLIP WEIGHT CAP COMPLIANCE (Call 3 — SD CLIP group)
+// ============================================================================
+// CLIP encoders have a finite attention budget per 77-token chunk. When too
+// many terms are weighted, the attention distribution flattens — nothing
+// stands out. This gate enforces a maximum of `maxWeights` weighted terms.
+//
+// Strategy: parse all (term:weight) pairs, sort by weight ascending, strip
+// parentheses+weight from the lowest-value terms until count ≤ max. The term
+// text is KEPT (unweighted) so no visual content is lost — it just stops
+// competing for the CLIP attention boost.
+//
+// Example: 13 weighted terms → cap at 8 → 5 lowest-weight terms become
+// unweighted keywords. Subject and high-priority terms always survive.
+// ============================================================================
+
+/**
+ * Enforce a maximum number of parenthetical-weighted terms.
+ * Terms beyond the cap are unwrapped: (term:1.1) → term
+ *
+ * @param prompt - The CLIP prompt text
+ * @param maxWeights - Maximum allowed weighted terms (default 8)
+ * @returns ComplianceResult with fixes applied
+ */
+export function enforceWeightCap(
+  prompt: string,
+  maxWeights: number = 8,
+): ComplianceResult {
+  // Find all (term:weight) matches with their positions
+  const weightPattern = /\(([^()]+):(\d+\.?\d*)\)/g;
+  const matches: Array<{ full: string; term: string; weight: number; index: number }> = [];
+
+  let match: RegExpExecArray | null;
+  while ((match = weightPattern.exec(prompt)) !== null) {
+    matches.push({
+      full: match[0],
+      term: match[1]!.trim(),
+      weight: parseFloat(match[2]!),
+      index: match.index,
+    });
+  }
+
+  if (matches.length <= maxWeights) {
+    return { text: prompt, wasFixed: false, fixes: [] };
+  }
+
+  // Sort by weight ascending — lowest weights get stripped first
+  const sorted = [...matches].sort((a, b) => a.weight - b.weight);
+  const toStrip = sorted.slice(0, matches.length - maxWeights);
+  const strippedTerms: string[] = [];
+
+  let result = prompt;
+  // Process in reverse order of string position to preserve indices
+  const toStripByPosition = [...toStrip].sort((a, b) => b.index - a.index);
+  for (const item of toStripByPosition) {
+    result = result.slice(0, item.index) + item.term + result.slice(item.index + item.full.length);
+    strippedTerms.push(`${item.term} (was :${item.weight})`);
+  }
+
+  return {
+    text: result,
+    wasFixed: true,
+    fixes: [`Capped weighted terms: ${matches.length} → ${maxWeights}. Unweighted: ${strippedTerms.join(', ')}`],
+  };
+}
+
+// ============================================================================
+// CLIP KEYWORD CLEANUP COMPLIANCE (Call 3 — SD CLIP groups)
+// ============================================================================
+// CLIP encoders tokenise every word. Orphaned verbs ("stands", "reflecting",
+// "leaving") and articles ("a", "the", "an") waste token budget because CLIP
+// doesn't meaningfully process them — they push real visual terms into weaker
+// chunks. GPT strips them ~80% of the time when told to, but code catches 100%.
+//
+// Only runs on keyword-style prompts (CLIP groups), NOT on natural language
+// prompts where articles and verbs are grammatically required.
+// ============================================================================
+
+/** Orphaned verbs that commonly survive in CLIP keyword prompts.
+ *  Only matches standalone comma-separated terms — not words inside phrases. */
+const ORPHAN_VERB_TERMS = new Set([
+  'stands', 'standing', 'sits', 'sitting', 'walks', 'walking',
+  'reflects', 'reflecting', 'flows', 'flowing', 'glows', 'glowing',
+  'falls', 'falling', 'rises', 'rising', 'leaves', 'leaving',
+  'crashes', 'crashing', 'sends', 'sending', 'cuts', 'cutting',
+  'grips', 'gripping', 'hangs', 'hanging', 'drifts', 'drifting',
+  'hovers', 'hovering', 'shines', 'shining', 'burns', 'burning',
+  'melts', 'melting', 'fades', 'fading', 'stretches', 'stretching',
+]);
+
+/**
+ * Strip orphaned verbs and leading articles from CLIP keyword prompts.
+ * Preserves verbs inside weighted phrases: (woman standing:1.3) → kept.
+ * Only strips standalone comma-separated verb terms.
+ *
+ * @param prompt - CLIP-style keyword prompt
+ * @returns ComplianceResult with stripped terms listed
+ */
+export function enforceClipKeywordCleanup(prompt: string): ComplianceResult {
+  const fixes: string[] = [];
+
+  // Split by commas, process each term
+  const terms = prompt.split(',').map(t => t.trim()).filter(Boolean);
+  const cleaned: string[] = [];
+  const strippedVerbs: string[] = [];
+  const strippedArticles: string[] = [];
+
+  for (const term of terms) {
+    // Skip weighted terms — don't touch (term:weight) or term::weight
+    if (/\([^()]+:\d+\.?\d*\)/.test(term) || /\w+::\d+\.?\d*/.test(term)) {
+      cleaned.push(term);
+      continue;
+    }
+
+    const trimmed = term.trim();
+
+    // Check if the entire term is a standalone orphan verb
+    if (ORPHAN_VERB_TERMS.has(trimmed.toLowerCase())) {
+      strippedVerbs.push(trimmed);
+      continue;
+    }
+
+    // Strip leading articles from unweighted terms: "a lighthouse" → "lighthouse"
+    const withoutArticle = trimmed.replace(/^(?:a|an|the)\s+/i, '');
+    if (withoutArticle !== trimmed) {
+      strippedArticles.push(`"${trimmed}" → "${withoutArticle}"`);
+      cleaned.push(withoutArticle);
+      continue;
+    }
+
+    cleaned.push(term);
+  }
+
+  if (strippedVerbs.length > 0) {
+    fixes.push(`Stripped orphan verbs: ${strippedVerbs.join(', ')}`);
+  }
+  if (strippedArticles.length > 0) {
+    fixes.push(`Stripped leading articles: ${strippedArticles.join(', ')}`);
+  }
+
+  const text = cleaned.join(', ');
+  return { text, wasFixed: fixes.length > 0, fixes };
 }
 
 // ============================================================================

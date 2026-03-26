@@ -87,6 +87,7 @@ import type { CategoryState } from '@/types/prompt-builder';
 import type { Provider } from '@/types/providers';
 import { getPlatformTierId } from '@/data/platform-tiers';
 import { getPromptLimit } from '@/lib/prompt-trimmer';
+import { getProviderGroup } from '@/lib/optimise-prompts/platform-groups';
 
 // ============================================================================
 // TYPES
@@ -118,6 +119,8 @@ export interface EnhancedEducationalPreviewProps {
   skipInternalParse?: boolean;
   /** Whether external assessment is loading */
   externalLoading?: boolean;
+  /** The user's original human description — passed to Call 3 for cross-referencing */
+  humanText?: string;
   /** Coverage assessment with matched phrases per category */
   coverageData?: import('@/types/category-assessment').CoverageAssessment | null;
 }
@@ -348,6 +351,7 @@ export default function EnhancedEducationalPreview({
   skipInternalParse,
   externalLoading,
   coverageData,
+  humanText,
 }: EnhancedEducationalPreviewProps) {
   // State
   const [selections, setSelections] = useState<PromptSelections>(EMPTY_SELECTIONS);
@@ -357,6 +361,18 @@ export default function EnhancedEducationalPreview({
   const [copied, setCopied] = useState(false);
   const [copiedOptimized, setCopiedOptimized] = useState(false);
   const [copiedAssembled, setCopiedAssembled] = useState(false);
+
+  // ── Generation ID: increments on every new API response ────────────
+  // MUST be synchronous (ref, not useState+useEffect) so it's already
+  // incremented when children render with the new prompts in the same frame.
+  // useEffect fires AFTER render — children would see stale generationId.
+  const generationIdRef = useRef(0);
+  const prevAiTierForIdRef = useRef(aiTierPrompts);
+  if (aiTierPrompts && aiTierPrompts !== prevAiTierForIdRef.current) {
+    generationIdRef.current += 1;
+    prevAiTierForIdRef.current = aiTierPrompts;
+  }
+  const generationId = generationIdRef.current;
 
 
   // ── External clear signal for DescribeYourImage (footer Clear All) ──
@@ -598,15 +614,36 @@ export default function EnhancedEducationalPreview({
     return source[tierKey] ?? '';
   }, [generatedPrompts, aiTierPrompts, activeTier]);
 
+  // Call 3 input text: for NL group providers that are T4 (e.g. Canva),
+  // send T3 (Natural Language) text instead — it has far more visual detail.
+  // T3 is the richest prose tier, giving GPT the best starting material to
+  // enrich against the original human description.
+  const call3InputText = useMemo(() => {
+    if (!selectedProviderId) return activeTierPromptText;
+    const group = getProviderGroup(selectedProviderId);
+    if (group === 'clean-natural-language' && activeTier === 4) {
+      const source = aiTierPrompts ?? generatedPrompts;
+      const t3Text = source.tier3 ?? '';
+      // Only use T3 if it actually has content; fall back to active tier otherwise
+      return t3Text || activeTierPromptText;
+    }
+    return activeTierPromptText;
+  }, [generatedPrompts, aiTierPrompts, activeTier, activeTierPromptText, selectedProviderId]);
+
   // ── Assembled prompt typewriter ─────────────────────────────────────
-  // Same speed logic as tier cards: fresh 25ms, regen 5ms
+  // Typewriter ONLY when Call 2 returns new AI content (fresh generation).
+  // Switching tier tabs (1→2→3→4) shows text INSTANTLY — no re-typewrite.
+  // Tracked via aiTierPrompts reference: new object = API call, same object = tab switch.
   const [assembledVisibleChars, setAssembledVisibleChars] = useState(0);
   const prevAssembledRef = useRef('');
+  const prevAiTierRef = useRef(aiTierPrompts);
   const assembledTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     const prev = prevAssembledRef.current;
+    const prevAi = prevAiTierRef.current;
     prevAssembledRef.current = activeTierPromptText;
+    prevAiTierRef.current = aiTierPrompts;
 
     if (assembledTimerRef.current) { clearInterval(assembledTimerRef.current); assembledTimerRef.current = null; }
 
@@ -614,11 +651,23 @@ export default function EnhancedEducationalPreview({
       setAssembledVisibleChars(0);
       return;
     }
+    // Same text → no change needed
     if (activeTierPromptText === prev) {
       setAssembledVisibleChars(activeTierPromptText.length);
       return;
     }
 
+    // Determine if this is a new API generation or just a tier tab switch.
+    // API call = aiTierPrompts reference changed. Tab switch = same reference, different tier.
+    const isNewGeneration = aiTierPrompts !== prevAi;
+
+    if (!isNewGeneration) {
+      // Tab switch — show instantly, no typewriter
+      setAssembledVisibleChars(activeTierPromptText.length);
+      return;
+    }
+
+    // New API content — typewrite it
     const isFresh = !prev;
     const speed = isFresh ? 25 : 5;
     setAssembledVisibleChars(0);
@@ -637,7 +686,7 @@ export default function EnhancedEducationalPreview({
     return () => {
       if (assembledTimerRef.current) clearInterval(assembledTimerRef.current);
     };
-  }, [activeTierPromptText]);
+  }, [activeTierPromptText, aiTierPrompts]);
 
   const assembledDisplayText = activeTierPromptText.slice(0, assembledVisibleChars);
   const isAssembledTyping = assembledVisibleChars < activeTierPromptText.length && activeTierPromptText.length > 0;
@@ -724,6 +773,7 @@ export default function EnhancedEducationalPreview({
       supportsWeighting: format.supportsWeighting,
       negativeSupport: format.negativeSupport,
       categoryOrder: format.categoryOrder,
+      groupKnowledge: format.groupKnowledge,
     };
   }, [selectedProviderId, selectedProvider?.name]);
 
@@ -732,12 +782,16 @@ export default function EnhancedEducationalPreview({
   const prevOptimizerEnabledRef = useRef(false);
   const prevPromptTextRef = useRef('');
   const reFireTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Ref for humanText — used by Call 3 for cross-referencing the original description.
+  // Must be a ref (not a dep) so Call 3 doesn't re-fire on every keystroke.
+  const humanTextRef = useRef(humanText ?? '');
+  humanTextRef.current = humanText ?? '';
 
   useEffect(() => {
     const wasEnabled = prevOptimizerEnabledRef.current;
     const prevText = prevPromptTextRef.current;
     prevOptimizerEnabledRef.current = isOptimizerEnabled;
-    prevPromptTextRef.current = activeTierPromptText;
+    prevPromptTextRef.current = call3InputText;
 
     // Toggled OFF → clear
     if (!isOptimizerEnabled && wasEnabled) {
@@ -747,28 +801,31 @@ export default function EnhancedEducationalPreview({
     }
 
     // Not enabled or missing requirements → skip
-    if (!isOptimizerEnabled || !selectedProviderId || !activeTierPromptText || !aiOptimiseContext) {
+    if (!isOptimizerEnabled || !selectedProviderId || !call3InputText || !aiOptimiseContext) {
       return;
     }
 
     // Just toggled ON → fire immediately
     if (!wasEnabled) {
-      aiOptimise(activeTierPromptText, selectedProviderId, aiOptimiseContext);
+      aiOptimise(call3InputText, selectedProviderId, aiOptimiseContext, humanTextRef.current);
       return;
     }
 
     // Already ON and text changed → debounced re-fire (800ms)
-    if (activeTierPromptText !== prevText) {
+    // Guard: skip re-fire if Call 3 already returned a result or is in flight.
+    // This prevents the AI tier load from triggering a second Call 3 that
+    // overwrites a good bypass result with a shorter one.
+    if (call3InputText !== prevText && !aiOptimiseResult && !isAiOptimising) {
       if (reFireTimerRef.current) clearTimeout(reFireTimerRef.current);
       reFireTimerRef.current = setTimeout(() => {
-        aiOptimise(activeTierPromptText, selectedProviderId, aiOptimiseContext);
+        aiOptimise(call3InputText, selectedProviderId, aiOptimiseContext, humanTextRef.current);
       }, 800);
     }
 
     return () => {
       if (reFireTimerRef.current) clearTimeout(reFireTimerRef.current);
     };
-  }, [isOptimizerEnabled, selectedProviderId, activeTierPromptText, aiOptimiseContext, aiOptimise, clearAiOptimise]);
+  }, [isOptimizerEnabled, selectedProviderId, call3InputText, aiOptimiseContext, aiOptimise, clearAiOptimise, aiOptimiseResult, isAiOptimising]);
 
   // Effective optimised values: AI result takes priority over client-side
   const effectiveOptimisedText = aiOptimiseResult?.optimised ?? optimizedResult.optimized;
@@ -776,6 +833,60 @@ export default function EnhancedEducationalPreview({
   const effectiveWasOptimized = aiOptimiseResult
     ? effectiveOptimisedLength < optimizedResult.originalLength
     : wasOptimized;
+
+  // ── Optimised prompt typewriter (Call 3) ────────────────────────────
+  // Typewriter when aiOptimiseResult changes (Call 3 returned new content).
+  // Instant when text changes for other reasons (client-side optimisation).
+  const [optimisedVisibleChars, setOptimisedVisibleChars] = useState(0);
+  const prevOptimisedRef = useRef('');
+  const prevAiOptimiseRef = useRef(aiOptimiseResult);
+  const optimisedTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    const prev = prevOptimisedRef.current;
+    const prevAiOpt = prevAiOptimiseRef.current;
+    prevOptimisedRef.current = effectiveOptimisedText;
+    prevAiOptimiseRef.current = aiOptimiseResult;
+
+    if (optimisedTimerRef.current) { clearInterval(optimisedTimerRef.current); optimisedTimerRef.current = null; }
+
+    if (!effectiveOptimisedText) {
+      setOptimisedVisibleChars(0);
+      return;
+    }
+    if (effectiveOptimisedText === prev) {
+      setOptimisedVisibleChars(effectiveOptimisedText.length);
+      return;
+    }
+
+    // Only typewrite when Call 3 returned new content
+    const isNewOptimisation = aiOptimiseResult !== prevAiOpt && aiOptimiseResult !== null;
+
+    if (!isNewOptimisation) {
+      setOptimisedVisibleChars(effectiveOptimisedText.length);
+      return;
+    }
+
+    // Call 3 returned → typewrite
+    setOptimisedVisibleChars(0);
+    let chars = 0;
+    optimisedTimerRef.current = setInterval(() => {
+      chars += 1;
+      if (chars >= effectiveOptimisedText.length) {
+        setOptimisedVisibleChars(effectiveOptimisedText.length);
+        if (optimisedTimerRef.current) { clearInterval(optimisedTimerRef.current); optimisedTimerRef.current = null; }
+      } else {
+        setOptimisedVisibleChars(chars);
+      }
+    }, 5);
+
+    return () => {
+      if (optimisedTimerRef.current) clearInterval(optimisedTimerRef.current);
+    };
+  }, [effectiveOptimisedText, aiOptimiseResult]);
+
+  const optimisedDisplayText = effectiveOptimisedText.slice(0, optimisedVisibleChars);
+  const isOptimisedTyping = optimisedVisibleChars < effectiveOptimisedText.length && effectiveOptimisedText.length > 0;
 
   // Suggested save name
   const suggestedSaveName = useMemo(() => {
@@ -981,6 +1092,7 @@ export default function EnhancedEducationalPreview({
           categoryState={categoryStateForScene}
           setCategoryState={setCategoryStateAdapter}
           isLocked={false}
+          defaultExpanded={true}
           onTextChange={onDescribeTextChange}
           onGenerate={onDescribeGenerate}
           onClear={() => {
@@ -1132,6 +1244,7 @@ export default function EnhancedEducationalPreview({
                 generatedForProvider={generatedForProvider}
                 providers={providers}
                 activeCategories={activeCategories}
+                generationId={generationId}
               />
             </div>
 
@@ -1242,9 +1355,9 @@ export default function EnhancedEducationalPreview({
                         <pre className="whitespace-pre-wrap font-sans text-[0.8rem] leading-relaxed text-emerald-100">
                           {colourTermIndex.size > 0
                             ? (() => {
-                                const segments = parsePromptIntoSegments(effectiveOptimisedText, colourTermIndex);
+                                const segments = parsePromptIntoSegments(optimisedDisplayText, colourTermIndex);
                                 const hasAnatomy = segments.some((s) => s.category !== 'structural');
-                                if (!hasAnatomy) return effectiveOptimisedText;
+                                if (!hasAnatomy) return optimisedDisplayText;
                                 return segments.map((seg, i) => {
                                   const c = CATEGORY_COLOURS[seg.category] ?? CATEGORY_COLOURS.structural;
                                   return (
@@ -1254,8 +1367,12 @@ export default function EnhancedEducationalPreview({
                                   );
                                 });
                               })()
-                            : effectiveOptimisedText
+                            : optimisedDisplayText
                           }
+                          {/* Typewriter cursor */}
+                          {isOptimisedTyping && (
+                            <span className="animate-pulse" style={{ color: '#6EE7B7' }}>▌</span>
+                          )}
                           {/* Inline copy + save icons — flows after last character, floats right */}
                           <span className="ml-1 inline-flex float-right gap-1">
                             <SaveIcon

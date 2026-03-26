@@ -1,16 +1,17 @@
 # AI Disguise — Prompt Lab Intelligence Engine
 
-**Version:** 3.0.0  
+**Version:** 4.0.0  
 **Created:** 22 March 2026  
-**Updated:** 23 March 2026  
+**Updated:** 25 March 2026  
 **Owner:** Promagen  
-**Status:** Parts 1–5 BUILT and deployed. Part 5 passive learning pipeline DEFERRED. Part 6 (testing) DEFERRED.  
+**Status:** Parts 1–4d BUILT and deployed. Part 5 passive learning pipeline DEFERRED. Part 6 (testing) BUILT — 115-test harmony lockdown suite.  
 **Scope:** Prompt Lab (`/studio/playground`) ONLY. The standard builder (`/providers/[id]`) is untouched.  
 **Authority:** This document defines the architecture, API routes, animation system, provider switching behaviour, and learning pipeline for the Prompt Lab's AI-powered prompt generation and optimisation system.
 
 > **Cross-references:**
 >
 > - `prompt-lab.md` — Studio section routes, Prompt Lab architecture, component table (v3.0.0)
+> - `harmonizing-claude-openai.md` — Dual-assessor harmony engineering methodology (v1.0.0 — **STALE**, needs update to cover R6+ and stress tests)
 > - `unified-prompt-brain.md` — One Brain assembly architecture (standard builder)
 > - `prompt-optimizer.md` — Client-side 4-phase optimizer (standard builder)
 > - `prompt-builder-page.md` — Builder UI and `assemblePrompt()` integration
@@ -184,7 +185,7 @@ Replace the string-template tier generators (`generators.ts`) with AI-generated 
 ### Route
 
 **Path:** `POST /api/generate-tier-prompts`  
-**File:** `src/app/api/generate-tier-prompts/route.ts` (406 lines — v3.0.0)
+**File:** `src/app/api/generate-tier-prompts/route.ts` (523 lines — v4.0.0; post-processing extracted to `src/lib/harmony-post-processing.ts`)
 
 ### Request Schema
 
@@ -242,13 +243,18 @@ const ResponseSchema = z.object({
 
 ---
 
-## 6. Call 2 — System Prompt (v3.0.0)
+## 6. Call 2 — System Prompt (v4.0.0)
 
-**This section replaces the v2.0.0 system prompt. The prompt below is the EXACT text deployed in production.**
+**The system prompt is defined in code as the single source of truth.** See `buildSystemPrompt()` in `src/app/api/generate-tier-prompts/route.ts` (lines 115–262). The prompt is dynamic — it changes based on selected provider context (weight syntax, token limits, quality prefix).
 
-The system prompt evolved through 5 rounds of harmony engineering between Claude (system prompt author) and GPT-5.4-mini (executor). See §8 for methodology. The prompt went from 11 rules scoring 62/100 to 18 rules + structural templates scoring 93/100.
+The system prompt evolved through 6+ rounds of harmony engineering between Claude (system prompt author) and GPT-5.4-mini (executor). See §8 for methodology. The prompt went from 11 rules scoring 62/100 to 30 rules scoring 96/100, with 7 post-processing functions catching mechanical artefacts.
 
-### System Prompt (Call 2 — v3.0.0, 23 March 2026)
+**Rule count:** 30 (ceiling enforced by `RULE_CEILING` in `harmony-compliance.ts` with test assertion).  
+**Rule inventory:** T1 (8 rules), T2 (6 rules), T3 (5 rules), T4 (5 rules), Global (6 rules).
+
+> **⚠️ WARNING:** The system prompt text below is from v3.0.0 (23 March 2026) and is **STALE**. It shows 18 rules. The deployed prompt has 30 rules. Always read `buildSystemPrompt()` in the code for the current prompt. This section is preserved as historical reference for the harmony engineering journey.
+
+### System Prompt (Call 2 — v3.0.0, 23 March 2026) — HISTORICAL REFERENCE
 
 ```
 You are an expert AI image prompt generator for 42 AI image generation platforms.
@@ -385,83 +391,66 @@ When `providerId` is null, `{providerBlock}` is empty — generic best-practice 
 
 ---
 
-## 7. Call 2 — Post-Processing Layer (v3.0.0)
+## 7. Call 2 — Post-Processing Layer (v4.0.0)
 
-**NEW in v3.0.0.** After GPT returns validated JSON, three post-processing functions run server-side before the response reaches the client. These catch GPT mechanical artefacts that system prompt rules cannot prevent.
+**v3.0.0:** Added P1 + P2. **v4.0.0:** Expanded to 7 functions (P1, P2, P3, P8, P10, P11, P12), extracted to testable module, 115-test lockdown suite.
 
-### P1: `deduplicateMjNegatives()`
+After GPT returns validated JSON, the post-processing pipeline runs server-side before the response reaches the client. These catch GPT mechanical artefacts that system prompt rules cannot prevent. Proven across 6 harmony rounds + 3 stress tests (900-char complex inputs).
 
-**Problem:** At temperature 0.5, GPT-5.4-mini mechanically duplicates the entire `--no` block ~50% of the time when the positive section runs long (400+ chars). The system prompt's FINAL RULE reduces but does not eliminate this.
+**File:** `src/lib/harmony-post-processing.ts` (342 lines) — extracted from route.ts for testability.  
+**Test:** `src/lib/__tests__/harmony-post-processing.test.ts` (601 lines, 72 tests).  
+**Import:** `route.ts` imports `postProcessTiers()` from the extracted module.
 
-**Solution:** Split T2 positive on `--no`, extract comma-separated terms, deduplicate case-insensitively preserving order, rejoin with single `--no`.
+### Pipeline per tier
 
-```typescript
-function deduplicateMjNegatives(prompt: string): string {
-  const noIndex = prompt.indexOf("--no ");
-  if (noIndex === -1) return prompt;
-  const positiveAndParams = prompt.slice(0, noIndex).trimEnd();
-  const negativePart = prompt.slice(noIndex + 5);
-  const terms = negativePart
-    .split(",")
-    .map((t) => t.trim())
-    .filter(Boolean);
-  const seen = new Set<string>();
-  const unique: string[] = [];
-  for (const term of terms) {
-    const lower = term.toLowerCase();
-    if (!seen.has(lower)) {
-      seen.add(lower);
-      unique.push(term);
-    }
-  }
-  return `${positiveAndParams} --no ${unique.join(", ")}`;
-}
-```
+| Tier | Chain         | What it catches                                                                           |
+| ---- | ------------- | ----------------------------------------------------------------------------------------- |
+| T1   | P12 → P2      | CLIP-unfriendly adjectives → trailing punctuation                                         |
+| T2   | P1            | Duplicate MJ --no/--ar/--v/--s params (+ P5 in harmony-compliance.ts adds missing params) |
+| T3   | P11           | "[Abstract noun] [perception verb]" meta-commentary openers                               |
+| T4   | P3 → P8 → P10 | Self-correction → meta-language openers → short sentence merge                            |
 
-### P2: `stripTrailingPunctuation()`
+### Function inventory
 
-**Problem:** GPT adds trailing periods to T1 CLIP prompts despite the B7 rule. CLIP prompts are comma-separated keyword lists — sentence punctuation is incorrect syntax.
+| ID  | Function                           | Tier | Problem it solves                                                                                                                                                                                     | Catch rate                       |
+| --- | ---------------------------------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| P1  | `deduplicateMjParams()`            | T2   | GPT duplicates entire --no block ~85% of runs at temp 0.5. Also deduplicates --ar/--v/--s and detects fusion artifacts.                                                                               | 100%                             |
+| P2  | `stripTrailingPunctuation()`       | T1   | GPT adds trailing periods to CLIP prompts.                                                                                                                                                            | 100%                             |
+| P3  | `fixT4SelfCorrection()`            | T4   | GPT produces "Is this X? No, it is Y" hallucinations.                                                                                                                                                 | 100%                             |
+| P8  | `fixT4MetaOpeners()`               | T4   | GPT produces "The [abstract noun] [meta verb]" sentence openers. Uses 23 abstract nouns × 21 meta verbs lookup sets. Broadened in v4.0.0.                                                             | 100% for sentence-start patterns |
+| P10 | `mergeT4ShortSentences()`          | T4   | GPT produces bare adjective checklists under 10 words as final sentence. Merges into previous sentence via em-dash.                                                                                   | 100%                             |
+| P11 | `fixT3MetaOpeners()`               | T3   | GPT produces "The [abstract noun] [perception verb]" sentence openers. Uses 20 abstract nouns × 18 perception verbs lookup sets.                                                                      | 100% for sentence-start patterns |
+| P12 | `stripClipQualitativeAdjectives()` | T1   | GPT produces CLIP-unfriendly qualitative adjectives (subtle, gentle, soft, etc.) before nouns. Strips from unweighted segments only — weight-wrapped terms like `(soft glow:1.2)` are never modified. | 100% on unweighted segments      |
 
-**Solution:** Strip trailing `.`, `!`, `?` from T1 positive and negative.
+### Compliance gate (separate file)
 
-```typescript
-function stripTrailingPunctuation(prompt: string): string {
-  return prompt.replace(/[.!?]+\s*$/, "").trimEnd();
-}
-```
+**File:** `src/lib/harmony-compliance.ts` (486 lines) — deterministic syntax validation.
+
+| ID  | Function                   | Tier | Purpose                                                        |
+| --- | -------------------------- | ---- | -------------------------------------------------------------- |
+| P4  | `enforceT1Syntax()`        | T1   | Converts wrong weight syntax for selected provider             |
+| P5  | `enforceMjParameters()`    | T2   | Adds missing --ar/--v/--s/--no params                          |
+| P6  | `detectT4MetaLanguage()`   | T4   | Flags meta-language (detection only, P8 auto-fixes)            |
+| P9  | `detectT4ShortSentences()` | T4   | Flags under-10-word sentences (detection only, P10 auto-fixes) |
 
 ### `postProcessTiers()` — Orchestrator
 
-Runs P2 on tier1 (positive + negative), P1 on tier2 (positive only), passes tier3 and tier4 through unchanged.
-
 ```typescript
-function postProcessTiers(tiers) {
-  return {
-    tier1: {
-      positive: stripTrailingPunctuation(tiers.tier1.positive),
-      negative: stripTrailingPunctuation(tiers.tier1.negative),
-    },
-    tier2: {
-      positive: deduplicateMjNegatives(tiers.tier2.positive),
-      negative: tiers.tier2.negative,
-    },
-    tier3: tiers.tier3,
-    tier4: tiers.tier4,
-  };
-}
-```
+import { postProcessTiers } from "@/lib/harmony-post-processing";
 
-Called after Zod validation, before JSON response: `const processed = postProcessTiers(validated.data);`
+// In route.ts, after Zod validation:
+const processed = postProcessTiers(validated.data);
+```
 
 ### Belt and Braces Principle
 
-The system prompt rules (B6, B7) **reduce** GPT errors. The post-processing functions **catch** the ones that slip through. Both layers are required — the system prompt alone cannot eliminate GPT mechanical artefacts at temperature 0.5.
+The system prompt rules **reduce** GPT errors. The post-processing functions **catch** the ones that slip through. Both layers are required — the system prompt alone cannot eliminate GPT mechanical artefacts at temperature 0.5. The post-processing layer is permanent and must never be bypassed or removed.
 
 ---
 
-## 8. Call 2 — Harmony Engineering (v3.0.0)
+## 8. Call 2 — Harmony Engineering (v4.0.0)
 
-**NEW in v3.0.0.** This section documents the methodology used to develop the Call 2 system prompt through 5 rounds of iterative testing between Claude (system prompt author) and GPT-5.4-mini (executor), with both Claude and ChatGPT independently scoring output quality.
+**v3.0.0:** 5 rounds (62→93). **v4.0.0:** 6 rounds + 3 stress tests (62→96), dual-assessor converged (≤1 point gap), 30 system prompt rules, 7 post-processing functions, 115-test lockdown suite.
 
 ### Methodology
 
@@ -470,30 +459,47 @@ The system prompt rules (B6, B7) **reduce** GPT errors. The post-processing func
 3. Both Claude and ChatGPT independently score each tier on structural correctness (0–100)
 4. Both identify bugs and suggest improvements
 5. Claude builds fixes, cycle repeats
+6. **v4.0.0:** After score convergence, 3 stress tests (900-char complex inputs) validated the system under load
 
 ### Proven Patterns
 
-| Pattern                         | Description                                                                                                                                                                                | Evidence                                   |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------ |
-| **Examples > abstract rules**   | GPT follows concrete WRONG/RIGHT examples more reliably than abstract instructions. Adding `Example: (lone mermaid:1.4)` fixed T1 syntax. Adding the structural example fixed T2 ordering. | B1 (R2→R3: 85→92), S9 (R3: 58→88)          |
-| **Instruction positioning**     | GPT pays most attention to first and last instructions in a block. Moving the no-duplicate rule to FINAL position in T2 improved compliance.                                               | B6 positioning (R4→R5)                     |
-| **Banned-phrase expansion**     | GPT finds synonyms for banned terms. Banning "rendered as" → GPT uses "should feel like". Must iteratively expand the banned list.                                                         | S14 (R4→R5: "should feel like" eliminated) |
-| **Post-processing safety nets** | System prompt rules reduce errors but cannot eliminate GPT mechanical artefacts. Post-processing catches the rest. Belt and braces.                                                        | P1, P2 (R4 onwards)                        |
-| **Temperature trade-offs**      | 0.5 enables creative T3 restructuring but causes mechanical duplication in T2. Acceptable trade-off — P1 catches the duplication.                                                          | Idea 1 (R2 onwards)                        |
+| Pattern                          | Description                                                                                                                                                                                    | Evidence                                   |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| **Examples > abstract rules**    | GPT follows concrete WRONG/RIGHT examples more reliably than abstract instructions. Adding `Example: (lone mermaid:1.4)` fixed T1 syntax. Adding the structural example fixed T2 ordering.     | B1 (R2→R3: 85→92), S9 (R3: 58→88)          |
+| **Instruction positioning**      | GPT pays most attention to first and last instructions in a block. Moving the no-duplicate rule to FINAL position in T2 improved compliance.                                                   | B6 positioning (R4→R5)                     |
+| **Banned-phrase expansion**      | GPT finds synonyms for banned terms. Banning "rendered as" → GPT uses "should feel like". Must iteratively expand the banned list.                                                             | S14 (R4→R5: "should feel like" eliminated) |
+| **Post-processing > more rules** | After ~18 rules, each new rule competes for GPT's attention. If GPT violates a rule >30% of the time after 2 rounds, build a code-level catch instead.                                         | P8, P10, P11, P12 (R3–R6)                  |
+| **Temperature trade-offs**       | 0.5 enables creative T3 restructuring but causes mechanical duplication in T2. Acceptable trade-off — P1 catches the duplication.                                                              | Idea 1 (R2 onwards)                        |
+| **Noun-substitution evasion**    | GPT rotates nouns to dodge bans: "The scene feels" → "The stillness feels" → "The room feels". Pattern-level code catches (abstract noun + perception verb lookup sets) are the permanent fix. | P8 broadened (ST2), P11 broadened (R5)     |
 
 ### Scoring Journey
 
-| Round | T1  | T2  | T3  | T4  | Average | Key Fix                                                         |
-| ----- | --- | --- | --- | --- | ------- | --------------------------------------------------------------- |
-| R1    | 62  | 55  | 58  | 72  | **62**  | Baseline — syntax wrong, no composition, paraphrased            |
-| R2    | 85  | 58  | 88  | 80  | **78**  | B1–B3 syntax + S1–S3 composition/value-add                      |
-| R3    | 92  | 88  | 91  | 94  | **91**  | B4 `--no` flag + S9 structural example + S13 ordering           |
-| R4    | 95  | 85  | 94  | 82  | **89**  | S14 banned phrases + P1/P2 post-processing (T4 variability dip) |
-| R5    | 96  | 88  | 95  | 93  | **93**  | S17 10-word minimum + T2 FINAL RULE positioning                 |
+| Round | T1  | T2 (prod) | T3  | T4  | Average   | Key Fix                                                                                 |
+| ----- | --- | --------- | --- | --- | --------- | --------------------------------------------------------------------------------------- |
+| R1    | 88  | 93        | 90  | 74  | **86**    | Baseline with 27 rules from prior work                                                  |
+| R2    | 93  | 94        | 96  | 82  | **91**    | T1-8 clustering, T1-4 sensory, T3-5 opening diversity, T4-5 scene depth, P8 meta-opener |
+| R3    | 95  | 95        | 97  | 93  | **95**    | G1 emotional mandate, T1-6 time-of-day weighting, P10 short sentence merge              |
+| R4    | 97  | 95        | 96  | 94  | **95.5**  | T1-8 concept dedup trap, T3 "that feels" ban, T4 limit 200→250                          |
+| R5    | 97  | 96        | 95  | 95  | **95.75** | P11 broadened (abstract noun + perception verb), P12 CLIP adjective stripper            |
+| R6    | 97  | 96        | 95  | 95  | **95.75** | Prompt trim (removed 150-token T3 ban — P11 handles in code), confirmed system stable   |
+
+### Stress Tests (900-char complex inputs)
+
+| Test | Scene                                                            | T1    | T2 prod | T3  | T4    | Avg       | Key Finding                                             |
+| ---- | ---------------------------------------------------------------- | ----- | ------- | --- | ----- | --------- | ------------------------------------------------------- |
+| ST1  | Lighthouse (dual lighting, 5 focal planes, storm)                | 92–94 | 96      | 97  | 88–94 | **93–95** | Dual-lighting interaction gap, T4 under-compression     |
+| ST2  | Cellist (abstract emotion, fine detail, decay)                   | 95    | 96      | 96  | 88–94 | **94–95** | "The room feels" → triggered P8 broadening              |
+| ST3  | Deep-sea diver (technical terms, extreme scale, bioluminescence) | 93    | 96      | 98  | 95    | **95.5**  | First clean T2 (no dupe negatives), G2 reformatting gap |
+
+### Convergence Status
+
+**Dual-assessor gap:** ≤1 point across all tiers for 4 consecutive rounds (R3–R6). Formally converged per the harmony doc's exit criteria.
+
+**Average on moderate inputs:** 96/100. **Average on complex inputs:** 94.5/100. **Known ceiling:** GPT lists elements side-by-side instead of composing them into unified visual systems on multi-source lighting/atmosphere scenes. This is an architectural limitation, not fixable via prompt rules.
 
 ### Harmony Score
 
-**Current: 96/100.** 18/18 system prompt rules followed. 2 GPT mechanical artefacts caught by post-processing. Score gap between Claude and ChatGPT assessors: 1.75 points per tier (converged from 20+ in Round 1).
+**Current: 96/100.** 30 system prompt rules. 7 post-processing functions (P1, P2, P3, P8, P10, P11, P12). 4 compliance functions (P4, P5, P6, P9). 115-test lockdown suite. Rule ceiling: 30 (raise requires explicit approval).
 
 ---
 
@@ -547,22 +553,22 @@ Unchanged from v2.0.0. See v2.0.0 §12.
 
 ### `/api/generate-tier-prompts` (Call 2) — UPDATED v3.0.0
 
-| Property              | Value                                                       |
-| --------------------- | ----------------------------------------------------------- |
-| Method                | POST                                                        |
-| Runtime               | nodejs                                                      |
-| Dynamic               | force-dynamic                                               |
-| Max duration          | 15s                                                         |
-| Rate limit            | 20/hour prod, 200/hour dev                                  |
-| Rate limit key        | `generate-tier-prompts`                                     |
-| Auth required         | No (Pro gate is at page level)                              |
-| Model                 | gpt-5.4-mini                                                |
-| Temperature           | **0.5** (up from 0.3 — enables creative T3 restructuring)   |
-| Max completion tokens | **2000** (up from 1500 — headroom for mandatory additions)  |
-| Response format       | json_object                                                 |
-| Cache                 | no-store                                                    |
-| **Post-processing**   | **P1 (T2 --no dedup) + P2 (T1 trailing punct strip)** — NEW |
-| System prompt rules   | **18 rules** (up from 11) — see §6                          |
+| Property              | Value                                                                 |
+| --------------------- | --------------------------------------------------------------------- |
+| Method                | POST                                                                  |
+| Runtime               | nodejs                                                                |
+| Dynamic               | force-dynamic                                                         |
+| Max duration          | 15s                                                                   |
+| Rate limit            | 20/hour prod, 200/hour dev                                            |
+| Rate limit key        | `generate-tier-prompts`                                               |
+| Auth required         | No (Pro gate is at page level)                                        |
+| Model                 | gpt-5.4-mini                                                          |
+| Temperature           | **0.5** (up from 0.3 — enables creative T3 restructuring)             |
+| Max completion tokens | **2000** (up from 1500 — headroom for mandatory additions)            |
+| Response format       | json_object                                                           |
+| Cache                 | no-store                                                              |
+| **Post-processing**   | **P1+P2+P3+P8+P10+P11+P12** via `harmony-post-processing.ts` — see §7 |
+| System prompt rules   | **30 rules** (up from 18) — see §6                                    |
 
 ### `/api/optimise-prompt` (Call 3)
 
@@ -593,16 +599,20 @@ Unchanged from v2.0.0. See v2.0.0 §14.
 
 ### New Files (all BUILT)
 
-| File                                              | Purpose                                              | Actual lines |
-| ------------------------------------------------- | ---------------------------------------------------- | ------------ |
-| `src/app/api/generate-tier-prompts/route.ts`      | Call 2 API route + post-processing                   | **406**      |
-| `src/app/api/optimise-prompt/route.ts`            | Call 3 API route                                     | 315          |
-| `src/hooks/use-tier-generation.ts`                | Hook for Call 2 (AI tier generation)                 | 224          |
-| `src/hooks/use-ai-optimisation.ts`                | Hook for Call 3 (AI optimisation + animation timing) | 335          |
-| `src/hooks/use-drift-detection.ts`                | Prompt DNA Drift Detection (zero API calls)          | 165          |
-| `src/data/algorithm-names.ts`                     | 101 cycling + 3 finale names + shuffle + count       | 187          |
-| `src/components/prompt-lab/algorithm-cycling.tsx` | Cycling animation component (amber→emerald)          | 256          |
-| `src/components/prompt-lab/drift-indicator.tsx`   | "N changes detected" amber badge                     | 136          |
+| File                                                | Purpose                                                                       | Actual lines |
+| --------------------------------------------------- | ----------------------------------------------------------------------------- | ------------ |
+| `src/app/api/generate-tier-prompts/route.ts`        | Call 2 API route (imports post-processing from lib)                           | **523**      |
+| `src/lib/harmony-post-processing.ts`                | **NEW v4.0.0** — Extracted post-processing pipeline (P1,P2,P3,P8,P10,P11,P12) | **342**      |
+| `src/lib/harmony-compliance.ts`                     | Compliance gate (P4,P5,P6,P9) + rule ceiling tracking                         | **486**      |
+| `src/lib/__tests__/harmony-post-processing.test.ts` | **NEW v4.0.0** — 72-test lockdown suite for post-processing                   | **601**      |
+| `src/lib/__tests__/harmony-compliance.test.ts`      | 43-test compliance gate regression suite                                      | **453**      |
+| `src/app/api/optimise-prompt/route.ts`              | Call 3 API route                                                              | 315          |
+| `src/hooks/use-tier-generation.ts`                  | Hook for Call 2 (AI tier generation)                                          | 224          |
+| `src/hooks/use-ai-optimisation.ts`                  | Hook for Call 3 (AI optimisation + animation timing)                          | 335          |
+| `src/hooks/use-drift-detection.ts`                  | Prompt DNA Drift Detection (zero API calls)                                   | 165          |
+| `src/data/algorithm-names.ts`                       | 101 cycling + 3 finale names + shuffle + count                                | 187          |
+| `src/components/prompt-lab/algorithm-cycling.tsx`   | Cycling animation component (amber→emerald)                                   | 256          |
+| `src/components/prompt-lab/drift-indicator.tsx`     | "N changes detected" amber badge                                              | 136          |
 
 ### Modified Files (all BUILT)
 
@@ -647,7 +657,7 @@ Unchanged from v2.0.0. See v2.0.0 §14.
 11. **Call 2 fires in PARALLEL with Call 1** — never sequential
 12. **Call 3 re-fires debounced (800ms)** when `activeTierPromptText` changes while optimizer is ON
 13. **`activeTierPromptText` uses `aiTierPrompts ?? generatedPrompts`** — AI text takes priority over template text
-14. **Post-processing is mandatory** — `postProcessTiers()` MUST run on all Call 2 responses before returning to client. Do not bypass or remove P1/P2.
+14. **Post-processing is mandatory** — `postProcessTiers()` MUST run on all Call 2 responses before returning to client. Do not bypass or remove any P1–P12 function. Post-processing functions live in `src/lib/harmony-post-processing.ts` — route.ts imports from this module.
 
 ### Layout & UI Rules
 
@@ -667,6 +677,12 @@ Unchanged from v2.0.0. See v2.0.0 §14.
 25. **`incrementLifetimePrompts()` preserved** — all copy handlers must continue to track usage
 26. **Colour-coded prompts preserved** — AI-generated tier text must still support `parsePromptIntoSegments()` colour coding for Pro users
 27. **Existing features preserved: Yes** — required statement for every change set
+
+### v4.0.0 Rules
+
+28. **Post-processing extraction is permanent** — all P1–P12 functions live in `src/lib/harmony-post-processing.ts`, not in route.ts. Do not move them back. route.ts imports `postProcessTiers()` from the module.
+29. **115-test harmony lockdown suite must pass before shipping** — `harmony-post-processing.test.ts` (72 tests) + `harmony-compliance.test.ts` (43 tests). Any red test = post-processing drift. Fix the code, not the test.
+30. **Rule ceiling is 30** — adding a new system prompt rule requires either replacing an existing rule, building a post-processing code fix instead, or explicit Martin approval to raise the ceiling. Rule count tracked in `harmony-compliance.ts` with test enforcement.
 
 ---
 
@@ -700,6 +716,12 @@ Unchanged from v2.0.0. See v2.0.0 §14.
 | D24 | Clear All buttons use purple gradient with white text                                         | Matches Dynamic/Randomise button style per `buttons.md` canonical style. Both top and footer Clear All identical.                                                                                                                                     | 23 Mar 2026 |
 | D25 | Tier provider icons strip added to FourTierPromptPreview                                      | Shows all providers for the active tier between header and cards. PotM-matching style (bg-white/15, ring-white/10, hover glow + scale-110). Non-clickable, tooltip on hover. Educational — teaches users which providers belong to which tier family. | 23 Mar 2026 |
 | D26 | Tier labels changed from `text-slate-500` to `text-white`                                     | No grey text anywhere in Prompt Lab. Code standard: no `text-slate-500` or `text-slate-600` on user-facing text.                                                                                                                                      | 23 Mar 2026 |
+| D27 | Rule ceiling raised from 27 → 30                                                              | +T1-8 (semantic clustering), +T3-5 (opening diversity), +T4-5 (scene depth). Martin-approved.                                                                                                                                                         | 25 Mar 2026 |
+| D28 | Post-processing expanded P1+P2 → P1–P12                                                       | P3 (self-correction), P8 (T4 meta-openers), P10 (short merge), P11 (T3 meta-openers), P12 (CLIP adjective strip). Code catches what prompt rules can't.                                                                                               | 25 Mar 2026 |
+| D29 | Post-processing extracted to `harmony-post-processing.ts`                                     | Functions were private in route.ts — untestable. Extraction enables 72-test lockdown suite.                                                                                                                                                           | 25 Mar 2026 |
+| D30 | P8/P11 broadened with abstract-noun + perception-verb lookup sets                             | GPT substitutes nouns to dodge bans. Lookup sets (20+ nouns × 18+ verbs) catch all variants.                                                                                                                                                          | 25 Mar 2026 |
+| D31 | T4 character limit raised 200 → 250                                                           | GPT exceeded 200 chars in all 6 rounds. Mandatory scene depth + mood phrase needs headroom.                                                                                                                                                           | 25 Mar 2026 |
+| D32 | 115-test harmony lockdown suite created                                                       | 72 post-processing + 43 compliance tests. Real GPT fixtures from 6 rounds + 3 stress tests.                                                                                                                                                           | 25 Mar 2026 |
 
 ---
 
@@ -708,7 +730,7 @@ Unchanged from v2.0.0. See v2.0.0 §14.
 ### Part 1 — Foundation (API routes + data) ✅ BUILT
 
 1. ✅ Created `src/data/algorithm-names.ts` — 187 lines
-2. ✅ Created `src/app/api/generate-tier-prompts/route.ts` — **406 lines** (was 319 at v2.0.0; +87 lines from 18-rule system prompt + post-processing layer)
+2. ✅ Created `src/app/api/generate-tier-prompts/route.ts` — **523 lines** (was 406 at v3.0.0; post-processing extracted to `harmony-post-processing.ts`)
 3. ✅ Created `src/app/api/optimise-prompt/route.ts` — 315 lines
 
 ### Part 2 — Hooks ✅ BUILT
@@ -748,21 +770,39 @@ Unchanged from v2.0.0. See v2.0.0 §14.
 24. ✅ Tier provider icons strip (D25)
 25. ✅ Tier labels white (D26)
 
+### Part 4d — Harmony Engineering v2 (v4.0.0) ✅ BUILT
+
+26. ✅ 6 additional harmony rounds (R1–R6) with frozen valley test input (D27)
+27. ✅ Rule ceiling raised 27 → 30: T1-8 clustering, T3-5 opening diversity, T4-5 scene depth (D27)
+28. ✅ Post-processing expanded: P3, P8, P10, P11, P12 added (D28)
+29. ✅ Post-processing extracted to `src/lib/harmony-post-processing.ts` (D29)
+30. ✅ P8/P11 broadened with abstract-noun + perception-verb lookup sets (D30)
+31. ✅ T4 character limit 200 → 250 (D31)
+32. ✅ T3 "that feels" added to banned phrases
+33. ✅ G1 emotional atmosphere mandate (per-tier mood token examples)
+34. ✅ T1-6 time-of-day weighting mandate
+35. ✅ T1-8 interaction merging (Option B — dual-lighting WRONG/RIGHT)
+36. ✅ 3 stress tests (900-char inputs): lighthouse, cellist, deep-sea diver
+
 ### Part 5 — Learning Pipeline (passive) ⏳ DEFERRED
 
-26. ⏳ Add learning pair logging to telemetry route — NOT YET BUILT
-27. ⏳ Extend prompt-telemetry schema to include AI generation data — NOT YET BUILT
+37. ⏳ Add learning pair logging to telemetry route — NOT YET BUILT
+38. ⏳ Extend prompt-telemetry schema to include AI generation data — NOT YET BUILT
 
-### Part 6 — Testing ⏳ DEFERRED
+### Part 6 — Testing ✅ BUILT (v4.0.0)
 
-28. ⏳ Unit tests for both new API routes
-29. ⏳ Unit tests for both new hooks
-30. ⏳ Integration test: full flow from human text → AI tiers → AI optimisation
-31. ⏳ Animation timing tests (minimum display, deceleration, landing)
+39. ✅ `harmony-post-processing.test.ts` — 72 tests covering all P1–P12 functions (D32)
+40. ✅ `harmony-compliance.test.ts` — 43 tests covering syntax conversion, MJ params, T3/T4 detection, rule ceiling
+41. ✅ Drift detection tests — assert lookup set sizes (T3: 20 nouns × 18 verbs, T4: 23 nouns × 21 verbs, CLIP: 10 adjectives)
+42. ✅ Full pipeline integration tests — verify P3→P8→P10 chain order and cross-tier no-op behaviour
+43. ⏳ Integration test: full flow from human text → AI tiers → AI optimisation — NOT YET BUILT
+44. ⏳ Animation timing tests (minimum display, deceleration, landing) — NOT YET BUILT
 
 ---
 
 ## Changelog
+
+- **25 March 2026 (v4.0.0):** **HARMONY ENGINEERING v2 + POST-PROCESSING EXTRACTION + TEST LOCKDOWN.** Six additional harmony rounds (R1–R6) with dual Claude/ChatGPT assessment, converged to ≤1 point gap across all tiers. Three 900-char stress tests (lighthouse, cellist, deep-sea diver) validated system at 94.5–96/100. System prompt rules expanded from 18 to 30 (ceiling raised 27→30, Martin-approved): +T1-8 semantic clustering with interaction merging, +T3-5 opening sentence diversity, +T4-5 mandatory scene depth, +G1 emotional atmosphere mandate, +T1-6 time-of-day weighting, +T3 "that feels" ban. Post-processing expanded from P1+P2 to 7 functions: +P3 (T4 self-correction), +P8 (T4 meta-openers, broadened with 23 abstract nouns × 21 meta verbs), +P10 (T4 short sentence merge), +P11 (T3 meta-openers, broadened with 20 abstract nouns × 18 perception verbs), +P12 (T1 CLIP qualitative adjective stripper). All post-processing extracted from route.ts to `src/lib/harmony-post-processing.ts` (342 lines) for testability. 115-test lockdown suite created: `harmony-post-processing.test.ts` (72 tests) + `harmony-compliance.test.ts` (43 tests). Drift detection tests assert lookup set sizes. T4 character limit raised 200→250 (D31). Decisions log expanded D26→D32. Non-regression rules expanded 27→30. Build order: Part 4d added (11 items), Part 6 updated from DEFERRED to BUILT.
 
 - **23 March 2026 (v3.0.0):** **HARMONY ENGINEERING + UI POLISH.** System prompt evolved from 11 rules (scoring 62/100) to 18 rules (scoring 93/100) through 5 rounds of iterative testing with dual Claude/ChatGPT assessment. Added §6 (complete v3.0.0 system prompt), §7 (post-processing layer: P1 deduplicateMjNegatives, P2 stripTrailingPunctuation, postProcessTiers orchestrator), §8 (harmony engineering methodology with scoring journey and proven patterns). API specs updated: temperature 0.3→0.5, max_completion_tokens 1500→2000. File map updated with current line counts. UI changes: Generate button adopts engine bay gradient+pulse+shimmer when text present; Clear All buttons use purple gradient with white text; tier labels changed to white; tier provider icons strip added to FourTierPromptPreview. Non-regression rules expanded from 23 to 27. Decisions log expanded from D18 to D26. Build order updated with Part 4c (harmony engineering, 7 items).
 

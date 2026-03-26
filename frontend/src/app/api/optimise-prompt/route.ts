@@ -16,31 +16,22 @@
 // Existing features preserved: Yes (new file, no modifications).
 // ============================================================================
 
-import 'server-only';
+import "server-only";
 
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import { z } from "zod";
 
-import { env } from '@/lib/env';
-import { rateLimit } from '@/lib/rate-limit';
-import { enforceT1Syntax } from '@/lib/harmony-compliance';
-import type { ComplianceContext } from '@/lib/harmony-compliance';
+import { env } from "@/lib/env";
+import { rateLimit } from "@/lib/rate-limit";
+import { enforceT1Syntax } from "@/lib/harmony-compliance";
+import type { ComplianceContext } from "@/lib/harmony-compliance";
+import { resolveGroupPrompt } from "@/lib/optimise-prompts";
+import { getProviderGroup } from "@/lib/optimise-prompts/platform-groups";
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 export const maxDuration = 15;
-
-// ============================================================================
-// TIER NAMES (for system prompt)
-// ============================================================================
-
-const TIER_DISPLAY: Record<number, string> = {
-  1: 'CLIP-Based (weighted keywords)',
-  2: 'Midjourney Family (prose + parameters)',
-  3: 'Natural Language (grammatical sentences)',
-  4: 'Plain Language (simple, short)',
-};
 
 // ============================================================================
 // REQUEST SCHEMA
@@ -70,24 +61,23 @@ const ProviderContextSchema = z.object({
   /** Whether the platform supports term weighting */
   supportsWeighting: z.boolean().optional(),
   /** How the platform handles negative prompts */
-  negativeSupport: z.enum(['separate', 'inline', 'none', 'converted']),
+  negativeSupport: z.enum(["separate", "inline", "none", "converted"]),
   /** Platform-specific category priority order */
   categoryOrder: z.array(z.string().max(30)).max(15).optional(),
+  /** Platform-specific trait for system prompt (from platform-formats.json) */
+  groupKnowledge: z.string().max(300).optional(),
 });
 
 const RequestSchema = z.object({
   /** The assembled prompt text to optimise */
   promptText: z
     .string()
-    .min(1, 'Prompt text cannot be empty')
-    .max(5000, 'Maximum 5,000 characters'),
+    .min(1, "Prompt text cannot be empty")
+    .max(5000, "Maximum 5,000 characters"),
   /** The user's original human description (for reference, preserving intent) */
   originalSentence: z.string().max(1000).optional(),
   /** Selected provider ID */
-  providerId: z
-    .string()
-    .min(1, 'Provider ID is required')
-    .max(50),
+  providerId: z.string().min(1, "Provider ID is required").max(50),
   /** Provider's platform format data */
   providerContext: ProviderContextSchema,
 });
@@ -96,74 +86,22 @@ const RequestSchema = z.object({
 // RESPONSE SCHEMA
 // ============================================================================
 
-const ResponseSchema = z.object({
-  /** The optimised prompt text */
-  optimised: z.string().max(5000),
-  /** The optimised negative prompt (if applicable) */
-  negative: z.string().max(1000).optional(),
-  /** Brief descriptions of changes made (for transparency panel) */
-  changes: z.array(z.string().max(200)).max(20),
-  /** Character count of optimised prompt */
-  charCount: z.number().int(),
-  /** Estimated token count */
-  tokenEstimate: z.number().int(),
-}).strip();
+const ResponseSchema = z
+  .object({
+    /** The optimised prompt text */
+    optimised: z.string().max(5000),
+    /** The optimised negative prompt (if applicable) */
+    negative: z.string().max(1000).optional(),
+    /** Brief descriptions of changes made (for transparency panel) */
+    changes: z.array(z.string().max(200)).max(20),
+    /** Character count of optimised prompt */
+    charCount: z.number().int(),
+    /** Estimated token count */
+    tokenEstimate: z.number().int(),
+  })
+  .strip();
 
 export type OptimiseResult = z.infer<typeof ResponseSchema>;
-
-// ============================================================================
-// SYSTEM PROMPT BUILDER
-// ============================================================================
-
-function buildSystemPrompt(ctx: z.infer<typeof ProviderContextSchema>): string {
-  const tierName = TIER_DISPLAY[ctx.tier] ?? 'Unknown';
-  const categoryOrderStr = ctx.categoryOrder?.join(' → ') ?? 'subject → style → environment → lighting → atmosphere → fidelity';
-  const weightNote = ctx.supportsWeighting
-    ? `WEIGHT SYNTAX (MANDATORY): Use EXACTLY this syntax: ${ctx.weightingSyntax ?? '(term:weight)'}. Do NOT substitute parentheses for double-colon or vice versa. Distribute weights: subject highest (1.3–1.4), supporting 1.0–1.2, filler unweighted. Rich phrases longer than 4 words must NOT be weight-wrapped — break them into shorter weighted terms instead (e.g., "lone woman in crimson coat" becomes "lone woman${ctx.weightingSyntax?.includes('::') ? '::1.3' : ':1.3)'}, crimson coat${ctx.weightingSyntax?.includes('::') ? '::1.2' : ':1.2)'}").`
-    : 'This platform does NOT support weight syntax — remove all weight markers.';
-
-  const qualitySuffix = ctx.tier === 1 ? '\n- Quality suffix (append at end): sharp focus, 8K, intricate textures' : '';
-
-  return `You are an expert prompt optimiser for the AI image generation platform "${ctx.name}".
-
-Your job is to take an assembled prompt and optimise it specifically for ${ctx.name}, which is a Tier ${ctx.tier} platform: ${tierName}.
-
-PLATFORM SPECIFICATIONS:
-- Prompt style: ${ctx.promptStyle}
-- Sweet spot: ${ctx.idealMin}–${ctx.idealMax} characters
-- Token limit: ${ctx.tokenLimit}
-${ctx.maxChars ? `- Hard character limit: ${ctx.maxChars}` : '- No hard character limit'}
-- ${weightNote}
-${ctx.qualityPrefix?.length ? `- Quality prefix: ${ctx.qualityPrefix.join(', ')}` : '- No quality prefix defined'}${qualitySuffix}
-- Category impact priority: ${categoryOrderStr}
-- Negative handling: ${ctx.negativeSupport}
-
-OPTIMISATION RULES:
-0. SYNTAX VALIDATION FIRST (DO THIS BEFORE ANYTHING ELSE): Check whether every weighted term in the input uses the CORRECT weight syntax for ${ctx.name}. The correct syntax is: ${ctx.weightingSyntax ?? '(term:weight)'}. If the input uses parenthetical syntax (term:1.3) but this platform requires double-colon syntax term::1.3, or vice versa, you MUST rewrite ALL weights to use the correct syntax. Wrong syntax = broken prompt on this platform. This single check alone can require a full rewrite. WRONG: leaving parenthetical syntax on a double-colon platform. RIGHT: converting every (term:1.3) to term::1.3 before optimising content.
-1. Reorder terms by platform-specific impact priority: ${categoryOrderStr}. Front-load high-impact categories.
-2. Remove redundant or duplicate semantic content — "realistic textures" after "realistic texture" is waste.
-3. Remove orphaned verb fragments — "stands", "leaving", "reflecting quietly" are sentence debris in keyword prompts.
-4. Remove filler tokens that dilute model attention — adverbs, unnecessary articles, vague modifiers.
-5. Strengthen quality anchors appropriate to this platform. For CLIP platforms: ensure quality prefix AND quality suffix are present.
-6. Ensure the final prompt is within the sweet spot (${ctx.idealMin}–${ctx.idealMax} characters). This is the PRIMARY optimisation target.
-7. For CLIP/keyword platforms (Tier 1): output must be clean comma-separated weighted keywords — NO sentence fragments, NO orphaned verbs, NO "a" or "the" articles. Use ONLY the weight syntax specified above.
-8. For Midjourney (Tier 2): ensure --ar, --v, --s, --no parameters are correctly formatted and placed at the end. Creative text should be descriptive prose, not keyword soup.
-9. For natural language platforms (Tier 3): ensure grammatical coherence — complete sentences, proper transitions. Convert any negative terms to positive reinforcement.
-10. For plain platforms (Tier 4): keep it short, simple, and impactful. Maximum 2–3 sentences. Remove all technical jargon.
-11. PRESERVE the user's core creative intent — optimise structure and efficiency, not meaning. Never remove the subject, core mood, or defining visual elements.
-12. List every change made in the "changes" array — the user sees this in the transparency panel. If the only change is syntax correction, list it: "Converted weight syntax from parenthetical to double-colon for ${ctx.name}".
-13. CRITICAL: The output weight syntax MUST match exactly: ${ctx.weightingSyntax ?? '(term:weight)'}. Wrong syntax = broken prompt on this platform.
-14. YOU MUST ALWAYS MAKE AT LEAST ONE CHANGE. If the prompt content is already optimal, verify and correct the weight syntax (Rule 0), adjust character count toward the sweet spot (Rule 6), or strengthen quality anchors (Rule 5). Returning the input unchanged is NEVER acceptable — the user clicked "Optimise" and expects a measurably different, improved result.
-
-Return ONLY valid JSON:
-{
-  "optimised": "the optimised prompt text",
-  "negative": "the optimised negative prompt (if applicable, empty string if not)",
-  "changes": ["Reordered subject to front position", "Removed redundant 'realistic' duplicate", ...],
-  "charCount": 285,
-  "tokenEstimate": 72
-}`;
-}
 
 // ============================================================================
 // HANDLER
@@ -172,19 +110,20 @@ Return ONLY valid JSON:
 export async function POST(req: NextRequest): Promise<Response> {
   // ── Rate limit ──────────────────────────────────────────────────────
   const rl = rateLimit(req, {
-    keyPrefix: 'optimise-prompt',
+    keyPrefix: "optimise-prompt",
     windowSeconds: 3600,
     max: env.isProd ? 30 : 200,
-    keyParts: ['POST', '/api/optimise-prompt'],
+    keyParts: ["POST", "/api/optimise-prompt"],
   });
 
   if (!rl.allowed) {
     return NextResponse.json(
       {
-        error: 'RATE_LIMITED',
-        message: 'Optimisation limit reached. Please wait before optimising again.',
+        error: "RATE_LIMITED",
+        message:
+          "Optimisation limit reached. Please wait before optimising again.",
       },
-      { status: 429, headers: { 'Retry-After': String(rl.retryAfterSeconds) } },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSeconds) } },
     );
   }
 
@@ -192,7 +131,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   const apiKey = env.providers.openAiApiKey;
   if (!apiKey) {
     return NextResponse.json(
-      { error: 'CONFIG_ERROR', message: 'Generation engine not configured.' },
+      { error: "CONFIG_ERROR", message: "Generation engine not configured." },
       { status: 500 },
     );
   }
@@ -203,68 +142,95 @@ export async function POST(req: NextRequest): Promise<Response> {
     body = await req.json();
   } catch {
     return NextResponse.json(
-      { error: 'INVALID_JSON', message: 'Request body must be valid JSON.' },
+      { error: "INVALID_JSON", message: "Request body must be valid JSON." },
       { status: 400 },
     );
   }
 
   const parsed = RequestSchema.safeParse(body);
   if (!parsed.success) {
-    const msg = parsed.error.issues.map((i) => i.message).join('; ');
+    const msg = parsed.error.issues.map((i) => i.message).join("; ");
     return NextResponse.json(
-      { error: 'VALIDATION_ERROR', message: msg },
+      { error: "VALIDATION_ERROR", message: msg },
       { status: 400 },
     );
   }
 
   // ── Sanitise inputs ─────────────────────────────────────────────────
-  const sanitisedPrompt = parsed.data.promptText
-    .replace(/<[^>]*>/g, '')
-    .trim();
+  const sanitisedPrompt = parsed.data.promptText.replace(/<[^>]*>/g, "").trim();
   const sanitisedOriginal = parsed.data.originalSentence
-    ? parsed.data.originalSentence.replace(/<[^>]*>/g, '').trim()
+    ? parsed.data.originalSentence.replace(/<[^>]*>/g, "").trim()
     : undefined;
 
   if (!sanitisedPrompt) {
     return NextResponse.json(
-      { error: 'VALIDATION_ERROR', message: 'Prompt text cannot be empty after sanitisation.' },
+      {
+        error: "VALIDATION_ERROR",
+        message: "Prompt text cannot be empty after sanitisation.",
+      },
       { status: 400 },
     );
   }
 
-  // ── Build system prompt ─────────────────────────────────────────────
-  const systemPrompt = buildSystemPrompt(parsed.data.providerContext);
+  // ── Build system prompt (group-specific or generic fallback) ────────
+  const { systemPrompt, groupCompliance } = resolveGroupPrompt(
+    parsed.data.providerId,
+    parsed.data.providerContext,
+  );
+
+  // ── Detect NL group for special handling ─────────────────────────────
+  const providerGroup = getProviderGroup(parsed.data.providerId);
+  const isNlGroup = providerGroup === "clean-natural-language";
 
   // ── Build user message ──────────────────────────────────────────────
-  const userMessage = sanitisedOriginal
-    ? `ASSEMBLED PROMPT TO OPTIMISE:\n${sanitisedPrompt}\n\nORIGINAL USER DESCRIPTION (for intent reference):\n${sanitisedOriginal}`
-    : `ASSEMBLED PROMPT TO OPTIMISE:\n${sanitisedPrompt}`;
+  // NL group: flip the framing — original sentence is the PRIMARY input
+  // ("write the best version of this scene"), T3 is reference material.
+  // This prevents GPT's "optimise = compress" instinct.
+  // All other groups: assembled prompt is primary, original is reference.
+  let userMessage: string;
+  if (isNlGroup && sanitisedOriginal) {
+    userMessage = `SCENE DESCRIPTION TO OPTIMISE FOR ${parsed.data.providerContext.name.toUpperCase()}:\n${sanitisedOriginal}\n\nREFERENCE DRAFT (natural language version — use as structural starting point, but enrich with ALL details from the scene description above):\n${sanitisedPrompt}`;
+  } else if (sanitisedOriginal) {
+    userMessage = `ASSEMBLED PROMPT TO OPTIMISE:\n${sanitisedPrompt}\n\nORIGINAL USER DESCRIPTION (for intent reference):\n${sanitisedOriginal}`;
+  } else {
+    userMessage = `ASSEMBLED PROMPT TO OPTIMISE:\n${sanitisedPrompt}`;
+  }
 
   // ── Call generation engine ──────────────────────────────────────────
   try {
-    const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
+    const openaiRes = await fetch(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-5.4-mini",
+          temperature: 0.2,
+          max_completion_tokens: 1200,
+          response_format: { type: "json_object" },
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userMessage },
+          ],
+        }),
       },
-      body: JSON.stringify({
-        model: 'gpt-5.4-mini',
-        temperature: 0.2,
-        max_completion_tokens: 1200,
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userMessage },
-        ],
-      }),
-    });
+    );
 
     if (!openaiRes.ok) {
-      const errText = await openaiRes.text().catch(() => 'Unknown error');
-      console.error('[optimise-prompt] Engine error:', openaiRes.status, errText);
+      const errText = await openaiRes.text().catch(() => "Unknown error");
+      console.error(
+        "[optimise-prompt] Engine error:",
+        openaiRes.status,
+        errText,
+      );
       return NextResponse.json(
-        { error: 'API_ERROR', message: 'Optimisation failed. Please try again.' },
+        {
+          error: "API_ERROR",
+          message: "Optimisation failed. Please try again.",
+        },
         { status: 502 },
       );
     }
@@ -272,10 +238,13 @@ export async function POST(req: NextRequest): Promise<Response> {
     const openaiData = await openaiRes.json();
     const content = openaiData?.choices?.[0]?.message?.content;
 
-    if (!content || typeof content !== 'string') {
-      console.error('[optimise-prompt] Empty engine response:', openaiData);
+    if (!content || typeof content !== "string") {
+      console.error("[optimise-prompt] Empty engine response:", openaiData);
       return NextResponse.json(
-        { error: 'API_ERROR', message: 'Empty response from engine. Please try again.' },
+        {
+          error: "API_ERROR",
+          message: "Empty response from engine. Please try again.",
+        },
         { status: 502 },
       );
     }
@@ -285,24 +254,50 @@ export async function POST(req: NextRequest): Promise<Response> {
     try {
       jsonParsed = JSON.parse(content);
     } catch {
-      console.error('[optimise-prompt] Invalid JSON from engine:', content);
+      console.error("[optimise-prompt] Invalid JSON from engine:", content);
       return NextResponse.json(
-        { error: 'PARSE_ERROR', message: 'Engine returned invalid data. Please try again.' },
+        {
+          error: "PARSE_ERROR",
+          message: "Engine returned invalid data. Please try again.",
+        },
         { status: 502 },
       );
     }
 
     const validated = ResponseSchema.safeParse(jsonParsed);
     if (!validated.success) {
-      console.error('[optimise-prompt] Schema validation failed:', validated.error.issues);
+      console.error(
+        "[optimise-prompt] Schema validation failed:",
+        validated.error.issues,
+      );
       return NextResponse.json(
-        { error: 'PARSE_ERROR', message: 'Engine response did not match expected format. Please try again.' },
+        {
+          error: "PARSE_ERROR",
+          message:
+            "Engine response did not match expected format. Please try again.",
+        },
         { status: 502 },
       );
     }
 
-    // ── Compliance gate: enforce correct syntax on optimised output ──
+    // ── Compliance gate: group-specific, then generic syntax enforcement ──
     const result = { ...validated.data };
+
+    // Step 1: Group-specific compliance (if the builder declared one)
+    if (groupCompliance) {
+      const groupResult = groupCompliance(result.optimised);
+      if (groupResult.wasFixed) {
+        result.optimised = groupResult.text;
+        result.charCount = groupResult.text.length;
+        result.changes = [...result.changes, ...groupResult.fixes];
+        console.debug(
+          "[optimise-prompt] Group compliance fix:",
+          groupResult.fixes.join("; "),
+        );
+      }
+    }
+
+    // Step 2: Generic syntax enforcement (always runs as safety net)
     const compCtx: ComplianceContext = {
       weightingSyntax: parsed.data.providerContext.weightingSyntax,
       supportsWeighting: parsed.data.providerContext.supportsWeighting ?? false,
@@ -315,7 +310,10 @@ export async function POST(req: NextRequest): Promise<Response> {
       result.optimised = syntaxResult.text;
       result.charCount = syntaxResult.text.length;
       result.changes = [...result.changes, ...syntaxResult.fixes];
-      console.debug('[optimise-prompt] Compliance fix:', syntaxResult.fixes.join('; '));
+      console.debug(
+        "[optimise-prompt] Compliance fix:",
+        syntaxResult.fixes.join("; "),
+      );
     }
 
     // ── Return compliance-gated optimised prompt ─────────────────────
@@ -323,13 +321,16 @@ export async function POST(req: NextRequest): Promise<Response> {
       { result },
       {
         status: 200,
-        headers: { 'Cache-Control': 'no-store' },
+        headers: { "Cache-Control": "no-store" },
       },
     );
   } catch (err) {
-    console.error('[optimise-prompt] Unexpected error:', err);
+    console.error("[optimise-prompt] Unexpected error:", err);
     return NextResponse.json(
-      { error: 'INTERNAL_ERROR', message: 'Something went wrong. Please try again.' },
+      {
+        error: "INTERNAL_ERROR",
+        message: "Something went wrong. Please try again.",
+      },
       { status: 500 },
     );
   }

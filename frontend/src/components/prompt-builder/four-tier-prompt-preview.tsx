@@ -70,6 +70,8 @@ interface FourTierPromptPreviewProps {
   providers?: { id: string; name: string; localIcon?: string }[];
   /** Category names populated by Call 1 — feeds category-aware algorithm cycling */
   activeCategories?: string[];
+  /** Increments on new API generation. Same ID = tab switch → instant text. New ID = typewrite. */
+  generationId?: number;
 }
 
 interface TierCardProps {
@@ -91,6 +93,8 @@ interface TierCardProps {
   isPro?: boolean;
   /** Pro Promagen: term → category lookup for colour coding */
   termIndex?: Map<string, PromptCategory>;
+  /** Increments on new API generation. Same ID = tab switch → show instant. Undefined = always typewrite (standard builder). */
+  generationId?: number;
 }
 
 // ============================================================================
@@ -285,22 +289,27 @@ function TierCard({
   platformId,
   isPro = false,
   termIndex,
+  generationId,
 }: TierCardProps) {
   const [copied, setCopied] = useState(false);
   const config = TIER_CONFIGS[tier];
 
   // ── Typewriter reveal ─────────────────────────────────────────────
-  // Fresh generation (prev empty → new text): 10ms/char with tier stagger
-  // Regeneration (prev had text → new text): 2ms/char with small stagger
-  // Clear (text → empty): instant reset
+  // When generationId is provided (Prompt Lab): typewrite ONLY on new
+  // API generation (generationId changes). Tab switch = instant.
+  // When generationId is undefined (standard builder): typewrite on
+  // every text change (original behaviour).
   const [visibleChars, setVisibleChars] = useState(0);
   const prevPositiveRef = useRef('');
+  const prevGenIdRef = useRef(generationId);
   const typewriterTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const staggerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const prev = prevPositiveRef.current;
+    const prevGenId = prevGenIdRef.current;
     prevPositiveRef.current = positive;
+    prevGenIdRef.current = generationId;
 
     // Clean up any existing timers
     if (typewriterTimerRef.current) { clearInterval(typewriterTimerRef.current); typewriterTimerRef.current = null; }
@@ -318,7 +327,14 @@ function TierCard({
       return;
     }
 
-    // Determine speed: fresh (prev empty) vs regen (prev had content)
+    // When generationId is provided: only typewrite if it changed (new API call).
+    // Same generationId = tab switch → show instantly.
+    if (generationId !== undefined && generationId === prevGenId) {
+      setVisibleChars(positive.length);
+      return;
+    }
+
+    // New generation (or standard builder with no generationId) → typewrite
     const isFresh = !prev;
     const speed = isFresh ? 25 : 5;
     const delay = isFresh ? (tier - 1) * 500 : (tier - 1) * 80;
@@ -348,7 +364,7 @@ function TierCard({
       if (typewriterTimerRef.current) clearInterval(typewriterTimerRef.current);
       if (staggerTimerRef.current) clearTimeout(staggerTimerRef.current);
     };
-  }, [positive, tier]);
+  }, [positive, tier, generationId]);
 
   // The text to display — typewriter-sliced
   const displayText = positive.slice(0, visibleChars);
@@ -710,6 +726,7 @@ export function FourTierPromptPreview({
   generatedForProvider = null,
   providers = [],
   activeCategories = [],
+  generationId,
 }: FourTierPromptPreviewProps) {
   const handleCopy = useCallback((tier: PlatformTier, text: string) => {
     onCopy?.(tier, text);
@@ -760,6 +777,7 @@ export function FourTierPromptPreview({
           platformId={platformId}
           isPro={isPro}
           termIndex={termIndex}
+          generationId={generationId}
         />
       </div>
     );
@@ -830,6 +848,7 @@ export function FourTierPromptPreview({
           platformId={platformId}
           isPro={isPro}
           termIndex={termIndex}
+          generationId={generationId}
         />
         <TierCard
           tier={2}
@@ -843,6 +862,7 @@ export function FourTierPromptPreview({
           platformId={platformId}
           isPro={isPro}
           termIndex={termIndex}
+          generationId={generationId}
         />
         <TierCard
           tier={3}
@@ -856,6 +876,7 @@ export function FourTierPromptPreview({
           platformId={platformId}
           isPro={isPro}
           termIndex={termIndex}
+          generationId={generationId}
         />
         <TierCard
           tier={4}
@@ -869,6 +890,7 @@ export function FourTierPromptPreview({
           platformId={platformId}
           isPro={isPro}
           termIndex={termIndex}
+          generationId={generationId}
         />
       </div>
       

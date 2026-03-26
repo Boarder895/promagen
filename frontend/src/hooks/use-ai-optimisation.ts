@@ -50,6 +50,8 @@ export interface OptimisationProviderContext {
   supportsWeighting?: boolean;
   negativeSupport: 'separate' | 'inline' | 'none' | 'converted';
   categoryOrder?: string[];
+  /** Platform-specific trait for Call 3 system prompt (from platform-formats.json) */
+  groupKnowledge?: string;
 }
 
 /** The result returned by the API after optimisation */
