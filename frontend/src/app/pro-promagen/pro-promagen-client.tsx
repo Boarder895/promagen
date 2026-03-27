@@ -1497,7 +1497,7 @@ function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
           className="italic text-amber-400/80 animate-pulse text-center font-semibold"
           style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.95rem)' }}
         >
-          One workspace — all 45 platforms — instant switching
+          One workspace — all 40 platforms — instant switching
         </p>
       </div>
 
@@ -1642,9 +1642,9 @@ function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
         ))}
       </div>
 
-      {/* ── 45 provider icons row ────────────────────────────────────── */}
+      {/* ── 40 provider icons row ────────────────────────────────────── */}
       <div className="flex items-center justify-center flex-wrap" style={{ gap: 'clamp(2px, 0.25vw, 4px)', paddingTop: 'clamp(6px, 0.6vw, 10px)' }}>
-        {providers.slice(0, 45).map((p) => (
+        {providers.slice(0, 40).map((p) => (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             key={p.id}
@@ -1656,7 +1656,7 @@ function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
           />
         ))}
         <span className="font-semibold" style={{ color: '#fb7185', fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)', marginLeft: 'clamp(4px, 0.4vw, 6px)' }}>
-          45 platforms — switch instantly
+          40 platforms — switch instantly
         </span>
       </div>
     </div>
@@ -1664,9 +1664,9 @@ function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
 }
 
 // ============================================================================
-// DAILY PROMPTS PREVIEW PANEL — 45-provider rotating showcase (v7.0.0)
+// DAILY PROMPTS PREVIEW PANEL — 40-provider rotating showcase (v7.0.0)
 // ============================================================================
-// Rotates through ALL 45 AI providers using live PotM category data.
+// Rotates through ALL 40 AI providers using live PotM category data.
 // Each rotation: assemblePrompt() + optimizePromptGoldStandard() called live.
 //
 // Visual sell: Assembled prompt = WHITE text (free tier look).
@@ -1680,7 +1680,7 @@ function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
 // Human factors:
 // - Von Restorff Effect: colour-coded text jumps out against white text
 // - Curiosity Gap: "I want MY prompts colour-coded"
-// - Social proof through variety: 45 platforms = serious engineering
+// - Social proof through variety: 40 platforms = serious engineering
 // - Click-to-navigate: "try it yourself"
 // ============================================================================
 
@@ -2967,8 +2967,6 @@ const PI_C = IG_C;
 const ENCODER_BADGES: Record<string, { plain: string; tech: string; tokens: string }> = {
   'stability':     { plain: 'Keywords · weighted',   tech: 'CLIP encoder',   tokens: '75 tokens' },
   'leonardo':      { plain: 'Keywords · weighted',   tech: 'CLIP encoder',   tokens: '75 tokens' },
-  'nightcafe':     { plain: 'Keywords · weighted',   tech: 'CLIP encoder',   tokens: '75 tokens' },
-  'tensor-art':    { plain: 'Keywords · weighted',   tech: 'Dual CLIP',      tokens: '75 tokens' },
   'midjourney':    { plain: 'Brief · with params',   tech: 'MJ encoder',     tokens: '~30 words' },
   'flux':          { plain: 'Natural language',       tech: 'T5-XXL encoder', tokens: '512 tokens' },
   'google-imagen': { plain: 'Natural language',       tech: 'T5-XXL encoder', tokens: '512 tokens' },
@@ -2979,14 +2977,14 @@ const ENCODER_BADGES: Record<string, { plain: string; tech: string; tokens: stri
   'canva':         { plain: 'Minimal phrases',        tech: 'Proprietary',    tokens: '~200 chars' },
 };
 
-// ── All 45 platform IDs for the scrolling ticker ribbon ──────────────────
+// ── All 40 active platform IDs for the scrolling ticker ribbon ────────────
 const ALL_PLATFORM_IDS = [
   'midjourney', 'openai', 'stability', 'flux', 'leonardo', 'adobe-firefly',
-  'ideogram', 'nightcafe', 'recraft', 'kling', 'luma-ai', 'tensor-art',
+  'ideogram', 'recraft', 'kling', 'luma-ai',
   'google-imagen', 'imagine-meta', 'runway', 'novelai', 'playground',
   'microsoft-designer', 'bing', 'canva', 'picsart', 'dreamstudio',
-  'artbreeder', 'craiyon', 'deepai', 'clipdrop', 'fotor', 'freepik',
-  'getimg', 'hotpot', 'jasper-art', 'lexica', 'openart', 'photoleap',
+  'artbreeder', 'craiyon', 'deepai', 'clipdrop', 'fotor',
+  'hotpot', 'jasper-art', 'lexica', 'photoleap',
   'pixlr', 'simplified', 'visme', 'vistacreate', '123rf', 'myedit',
   'picwish', 'dreamlike', 'artguru', 'artistly', 'bluewillow',
 ];
@@ -3157,14 +3155,14 @@ const INTELLIGENCE_SCENARIOS: IntelligenceScenario[] = [
       },
     ],
   },
-  // Scenario 3: Telephone Box — Dual CLIP (Tensor.Art) vs ChatGLM3 (Kling) vs T5 (Flux)
+  // Scenario 3: Telephone Box — CLIP (Stability) vs ChatGLM3 (Kling) vs T5 (Flux)
   {
     name: 'Desert Phone Box',
     humanSentence: 'An old telephone box in the middle of a desert with light pouring out of it and stars everywhere, sand blowing across the ground, mysterious and lonely',
     platforms: [
       {
-        id: 'tensor-art',
-        name: 'Tensor.Art',
+        id: 'stability',
+        name: 'Stability',
         segments: [
           { text: '(', color: PI_C.structural },
           { text: 'old telephone box', color: PI_C.subject },
@@ -3184,7 +3182,7 @@ const INTELLIGENCE_SCENARIOS: IntelligenceScenario[] = [
           { text: ', ', color: PI_C.structural },
           { text: 'lonely', color: PI_C.atmosphere },
           { text: ', ', color: PI_C.structural },
-          { text: 'best quality, score_9', color: PI_C.fidelity },
+          { text: '(8K detailed:1.1)', color: PI_C.fidelity },
         ],
       },
       {
@@ -3297,14 +3295,14 @@ const INTELLIGENCE_SCENARIOS: IntelligenceScenario[] = [
       },
     ],
   },
-  // Scenario 5: Robot in Cyberpunk — CLIP (NightCafe) vs MJ vs GPT-4 (DALL·E 3)
+  // Scenario 5: Robot in Cyberpunk — CLIP (Leonardo) vs MJ vs GPT-4 (DALL·E 3)
   {
     name: 'Lonely Robot',
     humanSentence: 'Robot sitting alone on a bench reading a newspaper in a rainy cyberpunk city at night, neon signs reflecting in the puddles, cinematic and melancholy',
     platforms: [
       {
-        id: 'nightcafe',
-        name: 'NightCafe',
+        id: 'leonardo',
+        name: 'Leonardo AI',
         segments: [
           { text: '(', color: PI_C.structural },
           { text: 'robot', color: PI_C.subject },
@@ -3474,7 +3472,7 @@ function IntelligencePreviewPanel() {
           className="italic text-amber-400/80 animate-pulse text-center font-semibold"
           style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.95rem)' }}
         >
-          Type it once — translated for 45 platforms
+          Type it once — translated for 40 platforms
         </p>
       </div>
 
@@ -3623,7 +3621,7 @@ function IntelligencePreviewPanel() {
         </div>
       </div>
 
-      {/* ── Scrolling ticker ribbon — all 45 platform icons ── */}
+      {/* ── Scrolling ticker ribbon — all 40 platform icons ── */}
       <div
         className="shrink-0 overflow-hidden rounded-lg"
         style={{
@@ -3688,7 +3686,7 @@ function IntelligencePreviewPanel() {
           className="text-amber-400 font-semibold"
           style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}
         >
-          1 sentence → 45 platforms · 4 encoders · 17 algorithms
+          1 sentence → 40 platforms · 4 encoders · 17 algorithms
         </span>
       </div>
     </div>

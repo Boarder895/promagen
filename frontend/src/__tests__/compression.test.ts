@@ -28,7 +28,7 @@ import {
   getCompressionStats,
   SHORTHAND_LEVELS,
   hasShorthandLevel,
-} from '@/data/compression';
+} from '@/data/providers/compression-utils';
 
 import type { CompressionTier } from '@/types/compression';
 
@@ -105,9 +105,9 @@ describe('Platform Support Matrix Integrity', () => {
     expect(platformSupport.version).toMatch(/^\d+\.\d+\.\d+$/);
   });
 
-  it('should have 41 platforms', () => {
+  it('should have 40 platforms', () => {
     const platformCount = Object.keys(platformSupport.platforms).length;
-    expect(platformCount).toBe(41);
+    expect(platformCount).toBe(40);
   });
 
   it('should have all 4 tiers defined', () => {
@@ -148,11 +148,11 @@ describe('Platform Support Matrix Integrity', () => {
     }
   });
 
-  it('should have Canva in tier 4', () => {
+  it('should have Canva in tier 3', () => {
     const config = platformSupport.platforms['canva'];
     expect(config).toBeDefined();
     if (config) {
-      expect(config.tier).toBe(4);
+      expect(config.tier).toBe(3);
     }
   });
 
@@ -227,7 +227,7 @@ describe('compressPrompt Function', () => {
     expect(compressPrompt('test', 'stability').tier).toBe(1);
     expect(compressPrompt('test', 'midjourney').tier).toBe(2);
     expect(compressPrompt('test', 'openai').tier).toBe(3);
-    expect(compressPrompt('test', 'canva').tier).toBe(4);
+    expect(compressPrompt('test', 'canva').tier).toBe(3);
   });
 
   it('should default to tier 4 for unknown platforms', () => {
@@ -365,14 +365,14 @@ describe('Tier-Specific Behavior', () => {
     expect(result.tier).toBe(3);
   });
 
-  it('should return tier 4 for consumer platforms', () => {
+  it('should return tier 3 for canva (Leonardo Phoenix)', () => {
     const result = compressPrompt('test prompt', 'canva');
-    expect(result.tier).toBe(4);
+    expect(result.tier).toBe(3);
   });
 
   it('should not modify tier 4 prompts excessively', () => {
     const input = 'black and white portrait';
-    const result = compressPrompt(input, 'canva');
+    const result = compressPrompt(input, 'craiyon');
     expect(result.compressed).toBe(input);
   });
 });
@@ -519,7 +519,7 @@ describe('Utility Functions', () => {
     expect(getPlatformTier('stability')).toBe(1);
     expect(getPlatformTier('midjourney')).toBe(2);
     expect(getPlatformTier('openai')).toBe(3);
-    expect(getPlatformTier('canva')).toBe(4);
+    expect(getPlatformTier('canva')).toBe(3);
   });
 
   it('getPlatformTier should return 4 for unknown platforms', () => {
@@ -546,7 +546,7 @@ describe('Utility Functions', () => {
   it('getSupportedPlatforms should return array of platforms', () => {
     const platforms = getSupportedPlatforms();
     expect(Array.isArray(platforms)).toBe(true);
-    expect(platforms.length).toBe(41);
+    expect(platforms.length).toBe(40);
     expect(platforms.some((p) => p.id === 'stability')).toBe(true);
     expect(platforms.some((p) => p.id === 'midjourney')).toBe(true);
   });
@@ -554,33 +554,35 @@ describe('Utility Functions', () => {
   it('getCompressionStats should return valid stats', () => {
     const stats = getCompressionStats();
     expect(stats.totalMappings).toBeGreaterThan(4000);
-    expect(stats.platforms).toBe(41);
+    expect(stats.platforms).toBe(40);
     expect(stats.tiers).toBe(4);
     expect(stats.fillerTerms).toBe(150);
     expect(stats.redundancyPatterns).toBeGreaterThanOrEqual(100);
   });
 
-  it('getAllPlatformIds should return 41 IDs', () => {
+  it('getAllPlatformIds should return 40 IDs', () => {
     const ids = getAllPlatformIds();
-    expect(ids.length).toBe(41);
+    expect(ids.length).toBe(40);
   });
 
   it('getPlatformsByTier should return correct platforms', () => {
     const tier1 = getPlatformsByTier(1);
     expect(tier1).toContain('stability');
     expect(tier1).toContain('leonardo');
-    expect(tier1.length).toBeGreaterThanOrEqual(13);
+    expect(tier1).toContain('fotor');
+    expect(tier1.length).toBeGreaterThanOrEqual(7);
 
     const tier2 = getPlatformsByTier(2);
     expect(tier2).toContain('midjourney');
-    expect(tier2).toContain('bluewillow');
 
     const tier3 = getPlatformsByTier(3);
     expect(tier3).toContain('openai');
     expect(tier3).toContain('flux');
+    expect(tier3).toContain('canva');
 
     const tier4 = getPlatformsByTier(4);
-    expect(tier4).toContain('canva');
+    expect(tier4).toContain('bluewillow');
+    expect(tier4).toContain('craiyon');
     expect(tier4.length).toBeGreaterThanOrEqual(15);
   });
 
@@ -628,7 +630,7 @@ describe('analyzeCompression', () => {
     expect(analyzeCompression('test', 'stability').tier).toBe(1);
     expect(analyzeCompression('test', 'midjourney').tier).toBe(2);
     expect(analyzeCompression('test', 'openai').tier).toBe(3);
-    expect(analyzeCompression('test', 'canva').tier).toBe(4);
+    expect(analyzeCompression('test', 'canva').tier).toBe(3);
   });
 
   it('should handle empty input', () => {

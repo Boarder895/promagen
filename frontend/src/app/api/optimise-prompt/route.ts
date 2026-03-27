@@ -24,7 +24,7 @@ import { z } from "zod";
 
 import { env } from "@/lib/env";
 import { rateLimit } from "@/lib/rate-limit";
-import { enforceT1Syntax } from "@/lib/harmony-compliance";
+import { enforceT1Syntax, enforceNegativeContradiction } from "@/lib/harmony-compliance";
 import type { ComplianceContext } from "@/lib/harmony-compliance";
 import { resolveGroupPrompt } from "@/lib/optimise-prompts";
 import { getProviderGroup } from "@/lib/optimise-prompts/platform-groups";
@@ -178,18 +178,30 @@ export async function POST(req: NextRequest): Promise<Response> {
     parsed.data.providerContext,
   );
 
-  // ── Detect NL group for special handling ─────────────────────────────
+  // ── Detect prose-based groups for primary-input flipping ─────────────
   const providerGroup = getProviderGroup(parsed.data.providerId);
-  const isNlGroup = providerGroup === "clean-natural-language";
+  // These groups read PROSE, not CLIP tags. The original human sentence
+  // is the better primary input — the assembled T1 prompt has already
+  // lost anchors through compression. Flipping prevents GPT's
+  // "optimise = compress" instinct.
+  const proseGroups = new Set([
+    "clean-natural-language",
+    "recraft",
+    "ideogram",
+    "dalle-api",
+    "flux-architecture",
+    "video-cinematic",
+  ]);
+  const isProseGroup = proseGroups.has(providerGroup ?? "");
 
   // ── Build user message ──────────────────────────────────────────────
-  // NL group: flip the framing — original sentence is the PRIMARY input
-  // ("write the best version of this scene"), T3 is reference material.
-  // This prevents GPT's "optimise = compress" instinct.
-  // All other groups: assembled prompt is primary, original is reference.
+  // Prose groups: flip the framing — original sentence is the PRIMARY input
+  // ("write the best version of this scene"), assembled is reference material.
+  // This prevents GPT from compressing an already-compressed input.
+  // CLIP groups: assembled prompt is primary (it has correct syntax/weights).
   let userMessage: string;
-  if (isNlGroup && sanitisedOriginal) {
-    userMessage = `SCENE DESCRIPTION TO OPTIMISE FOR ${parsed.data.providerContext.name.toUpperCase()}:\n${sanitisedOriginal}\n\nREFERENCE DRAFT (natural language version — use as structural starting point, but enrich with ALL details from the scene description above):\n${sanitisedPrompt}`;
+  if (isProseGroup && sanitisedOriginal) {
+    userMessage = `SCENE DESCRIPTION TO OPTIMISE FOR ${parsed.data.providerContext.name.toUpperCase()}:\n${sanitisedOriginal}\n\nREFERENCE DRAFT (use as structural starting point, but enrich with ALL details from the scene description above):\n${sanitisedPrompt}`;
   } else if (sanitisedOriginal) {
     userMessage = `ASSEMBLED PROMPT TO OPTIMISE:\n${sanitisedPrompt}\n\nORIGINAL USER DESCRIPTION (for intent reference):\n${sanitisedOriginal}`;
   } else {
@@ -208,7 +220,7 @@ export async function POST(req: NextRequest): Promise<Response> {
         },
         body: JSON.stringify({
           model: "gpt-5.4-mini",
-          temperature: 0.2,
+          temperature: isProseGroup ? 0.4 : 0.2,
           max_completion_tokens: 1200,
           response_format: { type: "json_object" },
           messages: [
@@ -297,6 +309,24 @@ export async function POST(req: NextRequest): Promise<Response> {
       }
     }
 
+    // Step 1.5: Negative-positive contradiction guard
+    // Strips terms from the negative that also appear in the positive.
+    // A term in both confuses the CLIP encoder.
+    if (result.negative) {
+      const contradictionResult = enforceNegativeContradiction(
+        result.optimised,
+        result.negative,
+      );
+      if (contradictionResult.wasFixed) {
+        result.negative = contradictionResult.negative;
+        result.changes = [...result.changes, ...contradictionResult.fixes];
+        console.debug(
+          "[optimise-prompt] Contradiction fix:",
+          contradictionResult.fixes.join("; "),
+        );
+      }
+    }
+
     // Step 2: Generic syntax enforcement (always runs as safety net)
     const compCtx: ComplianceContext = {
       weightingSyntax: parsed.data.providerContext.weightingSyntax,
@@ -315,6 +345,9 @@ export async function POST(req: NextRequest): Promise<Response> {
         syntaxResult.fixes.join("; "),
       );
     }
+
+    // ── Always measure actual charCount — GPT self-reports are unreliable ──
+    result.charCount = result.optimised.length;
 
     // ── Return compliance-gated optimised prompt ─────────────────────
     return NextResponse.json(

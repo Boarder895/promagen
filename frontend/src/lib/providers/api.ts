@@ -41,8 +41,13 @@ function parseProviders(): Provider[] {
 
   const parsed = ProvidersSchema.parse(rawProviders) as ParsedProvider[];
 
+  // Filter out archived providers (removed multi-engine aggregators)
+  const active = parsed.filter(
+    (p) => !(p as Record<string, unknown>).archived,
+  );
+
   // Sort: highest score first; stable tie-breakers.
-  const sorted = [...parsed].sort((a, b) => {
+  const sorted = [...active].sort((a, b) => {
     const as = typeof a.score === 'number' ? a.score : -Infinity;
     const bs = typeof b.score === 'number' ? b.score : -Infinity;
 

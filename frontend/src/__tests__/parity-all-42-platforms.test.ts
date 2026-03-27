@@ -282,7 +282,7 @@ describe('Platform config completeness', () => {
     for (const tier of [1, 2, 3, 4] as const) {
       allPlatforms.push(...TIER_PLATFORMS[tier]);
     }
-    expect(allPlatforms.length).toBe(42);
+    expect(allPlatforms.length).toBe(40);
     for (const pid of allPlatforms) {
       // Verify explicit config exists (not falling back to _defaults)
       expect(pid in platformFormats.platforms).toBe(true);
@@ -529,11 +529,7 @@ describe('Regression: previously-fixed bugs', () => {
     expect((fmt.categoryOrder as string[]).length).toBeGreaterThanOrEqual(10);
   });
 
-  it('getimg: has materials + composition (was 78% bug)', () => {
-    const cats = getPlatformFormat('getimg').categoryOrder as string[];
-    expect(cats).toContain('materials');
-    expect(cats).toContain('composition');
-  });
+  // getimg removed — multi-engine aggregator (v6.0.0 deep research audit)
 
   it('stability: sweetSpot ≥ 70 (was 50, truncating composition)', () => {
     expect(getPlatformFormat('stability').sweetSpot).toBeGreaterThanOrEqual(70);
@@ -590,12 +586,14 @@ describe('Regression: previously-fixed bugs', () => {
     }
   });
 
-  it('all 11 new T4 platforms have explicit configs (was fallback bug)', () => {
-    const newT4 = [
-      'artbreeder', 'freepik', 'myedit', 'photoleap', 'picwish',
-      'pixlr', 'remove-bg', 'simplified', 'visme', 'vistacreate', '123rf',
+  // v6.0.0: Updated after deep research audit. freepik removed (aggregator).
+  // artbreeder, pixlr, simplified moved to T3. remove-bg not a generation platform.
+  it('T4 platforms have explicit configs (was fallback bug)', () => {
+    const t4Platforms = [
+      'myedit', 'photoleap', 'picwish',
+      'visme', 'vistacreate', '123rf',
     ];
-    for (const pid of newT4) {
+    for (const pid of t4Platforms) {
       const fmt = getPlatformFormat(pid);
       // Verify explicit config exists (not falling back to _defaults)
       expect(pid in platformFormats.platforms).toBe(true);
@@ -652,9 +650,9 @@ describe('42-platform parity summary', () => {
       }
     }
     rows.push('');
-    rows.push(`TOTAL: ${totalPassed}/42 ≥ 95%`);
+    rows.push(`TOTAL: ${totalPassed}/40 ≥ 95%`);
      
     console.log('\n' + rows.join('\n') + '\n');
-    expect(totalPassed).toBe(42);
+    expect(totalPassed).toBe(40);
   });
 });

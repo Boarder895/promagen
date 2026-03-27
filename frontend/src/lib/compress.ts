@@ -39,7 +39,6 @@ import type {
   CompressionPassResult,
   CompressionOptions,
   CompressionDictionary,
-  PlatformSupportMatrix,
   PlatformConfig,
   RedundancyPattern,
   MappingCategory,
@@ -56,12 +55,12 @@ import {
 } from '@/types/compression';
 
 // Import data
-import compressionDictionary from '@/data/compression/compression-dictionary.json';
-import platformSupport from '@/data/compression/platform-support.json';
+import compressionDictionary from '@/data/providers/compression-dictionary.json';
+import { PLATFORM_SUPPORT_DERIVED, PROMPT_LIMITS_DERIVED } from '@/data/providers/platform-config';
 
 // Type assertions for imported JSON
 const dictionary = compressionDictionary as unknown as CompressionDictionary;
-const platforms = platformSupport as unknown as PlatformSupportMatrix;
+const platforms = PLATFORM_SUPPORT_DERIVED;
 
 // ============================================================================
 // PLATFORM DETECTION
@@ -966,10 +965,8 @@ function cleanWhitespace(text: string): string {
  * Falls back to 350 if platform not found.
  */
 function getTargetLength(platformId: string): number {
-  // Import prompt limits dynamically to avoid circular dependency
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const promptLimits = require('@/data/providers/prompt-limits.json');
-  const providers = promptLimits.providers as Record<
+  // Use SSOT adapter — no dynamic require needed
+  const providers = PROMPT_LIMITS_DERIVED.providers as Record<
     string,
     { idealMin: number; idealMax: number }
   >;

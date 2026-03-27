@@ -787,6 +787,23 @@ export default function EnhancedEducationalPreview({
   const humanTextRef = useRef(humanText ?? '');
   humanTextRef.current = humanText ?? '';
 
+  // ── Clear stale Call 3 when Call 2 returns new content ─────────────
+  // Without this, Call 3 fires with stale template text BEFORE Call 2
+  // returns, then the re-fire guard blocks Call 3 from running again
+  // with the correct Call 2 text. Clearing the stale result allows
+  // the useEffect below to re-fire Call 3 with the right input.
+  const prevAiTierForCall3Ref = useRef(aiTierPrompts);
+  useEffect(() => {
+    if (aiTierPrompts && aiTierPrompts !== prevAiTierForCall3Ref.current) {
+      prevAiTierForCall3Ref.current = aiTierPrompts;
+      // Call 2 just returned new content — clear stale Call 3 result
+      // so the re-fire guard at line below doesn't block
+      if (isOptimizerEnabled) {
+        clearAiOptimise();
+      }
+    }
+  }, [aiTierPrompts, isOptimizerEnabled, clearAiOptimise]);
+
   useEffect(() => {
     const wasEnabled = prevOptimizerEnabledRef.current;
     const prevText = prevPromptTextRef.current;
@@ -830,8 +847,11 @@ export default function EnhancedEducationalPreview({
   // Effective optimised values: AI result takes priority over client-side
   const effectiveOptimisedText = aiOptimiseResult?.optimised ?? optimizedResult.optimized;
   const effectiveOptimisedLength = aiOptimiseResult?.charCount ?? optimizedResult.optimizedLength;
+  // Show the optimized section when EITHER:
+  // - Call 3 returned ANY result (enrichment OR compression — both are transformations)
+  // - Local optimizer trimmed the prompt (compression only)
   const effectiveWasOptimized = aiOptimiseResult
-    ? effectiveOptimisedLength < optimizedResult.originalLength
+    ? aiOptimiseResult.optimised !== activeTierPromptText
     : wasOptimized;
 
   // ── Optimised prompt typewriter (Call 3) ────────────────────────────
@@ -1281,12 +1301,16 @@ export default function EnhancedEducationalPreview({
                   <>
                     <div className="rounded-lg border border-amber-900/50 bg-amber-950/30 px-3 py-2">
                       <div className="flex items-center gap-2">
-                        <span className="text-amber-400">↓</span>
+                        <span className="text-amber-400">{effectiveOptimisedLength <= optimizedResult.originalLength ? '↓' : '↑'}</span>
                         <span className="text-xs text-amber-200">
                           <span className="font-medium">Optimized:</span>{' '}
                           {optimizedResult.originalLength} → {effectiveOptimisedLength} chars{' '}
                           <span className="text-amber-300">
-                            (saved {optimizedResult.originalLength - effectiveOptimisedLength})
+                            {effectiveOptimisedLength < optimizedResult.originalLength
+                              ? `(saved ${optimizedResult.originalLength - effectiveOptimisedLength})`
+                              : effectiveOptimisedLength > optimizedResult.originalLength
+                                ? `(enriched +${effectiveOptimisedLength - optimizedResult.originalLength})`
+                                : '(rewritten)'}
                           </span>
                         </span>
                       </div>

@@ -40,7 +40,7 @@ import {
   getCategoryLimitsForPlatformTier,
   DEFAULT_PLATFORM_TIER,
 } from '@/lib/usage';
-import { getPlatformConfiguration } from '@/data/compression';
+import { getPlatformConfiguration } from '@/data/providers/compression-utils';
 import type { CompressionTier } from '@/types/compression';
 import {
   type ReferenceFrame,

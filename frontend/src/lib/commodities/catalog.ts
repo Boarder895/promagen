@@ -7,20 +7,22 @@
 //
 // Authority: Compacted conversation 2026-02-03 (commodities movers grid)
 
-import commoditiesJson from '@/data/commodities/commodities.catalog.json';
-import paidSelectedJson from '@/data/commodities/commodities.paid.selected.json';
+import commoditiesJson from "@/data/commodities/commodities.catalog.json";
+import paidSelectedJson from "@/data/commodities/commodities.paid.selected.json";
 import type {
   Commodity,
   CommoditiesCatalog,
   CommodityGroup,
   CommoditySubGroup,
-} from '@/data/commodities/commodities.catalog';
+} from "@/data/commodities/commodities.schema";
 
 type SelectedList = { ids: string[] };
 
 // Canonical in-memory catalogue.
 const ALL_COMMODITIES_INTERNAL = commoditiesJson as CommoditiesCatalog;
-const BY_ID = new Map<string, Commodity>(ALL_COMMODITIES_INTERNAL.map((c) => [c.id, c]));
+const BY_ID = new Map<string, Commodity>(
+  ALL_COMMODITIES_INTERNAL.map((c) => [c.id, c]),
+);
 
 function resolveSelected(ids: string[], label: string): Commodity[] {
   const out: Commodity[] = [];
@@ -38,7 +40,7 @@ function resolveSelected(ids: string[], label: string): Commodity[] {
   if (missing.length > 0) {
     throw new Error(
       `commodities SSOT integrity error: ${label} contains ids not present/active in commodities.catalog.json: ${missing.join(
-        ', ',
+        ", ",
       )}`,
     );
   }
@@ -79,7 +81,7 @@ export function getDefaultFreeCommodities(): Commodity[] {
  */
 export function getDefaultPaidCommodities(): Commodity[] {
   const ids = (paidSelectedJson as SelectedList).ids;
-  return resolveSelected(ids, 'commodities.paid.selected.json');
+  return resolveSelected(ids, "commodities.paid.selected.json");
 }
 
 /**
@@ -92,7 +94,9 @@ export function getCommoditiesByGroup(group: CommodityGroup): Commodity[] {
 /**
  * Filter active commodities by more detailed subgroup (e.g. "precious", "grains").
  */
-export function getCommoditiesBySubGroup(subGroup: CommoditySubGroup): Commodity[] {
+export function getCommoditiesBySubGroup(
+  subGroup: CommoditySubGroup,
+): Commodity[] {
   return getActiveCommodities().filter((item) => item.subGroup === subGroup);
 }
 
@@ -107,4 +111,9 @@ export function getCommodityById(id: string): Commodity | undefined {
 export const ALL_COMMODITIES: CommoditiesCatalog = ALL_COMMODITIES_INTERNAL;
 
 // Type re-exports so callers do not need to know about the .d.ts path.
-export type { Commodity, CommoditiesCatalog, CommodityGroup, CommoditySubGroup };
+export type {
+  Commodity,
+  CommoditiesCatalog,
+  CommodityGroup,
+  CommoditySubGroup,
+};

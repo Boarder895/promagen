@@ -1,8 +1,12 @@
-// src/data/compression/index.ts
+// src/data/providers/compression-utils.ts
 // ============================================================================
-// COMPRESSION DATA EXPORTS v2.1.0
+// COMPRESSION UTILITIES v2.2.0
 // ============================================================================
-// Centralized exports for compression dictionary and platform support matrix.
+// Compression dictionary operations + platform support lookups.
+// Moved from src/data/compression/index.ts — single folder for all provider data.
+//
+// Dictionary: compression-dictionary.json (5,271 shorthand mappings)
+// Platform config: reads from platform-config.json SSOT via adapter
 //
 // NEW in v2.0.0:
 // - abbreviations: Tier-specific abbreviation mappings
@@ -17,7 +21,7 @@
 // ============================================================================
 
 import compressionDictionaryData from './compression-dictionary.json';
-import platformSupportData from './platform-support.json';
+import { PLATFORM_SUPPORT_DERIVED } from '@/data/providers/platform-config';
 
 import type {
   CompressionDictionary,
@@ -35,7 +39,7 @@ import type {
 
 // Type assertions
 export const compressionDictionary = compressionDictionaryData as unknown as CompressionDictionary;
-export const platformSupport = platformSupportData as unknown as PlatformSupportMatrix;
+export const platformSupport: PlatformSupportMatrix = PLATFORM_SUPPORT_DERIVED;
 
 // ============================================================================
 // UTILITY FUNCTIONS

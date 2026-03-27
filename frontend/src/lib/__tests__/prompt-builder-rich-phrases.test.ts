@@ -232,7 +232,7 @@ describe('assembleNaturalSentences (Tier 3) with rich phrases', () => {
 // ============================================================================
 
 describe('assemblePlainLanguage (Tier 4) with rich phrases', () => {
-  const canvaId = 'canva';
+  const t4Id = 'craiyon'; // canva moved to T3 (v6.0.0)
 
   it('simplifies rich phrases to first 3 words', () => {
     const selections: PromptSelections = {
@@ -240,7 +240,7 @@ describe('assemblePlainLanguage (Tier 4) with rich phrases', () => {
       lighting: ['Cool white moonlight competing with focused accent lighting'],
     };
 
-    const result = assemblePrompt(canvaId, selections);
+    const result = assemblePrompt(t4Id, selections);
 
     // Rich phrase should be simplified
     expect(result.positive).toContain('Cool white moonlight');
@@ -254,7 +254,7 @@ describe('assemblePlainLanguage (Tier 4) with rich phrases', () => {
       lighting: ['moonlight'],
     };
 
-    const result = assemblePrompt(canvaId, selections);
+    const result = assemblePrompt(t4Id, selections);
     expect(result.positive).toContain('moonlight');
   });
 });
@@ -281,8 +281,8 @@ describe('backward compatibility (no regression)', () => {
     const openai = assemblePrompt('openai', selections);
     expect(openai.positive).toContain('Samurai warrior');
 
-    const canva = assemblePrompt('canva', selections);
-    expect(canva.positive).toContain('samurai warrior');
+    const craiyon = assemblePrompt('craiyon', selections);
+    expect(craiyon.positive).toContain('samurai warrior');
   });
 
   it('negative handling still works for separate-field platforms', () => {

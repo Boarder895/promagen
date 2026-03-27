@@ -47,7 +47,7 @@ import { compressPrompt } from '@/lib/compress';
 import type { CompressionResult, CompressionOptions } from '@/types/compression';
 
 // Import prompt limits data
-import promptLimitsData from '@/data/providers/prompt-limits.json';
+import { PROMPT_LIMITS_DERIVED } from '@/data/providers/platform-config';
 
 // ============================================================================
 // DATA ACCESS
@@ -78,7 +78,7 @@ export function getPromptLimit(platformId: string): PromptLimit {
   }
 
   // Look up in data
-  const providers = promptLimitsData.providers as Record<string, PromptLimit>;
+  const providers = PROMPT_LIMITS_DERIVED.providers as Record<string, PromptLimit>;
   const limit = providers[normalizedId];
 
   if (limit) {
@@ -96,7 +96,7 @@ export function getPromptLimit(platformId: string): PromptLimit {
 export function hasPromptLimit(platformId: string): boolean {
   if (!platformId || typeof platformId !== 'string') return false;
   const normalizedId = platformId.toLowerCase().trim();
-  const providers = promptLimitsData.providers as Record<string, unknown>;
+  const providers = PROMPT_LIMITS_DERIVED.providers as Record<string, unknown>;
   return normalizedId in providers;
 }
 

@@ -1,5 +1,0 @@
-{
-  "asOfSelector": "[data-asof], [data-as-of], text=/as[- ]?of/i",
-  "liveRegionSelector": "[aria-live=\"polite\"]",
-  "deltaSelector": "[data-delta]"
-}

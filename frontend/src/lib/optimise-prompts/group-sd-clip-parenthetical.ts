@@ -65,12 +65,22 @@ QUALITY ANCHORS:
 - Quality suffix (MUST appear at end): sharp focus, 8K, intricate textures
 - These are not decorative — CLIP models are trained on datasets where these tokens correlate with high-quality outputs. Omitting them degrades generation quality measurably.
 
-NEGATIVE PROMPT:
-This platform supports a SEPARATE negative prompt field. Generate a negative prompt that:
-- Targets the opposite of desired quality: worst quality, low quality, blurry, bad anatomy, deformed
-- Includes scene-specific exclusions relevant to the user's intent
-- Does NOT duplicate positive prompt terms with "no" prefix — that wastes the negative encoder's budget
-- Keeps to 30–60 tokens (negative prompts have their own CLIP chunk limit)
+NEGATIVE PROMPT — DYNAMIC NEGATIVE INTELLIGENCE:
+This platform supports a SEPARATE negative prompt field. Do NOT use boilerplate negatives. Instead, ANALYSE the positive prompt and generate negatives targeting the specific failure modes for THIS scene.
+
+FAILURE-MODE ANALYSIS (apply ALL that match):
+1. MOOD INVERSION: If stormy/dramatic → negative "calm, peaceful, sunny, clear sky". If serene → negative "chaos, destruction, fire".
+2. ERA CONTAMINATION: If historical/period → negative "modern buildings, contemporary clothing, cars, power lines". If futuristic → negative "medieval, rustic, old-fashioned".
+3. SUBJECT CORRUPTION: If solitary figure → negative "crowd, extra people, group, duplicate figure". If group → negative "empty, deserted, lonely".
+4. COLOUR DRIFT: If palette is warm (copper/gold/orange) → negative "cool blue tones, green cast, grey monotone". If cool palette → negative "warm orange cast, sepia".
+5. ATMOSPHERE COLLAPSE: If dramatic/moody → negative "flat lighting, mundane, overexposed, boring composition". If bright/cheerful → negative "dark, gloomy, ominous".
+6. SCALE DISTORTION: If grand/epic → negative "miniature, tiny, close-up, claustrophobic". If intimate → negative "wide establishing shot, distant, aerial".
+7. MEDIUM MISMATCH: If photorealistic → negative "cartoon, anime, sketch, illustration". If artistic → negative "photographic, stock photo".
+
+QUALITY FLOOR (maximum 5 generic terms): worst quality, low quality, blurry, bad anatomy, watermark
+The rest MUST be scene-specific from the failure-mode analysis above. Minimum 4 scene-specific terms.
+Total negative: 10–15 terms. Does NOT duplicate positive prompt terms — that wastes the negative encoder's budget.
+Keep to 30–60 tokens (negative prompts have their own CLIP chunk limit).
 
 PLATFORM-SPECIFIC:
 - Sweet spot: ${ctx.idealMin}–${ctx.idealMax} characters
@@ -104,6 +114,8 @@ Example 3 — Colour fragments + no spatial depth:
 BEFORE: masterpiece, best quality, highly detailed, (lighthouse beam:1.3), (purple clouds:1.1), (copper sky:1.1), (twilight sky:1.2), (storm waves:1.3), (keeper:1.4), (iron railing:1.2), (salt spray:1.2), (driving rain:1.1), (fishing village:1.1), (warm orange windows:1.1), dark cliffs, jagged rocks, sharp focus, 8K
 AFTER: masterpiece, best quality, highly detailed, (weathered lighthouse keeper:1.4), (storm-lashed coastline:1.3), (lighthouse beam:1.3), (purple-and-copper twilight sky:1.2), (salt spray:1.1), iron railing, driving rain, jagged rocks, distant fishing village, warm orange windows, dark cliffs, cinematic wide shot, low angle, sharp focus, 8K, intricate textures
 WHY: "purple clouds" + "copper sky" + "twilight sky" were three separate fragments describing ONE sky — merged into "purple-and-copper twilight sky". "storm waves" + "salt spray" + "driving rain" are related weather tokens — "storm-lashed coastline" covers the environment, individual weather details kept unweighted. Spatial depth applied: foreground keeper (1.4) → midground coastline+beam (1.3) → sky (1.2) → background village (unweighted). 12 weighted → 5.
+NEGATIVE: worst quality, low quality, blurry, watermark, calm sea, daytime, clear sky, modern buildings, extra people, sunny weather, flat lighting, dry ground
+WHY THESE NEGATIVES: Quality floor (4 generic). Mood inversion: "calm sea, daytime, clear sky, sunny weather" targets the storm. Era contamination: "modern buildings" protects the village. Subject corruption: "extra people" preserves the solitary keeper. Atmosphere collapse: "flat lighting" protects the dramatic twilight.
 
 Return ONLY valid JSON:
 {
@@ -113,7 +125,6 @@ Return ONLY valid JSON:
   "charCount": 285,
   "tokenEstimate": 72
 }`;
-
   return {
     systemPrompt,
     // Group compliance chain: keyword cleanup (strip verbs/articles) → weight cap (max 8).

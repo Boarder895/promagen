@@ -35,9 +35,10 @@ const baseMeta: WeatherCategoryMeta = {
 // ============================================================================
 
 describe('Fix A: SD family qualityPrefix consistency', () => {
+  // v6.0.0: nightcafe, getimg, openart removed (multi-engine aggregators)
+  // artguru, clipdrop, playground moved out of T1 (no exposed SD syntax)
   const sdPlatforms = [
-    'stability', 'dreamstudio', 'lexica', 'playground', 'nightcafe',
-    'getimg', 'openart', 'jasper-art', 'artguru', 'leonardo', 'dreamlike',
+    'stability', 'dreamstudio', 'lexica', 'fotor', 'leonardo', 'dreamlike',
   ];
 
   const standardPrefix = ['masterpiece', 'best quality', 'highly detailed'];

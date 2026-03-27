@@ -4,7 +4,7 @@
 import providersJson from './providers.json';
 import capabilitiesJson from './providers.capabilities.json';
 import promptOptionsJson from './prompt-options.json';
-import platformFormatsJson from './platform-formats.json';
+import { PLATFORM_FORMATS_DERIVED } from './platform-config';
 import type { Provider } from '@/types/providers';
 import type { PromptOptions, PlatformFormats } from '@/types/prompt-builder';
 
@@ -84,9 +84,9 @@ export const getProviderCapabilities = (id: string): ProviderCapabilityFlags =>
 export const PROMPT_OPTIONS = promptOptionsJson as PromptOptions;
 
 /**
- * Platform formats: assembly rules per platform
+ * Platform formats: assembly rules per platform — derived from platform-config.json SSOT
  */
-export const PLATFORM_FORMATS = platformFormatsJson as PlatformFormats;
+export const PLATFORM_FORMATS: PlatformFormats = PLATFORM_FORMATS_DERIVED;
 
 /**
  * Get all available prompt categories

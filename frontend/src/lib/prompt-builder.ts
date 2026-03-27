@@ -33,7 +33,6 @@ import type {
   AssembledPrompt,
   ConversionResultMeta,
   PlatformFormat,
-  PlatformFormats,
   PromptOptions,
 } from '@/types/prompt-builder';
 
@@ -94,7 +93,7 @@ import { getPlatformTierId } from '@/data/platform-tiers';
 import type { PlatformTierId } from '@/data/platform-tiers';
 
 import promptOptionsData from '@/data/providers/prompt-options.json';
-import platformFormatsData from '@/data/providers/platform-formats.json';
+import { PLATFORM_FORMATS_DERIVED } from '@/data/providers/platform-config';
 
 // Vocabulary loader for enhanced options and intelligent suggestions
 import {
@@ -109,7 +108,7 @@ import {
 
 // Type assertions for JSON imports
 const promptOptions = promptOptionsData as PromptOptions;
-const platformFormats = platformFormatsData as PlatformFormats;
+const platformFormats = PLATFORM_FORMATS_DERIVED;
 
 // ============================================================================
 // Enhanced Category Config Types (Vocabulary Integration)

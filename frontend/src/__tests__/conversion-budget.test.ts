@@ -71,7 +71,6 @@ describe('Conversion Budget Calculator', () => {
     it('should return correct values', () => {
       expect(getStaticCeiling('midjourney')).toBe(30);
       expect(getStaticCeiling('flux')).toBe(80);
-      expect(getStaticCeiling('tensor-art')).toBe(58);
       expect(getStaticCeiling('leonardo')).toBe(154);
     });
 
@@ -85,8 +84,8 @@ describe('Conversion Budget Calculator', () => {
       expect(getClipTokenCeiling('stability')).toBe(77);
     });
 
-    it('should return 75 for tensor-art', () => {
-      expect(getClipTokenCeiling('tensor-art')).toBe(75);
+    it('should return 77 for fotor (now T1)', () => {
+      expect(getClipTokenCeiling('fotor')).toBe(77);
     });
 
     it('should return null for non-Tier-1', () => {

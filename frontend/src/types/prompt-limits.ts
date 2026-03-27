@@ -28,7 +28,7 @@ export type ImpactCategory = 'high' | 'moderate' | 'low';
  * - 'proprietary': Unknown/custom architecture (Midjourney)
  * - 'unknown': Insufficient data to classify
  */
-export type ModelArchitecture = 'clip-based' | 'transformer' | 'proprietary' | 'unknown';
+export type ModelArchitecture = 'clip-based' | 'natural-language' | 'transformer' | 'proprietary' | 'unknown';
 
 /**
  * Current prompt length status relative to platform ideal.
@@ -235,7 +235,7 @@ export function isValidPromptLimit(obj: unknown): obj is PromptLimit {
   const validImpactCategories = ['high', 'moderate', 'low'];
   if (!validImpactCategories.includes(candidate.impactCategory as string)) return false;
 
-  const validArchitectures = ['clip-based', 'transformer', 'proprietary', 'unknown'];
+  const validArchitectures = ['clip-based', 'natural-language', 'transformer', 'proprietary', 'unknown'];
   if (!validArchitectures.includes(candidate.architecture as string)) return false;
 
   // Array field

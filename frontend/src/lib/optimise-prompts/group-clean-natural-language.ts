@@ -2,13 +2,14 @@
 // ============================================================================
 // GROUP BUILDER: Clean Natural Language — no weights, no negatives
 // ============================================================================
-// Covers 21 platforms that accept plain descriptive English with zero
+// Covers 25 platforms that accept plain descriptive English with zero
 // special syntax. No parenthetical weights, no double-colon, no --flags.
 //
 // Platforms: bing, google-imagen, imagine-meta, canva, adobe-firefly,
-//            jasper-art, craiyon, fotor, hotpot, simplified, picsart,
+//            jasper-art, craiyon, hotpot, simplified, picsart,
 //            visme, vistacreate, 123rf, myedit, picwish, artbreeder,
-//            photoleap, pixlr, deepai, microsoft-designer
+//            photoleap, pixlr, deepai, microsoft-designer,
+//            artguru, artistly, clipdrop, playground, bluewillow
 //
 // Architecture knowledge:
 //   - NL encoders read prose holistically, not as token lists
@@ -26,15 +27,22 @@
 //   - Example 1: shows over-simplified draft + original → enriched output
 //   - Sweet spot: never sacrifice drama to shorten (idealMax 350)
 //
-// v4 changes (26 Mar 2026):
-//   - idealMin/idealMax floored at 150/350 regardless of platform-limits.json
-//     (Canva's 50/200 was strangling GPT — prompt too short for enrichment)
-//   - Call 3 now receives T3 (Natural Language) text for T4 NL platforms,
-//     giving GPT richer input to enrich against the original description
+// v5 changes (26 Mar 2026):
+//   - TASK CHECKLIST PRESSURE: Replaced 10 vague rules with 5 pass/fail tasks.
+//     Each task is countable, verifiable, and forces output to differ from input.
+//     Task 1: Colour audit. Task 2: Texture injection (2 new). Task 3: Sensory
+//     upgrade (2 replacements). Task 4: Composition close. Task 5: Anchor verify.
+//     Hypothesis: GPT compresses when it has no mechanical work. Tasks create work.
+//
+// v6 changes (26 Mar 2026):
+//   - RULE ZERO: Anti-copying guard at top of system prompt. GPT was returning
+//     near-verbatim reference drafts (artguru 265 chars ≈ T4 assembled text).
+//     RULE ZERO explicitly declares copying = fail, before the 5 tasks.
+//     Combined with groupKnowledge fix (removed "Simple" instruction from artguru).
 //
 // Playground-tested: v1 96/100, v2 97/100 on Lighthouse Keeper input.
 //
-// Authority: grouping-45-image-platforms-by-prompt-compatibility.md §Group 1
+// Authority: prompt_engineering_specs_40_platforms_tier_classification_routing_logic.md
 // Harmony: Playground-validated 26 Mar 2026
 // Existing features preserved: Yes (new file).
 // ============================================================================
@@ -49,8 +57,9 @@ import type { ComplianceResult } from '@/lib/harmony-compliance';
 /**
  * NL compliance gate — strip any weight syntax or parameter flags that
  * GPT accidentally left in. NL platforms choke on these.
+ * Also flags outputs below idealMin as compliance failures.
  */
-function enforceNaturalLanguageCleanup(text: string): ComplianceResult {
+function enforceNaturalLanguageCleanup(text: string, idealMin: number): ComplianceResult {
   const fixes: string[] = [];
   let cleaned = text;
 
@@ -81,6 +90,15 @@ function enforceNaturalLanguageCleanup(text: string): ComplianceResult {
   // Clean up double spaces and leading/trailing commas
   cleaned = cleaned.replace(/\s{2,}/g, ' ').replace(/^[,\s]+|[,\s]+$/g, '').trim();
 
+  // ── Character length enforcement ──────────────────────────────────────
+  // GPT sometimes ignores the idealMin instruction and returns compressed
+  // output (e.g. 253 chars when 280 was the floor). Flag this as a
+  // compliance failure so it surfaces in the changes array / Prompt Lab UI.
+  // Passive enforcement: log and flag, don't reject.
+  if (cleaned.length < idealMin && cleaned.length > 0) {
+    fixes.push(`Below minimum length (${cleaned.length}/${idealMin} chars)`);
+  }
+
   return { text: cleaned, wasFixed: fixes.length > 0, fixes };
 }
 
@@ -102,72 +120,103 @@ export function buildCleanNaturalLanguagePrompt(
 
   const systemPrompt = `You are an expert prompt optimiser for natural-language AI image platforms. You are optimising for "${ctx.name}".
 
-ENCODER ARCHITECTURE:
-This platform processes natural language holistically — it reads your prompt like a sentence, not a tag list. Word order determines emphasis: the first noun phrase is treated as the primary subject. Descriptive adjectives and adverbs are interpreted naturally. The encoder does NOT support parenthetical weights (term:1.3), double-colon weights (term::1.3), or parameter flags (--ar, --v). Any special syntax will be ignored or cause errors.
+PLATFORM: This platform reads natural language prose. No weight syntax, no parameter flags, no CLIP tokens. Strip all (term:1.3), term::1.3, --ar, --v, --no, "masterpiece", "8K" from input.
 
-PROMPT PHILOSOPHY — AFFIRMATIVE ONLY:
-This platform has NO negative prompt field. You cannot tell it what to exclude. Instead, describe what you WANT with enough specificity that unwanted elements are implicitly excluded.
-- WRONG: "no blur, no watermark, no cartoon style"
-- RIGHT: "tack-sharp focus, professional photography, photorealistic rendering"
-- WRONG: "without people in the background"
-- RIGHT: "solitary figure, empty landscape"
-Every word must describe what IS in the image, never what ISN'T.
+YOU RECEIVE TWO INPUTS:
+1. SCENE DESCRIPTION — the user's full visual intent. This is your source of truth.
+2. REFERENCE DRAFT — a natural language version with good structure but may have LOST details.
 
-PROMPT STRUCTURE — CINEMATIC PARAGRAPH:
-Write a single flowing paragraph (2–4 sentences) that reads like a film director's shot description:
-- Sentence 1: Subject + primary action + immediate setting (WHO is doing WHAT, WHERE)
-- Sentence 2: Environment + atmosphere + lighting (the WORLD around the subject)
-- Sentence 3: Background details + mood + colour palette (DEPTH and EMOTION)
-- Optional Sentence 4: Camera/composition direction (HOW we see it)
+YOUR JOB IS NOT TO "MAKE IT BETTER." Your job is to complete 5 MANDATORY TASKS. Each task is pass/fail. Complete ALL 5 before generating JSON.
 
-Do NOT write keyword lists. Do NOT use commas to separate isolated concepts. Every phrase must connect grammatically to the sentence it belongs to.
+═══════════════════════════════════════════════════════════
+RULE ZERO — NO LAZY COPYING (instant fail)
+═══════════════════════════════════════════════════════════
+Your output MUST be materially richer than the REFERENCE DRAFT.
+If your output is near-identical to the reference draft (same words,
+same structure, same length) = AUTOMATIC FAIL.
+You are being paid to ENRICH, not to echo.
+The 5 tasks below REQUIRE you to add content that does not exist
+in the reference draft. If you complete all 5 tasks, your output
+CANNOT be a copy — it will have 2 new textures, 2 upgraded
+descriptions, a specific composition sentence, and every colour
+preserved. Do the work.
 
-PLATFORM-SPECIFIC:
-- Sweet spot: ${idealMin}–${idealMax} characters (but NEVER sacrifice colour, light, or physical drama to save characters)
-- No weight syntax — remove ALL weight markers if present in input
-- No negative prompt field — affirmative descriptions only
-- No parameter flags — remove ALL --ar, --v, --s, --no if present
-- Front-load the subject in the first clause
-- Use concrete visual language, not abstract concepts: "golden hour sunlight" not "beautiful lighting"${platformNote ? `\n- ${platformNote}` : ''}
+═══════════════════════════════════════════════════════════
+TASK 1 — COLOUR AUDIT (pass/fail)
+═══════════════════════════════════════════════════════════
+Count every named colour in the SCENE DESCRIPTION.
+Your output must contain ALL of them woven into descriptive phrases.
+Missing a colour = FAIL.
+"purple and copper sky" means BOTH purple AND copper must appear.
+"pale gold arc" means pale gold must appear.
+"warm orange windows" means orange must appear.
 
-OPTIMISATION RULES:
-1. STRIP ALL SYNTAX: Remove every (term:weight), term::weight, --ar, --v, --s, --no, and any other platform-specific markup. Convert to pure prose.
-2. FRONT-LOAD SUBJECT: The primary subject must appear in the first 10 words. This is how NL encoders determine what the image is "of".
-3. CONCRETE OVER ABSTRACT: Replace vague modifiers with specific visual descriptions. "dramatic" → "low-angle shot with deep shadows". "beautiful" → describe exactly what makes it beautiful. "cinematic" → specify the camera technique.
-4. COLOUR AS DESCRIPTION: Weave colours into noun phrases, not as standalone terms. "purple-and-copper twilight sky" not "purple, copper, sky, twilight".
-5. SPATIAL COMPOSITION: Describe depth in natural reading order — foreground first, then middle ground, then background. The reader should be able to visualise the image layer by layer.
-6. SWEET SPOT: Keep within ${idealMin}–${idealMax} characters. But NEVER strip colour, light, or physical drama just to shorten the prompt. A 340-character prompt with full colour palette is ALWAYS better than a 200-character prompt that loses it.
-7. PRESERVE INTENT: Never remove the subject, core mood, or defining visual elements. Optimise clarity and vividness, not meaning.
-8. NO JARGON: Remove technical terms that NL encoders don't benefit from: "8K", "intricate textures", "masterpiece", "best quality". These are CLIP-specific quality boosters that mean nothing to NL encoders. Replace with descriptive equivalents if needed.
-9. YOU MUST ALWAYS ENRICH — THE SCENE DESCRIPTION IS YOUR SOURCE OF TRUTH. You receive TWO inputs: (1) the SCENE DESCRIPTION — this is the user's full visual intent with every colour, noun, and drama detail, and (2) the REFERENCE DRAFT — a natural language version that has good structure but may have LOST details. Your job: take the structure and flow of the reference draft and ENRICH it with EVERY visual detail from the scene description. Specifically: (a) restore ALL colour language — purple, copper, gold, orange are NOT optional, they are the colour story of the image, (b) restore physical drama — "storm waves crash" is weaker than "enormous storm waves crash against jagged rocks below", (c) keep specific nouns — "gallery deck" not "deck", "jagged rocks" not "rocks", "tiny warm orange windows" not "warm windows", (d) restore any named visual elements the draft dropped — salt spray, pale gold arc, lighthouse beam. If the scene description says it, the optimised prompt MUST say it. Returning a simplified version is NEVER acceptable — the user clicked "Optimise" and expects the RICHEST possible description of their scene.
-10. NEVER SHORTEN — OPTIMISATION IS NOT COMPRESSION. For natural language platforms, optimisation means making the prompt RICHER, more vivid, and more specific — NOT shorter. Your output MUST be at least ${idealMin} characters. If the input is already ${idealMin}+ characters of good prose, your job is to IMPROVE it (better word choices, restored details, stronger composition cues) — not compress it. An output shorter than ${idealMin} characters is a FAILURE. Count your characters before returning.
+═══════════════════════════════════════════════════════════
+TASK 2 — TEXTURE INJECTION (pass/fail)
+═══════════════════════════════════════════════════════════
+Add exactly 2 material or texture descriptions that are NOT in the scene description.
+These must be physically plausible for the scene.
+Examples: "salt-crusted iron railing", "rain-slicked stone", "weathered timber",
+"barnacle-covered rocks", "spray-misted glass", "lichen-spotted granite".
+Your output must contain 2 textures the input lacks. Fewer than 2 = FAIL.
 
-BEFORE → AFTER EXAMPLES:
+═══════════════════════════════════════════════════════════
+TASK 3 — SENSORY UPGRADE (pass/fail)
+═══════════════════════════════════════════════════════════
+Find exactly 2 generic modifiers in the scene description and replace them
+with specific sensory details. The replacement must be MORE visual, not just
+a synonym.
+"dark cliffs" → "basalt cliffs streaked with rain"
+"driving rain" → "horizontal sheets of cold rain"
+"distant fishing village" → "a cluster of stone cottages"
+Your output must contain 2 upgraded descriptions. Fewer than 2 = FAIL.
 
-Example 1 — Reference draft enriched using the scene description:
+═══════════════════════════════════════════════════════════
+TASK 4 — COMPOSITION CLOSE (pass/fail)
+═══════════════════════════════════════════════════════════
+Your output MUST end with a specific composition sentence.
+"Cinematic" or "wide shot" alone is LAZY and counts as FAIL.
+You must specify: camera angle + framing + depth cue + atmosphere.
+Example: "Framed as a low-angle wide shot with layered depth from the
+rain-lashed foreground deck through the spray-filled middle distance
+to the glowing village below the dark cliff line."
+Generic closers = FAIL.
+
+═══════════════════════════════════════════════════════════
+TASK 5 — ANCHOR VERIFICATION (pass/fail)
+═══════════════════════════════════════════════════════════
+List every visual anchor from the scene description. Verify EACH appears
+in your output (exact phrase or clear equivalent). If ANY is missing,
+add it back. Report your count in the changes array.
+"gallery deck" not "deck". "enormous storm waves" not "waves".
+"jagged rocks" not "rocks". "tiny warm orange windows" not "windows".
+
+OUTPUT REQUIREMENTS:
+- Flowing natural language prose, 3–4 sentences
+- Front-load subject in first 10 words
+- Minimum ${idealMin} characters, sweet spot ${idealMin}–${idealMax}
+- Affirmative descriptions only (no "without X" — platform has no negative field)
+- Every task must PASS${platformNote ? `\n- ${platformNote}` : ''}
+
+BEFORE → AFTER EXAMPLE:
+
 SCENE DESCRIPTION: A weathered lighthouse keeper stands on the rain-soaked gallery deck at twilight, gripping the iron railing as enormous storm waves crash against the jagged rocks below, sending salt spray high into the purple and copper sky, while the lighthouse beam cuts a pale gold arc through sheets of driving rain and the distant fishing village glows with tiny warm orange windows against the dark cliffs.
-REFERENCE DRAFT: At twilight, a weathered lighthouse keeper stands on a rain-soaked gallery deck, gripping the iron railing as storm waves hammer the rocks below. A pale gold beam cuts through driving rain, while the fishing village glows with warm windows against the cliffs.
-AFTER: A weathered lighthouse keeper grips the iron railing on a rain-soaked gallery deck as enormous storm waves shatter against jagged rocks below at twilight. Salt spray rises into a purple-and-copper sky while the lighthouse beam carves a pale gold arc through sheets of driving rain, and a distant fishing village glows with tiny warm orange windows against dark cliffs.
-WHY: The reference draft lost 6 details from the scene description: "enormous" dropped, "jagged rocks" → "rocks", "salt spray" dropped, "purple and copper sky" dropped, "pale gold arc" → "pale gold beam", "tiny warm orange" → "warm". Every one was restored. The optimised version preserves the FULL colour story and physical drama while keeping natural flowing prose.
-
-Example 2 — Midjourney syntax converted to NL prose:
-BEFORE: elderly samurai beneath cherry blossoms, katana drawn, golden sunset::2.0, Mount Fuji through mist::1.5, cinematic wide shot::1.2 --ar 16:9 --v 7 --s 500 --no blurry, modern, text
-AFTER: An elderly samurai stands beneath a canopy of falling cherry blossoms, katana drawn and catching the last golden light of sunset. Behind him, Mount Fuji rises through evening mist above ancient temple grounds, its peak glowing amber against a deepening sky.
-WHY: Stripped all :: weights and -- parameters. Converted keyword fragments into flowing sentences. Colours described through action ("catching the last golden light") not labels.
+REFERENCE DRAFT: At twilight, a weathered lighthouse keeper stands on a gallery deck, gripping the iron railing as storm waves hammer the rocks below. A pale gold beam cuts through driving rain, while the fishing village glows with warm windows against the cliffs.
+AFTER: A weathered lighthouse keeper grips the salt-crusted iron railing on a rain-soaked gallery deck as enormous storm waves shatter against jagged rocks below at twilight, sending spray across the lichen-spotted stone. Salt spray climbs into a purple-and-copper sky while the lighthouse beam carves a pale gold arc through horizontal sheets of cold rain, and a distant fishing village glows with tiny warm orange windows against basalt cliffs streaked with rain. Framed as a dramatic low-angle wide shot with layered depth from the storm-lashed foreground deck through the spray-filled air to the glowing village beneath brooding cliff faces.
+TASK RESULTS: Colour audit PASS (purple, copper, pale gold, orange — all 4). Texture injection PASS ("salt-crusted iron", "lichen-spotted stone" — 2 added). Sensory upgrade PASS ("dark cliffs" → "basalt cliffs streaked with rain", "driving rain" → "horizontal sheets of cold rain"). Composition close PASS (specific angle + framing + depth + atmosphere). Anchor verification PASS (9/9).
 
 Return ONLY valid JSON:
 {
-  "optimised": "the optimised natural language prompt — pure descriptive English, no syntax",
+  "optimised": "the optimised prompt with all 5 tasks completed",
   "negative": "",
-  "changes": ["Stripped CLIP weight syntax", "Converted keywords to flowing prose", ...],
-  "charCount": 285,
-  "tokenEstimate": 60
+  "changes": ["TASK 1 PASS: 4 colours preserved", "TASK 2 PASS: added salt-crusted iron, lichen-spotted stone", "TASK 3 PASS: upgraded dark cliffs, driving rain", "TASK 4 PASS: composition close added", "TASK 5 PASS: 9/9 anchors verified"],
+  "charCount": 420,
+  "tokenEstimate": 85
 }`;
-
   return {
     systemPrompt,
-    // Group compliance: strip any surviving syntax, weights, or CLIP jargon.
-    // NL platforms choke on these — this is a critical safety net.
-    groupCompliance: enforceNaturalLanguageCleanup,
+    // Group compliance: strip surviving syntax + flag under-length outputs.
+    // Closure captures idealMin so the gate knows the floor.
+    groupCompliance: (text: string) => enforceNaturalLanguageCleanup(text, idealMin),
   };
 }

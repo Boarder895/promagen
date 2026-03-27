@@ -75,14 +75,14 @@ const EMPTY_SELECTIONS: PromptSelections = {
 };
 
 // First 10 platforms (all keyword-based)
-const TIER_2_PLATFORMS = ['midjourney', 'bluewillow'] as const;
+const TIER_2_PLATFORMS = ['midjourney'] as const;
 // v5.2.0: All T1 platforms now have CLIP weights (weightingSyntax + weightedCategories)
+// v6.0.0: Deep research audit — artguru, clipdrop, playground removed from T1
 const TIER_1_WEIGHTED = [
-  'stability', 'dreamstudio', 'lexica', 'playground',
-  'nightcafe', 'getimg', 'openart', 'clipdrop',
+  'stability', 'dreamstudio', 'lexica', 'fotor',
 ] as const;
 // Sweet-spot grouping for trim tests (separate from weighting)
-const TIER_1_SS80 = ['dreamstudio', 'lexica', 'playground', 'nightcafe', 'getimg', 'openart', 'clipdrop'] as const; // sweetSpot=80
+const TIER_1_SS80 = ['dreamstudio', 'lexica', 'fotor'] as const; // sweetSpot=80
 const ALL_CLIP_WEIGHTED = [...TIER_1_WEIGHTED] as const;
 const ALL_10_PLATFORMS = [...TIER_2_PLATFORMS, ...TIER_1_WEIGHTED] as const;
 

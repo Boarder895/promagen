@@ -36,7 +36,7 @@
   },
   {
     "id": "openai",
-    "name": "DALL\u00b7E 3",
+    "name": "DALL·E 3",
     "country": "US",
     "countryCode": "US",
     "hqCity": "San Francisco",
@@ -447,7 +447,8 @@
       "discord": "https://discord.com/invite/openart-ai",
       "x": "https://x.com/openart_ai"
     },
-    "apiDocsUrl": null
+    "apiDocsUrl": null,
+    "archived": true
   },
   {
     "id": "123rf",
@@ -586,7 +587,8 @@
     "socials": {
       "x": "https://x.com/NightCafeStudio"
     },
-    "apiDocsUrl": null
+    "apiDocsUrl": null,
+    "archived": true
   },
   {
     "id": "picsart",
@@ -967,7 +969,7 @@
     "name": "Freepik AI",
     "country": "ES",
     "countryCode": "ES",
-    "hqCity": "M\u00e1laga",
+    "hqCity": "Málaga",
     "timezone": "Europe/Madrid",
     "supportHours": "Mon-Fri 9AM-6PM CET",
     "score": 75,
@@ -996,7 +998,8 @@
       "tiktok": "https://www.tiktok.com/@freepik",
       "x": "https://x.com/freepik"
     },
-    "apiDocsUrl": "https://developers.freepik.com/"
+    "apiDocsUrl": "https://developers.freepik.com/",
+    "archived": true
   },
   {
     "id": "simplified",
@@ -1337,7 +1340,8 @@
       "instagram": "https://www.instagram.com/getimg.ai/",
       "discord": "https://discord.com/invite/5KsUXSzVwS"
     },
-    "apiDocsUrl": "https://docs.getimg.ai/"
+    "apiDocsUrl": "https://docs.getimg.ai/",
+    "archived": true
   },
   {
     "id": "imagine-meta",
@@ -1537,6 +1541,7 @@
     "socials": {
       "x": "https://x.com/ArtTensor"
     },
-    "apiDocsUrl": "https://tensor.art/articles"
+    "apiDocsUrl": "https://tensor.art/articles",
+    "archived": true
   }
 ]

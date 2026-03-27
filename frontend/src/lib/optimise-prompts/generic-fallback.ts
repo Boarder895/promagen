@@ -74,6 +74,5 @@ Return ONLY valid JSON:
   "charCount": 285,
   "tokenEstimate": 72
 }`;
-
   return { systemPrompt };
 }

@@ -22,6 +22,11 @@ import { buildSdClipDoubleColonPrompt } from './group-sd-clip-double-colon';
 import { buildMidjourneyPrompt } from './group-midjourney';
 import { buildCleanNaturalLanguagePrompt } from './group-clean-natural-language';
 import { buildDalleApiPrompt } from './group-dalle-api';
+import { buildFluxArchitecturePrompt } from './group-flux-architecture';
+import { buildVideoCinematicPrompt } from './group-video-cinematic';
+import { buildNovelAiPrompt } from './group-novelai';
+import { buildIdeogramPrompt } from './group-ideogram';
+import { buildRecraftPrompt } from './group-recraft';
 import { buildGenericFallbackPrompt } from './generic-fallback';
 
 /**
@@ -41,7 +46,7 @@ export function resolveGroupPrompt(
   const group = getProviderGroup(providerId);
 
   switch (group) {
-    // ── Wave 1: SD CLIP Parenthetical (12 platforms) ──────────────────
+    // ── SD CLIP Parenthetical (5 platforms) ────────────────────────────
     case 'sd-clip-parenthetical':
       return buildSdClipParentheticalPrompt(providerId, ctx);
 
@@ -53,7 +58,7 @@ export function resolveGroupPrompt(
     case 'midjourney':
       return buildMidjourneyPrompt(providerId, ctx);
 
-    // ── Wave 4: Clean Natural Language (21 platforms) ────────────────
+    // ── Clean Natural Language (25 platforms) ───────────────────────────
     case 'clean-natural-language':
       return buildCleanNaturalLanguagePrompt(providerId, ctx);
 
@@ -61,19 +66,23 @@ export function resolveGroupPrompt(
     case 'dalle-api':
       return buildDalleApiPrompt(providerId, ctx);
 
-    // ── Future waves — uncomment as each builder is created ───────────
-    // case 'flux-architecture':
-    //   return buildFluxArchitecturePrompt(providerId, ctx);
-    // case 'video-cinematic':
-    //   return buildVideoCinematicPrompt(providerId, ctx);
-    // case 'multi-engine':
-    //   return buildMultiEnginePrompt(providerId, ctx);
-    // case 'novelai':
-    //   return buildNovelAiPrompt(providerId, ctx);
-    // case 'ideogram':
-    //   return buildIdeogramPrompt(providerId, ctx);
-    // case 'recraft':
-    //   return buildRecraftPrompt(providerId, ctx);
+    // ── Wave 6: Flux Architecture (Black Forest Labs) ────────────────
+    case 'flux-architecture':
+      return buildFluxArchitecturePrompt(providerId, ctx);
+
+    // ── Wave 7: Video Cinematic (Runway, Luma, Kling) ────────────────
+    case 'video-cinematic':
+      return buildVideoCinematicPrompt(providerId, ctx);
+
+    // ── Wave 8: Dedicated Platforms ──────────────────────────────────
+    case 'novelai':
+      return buildNovelAiPrompt(providerId, ctx);
+
+    case 'ideogram':
+      return buildIdeogramPrompt(providerId, ctx);
+
+    case 'recraft':
+      return buildRecraftPrompt(providerId, ctx);
 
     // ── Fallback: tier-based generic (the original buildSystemPrompt) ─
     default:

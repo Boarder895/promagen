@@ -1,7 +1,7 @@
 {
   "_meta": {
     "version": "3.5.0",
-    "description": "Platform-specific prompt assembly rules with tier-aware config and intent reordering. impactPriority defines which categories to front-load for maximum platform impact. v3.2.0: Normalised quality prefixes across SD family, added weight syntax to Artguru, subject emphasis for SD platforms. v3.3.0: Aligned all Tier 3/4 platform categoryOrders with reference platforms for parity. v3.4.0: hotpot ss=100 +composition/camera/materials; imagine-meta +materials; canva ref +environment/atmosphere/composition; all T4 aligned; flux qualitySuffix cleared; expanded NEGATIVE_TO_POSITIVE map. v3.5.0: All 42 platforms configured. clipdrop reconfigured as T1 CLIP; getimg +materials/composition; stability ss→70; bluewillow +camera/materials; 11 missing T4 platforms added. novelai ss=80→100.",
+    "description": "Platform-specific prompt assembly rules with tier-aware config and intent reordering. impactPriority defines which categories to front-load for maximum platform impact. v3.2.0: Normalised quality prefixes across SD family, added weight syntax to Artguru, subject emphasis for SD platforms. v3.3.0: Aligned all Tier 3/4 platform categoryOrders with reference platforms for parity. v3.4.0: hotpot ss=100 +composition/camera/materials; imagine-meta +materials; canva ref +environment/atmosphere/composition; all T4 aligned; flux qualitySuffix cleared; expanded NEGATIVE_TO_POSITIVE map. v3.5.0: All platforms configured. v4.0.0 (26 Mar 2026): SSOT migration — platform-config.json is now the authority. This file retained for _assemblyDefaults only. 5 aggregators removed (40 active). 6 tier-corrected platforms updated.",
     "updated": "2026-03-03"
   },
   "_defaults": {
@@ -82,7 +82,7 @@
       "groupKnowledge": "Proprietary encoder. :: multi-prompt weighting, --ar/--v/--s/--no parameter flags. Prose sections, not keywords. ~40 words effective influence. Excels at atmosphere, mood, cinematic compositions."
     },
     "bluewillow": {
-      "promptStyle": "keywords",
+      "promptStyle": "natural",
       "separator": ", ",
       "negativeSupport": "inline",
       "negativeSyntax": "--no {negative}",
@@ -102,8 +102,8 @@
       "wrapNegativeInPrompt": false,
       "tokenLimit": 60,
       "sweetSpot": 40,
-      "tips": "BlueWillow uses Midjourney-like syntax. Similar parameter flags.",
-      "exampleOutput": "portrait of a samurai, fighting, cinematic lighting, dramatic --no blur --no text",
+      "tips": "BlueWillow accepts simple natural language via Discord. Keep prompts concise.",
+      "exampleOutput": "A samurai in a dramatic fighting pose, cinematic lighting, detailed armor",
       "impactPriority": [
         "subject",
         "style",
@@ -117,13 +117,12 @@
         "high quality",
         "detailed"
       ],
-      "qualityNegative": [
-        "blurry",
-        "watermark",
-        "text",
-        "bad quality",
-        "worst quality"
-      ]
+      "qualityNegative": [],
+      "tier": 4,
+      "supportsWeighting": false,
+      "qualityPrefix": [],
+      "weightedCategories": {},
+      "groupKnowledge": "Discord-based interface. Very limited parameters (--ar, --no only). Short simple descriptions work best. ~200 chars effective."
     },
     "stability": {
       "promptStyle": "keywords",
@@ -326,7 +325,7 @@
       "groupKnowledge": "Aperture v4 model. Responds well to photographic terms. Front-load camera and lens references."
     },
     "playground": {
-      "promptStyle": "keywords",
+      "promptStyle": "natural",
       "separator": ", ",
       "negativeSupport": "separate",
       "negativeSyntax": null,
@@ -346,253 +345,30 @@
       "wrapNegativeInPrompt": false,
       "tokenLimit": 150,
       "sweetSpot": 80,
-      "qualityPrefix": [
-        "masterpiece",
-        "best quality",
-        "highly detailed"
-      ],
-      "qualityNegative": [
-        "worst quality",
-        "low quality",
-        "normal quality",
-        "lowres",
-        "bad anatomy",
-        "bad hands",
-        "error",
-        "missing fingers",
-        "extra digit",
-        "fewer digits",
-        "cropped",
-        "jpeg artifacts",
-        "signature",
-        "watermark",
-        "username",
-        "blurry"
-      ],
-      "weightedCategories": {
-        "lighting": 1.1,
-        "subject": 1.2,
-        "style": 1.15,
-        "environment": 1.05
-      },
-      "tips": "Playground supports multiple models. Match prompt style to selected model.",
-      "exampleOutput": "portrait of a samurai, fighting, concept art, cinematic lighting, dramatic mood, highly detailed",
+      "qualityPrefix": [],
+      "qualityNegative": [],
+      "weightedCategories": {},
+      "tips": "Playground v3 reads natural language. Use descriptive prose, not keyword lists.",
+      "exampleOutput": "A samurai warrior standing in a dramatic fighting pose under intense cinematic side-lighting, wearing intricately detailed traditional armor",
       "impactPriority": [
         "subject",
         "style",
         "lighting",
         "environment"
       ],
-      "weightingSyntax": "({term}:{weight})",
       "qualitySuffix": [
         "sharp focus",
         "8K",
         "intricate textures"
       ],
-      "groupKnowledge": "Hosts SD models alongside Playground v3. This targets SD mode only."
-    },
-    "nightcafe": {
-      "promptStyle": "keywords",
-      "separator": ", ",
-      "negativeSupport": "separate",
-      "negativeSyntax": null,
-      "categoryOrder": [
-        "subject",
-        "action",
-        "style",
-        "environment",
-        "lighting",
-        "atmosphere",
-        "colour",
-        "camera",
-        "materials",
-        "composition",
-        "fidelity"
-      ],
-      "wrapNegativeInPrompt": false,
-      "tokenLimit": 150,
-      "sweetSpot": 80,
-      "qualityPrefix": [
-        "masterpiece",
-        "best quality",
-        "highly detailed"
-      ],
-      "qualityNegative": [
-        "worst quality",
-        "low quality",
-        "normal quality",
-        "lowres",
-        "bad anatomy",
-        "bad hands",
-        "error",
-        "missing fingers",
-        "extra digit",
-        "fewer digits",
-        "cropped",
-        "jpeg artifacts",
-        "signature",
-        "watermark",
-        "username",
-        "blurry"
-      ],
-      "weightedCategories": {
-        "lighting": 1.1,
-        "subject": 1.2,
-        "style": 1.15,
-        "environment": 1.05
-      },
-      "tips": "NightCafe supports multiple algorithms. SD mode uses standard weighting.",
-      "exampleOutput": "portrait of a samurai warrior, fighting, concept art, cinematic lighting, dramatic mood, 8K detail",
-      "impactPriority": [
-        "subject",
-        "style",
-        "lighting",
-        "environment"
-      ],
-      "weightingSyntax": "({term}:{weight})",
-      "qualitySuffix": [
-        "sharp focus",
-        "8K",
-        "intricate textures"
-      ],
-      "groupKnowledge": "Multi-engine aggregator. This targets SD/SDXL engine. VQGAN+CLIP uses different syntax."
-    },
-    "getimg": {
-      "promptStyle": "keywords",
-      "separator": ", ",
-      "negativeSupport": "separate",
-      "negativeSyntax": null,
-      "categoryOrder": [
-        "subject",
-        "action",
-        "style",
-        "environment",
-        "lighting",
-        "atmosphere",
-        "colour",
-        "camera",
-        "materials",
-        "composition",
-        "fidelity"
-      ],
-      "wrapNegativeInPrompt": false,
-      "tokenLimit": 150,
-      "sweetSpot": 80,
-      "qualityPrefix": [
-        "masterpiece",
-        "best quality",
-        "highly detailed"
-      ],
-      "qualityNegative": [
-        "worst quality",
-        "low quality",
-        "normal quality",
-        "lowres",
-        "bad anatomy",
-        "bad hands",
-        "error",
-        "missing fingers",
-        "extra digit",
-        "fewer digits",
-        "cropped",
-        "jpeg artifacts",
-        "signature",
-        "watermark",
-        "username",
-        "blurry"
-      ],
-      "weightedCategories": {
-        "lighting": 1.1,
-        "subject": 1.2,
-        "style": 1.15,
-        "environment": 1.05
-      },
-      "tips": "Multiple models available. Match prompt style to model.",
-      "exampleOutput": "portrait of a samurai warrior, fighting, concept art, cinematic lighting, dramatic",
-      "impactPriority": [
-        "subject",
-        "style",
-        "lighting",
-        "environment"
-      ],
-      "weightingSyntax": "({term}:{weight})",
-      "qualitySuffix": [
-        "sharp focus",
-        "8K",
-        "intricate textures"
-      ],
-      "groupKnowledge": "Multi-model host. SD/SDXL use standard CLIP syntax. Flux models need natural language."
-    },
-    "openart": {
-      "promptStyle": "keywords",
-      "separator": ", ",
-      "negativeSupport": "separate",
-      "negativeSyntax": null,
-      "categoryOrder": [
-        "subject",
-        "action",
-        "style",
-        "environment",
-        "lighting",
-        "atmosphere",
-        "colour",
-        "camera",
-        "materials",
-        "composition",
-        "fidelity"
-      ],
-      "wrapNegativeInPrompt": false,
-      "tokenLimit": 150,
-      "sweetSpot": 80,
-      "qualityPrefix": [
-        "masterpiece",
-        "best quality",
-        "highly detailed"
-      ],
-      "qualityNegative": [
-        "worst quality",
-        "low quality",
-        "normal quality",
-        "lowres",
-        "bad anatomy",
-        "bad hands",
-        "error",
-        "missing fingers",
-        "extra digit",
-        "fewer digits",
-        "cropped",
-        "jpeg artifacts",
-        "signature",
-        "watermark",
-        "username",
-        "blurry"
-      ],
-      "weightedCategories": {
-        "lighting": 1.1,
-        "subject": 1.2,
-        "style": 1.15,
-        "environment": 1.05
-      },
-      "tips": "SD-based with multiple models. Quality tags help.",
-      "exampleOutput": "portrait of a samurai, fighting, concept art, cinematic lighting, dramatic mood",
-      "impactPriority": [
-        "subject",
-        "style",
-        "lighting",
-        "environment"
-      ],
-      "weightingSyntax": "({term}:{weight})",
-      "qualitySuffix": [
-        "sharp focus",
-        "8K",
-        "intricate textures"
-      ],
-      "groupKnowledge": "Multi-model host. SD/SDXL use standard CLIP syntax."
+      "groupKnowledge": "PGv3 uses LLM-integrated encoder (Llama3-8B). Supports hex colour codes in prompts. Very long token capacity. Natural language prose preferred.",
+      "tier": 3,
+      "supportsWeighting": false
     },
     "clipdrop": {
-      "promptStyle": "keywords",
+      "promptStyle": "natural",
       "separator": ", ",
-      "negativeSupport": "separate",
+      "negativeSupport": "none",
       "negativeSyntax": null,
       "categoryOrder": [
         "subject",
@@ -610,50 +386,25 @@
       "wrapNegativeInPrompt": false,
       "tokenLimit": 150,
       "sweetSpot": 80,
-      "tips": "Clipdrop (Stability AI) prefers clean, direct descriptions.",
-      "exampleOutput": "portrait of a samurai warrior, fighting, dramatic cinematic lighting, golden hour atmosphere",
+      "tips": "ClipDrop uses plain text only. No weight syntax or special formatting.",
+      "exampleOutput": "A samurai warrior in dramatic fighting pose under cinematic lighting, highly detailed armor",
       "impactPriority": [
         "subject",
         "lighting",
         "style",
         "environment"
       ],
-      "qualityNegative": [
-        "worst quality",
-        "low quality",
-        "normal quality",
-        "lowres",
-        "bad anatomy",
-        "bad hands",
-        "error",
-        "missing fingers",
-        "extra digit",
-        "fewer digits",
-        "cropped",
-        "jpeg artifacts",
-        "signature",
-        "watermark",
-        "username",
-        "blurry"
-      ],
-      "qualityPrefix": [
-        "masterpiece",
-        "best quality",
-        "highly detailed"
-      ],
-      "weightingSyntax": "({term}:{weight})",
-      "weightedCategories": {
-        "subject": 1.2,
-        "lighting": 1.1,
-        "style": 1.15,
-        "environment": 1.05
-      },
+      "qualityNegative": [],
+      "qualityPrefix": [],
+      "weightedCategories": {},
       "qualitySuffix": [
         "sharp focus",
         "8K",
         "intricate textures"
       ],
-      "groupKnowledge": "Stability-backed. Same CLIP behaviour as Stability. SDXL Turbo for fast generation."
+      "groupKnowledge": "SDXL Turbo backend abstracted behind plain text interface. 1000-char API limit. No weights, no special syntax.",
+      "tier": 4,
+      "supportsWeighting": false
     },
     "jasper-art": {
       "promptStyle": "natural",
@@ -704,10 +455,11 @@
         "environment"
       ],
       "qualitySuffix": [],
-      "groupKnowledge": "DALL-E 2 wrapper. 400 char limit. Mood/medium/style dropdowns available."
+      "groupKnowledge": "DALL-E 2 wrapper. 400 char limit. Mood/medium/style dropdowns available.",
+      "tier": 4
     },
     "artguru": {
-      "promptStyle": "keywords",
+      "promptStyle": "natural",
       "separator": ", ",
       "negativeSupport": "separate",
       "negativeSyntax": null,
@@ -727,51 +479,25 @@
       "wrapNegativeInPrompt": false,
       "tokenLimit": 150,
       "sweetSpot": 80,
-      "qualityPrefix": [
-        "masterpiece",
-        "best quality",
-        "highly detailed"
-      ],
-      "qualityNegative": [
-        "worst quality",
-        "low quality",
-        "normal quality",
-        "lowres",
-        "bad anatomy",
-        "bad hands",
-        "error",
-        "missing fingers",
-        "extra digit",
-        "fewer digits",
-        "cropped",
-        "jpeg artifacts",
-        "signature",
-        "watermark",
-        "username",
-        "blurry"
-      ],
-      "weightedCategories": {
-        "subject": 1.2,
-        "lighting": 1.1,
-        "style": 1.15,
-        "environment": 1.05
-      },
-      "tips": "Artguru is SD-based. Use quality tags and comprehensive negative prompts.",
-      "exampleOutput": "masterpiece, best quality, portrait of a samurai, fighting pose, cinematic lighting, highly detailed",
+      "qualityPrefix": [],
+      "qualityNegative": [],
+      "weightedCategories": {},
+      "tips": "Artguru uses style presets for creative direction. Write clear natural language descriptions.",
+      "exampleOutput": "A samurai in a fighting pose under dramatic cinematic lighting, highly detailed armor with intricate patterns",
       "impactPriority": [
         "subject",
         "style",
         "lighting",
         "environment"
       ],
-      "supportsWeighting": true,
-      "weightingSyntax": "({term}:{weight})",
+      "supportsWeighting": false,
       "qualitySuffix": [
         "sharp focus",
         "8K",
         "intricate textures"
       ],
-      "groupKnowledge": "SD-based. Shorter prompts work better — stay under 200 tokens."
+      "groupKnowledge": "Style-preset driven platform with 30+ presets. No weight syntax exposed. Accepts up to ~500 chars. Separate negative prompt field available.",
+      "tier": 4
     },
     "leonardo": {
       "promptStyle": "keywords",
@@ -887,7 +613,8 @@
         "style",
         "lighting",
         "environment"
-      ]
+      ],
+      "groupKnowledge": "T5-XXL encoder, not CLIP. Reads full sentences — prose outperforms tags. No weight syntax. No negative prompts on Flux 1. guidance_scale 3.5 — follows prompt faithfully. Best-in-class photorealism and text rendering."
     },
     "novelai": {
       "promptStyle": "keywords",
@@ -947,7 +674,9 @@
         "sharp focus",
         "8K",
         "intricate textures"
-      ]
+      ],
+      "groupKnowledge": "Anime-optimised SD with CLIP encoder. Uses {{{term}}} triple-brace weighting (NOT parenthetical). Tag-based prompting, not prose. Quality prefix required: {{{masterpiece}}}, {{best quality}}. 77-token CLIP limit per chunk. Danbooru-style tags produce best results.",
+      "tier": 1
     },
     "ideogram": {
       "promptStyle": "natural",
@@ -985,7 +714,9 @@
         "text",
         "low quality",
         "bad quality"
-      ]
+      ],
+      "groupKnowledge": "Industry leader for text-in-image rendering. Quoted text in prompt appears in image. Magic Prompt rewrites input (like DALL-E). Design-focused model understands typography, kerning, composition grids. ~150-160 word limit. Inline negatives via 'without X' unreliable.",
+      "tier": 3
     },
     "openai": {
       "promptStyle": "natural",
@@ -1115,7 +846,8 @@
         "environment",
         "lighting"
       ],
-      "groupKnowledge": "Bracket templates [color], [animal], [style] for guided creation. Design workflow integration."
+      "groupKnowledge": "Bracket templates [color], [animal], [style] for guided creation. Design workflow integration.",
+      "tier": 4
     },
     "imagine-meta": {
       "promptStyle": "natural",
@@ -1179,7 +911,8 @@
         "style",
         "lighting",
         "atmosphere"
-      ]
+      ],
+      "groupKnowledge": "Video-first platform. Supports [00:01] timestamp syntax for timed events. No negative prompts. Camera movement language critical. 4-10 second clips. Concise directive prompts preferred."
     },
     "picsart": {
       "promptStyle": "natural",
@@ -1212,9 +945,9 @@
       "groupKnowledge": "AI image generator with style presets. Short descriptive prompts preferred."
     },
     "fotor": {
-      "promptStyle": "natural",
+      "promptStyle": "keywords",
       "separator": ", ",
-      "negativeSupport": "none",
+      "negativeSupport": "separate",
       "negativeSyntax": null,
       "categoryOrder": [
         "subject",
@@ -1230,8 +963,8 @@
       "wrapNegativeInPrompt": false,
       "tokenLimit": 150,
       "sweetSpot": 60,
-      "tips": "Simple interface. Short prompts + style presets in UI.",
-      "exampleOutput": "samurai warrior portrait, fighting pose, dramatic lighting, cinematic style",
+      "tips": "Fotor exposes full Stable Diffusion weight syntax. Use CLIP-style tags with quality boosters.",
+      "exampleOutput": "(masterpiece:1.3), (best quality:1.2), samurai, fighting pose, (cinematic lighting:1.1), highly detailed armor",
       "impactPriority": [
         "subject",
         "action",
@@ -1239,7 +972,28 @@
         "style",
         "lighting"
       ],
-      "groupKnowledge": "AI image generator with style options. Concise descriptions work best."
+      "groupKnowledge": "Exposes full SD (term:1.3) weight syntax. Separate negative prompt field. CLIP 77-token limit. Quality boosters essential.",
+      "tier": 1,
+      "supportsWeighting": true,
+      "weightingSyntax": "({term}:{weight})",
+      "qualityPrefix": [
+        "masterpiece",
+        "best quality",
+        "highly detailed"
+      ],
+      "qualityNegative": [
+        "worst quality",
+        "low quality",
+        "lowres",
+        "bad anatomy",
+        "blurry",
+        "watermark"
+      ],
+      "weightedCategories": {
+        "subject": 1.2,
+        "lighting": 1.1,
+        "style": 1.15
+      }
     },
     "deepai": {
       "promptStyle": "natural",
@@ -1269,7 +1023,8 @@
         "style",
         "lighting"
       ],
-      "groupKnowledge": "Simple text-to-image. Short focused prompts work best. Multiple style models available."
+      "groupKnowledge": "Simple text-to-image. Short focused prompts work best. Multiple style models available.",
+      "tier": 3
     },
     "craiyon": {
       "promptStyle": "natural",
@@ -1302,9 +1057,9 @@
       "groupKnowledge": "9 images per generation. Pipe | syntax for concept combining. Raw mode available."
     },
     "artistly": {
-      "promptStyle": "keywords",
+      "promptStyle": "natural",
       "separator": ", ",
-      "negativeSupport": "separate",
+      "negativeSupport": "none",
       "negativeSyntax": null,
       "categoryOrder": [
         "subject",
@@ -1320,50 +1075,25 @@
       "wrapNegativeInPrompt": false,
       "tokenLimit": 150,
       "sweetSpot": 80,
-      "tips": "Artistly has prompt extender feature. Start simple, let it expand.",
-      "exampleOutput": "portrait of a samurai warrior, fighting, concept art, cinematic lighting, dramatic mood",
+      "tips": "Artistly auto-expands keywords into full descriptions. Short focused input works best.",
+      "exampleOutput": "A samurai warrior in dramatic fighting pose, cinematic lighting, detailed armor",
       "impactPriority": [
         "subject",
         "style",
         "lighting",
         "environment"
       ],
-      "weightingSyntax": "({term}:{weight})",
-      "weightedCategories": {
-        "subject": 1.2,
-        "style": 1.15,
-        "lighting": 1.1,
-        "environment": 1.05
-      },
-      "qualityPrefix": [
-        "masterpiece",
-        "best quality",
-        "highly detailed"
-      ],
+      "weightedCategories": {},
+      "qualityPrefix": [],
       "qualitySuffix": [
         "sharp focus",
         "8K",
         "intricate textures"
       ],
-      "qualityNegative": [
-        "worst quality",
-        "low quality",
-        "normal quality",
-        "lowres",
-        "bad anatomy",
-        "bad hands",
-        "error",
-        "missing fingers",
-        "extra digit",
-        "fewer digits",
-        "cropped",
-        "jpeg artifacts",
-        "signature",
-        "watermark",
-        "username",
-        "blurry"
-      ],
-      "groupKnowledge": "SD-based. Good with artistic style descriptors."
+      "qualityNegative": [],
+      "groupKnowledge": "Smart Prompt Enhancer auto-expands short inputs into detailed prompts. Keep input concise. ~200 chars.",
+      "tier": 4,
+      "supportsWeighting": false
     },
     "bing": {
       "promptStyle": "natural",
@@ -1425,7 +1155,8 @@
       ],
       "tips": "Canva works best with short, focused prompts. Use UI style presets.",
       "exampleOutput": "samurai warrior, fighting, dramatic lighting",
-      "groupKnowledge": "Powered by Leonardo Phoenix. Three output types (image/graphic/video). Style and aspect ratio set via UI controls, not in prompt. Prefers clear descriptive natural language with visual specifics — subject, setting, mood, lighting, colour."
+      "groupKnowledge": "Powered by Leonardo Phoenix. Three output types (image/graphic/video). Style and aspect ratio set via UI controls, not in prompt. Prefers clear descriptive natural language with visual specifics — subject, setting, mood, lighting, colour.",
+      "tier": 3
     },
     "hotpot": {
       "promptStyle": "natural",
@@ -1456,7 +1187,8 @@
         "lighting"
       ],
       "tips": "Simple interface. Short, focused prompts work best.",
-      "exampleOutput": "samurai warrior portrait, fighting, dramatic lighting, cinematic style"
+      "exampleOutput": "samurai warrior portrait, fighting, dramatic lighting, cinematic style",
+      "tier": 4
     },
     "dreamlike": {
       "promptStyle": "keywords",
@@ -1551,36 +1283,8 @@
       "exampleOutput": "atmospheric cityscape, warm tones, dramatic lighting",
       "sweetSpot": 30,
       "tokenLimit": 75,
-      "tips": "Artbreeder works best with very short evocative phrases. Use sliders for fine-tuning."
-    },
-    "freepik": {
-      "promptStyle": "natural",
-      "separator": ", ",
-      "negativeSupport": "none",
-      "negativeSyntax": null,
-      "categoryOrder": [
-        "subject",
-        "action",
-        "style",
-        "lighting",
-        "colour",
-        "environment",
-        "atmosphere",
-        "composition",
-        "fidelity"
-      ],
-      "wrapNegativeInPrompt": false,
-      "impactPriority": [
-        "subject",
-        "action",
-        "environment",
-        "style",
-        "lighting"
-      ],
-      "exampleOutput": "atmospheric cityscape, warm tones, dramatic lighting",
-      "sweetSpot": 60,
-      "tokenLimit": 150,
-      "tips": "Freepik AI responds to clear descriptive prompts. Include style and mood."
+      "tips": "Artbreeder works best with very short evocative phrases. Use sliders for fine-tuning.",
+      "tier": 3
     },
     "myedit": {
       "promptStyle": "natural",
@@ -1697,7 +1401,8 @@
       "exampleOutput": "atmospheric cityscape, warm tones, dramatic lighting",
       "sweetSpot": 50,
       "tokenLimit": 150,
-      "tips": "Pixlr AI responds to concise natural language descriptions."
+      "tips": "Pixlr AI responds to concise natural language descriptions.",
+      "tier": 3
     },
     "simplified": {
       "promptStyle": "natural",
@@ -1726,7 +1431,8 @@
       "exampleOutput": "atmospheric cityscape, warm tones, dramatic lighting",
       "sweetSpot": 50,
       "tokenLimit": 150,
-      "tips": "Simplified works well with marketing-focused descriptions."
+      "tips": "Simplified works well with marketing-focused descriptions.",
+      "tier": 3
     },
     "visme": {
       "promptStyle": "natural",
@@ -1844,7 +1550,9 @@
       "exampleOutput": "A clean vector illustration of a lighthouse on a rocky coast, flat design, warm sunset tones, minimal background",
       "sweetSpot": 100,
       "tokenLimit": 200,
-      "tips": "Recraft excels at vector art, design, and text in images. Use structured prompts: style + subject + detail + background."
+      "tips": "Recraft excels at vector art, design, and text in images. Use structured prompts: style + subject + detail + background.",
+      "groupKnowledge": "Design-first platform with SVG vector output capability. Hierarchical style/substyle taxonomy (25+ options). Text positioning control. 'Artistic level' slider inverts — lower = more prompt adherence. Excels at vector art, icons, logos, illustrations. Separate negative prompt field supported.",
+      "tier": 3
     },
     "kling": {
       "promptStyle": "natural",
@@ -1876,7 +1584,8 @@
       "exampleOutput": "A samurai warrior standing in a bamboo forest, cinematic lighting, mist rising from the ground, photorealistic",
       "sweetSpot": 100,
       "tokenLimit": 200,
-      "tips": "Kling excels at cinematic compositions and character consistency. Keep prompts descriptive with subject + action + context + style."
+      "tips": "Kling excels at cinematic compositions and character consistency. Keep prompts descriptive with subject + action + context + style.",
+      "groupKnowledge": "Video-first platform. Supports Shot 1:/Shot 2: multi-shot storyboard syntax. Supports negative prompts via separate field. Strong character consistency. Camera movement and cinematic direction language preferred."
     },
     "luma-ai": {
       "promptStyle": "natural",
@@ -1908,67 +1617,8 @@
       "exampleOutput": "A close-up portrait in natural light, shallow depth of field, soft bokeh background, photorealistic skin texture",
       "sweetSpot": 150,
       "tokenLimit": 300,
-      "tips": "Luma Photon excels at photorealism. Natural language descriptions outperform keyword lists. Specify lighting and camera details."
-    },
-    "tensor-art": {
-      "promptStyle": "keywords",
-      "separator": ", ",
-      "negativeSupport": "separate",
-      "negativeSyntax": null,
-      "weightingSyntax": "({term}:{weight})",
-      "categoryOrder": [
-        "subject",
-        "action",
-        "style",
-        "atmosphere",
-        "lighting",
-        "environment",
-        "colour",
-        "composition",
-        "camera",
-        "materials",
-        "fidelity"
-      ],
-      "wrapNegativeInPrompt": false,
-      "impactPriority": [
-        "subject",
-        "style",
-        "atmosphere",
-        "lighting"
-      ],
-      "qualityPrefix": [
-        "masterpiece",
-        "best quality",
-        "highly detailed"
-      ],
-      "qualitySuffix": [
-        "sharp focus",
-        "8K",
-        "intricate textures"
-      ],
-      "qualityNegative": [
-        "worst quality",
-        "low quality",
-        "normal quality",
-        "lowres",
-        "bad anatomy",
-        "bad hands",
-        "error",
-        "missing fingers",
-        "extra digit",
-        "fewer digits",
-        "cropped",
-        "jpeg artifacts",
-        "signature",
-        "watermark",
-        "username",
-        "blurry"
-      ],
-      "exampleOutput": "masterpiece, best quality, highly detailed, cyberpunk city street, neon lights, rain-slicked asphalt, cinematic, sharp focus, 8K",
-      "sweetSpot": 80,
-      "tokenLimit": 150,
-      "tips": "Multi-model platform running SD, SDXL, and Flux. Use keyword syntax with CLIP weighting for SD/SDXL models.",
-      "groupKnowledge": "Dual CLIP encoder (CLIP-L + CLIP-G on SDXL). LoRA references supported. Weight-sensitive — keep 0.8–1.4."
+      "tips": "Luma Photon excels at photorealism. Natural language descriptions outperform keyword lists. Specify lighting and camera details.",
+      "groupKnowledge": "Video-first platform. Supports @style keyword for style references and loop keyword for looping clips. No negative prompts. Conversational natural language preferred. Excels at photorealistic motion."
     }
   }
 }

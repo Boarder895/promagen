@@ -151,7 +151,6 @@ Return ONLY valid JSON:
   "charCount": 350,
   "tokenEstimate": 75
 }`;
-
   return {
     systemPrompt,
     // Group compliance: strip any surviving syntax that DALL-E would choke on.

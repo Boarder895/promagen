@@ -9,7 +9,7 @@
 // not another system prompt rule. Code catches it 100% of the time.
 //
 // Pipeline per tier:
-//   T1: P12 (strip CLIP adjectives) → P2 (strip punctuation)
+//   T1: P12 (strip CLIP adjectives) → P13 (weight cap 8) → P2 (strip punctuation)
 //   T2: P1 (dedup MJ params)
 //   T3: P11 (strip abstract meta-openers)
 //   T4: P3 (self-correction) → P8 (meta-openers) → P10 (short sentence merge)
@@ -17,6 +17,8 @@
 // Authority: harmonizing-claude-openai.md §6, §10
 // Test file: src/lib/__tests__/harmony-post-processing.test.ts
 // ============================================================================
+
+import { enforceWeightCap } from '@/lib/harmony-compliance';
 
 // ============================================================================
 // P1+P7: T2 Midjourney Parameter Deduplication
@@ -323,7 +325,12 @@ export interface TierPrompts {
 export function postProcessTiers(tiers: TierPrompts): TierPrompts {
   return {
     tier1: {
-      positive: stripTrailingPunctuation(stripClipQualitativeAdjectives(tiers.tier1.positive)),
+      positive: (() => {
+        let text = stripClipQualitativeAdjectives(tiers.tier1.positive);
+        const capResult = enforceWeightCap(text, 8);
+        if (capResult.wasFixed) text = capResult.text;
+        return stripTrailingPunctuation(text);
+      })(),
       negative: stripTrailingPunctuation(tiers.tier1.negative),
     },
     tier2: {

@@ -1,9 +1,0 @@
-{
-  "fx": {
-    "sessionTintedGlow": true,
-    "favoritesPin": true,
-    "inlineCompare": true,
-    "staleBadge": true,
-    "pauseBannerSrOnly": true
-  }
-}

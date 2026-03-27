@@ -686,6 +686,115 @@ export function runFullCompliance(
 }
 
 // ============================================================================
+// NEGATIVE-POSITIVE CONTRADICTION GUARD (Extra B)
+// ============================================================================
+// Tokenises both the positive and negative prompts, finds any terms that
+// appear in BOTH, and strips them from the negative. A term in both the
+// positive and negative confuses the CLIP encoder — it tries to render
+// AND suppress the same concept simultaneously.
+//
+// Runs after group compliance, before enforceT1Syntax.
+// Zero false positives: only matches exact tokens (case-insensitive).
+//
+// Authority: trend-analysis.md §Extra B
+// ============================================================================
+
+/**
+ * Tokenise a prompt into lowercase terms.
+ * Handles comma-separated lists and prose.
+ * Strips weight syntax before tokenising.
+ */
+function tokeniseForComparison(text: string): Set<string> {
+  // Strip weight syntax: (term:1.3) → term, term::1.3 → term, {{{term}}} → term
+  let cleaned = text;
+  cleaned = cleaned.replace(/\(([^()]+):\d+\.?\d*\)/g, '$1');        // parenthetical
+  cleaned = cleaned.replace(/(\w[\w\s-]*)::\d+\.?\d*/g, '$1');        // double-colon
+  cleaned = cleaned.replace(/\{+([^{}]+)\}+/g, '$1');                 // triple/double/single brace
+  cleaned = cleaned.replace(/--\w+\s*[^\s,]*/g, '');                  // MJ flags
+
+  // Split on commas, then split multi-word terms into individual words
+  const rawTerms = cleaned
+    .split(/[,\n]+/)
+    .map(t => t.trim().toLowerCase())
+    .filter(t => t.length > 0);
+
+  const tokens = new Set<string>();
+  for (const term of rawTerms) {
+    // Add the full term
+    tokens.add(term);
+    // Also add individual words (for multi-word matching)
+    for (const word of term.split(/\s+/)) {
+      if (word.length > 2) tokens.add(word); // skip tiny words like "a", "in"
+    }
+  }
+  return tokens;
+}
+
+export interface NegativeContradictionResult {
+  /** The cleaned negative prompt */
+  negative: string;
+  /** Whether any contradictions were found and removed */
+  wasFixed: boolean;
+  /** Description of what was removed */
+  fixes: string[];
+  /** The specific contradicting terms that were removed */
+  removedTerms: string[];
+}
+
+/**
+ * Strip terms from the negative prompt that also appear in the positive prompt.
+ * A term in both positive and negative confuses the CLIP encoder.
+ *
+ * @param positive - The positive prompt text
+ * @param negative - The negative prompt text
+ * @returns Cleaned negative with contradictions removed
+ */
+export function enforceNegativeContradiction(
+  positive: string,
+  negative: string,
+): NegativeContradictionResult {
+  if (!positive || !negative) {
+    return { negative, wasFixed: false, fixes: [], removedTerms: [] };
+  }
+
+  const positiveTokens = tokeniseForComparison(positive);
+  const removedTerms: string[] = [];
+
+  // Split negative into comma-separated terms
+  const negTerms = negative.split(/,/).map(t => t.trim()).filter(t => t.length > 0);
+
+  const survivingTerms: string[] = [];
+
+  for (const term of negTerms) {
+    const lower = term.toLowerCase();
+    // Check if the full term or its significant words conflict
+    const words = lower.split(/\s+/).filter(w => w.length > 2);
+    const conflicts = words.filter(w => positiveTokens.has(w));
+
+    // A term contradicts if >50% of its significant words are in the positive
+    // This avoids stripping "calm sea" just because "sea" appears — but DOES
+    // strip "storm waves" if "storm" and "waves" both appear in positive
+    if (words.length > 0 && conflicts.length > words.length * 0.5) {
+      removedTerms.push(term);
+    } else {
+      survivingTerms.push(term);
+    }
+  }
+
+  if (removedTerms.length === 0) {
+    return { negative, wasFixed: false, fixes: [], removedTerms: [] };
+  }
+
+  const cleanedNegative = survivingTerms.join(', ');
+  return {
+    negative: cleanedNegative,
+    wasFixed: true,
+    fixes: [`Removed ${removedTerms.length} contradicting term${removedTerms.length !== 1 ? 's' : ''} from negative: ${removedTerms.join(', ')}`],
+    removedTerms,
+  };
+}
+
+// ============================================================================
 // RULE CEILING TRACKING
 // ============================================================================
 

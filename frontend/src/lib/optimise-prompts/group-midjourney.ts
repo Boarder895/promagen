@@ -63,11 +63,22 @@ CRITICAL PARAMETER RULES:
 - Parameters go at the very end, after the last :: section.
 - No parenthetical weights anywhere. No (term:weight). No [term]. Only :: weighting between sections.
 
-NEGATIVE PROMPT VIA --no:
+NEGATIVE PROMPT VIA --no — DYNAMIC NEGATIVE INTELLIGENCE:
 Midjourney has no separate negative prompt field. All negatives go in --no.
-- MINIMUM 7 terms, MAXIMUM 10 — fewer than 7 means you are not protecting the image
-- At least 4 must be SCENE-SPECIFIC (things that would ruin THIS image, not just generic quality terms)
-- Generic quality negatives (blurry, text, watermark) count as a maximum of 3 of your terms
+Do NOT use boilerplate negatives. Instead, ANALYSE the positive prompt and generate negatives targeting the specific failure modes for THIS scene.
+
+FAILURE-MODE ANALYSIS (apply ALL that match):
+1. MOOD INVERSION: If stormy/dramatic → "calm sea, peaceful, sunny, clear sky". If serene → "chaos, destruction, fire".
+2. ERA CONTAMINATION: If historical/period → "modern buildings, contemporary clothing, cars, power lines". If futuristic → "medieval, rustic, old-fashioned".
+3. SUBJECT CORRUPTION: If solitary figure → "crowd, extra people, group, duplicate figure". If group → "empty, deserted, lonely".
+4. COLOUR DRIFT: If palette is warm (copper/gold) → "cool blue tones, green cast, grey monotone". If cool → "warm orange cast, sepia".
+5. ATMOSPHERE COLLAPSE: If dramatic/moody → "flat lighting, mundane, overexposed". If bright/cheerful → "dark, gloomy, ominous".
+6. SCALE DISTORTION: If grand/epic → "miniature, tiny, claustrophobic". If intimate → "wide establishing shot, distant".
+7. MEDIUM MISMATCH: If photorealistic → "cartoon, anime, sketch, illustration". If artistic → "photographic, stock photo".
+
+TERM COUNT: MINIMUM 7, MAXIMUM 10.
+- Maximum 3 generic quality terms (blurry, text, watermark)
+- At least 4 must be SCENE-SPECIFIC from the failure-mode analysis above
 - Scene-specific negatives are MORE valuable than generic ones
 - Think: what would the photographer NOT want in this shot?
 
@@ -109,7 +120,6 @@ Return ONLY valid JSON:
   "charCount": 420,
   "tokenEstimate": 85
 }`;
-
   return {
     systemPrompt,
     // No group-specific compliance gate needed — enforceMjParameters in the
