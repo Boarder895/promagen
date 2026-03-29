@@ -1,8 +1,8 @@
 # Prompt Optimisation Trend Analysis
 
-**Version:** 6.0.0  
+**Version:** 5.0.0  
 **Created:** 25 March 2026  
-**Updated:** 26 March 2026 (Session 4 — 40-platform sync)  
+**Updated:** 27 March 2026 (Session 3)  
 **Owner:** Promagen  
 **Status:** Living document — updated every test round  
 **Authority:** This document tracks scoring trends across all harmony rounds for the 4 generic tier outputs (Call 2) and platform-specific optimised outputs (Call 3). It is the single source of truth for deciding when to intervene on the generic tiers.
@@ -11,9 +11,9 @@
 
 - `ai-disguise.md` — Call 2 (tier generation) and Call 3 (optimisation) architecture
 - `harmonizing-claude-openai.md` — Dual-assessor methodology, scoring criteria
-- `prompt_engineering_specs_40_platforms_tier_classification_routing_logic.md` — Platform tier classification and routing logic (supersedes deleted `grouping-45-image-platforms-by-prompt-compatibility.md`)
+- `grouping-45-image-platforms-by-prompt-compatibility.md` — Platform group definitions
 - `harmony-compliance.ts` — Compliance gates (enforceT1Syntax, enforceMjParameters, enforceWeightCap, enforceClipKeywordCleanup)
-- `lib/optimise-prompts/` — Group-specific system prompt builders (10 groups, `group-multi-engine.ts` deleted)
+- `lib/optimise-prompts/` — Group-specific system prompt builders
 
 ---
 
@@ -112,9 +112,11 @@ These are the 4 tier outputs from `/api/generate-tier-prompts` — unaffected by
 | R6    | 26 Mar | —      | 90      | —          | —              | Session 2: ChatGPT-only assessment              |
 | R7    | 26 Mar | —      | 91      | —          | —              | Session 2: best T1 — pale gold arc now weighted |
 | R8    | 26 Mar | —      | 92      | —          | —              | Session 2: strongest CLIP, all anchors present  |
+| R9    | 27 Mar | —      | 90      | —          | —              | Session 3: stable. "purple copper clouds" weakness persists — key elements unweighted |
 
-**Floor:** 86 · **Ceiling:** 93 · **Average:** 89 · **Trend:** Gradually improving  
-**Status:** ⚠️ Monitoring — not at intervention threshold
+**Floor:** 86 · **Ceiling:** 93 · **Average:** 89 · **Trend:** Stable — improvement stalled  
+**Known flaw:** "purple copper clouds" survives Call 3 — should be "purple-and-copper sky". Example 3 in builder has the correct merge but GPT isn't consistently applying it to all inputs.  
+**Status:** ⚠️ Monitoring — "purple copper clouds" flaw + unweighted key elements (jagged rocks, salt spray, dark cliffs) need addressing
 
 ### T2 Midjourney Family
 
@@ -127,8 +129,9 @@ These are the 4 tier outputs from `/api/generate-tier-prompts` — unaffected by
 | R5    | 26 Mar | 83     | 89      | 86         | Two separate --no blocks           | Step 1 handles multi-block                       |
 | R6    | 26 Mar | —      | 91      | —          | Duplicated --no tail               | Session 2: strong content, plumbing bug persists |
 | R7    | 26 Mar | —      | 92      | —          | Duplicated --no tail               | Session 2: all 9 anchors, --no still duplicated  |
+| R8    | 27 Mar | —      | 92      | —          | None seen                          | Session 3: stable. Prose restructuring working, slightly over-written |
 
-**Floor:** 79 · **Ceiling:** 94 · **Average:** 86 · **Trend:** Content improving, --no duplication persistent  
+**Floor:** 79 · **Ceiling:** 94 · **Average:** 87 · **Trend:** Content stable at 90–92  
 **Root cause:** GPT produces duplicate --no content in most runs. Three compliance fixes deployed but bug persists in ~60% of runs.  
 **Status:** ⚠️ Monitoring — --no duplication is a cosmetic issue, content quality is strong
 
@@ -144,8 +147,9 @@ These are the 4 tier outputs from `/api/generate-tier-prompts` — unaffected by
 | R6    | 26 Mar | —      | 90      | —          | Session 2: "storm waves hammer the jagged rocks" visceral              |
 | R7    | 26 Mar | —      | 94      | —          | Session 2: "gives the storm immense scale" — outstanding               |
 | R8    | 26 Mar | —      | 95      | —          | Session 2: best T3 ever — "height of the tower and the violence below" |
+| R9    | 27 Mar | —      | 94      | —          | Session 3: stable. "small fishing village" slightly weaker than source |
 
-**Floor:** 92 · **Ceiling:** 96 · **Average:** 94 · **Trend:** Stable to improving  
+**Floor:** 92 · **Ceiling:** 96 · **Average:** 94 · **Trend:** Stable  
 **Status:** ✅ Bulletproof
 
 ### T4 Plain Language
@@ -160,8 +164,9 @@ These are the 4 tier outputs from `/api/generate-tier-prompts` — unaffected by
 | R6    | 26 Mar | —      | 82      | —          | Session 2: salt spray + purple sky restored           |
 | R7    | 26 Mar | —      | 87      | —          | Session 2: "stormy, vast, and lonely" emotional close |
 | R8    | 26 Mar | —      | 88      | —          | Session 2: purple and copper skies + flying spray     |
+| R9    | 27 Mar | —      | 87      | —          | Session 3: stable. Loses jagged rocks, salt spray, pale gold, gallery deck precision |
 
-**Floor:** 87 · **Ceiling:** 92 · **Average:** 89 · **Trend:** Improving  
+**Floor:** 87 · **Ceiling:** 92 · **Average:** 89 · **Trend:** Stable  
 **Status:** ✅ Above threshold
 
 ---
@@ -179,8 +184,9 @@ These are the 4 tier outputs from `/api/generate-tier-prompts` — unaffected by
 | R1    | 25 Mar | 84     | 94      | 89         | 13             | — (baseline, generic fallback)                    |
 | R2    | 25 Mar | 93     | 89      | 91         | 7              | BEFORE→AFTER examples + enforceWeightCap(8)       |
 | R3    | 25 Mar | 95     | 89      | 92         | 6              | Example 3 (colour merge) + Rule 9 (spatial depth) |
+| R4    | 27 Mar | —      | 86      | —          | —              | Session 3 retest: "purple copper clouds" persists, key elements unweighted |
 
-**Status:** ✅ Wave 1 complete. Harmonised 92.
+**Status:** ⚠️ Score revised downward. Session 3 honest ChatGPT score: 86 (previous 92 was Claude-lenient). Root cause: "purple copper clouds" instead of "purple-and-copper sky"; jagged rocks, salt spray, dark cliffs, warm orange windows all unweighted. Negatives generated by builder but not displayed in Prompt Lab UI.
 
 ### Wave 2: SD CLIP Double-Colon (Leonardo)
 
@@ -190,8 +196,9 @@ These are the 4 tier outputs from `/api/generate-tier-prompts` — unaffected by
 | Round | Date   | Claude | ChatGPT | Harmonised | Weighted terms | Key observation                                       |
 | ----- | ------ | ------ | ------- | ---------- | -------------- | ----------------------------------------------------- |
 | R4    | 26 Mar | 96     | 88      | 93         | 7              | First-time hit. Correct :: syntax. Colour merge done. |
+| R5    | 27 Mar | —      | 87      | —          | —              | Session 3 retest: "purple copper clouds" persists, key elements unweighted. Previous 93 was Claude-lenient. |
 
-**Status:** ✅ Wave 2 complete. Harmonised 93.
+**Status:** ⚠️ Score revised. Honest ChatGPT score: 87. Same root cause as Wave 1 — "purple copper clouds" weakness in assembled input; jagged rocks, salt spray, dark cliffs unweighted. Both CLIP builders share this flaw.
 
 ### Wave 3: Midjourney Dedicated
 
@@ -204,8 +211,9 @@ These are the 4 tier outputs from `/api/generate-tier-prompts` — unaffected by
 | PG v2 | 26 Mar | 98     | —       | —          | Playground | Rule 9 added, 10 --no terms    |
 | R5    | 26 Mar | 88     | 92      | 90         | Prompt Lab | Near-identical output returned |
 | R6b   | 26 Mar | 91     | 93      | 92         | Prompt Lab | "concept art" persists         |
+| R7    | 27 Mar | —      | 90      | —          | Prompt Lab | Session 3 retest: slightly over-written. "storm-realism photography" is better than "concept art" but prose is pushed. |
 
-**Status:** ✅ Wave 3 complete. Harmonised 92.
+**Status:** ✅ Wave 3 stable. ChatGPT 90. Slightly over-written but strong content. "concept art" → "storm-realism photography" fix confirmed working.
 
 ### Wave 4: Clean Natural Language (21 platforms)
 
@@ -226,8 +234,13 @@ These are the 4 tier outputs from `/api/generate-tier-prompts` — unaffected by
 | R8d   | 26 Mar | —      | 87      | —          | Session 2 (v4)  | Canva: pale gold beam restored for first time           |
 | R8e   | 26 Mar | —      | 88      | —          | Session 2 (v5)  | .next cache cleared — all fixes firing together         |
 | R8f   | 26 Mar | —      | 89      | —          | Session 2 (v6)  | Flipped framing (Idea 1) — best Canva score. Final.     |
+| R9a   | 27 Mar | —      | 91      | —          | Session 3 (Firefly) | NL group: slightly over-engineered. "add tactile realism" sounds synthetic. |
+| R9b   | 27 Mar | —      | 90      | —          | Session 3 (Google Imagen) | **CRITICAL: Assembled T3 scored 94 — optimised scored 90. Call 3 DEGRADING output.** |
 
 **Playground → Prompt Lab gap:** Narrowed from -12 to -8 (97 → 89).
+
+**CRITICAL SESSION 3 FINDING — NL group Call 3 degrades output:**
+Google Imagen assembled T3 (94) > Call 3 optimised (90). The assembled prompt is cleaner, tighter, and more natural than the Call 3 result. This confirms the NL compression instinct is still active: Call 3 is adding length and synthetic phrasing ("Framed as a dramatic low-angle wide shot with layered depth from…") that scores lower than the original assembled prose. This is the strongest evidence yet for skipping Call 3 on the NL group entirely.
 
 **Root causes identified and fixed (Session 2):**
 
@@ -240,7 +253,7 @@ These are the 4 tier outputs from `/api/generate-tier-prompts` — unaffected by
 
 **GPT compression problem (Session 2 learning):** At temperature 0.2, GPT treats "optimise" as "simplify" for NL prose. No amount of prompt engineering fully overcomes this. Five separate fixes were attempted; the combination of all five brought Canva from 82 to 89. An NL bypass (returning original sentence directly) was attempted but failed due to React useEffect double-fire timing — the first Call 3 returned correctly (395 chars) but a second debounced re-fire overwrote it with a shorter result.
 
-**Status:** ✅ Wave 4 complete. ChatGPT 89 (Canva). Flipped framing is the production path.
+**Status:** ⚠️ Wave 4 decision pending. Canva ceiling: 89. But assembled T3 baseline for NL group is 94. Call 3 is spending API budget to produce output that scores lower than what the user already had. Strong case for skipping Call 3 entirely for the NL group and displaying assembled T3 as the final output.
 
 ### Wave 5: DALL-E API (OpenAI)
 
@@ -252,10 +265,11 @@ These are the 4 tier outputs from `/api/generate-tier-prompts` — unaffected by
 | ----- | ------ | ------ | ------- | ---------- | ---------- | ------- | ------------------------------------- |
 | PG v1 | 26 Mar | 96     | —       | —          | Playground | 9/9     | All anchors, 385 chars, rewrite-proof |
 | R9    | 26 Mar | 95     | 95      | 95         | Prompt Lab | 9/9     | First-time ship. 389 chars.           |
+| R10   | 27 Mar | —      | 96      | —          | Prompt Lab | 9/9     | Session 3 retest. 392 chars. Clean prose, all anchors. |
 
 **Key architecture insight:** DALL-E 3 rewrites every prompt via GPT-4. The builder teaches GPT to write "rewrite-proof" prompts — every visual element is a named anchor that GPT-4 preserves during expansion. Vague modifiers get reinterpreted; specific nouns survive.
 
-**Status:** ✅ Wave 5 complete. ChatGPT 95. First-time ship, no Playground iteration needed.
+**Status:** ✅ Wave 5 confirmed. ChatGPT 96. Consistent across sessions.
 
 ### Wave 6: Flux Architecture (Black Forest Labs)
 
@@ -266,6 +280,7 @@ These are the 4 tier outputs from `/api/generate-tier-prompts` — unaffected by
 | Round | Date   | Claude | ChatGPT | Harmonised | Source     | Anchors | Key observation             |
 | ----- | ------ | ------ | ------- | ---------- | ---------- | ------- | --------------------------- |
 | R10   | 26 Mar | 95     | 95      | 95         | Prompt Lab | 9/9     | First-time ship. 456 chars. |
+| R11   | 27 Mar | —      | 96      | —          | Prompt Lab | 9/9     | Session 3 retest. 600 chars. Tactile detail: cold iron, wet metal, slick stone. |
 
 **Key architecture insight:** Flux uses T5-XXL (NOT CLIP). Full sentences produce better results than tags. Parenthetical weights appear as literal text in images. guidance_scale 3.5 means model follows prompt faithfully — precision matters more than emphasis tricks. Best-in-class photorealism.
 
@@ -275,7 +290,7 @@ These are the 4 tier outputs from `/api/generate-tier-prompts` — unaffected by
 - Rule 11: Negative-as-positive converter — strips "without X" phrases that T5-XXL would render as literal text
 - Compliance gate: strips surviving negative phrases from output
 
-**Status:** ✅ Wave 6 complete. ChatGPT 95. First-time ship.
+**Status:** ✅ Wave 6 confirmed. ChatGPT 96. Consistent and improving. negativeSupport config corrected to `none` (Session 3).
 
 ### Wave 7: Video Cinematic (Runway, Luma, Kling)
 
@@ -286,6 +301,7 @@ These are the 4 tier outputs from `/api/generate-tier-prompts` — unaffected by
 | Round | Date   | Claude | ChatGPT | Harmonised | Source     | Anchors | Key observation                                           |
 | ----- | ------ | ------ | ------- | ---------- | ---------- | ------- | --------------------------------------------------------- |
 | R11   | 26 Mar | 95     | —       | —          | Prompt Lab | 9/9     | First-time ship. 390 chars. Camera movement opens prompt. |
+| R12   | 27 Mar | —      | 92      | —          | Prompt Lab | 9/9     | Session 3 retest. 419 chars. Motion language correct. Lacks material texture depth vs Flux/Recraft. |
 
 **Key architecture insight:** Video platforms generate motion, not stills. Every prompt must imply movement — camera direction opens the prompt ("Low-angle tracking shot follows"), all verbs are active ("crash", "rises", "sweeps", "flickers"), temporal flow is implied. Concise and directive, not long descriptive paragraphs.
 
@@ -295,98 +311,65 @@ These are the 4 tier outputs from `/api/generate-tier-prompts` — unaffected by
 - Luma: `@style` keyword, `loop` keyword, no negatives
 - Kling: `Shot 1:/Shot 2:` multi-shot, supports negative prompts
 
-**Status:** ✅ Wave 7 complete. Claude 95 (Runway). First-time ship.
+**Status:** ✅ Wave 7 confirmed. ChatGPT 92. Previous Claude-only 95 was lenient. 92 is the honest number for Runway. Luma/Kling ideal ranges tightened to 150–350 (Session 3 config fix).
 
 ### Wave 8: Remaining Dedicated (3 platforms)
 
-**Builders built:** `group-novelai.ts` (v2), `group-ideogram.ts` (v2), `group-recraft.ts` (v3)  
-**Router wired.** groupKnowledge added for all 3. **Tested in Prompt Lab Session 3.**
+**Builders built:** `group-novelai.ts`, `group-ideogram.ts`, `group-recraft.ts`  
+**Router wired.** groupKnowledge added for all 3. **Tested Session 3 (27 Mar).**
 
-**NovelAI** (`group-novelai.ts` v2):
+**Recraft** (`group-recraft.ts`):
 
+| Round | Date   | Claude | ChatGPT | Harmonised | Source     | Anchors | Key observation |
+| ----- | ------ | ------ | ------- | ---------- | ---------- | ------- | --------------- |
+| R12   | 27 Mar | —      | 96      | —          | Prompt Lab | 9/9     | v5 builder (lighthouse-hardcoded). 655 chars. All anchors, tactile textures, strong composition close. |
+
+**⚠️ Important:** R12 score was achieved with v5 builder which hardcoded Lighthouse-specific anchors. v6 builder (scene-agnostic) was deployed Session 3 but not yet retested. R12 result reflects a builder that is not production-safe for non-Lighthouse inputs.
+
+**Ideogram** (`group-ideogram.ts`):
+- negativeSupport corrected from `inline` to `separate` (Session 3 config fix)
+- Not yet retested post-fix
+
+**NovelAI** (`group-novelai.ts`):
 - Anime-optimised SD with CLIP encoder
 - Triple-brace weighting: `{{{term}}}` = strongest, `{{term}}` = strong, `{term}` = moderate
 - Tag-based (not prose), Danbooru-style vocabulary
 - Quality prefix: `{{{masterpiece}}}`, `{{best quality}}`, `{{highly detailed}}`
 - Compliance gate converts parenthetical weights to triple-brace
-- v2: Dynamic Negative Intelligence added, anatomy floor capped
+- Not yet retested Session 3
 
-| Round | Date   | Score | Weighted terms | Key observation                                                                     |
-| ----- | ------ | ----- | -------------- | ----------------------------------------------------------------------------------- |
-| R1    | 26 Mar | 86    | 8              | Correct triple-brace. All anchors present (minor softening). No negative generated. |
+**Status:** ⚠️ Recraft 96 (v5, lighthouse-specific — v6 awaiting retest). Ideogram and NovelAI not yet tested with Lighthouse Keeper.
 
-**Ideogram** (`group-ideogram.ts` v2):
+### Wave 9: Multi-Engine Aggregators (Freepik)
 
-- Industry leader for text-in-image rendering
-- Quoted text in prompt = text to render: `"Hello World"`
-- Magic Prompt rewrites input (like DALL-E)
-- Design-focused: understands typography, kerning, composition grids
-- ~150–160 word limit
-- v2: Dynamic Negative Intelligence added, negative field now populated for paid users
-
-| Round | Date   | Score | Chars | Key observation                                        |
-| ----- | ------ | ----- | ----- | ------------------------------------------------------ |
-| R1    | 26 Mar | 90    | 491   | All 9 anchors. Strong composition. Clean NL prose.     |
-| R2    | 26 Mar | 86    | 398   | GPT over-compressed by ~90 chars. Variance, not a bug. |
-
-**Recraft** (`group-recraft.ts` v3):
-
-- Design-first platform with SVG vector output
-- Hierarchical style/substyle taxonomy (25+ options)
-- Prompts structured as design briefs: output type + subject + visual details + composition
-- "Artistic level" slider inverts usual paradigm (lower = more prompt adherence)
-- Supports scene-specific negative prompts
-- v2: Dynamic Neg Intelligence, idealMin 150→200, zero-anchor-loss rule, spatial depth
-- v3: Restructured — RULE ZERO (anchor preservation) front-loaded, PRE-FLIGHT CHECK added, rules reduced from 9 to 4
-
-| Round | Date   | Score | Chars | Key observation                                                                                                            |
-| ----- | ------ | ----- | ----- | -------------------------------------------------------------------------------------------------------------------------- |
-| R1    | 26 Mar | 72    | 242   | v1: 4–5 lost anchors. GPT over-compressed.                                                                                 |
-| R2    | 26 Mar | 70    | 259   | v1 retest: same compression. Confirmed input-side problem.                                                                 |
-| R3    | 26 Mar | 68    | 245   | v2: zero-anchor-loss rule added but GPT ignored (Rule 7).                                                                  |
-| R4    | 26 Mar | 62    | 239   | v3: RULE ZERO front-loaded. Still compressed. Root cause: assembled T1 input already stripped anchors before GPT saw them. |
-| R5    | 26 Mar | 74    | 260   | Prose flip deployed (original sentence as primary input). +12 points. "pale gold" returned. Still 5/9 anchors.             |
-
-**Root cause identified:** The assembled T1 CLIP prompt sent to GPT had already lost anchors during assembly. GPT was "optimising" text that was already degraded. Fix: prose-primary flip (same pattern as Clean NL group) deployed for all prose-based groups. Recraft still under-performs vs other prose groups — GPT's compression instinct persists despite system prompt rules.
-
-**Status:** ✅ Wave 8 complete. Tested. Ideogram 90 (ship). NovelAI 86 (ship). Recraft 74 (functional, GPT compression is the ceiling — architectural, not builder).
-
-### Wave 9: Multi-Engine Aggregators — REMOVED (26 Mar 2026)
-
-**Builder:** `group-multi-engine.ts` — **deleted**  
-**Platforms removed:** NightCafe, OpenArt, Tensor.Art, GetImg, Freepik (5 platforms)
-
-The multi-engine aggregators were removed from the active roster because their dynamic model-routing requirement made single-tier assignment impossible. Freepik was the only platform tested (scored 73). The builder file and route case have been deleted.
-
-| Round | Date   | Score | Chars | Key observation (historical)                                                            |
-| ----- | ------ | ----- | ----- | --------------------------------------------------------------------------------------- |
-| R1    | 26 Mar | 73    | 260   | 5/9 anchors. Same GPT compression pattern as Recraft. Builder was architecturally sound. |
-
-**Status:** ❌ Removed. Platform count reduced 45→40. BlueWillow moved to Clean NL group.
+**Status:** Not started. Only 1 platform remaining (freepik). BlueWillow uses generic fallback.
 
 ---
 
 ## 5. Playground vs Prompt Lab Gap
 
-**Discovered 26 Mar Session 1. Updated 26 Mar Session 2.**
+**Discovered 26 Mar Session 1. Updated 27 Mar Session 3.**
 
-| Wave | Platform   | Playground | Prompt Lab | Gap    | Notes                         |
-| ---- | ---------- | ---------- | ---------- | ------ | ----------------------------- |
-| 1    | Stability  | Not tested | 95         | —      |                               |
-| 2    | Leonardo   | Not tested | 96         | —      |                               |
-| 3    | Midjourney | 98         | 92         | **-6** |                               |
-| 4    | Canva (NL) | 97         | 89         | **-8** | Narrowed from -12 via 6 fixes |
-| 5    | DALL-E     | 96         | 95         | **-1** | Effectively closed            |
-| 6    | Flux       | Not tested | 95         | —      | First-time ship               |
-| 7    | Runway     | Not tested | 95         | —      | First-time ship               |
+| Wave | Platform      | Playground | Prompt Lab | Gap     | Notes                                                          |
+| ---- | ------------- | ---------- | ---------- | ------- | -------------------------------------------------------------- |
+| 1    | Stability     | Not tested | 86         | —       | Session 3 revised down from 92 (Claude-lenient). Real number. |
+| 2    | Leonardo      | Not tested | 87         | —       | Session 3 revised down from 93 (Claude-lenient). Real number. |
+| 3    | Midjourney    | 98         | 90         | **-8**  | Session 3 revised from 92. Slightly over-written.             |
+| 4    | Canva (NL)    | 97         | 89         | **-8**  | Narrowed from -12 via 6 fixes. NL ceiling.                    |
+| 4    | Firefly (NL)  | Not tested | 91         | —       | Session 3 first data point.                                    |
+| 4    | G. Imagen (NL)| 94 (T3)    | 90         | **-4**  | **Session 3: assembled T3 beats optimised. Call 3 degrading.** |
+| 5    | DALL-E        | 96         | 96         | **0**   | Session 3: gap closed. Consistent.                             |
+| 6    | Flux          | Not tested | 96         | —       | Session 3 improved from 95.                                    |
+| 7    | Runway        | Not tested | 92         | —       | Session 3 revised from 95 (Claude-only was lenient).           |
+| 8    | Recraft       | Not tested | 96         | —       | Session 3 first data (v5 builder — v6 awaiting retest).        |
 
-### Root Cause: GPT Compression Instinct (confirmed Session 2)
+### Root Cause: GPT Compression Instinct (confirmed Session 2, reinforced Session 3)
 
-For CLIP, MJ, and DALL-E groups, the gap is minimal (0–6 points) because GPT has mechanical syntax work to do — rebalance weights, dedup parameters, strip brackets. There's clear "optimisation" work.
+For CLIP, MJ, DALL-E, Flux, and Video groups, the gap is minimal (0–8 points) because GPT has mechanical syntax work to do — rebalance weights, dedup parameters, strip brackets, add camera movement. There is clear structural "optimisation" work that GPT can do reliably.
 
-For NL group, the gap is widest (-8) because the input is already "good enough" prose. GPT's instinct at temperature 0.2 is to "simplify" when the input looks clean. Rule 9 ("always enrich"), Rule 10 ("never shorten"), flipped framing, and idealMin floor all helped but couldn't fully overcome this instinct.
+For NL group, the gap persists AND Session 3 has shown Call 3 can go negative: Google Imagen assembled T3 (94) > Call 3 optimised (90). The builder adds synthetic phrasing ("Framed as a dramatic low-angle wide shot with layered depth from…") that sounds engineered rather than natural. GPT's instinct at temperature 0.4 is to demonstrate effort by adding compositional framing language — which scores lower than the clean assembled prose it started with.
 
-**Conclusion:** The NL gap is a fundamental limitation of using GPT for NL-to-NL optimisation. 89 is the practical ceiling without switching models or temperature. For CLIP/MJ/DALL-E/Flux/Video, the gap is effectively closed.
+**Session 3 conclusion:** Call 3 is worth its API cost on CLIP/MJ/DALL-E/Flux/Video groups where it has mechanical work to do. For the NL group (25 platforms), it actively degrades output. **The correct decision is to skip Call 3 for the NL group entirely and display assembled T3 as the optimised output.** This also eliminates unnecessary API spend on 25 of 40 platforms.
 
 ---
 
@@ -451,22 +434,16 @@ Call 3 sends a DEDICATED system prompt per platform group. GPT's full attention 
 | DALL-E     | 95           | ChatGPT |
 | Flux       | 95           | ChatGPT |
 | Runway     | 95           | Claude  |
-| Ideogram   | 90           | Claude  |
-| NovelAI    | 86           | Claude  |
-| Recraft    | 74           | Claude  |
-| Freepik    | 73           | Claude  |
 
 **Conclusion:** The generic 4-tier preview is the hook. The optimised output is the product.
 
-### GPT Compression Instinct — Critical Discovery (Session 2, expanded Session 3)
+### GPT Compression Instinct — Critical Discovery (Session 2)
 
 GPT-5.4-mini at temperature 0.2 treats "optimise" as "simplify" for NL prose input. When it receives text that already reads as clean prose, it compresses rather than enriches. This was the root cause of the Canva gap (97 Playground → 82 initial Prompt Lab).
 
-**Session 3 expansion:** The compression instinct is not limited to NL platforms. Recraft (74) and Freepik (73) both hit the same wall. Even with RULE ZERO front-loaded, PRE-FLIGHT CHECK at the end, rules reduced from 9 to 4, and the prose-primary flip deployed — GPT still compresses to ~240–260 chars when the sweet spot is 250–400. System prompt restructuring (v2→v3) had zero measurable effect. The prose-primary flip helped (+12pts for Recraft) but did not eliminate the behaviour. This is a GPT behavioural limit at temperature 0.2, not a fixable builder bug.
-
 **What partially overcomes it:**
 
-- Flipped framing (original as primary, assembled as reference) — +4pts Canva, +12pts Recraft
+- Flipped framing (original as primary, T3 as reference)
 - idealMin floor forcing output above T4 length
 - Rule 10 explicit anti-compression
 - Updated groupKnowledge removing "short" instructions
@@ -477,35 +454,26 @@ GPT-5.4-mini at temperature 0.2 treats "optimise" as "simplify" for NL prose inp
 - Raising idealMax
 - Sending richer input (T3 instead of T4)
 - Any bypass approach (double-fire timing defeats it)
-- Front-loading anchor preservation rules (RULE ZERO — v3 showed no improvement)
-- PRE-FLIGHT CHECK before JSON return
-- Reducing rule count (9→4 made no difference)
 
 **For CLIP/MJ/DALL-E/Flux/Video:** Not a problem. GPT has mechanical work to do (syntax conversion, weight rebalancing, camera movement addition). The "optimise" instinct produces genuinely better output.
 
-### Flipped Framing for Prose-Based Groups
+### Flipped Framing for NL Group
 
-For all prose-based platforms (7 groups, 28 platforms), the user message is restructured:
+For NL platforms, the user message is restructured:
 
 ```
 SCENE DESCRIPTION TO OPTIMISE FOR [PLATFORM]:
 [original human sentence — full visual intent]
 
 REFERENCE DRAFT (use as structural starting point, enrich with ALL details):
-[assembled text — good structure, may have lost details]
+[T3 natural language text — good structure, may have lost details]
 ```
 
-This frames GPT's task as "write the best version of this scene" rather than "make this text shorter."
-
-**Groups using prose-primary flip:** clean-natural-language, recraft, ideogram, dalle-api, flux-architecture, video-cinematic.
-
-**Groups NOT flipped (CLIP/syntax-primary):** sd-clip-parenthetical, sd-clip-double-colon, midjourney, novelai. These need the assembled prompt as primary because it contains correct syntax/weights that GPT must preserve.
-
-Originally deployed for NL group only (Session 2, +4pts for Canva). Expanded to all 7 prose groups in Session 3 after Recraft root cause analysis proved T1 assembly was stripping anchors before GPT saw them.
+This frames GPT's task as "write the best version of this scene" rather than "make this text shorter." Responsible for the jump from 85 to 89 for Canva.
 
 ### Original Sentence Bug — Fixed (Session 1, confirmed Session 2)
 
-`humanText` from playground-workspace now reaches Call 3 via ref. Confirmed working via diagnostic logging in Session 2 (395 chars, full Lighthouse Keeper text). Benefits all 40 covered platforms.
+`humanText` from playground-workspace now reaches Call 3 via ref. Confirmed working via diagnostic logging in Session 2 (395 chars, full Lighthouse Keeper text). Benefits all 43 covered platforms.
 
 ### T3 Input for NL T4 Providers
 
@@ -548,14 +516,14 @@ The optimizer useEffect fires correctly on toggle-ON, but then re-fires when `ai
 
 **New builders (Session 2):**
 
-| File                              | Platforms               | Score | Status                |
-| --------------------------------- | ----------------------- | ----- | --------------------- |
-| `group-dalle-api.ts` (v1)         | 1 (OpenAI)              | 95    | ✅ Tested             |
-| `group-flux-architecture.ts` (v2) | 1 (Flux)                | 95    | ✅ Tested             |
-| `group-video-cinematic.ts` (v1)   | 3 (Runway, Luma, Kling) | 95    | ✅ Tested (Runway)    |
-| `group-novelai.ts` (v1)           | 1 (NovelAI)             | 86    | ✅ Tested (Session 3) |
-| `group-ideogram.ts` (v1)          | 1 (Ideogram)            | 90    | ✅ Tested (Session 3) |
-| `group-recraft.ts` (v1)           | 1 (Recraft)             | 74    | ✅ Tested (Session 3) |
+| File                              | Platforms               | Score | Status               |
+| --------------------------------- | ----------------------- | ----- | -------------------- |
+| `group-dalle-api.ts` (v1)         | 1 (OpenAI)              | 95    | ✅ Tested            |
+| `group-flux-architecture.ts` (v2) | 1 (Flux)                | 95    | ✅ Tested            |
+| `group-video-cinematic.ts` (v1)   | 3 (Runway, Luma, Kling) | 95    | ✅ Tested (Runway)   |
+| `group-novelai.ts` (v1)           | 1 (NovelAI)             | —     | ⚠️ Built, not tested |
+| `group-ideogram.ts` (v1)          | 1 (Ideogram)            | —     | ⚠️ Built, not tested |
+| `group-recraft.ts` (v1)           | 1 (Recraft)             | —     | ⚠️ Built, not tested |
 
 **Flux v2 improvements (built, not retested):**
 
@@ -563,116 +531,67 @@ The optimizer useEffect fires correctly on toggle-ON, but then re-fires when `ai
 - Rule 11: Negative-as-positive converter
 - Compliance gate: strips surviving negative phrases
 
-**Router state:** 10 active cases (sd-clip-parenthetical, sd-clip-double-colon, midjourney, clean-natural-language, dalle-api, flux-architecture, video-cinematic, novelai, ideogram, recraft). All groups covered. BlueWillow moved to clean-natural-language.
-
-### Session 3 (26 Mar) — Wave 8 testing + Wave 9 build + Dynamic Negative Intelligence
-
-**Wave 8 tested (NovelAI, Ideogram, Recraft):**
-
-| Platform | Score | Key finding                                                       |
-| -------- | ----- | ----------------------------------------------------------------- |
-| Ideogram | 90    | All 9 anchors survived. Clean prose. Production quality.          |
-| NovelAI  | 86    | Correct triple-brace syntax. Minor softening of 2 anchors.        |
-| Recraft  | 74    | 5/9 anchors after prose-flip fix. GPT compression is the ceiling. |
-
-**Recraft iteration log (v1→v3):**
-
-| Version | Change                                                              | Score | Outcome                                                                               |
-| ------- | ------------------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------- |
-| v1      | Initial builder                                                     | 72    | 4–5 lost anchors. GPT over-compressed to 242 chars.                                   |
-| v2      | Dynamic Neg Intelligence, idealMin 150→200, zero-anchor-loss Rule 7 | 62    | Regression. Rule 7 buried at position 7, GPT ignored it.                              |
-| v3      | RULE ZERO front-loaded, PRE-FLIGHT CHECK, rules reduced 9→4         | 62    | No improvement. Root cause was upstream: T1 assembled input already stripped anchors. |
-| v3+flip | Prose-primary flip: original sentence as primary input              | 74    | +12 points. "pale gold" and "jagged rocks" returned. GPT compression remains.         |
-
-**Root cause analysis:** System prompt restructuring (v2, v3) had no effect because the problem was upstream. The T1 assembled CLIP prompt sent to GPT had already lost anchors during assembly. GPT was "optimising" text that was already degraded. Fix: prose-primary flip (same pattern as Clean NL group) deployed for all 6 prose-based groups (clean-natural-language, recraft, ideogram, dalle-api, flux-architecture, video-cinematic).
-
-**Dynamic Negative Intelligence (Extra 2) — shipped:**
-
-Applied to 6 builders with negative prompt support:
-
-- `group-sd-clip-parenthetical.ts` — 7-point failure-mode analysis
-- `group-sd-clip-double-colon.ts` — 7-point failure-mode analysis
-- `group-midjourney.ts` — --no section replaced with structured framework
-- `group-novelai.ts` — 7 modes + anime medium mismatch, anatomy floor capped
-- `group-ideogram.ts` — negative field now populated for paid users
-- `group-recraft.ts` — 5 failure modes (trimmed from 7)
-
-Failure-mode analysis framework: mood inversion, era contamination, subject corruption, colour drift, atmosphere collapse, scale distortion, medium mismatch. Quality floor capped at 3–5 generic terms. Rest must be scene-specific.
-
-**Negative-Positive Contradiction Guard (Extra B) — shipped:**
-
-`enforceNegativeContradiction()` added to `harmony-compliance.ts`. Tokenises positive + negative prompts, strips terms appearing in both (50%+ word overlap threshold). Wired as Step 1.5 in the route compliance chain.
-
-**Wave 9 built then removed (Freepik multi-engine):**
-
-| File                         | Platforms   | Score | Status              |
-| ---------------------------- | ----------- | ----- | ------------------- |
-| `group-multi-engine.ts` (v1) | 1 (Freepik) | 73    | ❌ Removed (26 Mar) |
-
-**Prose-primary flip expanded:**
-
-`route.ts` updated: `proseGroups` set now includes clean-natural-language, recraft, ideogram, dalle-api, flux-architecture, video-cinematic. All prose-based groups receive the original human sentence as primary input, assembled T1 as reference.
-
-**40/40 platforms covered. All active waves complete. Wave 9 (multi-engine) removed.**
+**Router state:** 10 active cases (sd-clip-parenthetical, sd-clip-double-colon, midjourney, clean-natural-language, dalle-api, flux-architecture, video-cinematic, novelai, ideogram, recraft). Only `multi-engine` (Freepik) remains.
 
 ---
 
 ## 11. Platform Coverage Summary
 
-**v6.0.0 (26 Mar 2026):** Synced to 40-platform reality. 5 multi-engine aggregators removed (nightcafe, openart, tensor-art, getimg, freepik). `group-multi-engine.ts` deleted. 19 tier corrections applied — artguru/artistly/clipdrop moved from SD CLIP to Clean NL, fotor moved from NL to SD CLIP, playground moved from SD CLIP to Clean NL, bluewillow moved from generic fallback to Clean NL.
-
-| Wave | Group                 | Platforms                                                                                                                                                                                                                                              | Count  | Builder                           | Score | Status           |
-| ---- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ | --------------------------------- | ----- | ---------------- |
-| 1    | SD CLIP Parenthetical | stability, dreamlike, dreamstudio, fotor, lexica                                                                                                                                                                                                       | 5      | `group-sd-clip-parenthetical.ts`  | 92    | ✅               |
-| 2    | SD CLIP Double-Colon  | leonardo                                                                                                                                                                                                                                               | 1      | `group-sd-clip-double-colon.ts`   | 93    | ✅               |
-| 3    | Midjourney            | midjourney                                                                                                                                                                                                                                             | 1      | `group-midjourney.ts`             | 92    | ✅               |
-| 4    | Clean NL              | bing, google-imagen, imagine-meta, canva, adobe-firefly, jasper-art, craiyon, hotpot, simplified, picsart, visme, vistacreate, 123rf, myedit, picwish, artbreeder, photoleap, pixlr, deepai, microsoft-designer, artguru, artistly, clipdrop, playground, bluewillow | 25     | `group-clean-natural-language.ts` | 89    | ✅               |
-| 5    | DALL-E API            | openai                                                                                                                                                                                                                                                 | 1      | `group-dalle-api.ts`              | 95    | ✅               |
-| 6    | Flux Architecture     | flux                                                                                                                                                                                                                                                   | 1      | `group-flux-architecture.ts`      | 95    | ✅               |
-| 7    | Video Cinematic       | runway, luma-ai, kling                                                                                                                                                                                                                                 | 3      | `group-video-cinematic.ts`        | 95    | ✅               |
-| 8    | NovelAI Dedicated     | novelai                                                                                                                                                                                                                                                | 1      | `group-novelai.ts`                | 86    | ✅               |
-| 8    | Ideogram Dedicated    | ideogram                                                                                                                                                                                                                                               | 1      | `group-ideogram.ts`               | 90    | ✅               |
-| 8    | Recraft Dedicated     | recraft                                                                                                                                                                                                                                                | 1      | `group-recraft.ts`                | 74    | ✅ (GPT ceiling) |
-|      |                       | **TOTAL**                                                                                                                                                                                                                                              | **40** |                                   |       | **40 covered**   |
+| Wave | Group                 | Platforms                                                                                                                                                                                                              | Count  | Builder                           | Score (honest) | Status         |
+| ---- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | --------------------------------- | -------------- | -------------- |
+| 1    | SD CLIP Parenthetical | stability, dreamlike, dreamstudio, fotor, lexica                                                                                                                                                                       | 5      | `group-sd-clip-parenthetical.ts`  | 86             | ⚠️ Revised     |
+| 2    | SD CLIP Double-Colon  | leonardo                                                                                                                                                                                                               | 1      | `group-sd-clip-double-colon.ts`   | 87             | ⚠️ Revised     |
+| 3    | Midjourney            | midjourney                                                                                                                                                                                                             | 1      | `group-midjourney.ts`             | 90             | ✅             |
+| 4    | Clean NL              | bing, google-imagen, imagine-meta, canva, adobe-firefly, jasper-art, craiyon, hotpot, simplified, picsart, visme, vistacreate, 123rf, myedit, picwish, artbreeder, photoleap, pixlr, deepai, microsoft-designer, artguru, artistly, clipdrop, playground, bluewillow | 25 | `group-clean-natural-language.ts` | 89–91 | ⚠️ Skip Call 3 pending |
+| 5    | DALL-E API            | openai                                                                                                                                                                                                                 | 1      | `group-dalle-api.ts`              | 96             | ✅             |
+| 6    | Flux Architecture     | flux                                                                                                                                                                                                                   | 1      | `group-flux-architecture.ts`      | 96             | ✅             |
+| 7    | Video Cinematic       | runway, luma-ai, kling                                                                                                                                                                                                 | 3      | `group-video-cinematic.ts`        | 92             | ✅             |
+| 8    | Dedicated             | recraft                                                                                                                                                                                                                | 1      | `group-recraft.ts`                | 96 (v5)        | ⚠️ v6 awaiting retest |
+| 8    | Dedicated             | ideogram, novelai                                                                                                                                                                                                      | 2      | 2 dedicated builders              | —              | ⚠️ Not tested  |
+| 9    | Multi-Engine          | freepik                                                                                                                                                                                                                | 1      | Not built                         | —              | ❌             |
+|      |                       | **TOTAL**                                                                                                                                                                                                              | **41** |                                   |                | **39 covered** |
 
 ---
 
 ## 12. Open Issues
 
-| #   | Issue                                                 | Severity | Status                                                                                                                                                                                             |
-| --- | ----------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | T2 --no duplication in Call 2 (~60% of runs)          | Medium   | 3 compliance gates deployed, persists                                                                                                                                                              |
-| 2   | Schema validation failures on Call 3 (intermittent)   | Medium   | No new failures in Sessions 2–3                                                                                                                                                                    |
-| 3   | Schema failure UX — error at bottom of page, no toast | Low      | UX fix needed                                                                                                                                                                                      |
-| 4   | NL group compression: GPT ceiling at 89 for Canva     | Medium   | Accepted — flipped framing is production path                                                                                                                                                      |
-| 5   | MJ "concept art" persists despite Rule 9              | Low      | GPT partially ignores style commitment                                                                                                                                                             |
-| 6   | MJ --no duplication in Call 3 output                  | Low      | Content strong, cosmetic issue                                                                                                                                                                     |
-| 7   | Recraft anchor loss: GPT compresses despite rules     | Medium   | Root cause: GPT compression instinct. Prose flip helped (+12 pts) but ceiling at 74. System prompt restructuring (v2→v3) did not fix — this is a GPT behavioural limit, not a builder bug.         |
-| 8   | GPT compression on all prose-group platforms          | Medium   | Freepik (73), Recraft (74) share the same pattern. Prose-primary flip deployed for all 6 prose groups. Further improvement requires either stronger anti-compression framing or a different model. |
-| 9   | Double-fire overwrite on optimizer toggle             | Medium   | Guard added, may still occur                                                                                                                                                                       |
-| 10  | Security audit needed before launch                   | High     | Not started                                                                                                                                                                                        |
+| #   | Issue                                                                     | Severity | Status                                                                            |
+| --- | ------------------------------------------------------------------------- | -------- | --------------------------------------------------------------------------------- |
+| 1   | T2 --no duplication in Call 2 (~60% of runs)                              | Medium   | 3 compliance gates deployed, persists. Cosmetic only.                             |
+| 2   | Schema validation failures on Call 3 (intermittent)                       | Medium   | No new failures Session 2 or 3                                                    |
+| 3   | Schema failure UX — error at bottom of page, no toast                     | Low      | UX fix needed                                                                     |
+| 4   | **NL group Call 3 degrading output** — assembled T3 (94) > optimised (90) | **High** | **Session 3 confirmed. Decision needed: skip Call 3 for NL group entirely.**      |
+| 5   | MJ slightly over-written — "knuckles white", "detonating" pushed           | Low      | Acceptable. 90 is still strong.                                                   |
+| 6   | CLIP "purple copper clouds" — should be "purple-and-copper sky"            | Medium   | Persists in Call 3 output. Example 3 in builder has correct merge — GPT not applying consistently to all inputs. |
+| 7   | CLIP key elements unweighted (jagged rocks, salt spray, dark cliffs)       | Medium   | Costs 4–6 points. Builder rules don't force weighting of all key anchors.         |
+| 8   | Wave 8 (Ideogram, NovelAI) not yet tested                                 | Medium   | Built, wired, needs Prompt Lab testing                                            |
+| 9   | Recraft v6 (scene-agnostic) not yet retested                              | Medium   | v5 scored 96 on Lighthouse but is not production-safe for other scenes            |
+| 10  | Wave 9 (Freepik multi-engine) not built                                   | Low      | Last remaining platform                                                            |
+| 11  | Double-fire overwrite on optimizer toggle                                  | Medium   | Guard added Session 2, may still occur                                            |
+| 12  | **Call 3 negative output never displayed in Prompt Lab UI**               | **High** | `aiOptimiseResult.negative` is returned, stored in hook, never rendered. All Dynamic Negative Intelligence work is invisible to the user. |
+| 13  | Call 3 negative output not gated by `negativeSupport` in route.ts         | Low      | Route always processes negative regardless of platform support. Not a user-visible bug now (issue 12 is the priority). |
+| 14  | Security audit needed before launch                                        | High     | Not started                                                                       |
 
 ---
 
 ## 13. Next Session Priorities
 
-1. **Retest Flux** with v2 improvements (texture minimum, negative-as-positive)
-2. **Retest Recraft** with prose-flip + v3 builder — verify if the +12pt improvement holds across multiple runs
-3. **Extra 1: Platform-native example injection** — add second BEFORE→AFTER example per builder showing platform's unique strength (anime for NovelAI, typography for Ideogram, vector for Recraft, etc.)
-4. **Investigate GPT compression ceiling** — Recraft (74) and Freepik (73) both hit the same wall. Options: stronger anti-compression framing in user message, temperature adjustment, or accept as GPT behavioural limit
-5. **YouTube/social media content strategy** when product is shelf-ready
-6. **Full security audit** before launch
-7. **Pro subscription payment system** — Stripe setup
+1. **DECISION: Skip Call 3 for NL group** — assembled T3 beats optimised for Google Imagen (94 vs 90). Implement gate in `enhanced-educational-preview.tsx`: if provider is in `clean-natural-language` group, display T3 directly without firing Call 3. Saves API cost on 25 of 40 platforms and improves output quality.
+2. **Fix CLIP "purple copper clouds" weakness** — add explicit compound colour rule to SD CLIP parenthetical and double-colon builders: "Multiple colour words describing the SAME element (purple, copper, sky) MUST be merged into a single hyphenated compound phrase: purple-and-copper sky." Add as a numbered rule, not just an example.
+3. **Fix CLIP unweighted key elements** — add rule requiring all named nouns from the scene to receive a weight. Current builders allow important anchors (jagged rocks, salt spray, dark cliffs, warm orange windows) to fall through as unweighted. Add explicit instruction: "Every visually critical noun from the original scene must be weighted unless it is in the final background layer."
+4. **Add Call 3 negative display to Prompt Lab UI** — `aiOptimiseResult.negative` is computed but never shown. Add a negative prompt panel below the optimised positive prompt, gated on `negativeSupport === 'separate'`. Until this is built, the Dynamic Negative Intelligence feature is entirely invisible.
+5. **Retest Recraft v6** — v5 scored 96 on Lighthouse but hardcoded maritime anchors. v6 is scene-agnostic. Run Lighthouse Keeper to confirm parity, then run 2–3 non-maritime scenes to validate generalisation.
+6. **Test Wave 8** — Ideogram and NovelAI with Lighthouse Keeper in Prompt Lab
+7. **Build Wave 9** — Freepik multi-engine (last platform)
 
 ---
 
 ## 14. Changelog
 
-| Date        | Version | Changes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| ----------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 25 Mar 2026 | 1.0.0   | Initial document. 3 rounds of Lighthouse Keeper data. Wave 1 (Stability) complete at 92.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| 26 Mar 2026 | 2.0.0   | Added R4–R6 data. Wave 2 (Leonardo, 93) and Wave 3 (Midjourney, 92) complete. Added §5 Playground gap, §6 schema failures, §9 architectural insights.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| 26 Mar 2026 | 3.0.0   | Wave 4 (NL, 21 platforms) built. Original sentence bug discovered and fixed. Full R7 Canva data. Added §10 build history, §12 next priorities.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| 26 Mar 2026 | 4.0.0   | **Session 2.** Wave 4 Canva iterated from 82→89 (6 fixes). Wave 5 DALL-E shipped at 95 (first-time). Wave 6 Flux shipped at 95 (first-time, v2 improvements built). Wave 7 Video shipped at 95 (first-time). Wave 8 built (NovelAI, Ideogram, Recraft) — not tested. 43/45 platforms covered. Added §11 platform coverage summary. ChatGPT scoring criteria documented. GPT compression instinct documented as architectural insight.                                                                                                                                                                                                                                                                                    |
-| 26 Mar 2026 | 5.0.0   | **Session 3.** Wave 8 tested: Ideogram 90, NovelAI 86, Recraft 74 (GPT compression ceiling). Recraft iterated v1→v3 + prose-flip — root cause identified as upstream T1 assembly stripping anchors, not system prompt ordering. Wave 9 Freepik multi-engine built and tested at 73 — **45/45 platforms covered, all waves complete.** Dynamic Negative Intelligence shipped across 6 builders (7-point failure-mode analysis framework). Negative-Positive Contradiction Guard shipped in harmony-compliance.ts. Prose-primary flip expanded from 1 group to 7 prose-based groups. §11 updated to show all 45 platforms. §12 open issues updated (Wave 7/8 resolved, GPT compression documented as architectural limit). |
-| 26 Mar 2026 | 6.0.0   | **40-platform sync.** Deep research audit: 19 tier corrections applied. 5 multi-engine aggregators removed (NightCafe, OpenArt, Tensor.Art, GetImg, Freepik). `group-multi-engine.ts` deleted. Platform count 45→40. §11 rewritten: Wave 1 SD CLIP 12→5, Wave 4 Clean NL 21→25, Wave 9 removed, generic fallback removed (BlueWillow→Clean NL). Cross-references updated: `grouping-45-image-platforms-by-prompt-compatibility.md` deleted, superseded by `prompt_engineering_specs_40_platforms_tier_classification_routing_logic.md`. Router state 11→10 cases. proseGroups 7→6 (multi-engine removed). All "45" references updated to "40" except historical changelog entries. |
+| Date        | Version | Changes                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ----------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 25 Mar 2026 | 1.0.0   | Initial document. 3 rounds of Lighthouse Keeper data. Wave 1 (Stability) complete at 92.                                                                                                                                                                                                                                                                                                                                              |
+| 26 Mar 2026 | 2.0.0   | Added R4–R6 data. Wave 2 (Leonardo, 93) and Wave 3 (Midjourney, 92) complete. Added §5 Playground gap, §6 schema failures, §9 architectural insights.                                                                                                                                                                                                                                                                                 |
+| 26 Mar 2026 | 3.0.0   | Wave 4 (NL, 21 platforms) built. Original sentence bug discovered and fixed. Full R7 Canva data. Added §10 build history, §12 next priorities.                                                                                                                                                                                                                                                                                        |
+| 26 Mar 2026 | 4.0.0   | **Session 2.** Wave 4 Canva iterated from 82→89 (6 fixes). Wave 5 DALL-E shipped at 95 (first-time). Wave 6 Flux shipped at 95 (first-time, v2 improvements built). Wave 7 Video shipped at 95 (first-time). Wave 8 built (NovelAI, Ideogram, Recraft) — not tested. 43/45 platforms covered. Added §11 platform coverage summary. ChatGPT scoring criteria documented. GPT compression instinct documented as architectural insight. |
+| 27 Mar 2026 | 5.0.0   | **Session 3.** Full ChatGPT retest across all waves. All previous Claude-lenient scores revised: Stability 92→86, Leonardo 93→87, Runway 95→92, Midjourney 92→90. Flux 95→96, DALL-E 95→96 (both confirmed and improved). Recraft first test: 96 (v5, lighthouse-hardcoded — v6 scene-agnostic builder deployed, awaiting retest). **Critical finding: NL group Call 3 degrades output** — Google Imagen assembled T3 (94) beats optimised (90). Decision pending to skip Call 3 for NL group entirely. 5 platform-config.json data fixes applied (Recraft idealMin/idealMax, Flux/Ideogram negativeSupport, Luma-AI/Kling ideal ranges). Recraft builder rewritten v5→v6 (scene-agnostic). Critical new issue: `aiOptimiseResult.negative` never displayed in UI — all Dynamic Negative Intelligence output is invisible to user. Open issues updated, next priorities reordered by impact. |

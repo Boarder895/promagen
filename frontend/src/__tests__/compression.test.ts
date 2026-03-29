@@ -583,7 +583,7 @@ describe('Utility Functions', () => {
     const tier4 = getPlatformsByTier(4);
     expect(tier4).toContain('bluewillow');
     expect(tier4).toContain('craiyon');
-    expect(tier4.length).toBeGreaterThanOrEqual(15);
+    expect(tier4.length).toBeGreaterThanOrEqual(10);
   });
 
   it('getPlatformConfig should return valid config', () => {

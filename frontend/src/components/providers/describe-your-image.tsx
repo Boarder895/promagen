@@ -944,7 +944,7 @@ export function DescribeYourImage({
                 <button
                   type="button"
                   onClick={handleGenerate}
-                  disabled={isLoading || externalLoading || !inputText.trim()}
+                  disabled={isLoading || externalLoading || !inputText.trim() || (hasGenerated && !isDrifted)}
                   className={`
                     group relative inline-flex items-center overflow-hidden rounded-lg font-semibold text-white
                     transition-all duration-200
@@ -952,7 +952,7 @@ export function DescribeYourImage({
                     ${
                       isLoading || externalLoading
                         ? "dyi-generating border-sky-400/40 bg-gradient-to-r from-sky-400/30 via-emerald-300/30 to-indigo-400/30"
-                        : inputText.trim()
+                        : inputText.trim() && !(hasGenerated && !isDrifted)
                           ? "dyi-generate-active border-sky-400/60 bg-gradient-to-r from-sky-400/40 via-emerald-300/40 to-indigo-400/40 cursor-pointer"
                           : "bg-slate-800/40 border-slate-700/30 cursor-not-allowed"
                     }
@@ -965,7 +965,7 @@ export function DescribeYourImage({
                   }}
                 >
                   {/* Shimmer overlay — identical to engine bay */}
-                  {inputText.trim() && !isLoading && !externalLoading && (
+                  {inputText.trim() && !isLoading && !externalLoading && !(hasGenerated && !isDrifted) && (
                     <div
                       className="dyi-generate-shimmer pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
                       aria-hidden="true"
@@ -1141,22 +1141,8 @@ export function DescribeYourImage({
                 </div>
               )}
 
-            {/* Fix 4: Hint — match mission control amber animated text */}
-            {hasGenerated && !isLoading && !isDrifted && (
-              <p
-                className="italic animate-pulse"
-                style={{
-                  marginTop: "clamp(20px, 2vw, 32px)",
-                  marginBottom: "clamp(12px, 1.2vw, 20px)",
-                  fontSize: "clamp(0.65rem, 0.75vw, 1rem)",
-                  lineHeight: 1.4,
-                  color: "rgb(251 191 36 / 0.8)",
-                }}
-              >
-                Edit your description above and click Regenerate to refine your
-                prompts
-              </p>
-            )}
+            {/* Drift hint MOVED to enhanced-educational-preview.tsx (v6.1.0) */}
+            {/* Positioned between textarea and tier cards for §7 Spatial Framing */}
           </div>
         </div>
       </div>

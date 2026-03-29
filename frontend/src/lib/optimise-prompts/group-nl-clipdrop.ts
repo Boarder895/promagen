@@ -1,0 +1,141 @@
+// src/lib/optimise-prompts/group-nl-clipdrop.ts
+// ============================================================================
+// DEDICATED BUILDER: Clipdrop — Independent System Prompt
+// ============================================================================
+// Tier 4 | idealMin 100 | idealMax 500 | maxChars 1000 | Strategy: ENRICH
+// negativeSupport: none
+// architecture: natural-language
+//
+// Platform knowledge: SDXL Turbo backend abstracted behind plain text interface. 1000-char API limit. ...
+//
+// FULLY INDEPENDENT — no shared imports. Own compliance gate + own system prompt.
+// Pattern: matches group-recraft.ts (dedicated builder per platform).
+//
+// Authority: platform-config.json, Prompt_Engineering_Specs.md
+// Existing features preserved: Yes.
+// ============================================================================
+
+import type { OptimiseProviderContext, GroupPromptResult } from './types';
+import type { ComplianceResult } from '@/lib/harmony-compliance';
+
+// ============================================================================
+// COMPLIANCE: Clipdrop-specific cleanup
+// ============================================================================
+
+function enforceClipdropCleanup(text: string): ComplianceResult {
+  const fixes: string[] = [];
+  let cleaned = text;
+
+  // Strip parenthetical weights: (term:1.3) → term
+  const parenBefore = cleaned;
+  cleaned = cleaned.replace(/\(([^()]+):\d+\.?\d*\)/g, '$1');
+  if (cleaned !== parenBefore) fixes.push('Stripped parenthetical weight syntax');
+
+  // Strip double-colon weights: term::1.3 → term
+  const dcBefore = cleaned;
+  cleaned = cleaned.replace(/(\w[\w\s-]*)::(?:\d+\.?\d*)/g, '$1');
+  if (cleaned !== dcBefore) fixes.push('Stripped double-colon weight syntax');
+
+  // Strip MJ parameter flags
+  const flagBefore = cleaned;
+  cleaned = cleaned.replace(/\s*--(?:ar|v|s|no|stylize|chaos|weird|tile|repeat|seed|stop|iw|niji|raw)\s*[^\s,]*/gi, '');
+  if (cleaned !== flagBefore) fixes.push('Stripped parameter flags');
+
+  // Strip CLIP quality tokens
+  const clipTokens = ['masterpiece', 'best quality', 'highly detailed', '8K', '4K', 'intricate textures', 'sharp focus'];
+  for (const token of clipTokens) {
+    const re = new RegExp(`\\b${token.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')}\\b,?\\s*`, 'gi');
+    const before = cleaned;
+    cleaned = cleaned.replace(re, '');
+    if (cleaned !== before) fixes.push(`Stripped CLIP token "${token}"`);
+  }
+
+  // Clean up double spaces and leading/trailing commas
+  cleaned = cleaned.replace(/\s{2,}/g, ' ').replace(/^[,\s]+|[,\s]+$/g, '').trim();
+
+  // Over-length enforcement — truncate at last complete sentence under ceiling
+  const CEILING = 500;
+  if (cleaned.length > CEILING) {
+    const sentences = cleaned.match(/[^.!?]+[.!?]+/g) || [cleaned];
+    let truncated = '';
+    for (const sentence of sentences) {
+      if ((truncated + sentence).length <= CEILING) {
+        truncated += sentence;
+      } else {
+        break;
+      }
+    }
+    if (truncated.length > 0 && truncated.length < cleaned.length) {
+      fixes.push(`Truncated from ${cleaned.length} to ${truncated.trim().length} chars (ceiling: ${CEILING})`);
+      cleaned = truncated.trim();
+    }
+  }
+
+  // Flag under-length
+  if (cleaned.length < 100 && cleaned.length > 0) {
+    fixes.push(`Below minimum length (${cleaned.length}/100 chars)`);
+  }
+
+  return { text: cleaned, wasFixed: fixes.length > 0, fixes };
+}
+
+// ============================================================================
+// BUILDER
+// ============================================================================
+
+export function buildClipdropPrompt(
+  _providerId: string,
+  ctx: OptimiseProviderContext,
+): GroupPromptResult {
+  const platformNote = ctx.groupKnowledge ?? '';
+
+  const systemPrompt = `You are an expert prompt optimiser for "Clipdrop". This platform reads natural language prose only. No weight syntax, no parameter flags, no CLIP tokens. Strip all (term:1.3), term::1.3, --ar, --v, --no, "masterpiece", "8K" from input.
+
+YOU RECEIVE TWO INPUTS:
+1. SCENE DESCRIPTION — the user's full visual intent. This is your source of truth for colours, objects, mood, and spatial detail.
+2. REFERENCE DRAFT — a structured version. May have LOST details from the original. Do not trust it as complete.
+
+TASK A — ANCHOR PRESERVATION (mandatory)
+Scan the SCENE DESCRIPTION. Identify every named visual element: subjects, objects, colours, textures, spatial relationships, lighting, atmosphere.
+Every element MUST appear in your output using the EXACT words or a stronger equivalent.
+- "enormous storm waves" → "waves" is a FAILURE (lost "enormous" + "storm")
+- Every named colour must survive (purple, copper, gold, orange — all of them)
+- Every compound adjective must survive ("tiny warm orange windows" loses nothing)
+If your output has fewer named elements than the scene description, it is REJECTED.
+
+TASK B — TEXTURE INJECTION
+Add exactly 2 material/surface textures NOT in the scene description. Must be physically plausible for this specific scene. Be specific: "salt-crusted iron railing", "lichen-spotted granite", "spray-misted glass". Generic textures are not acceptable.
+
+TASK C — SENSORY UPGRADE
+Find 2 generic modifiers in the scene description and replace with richer sensory details:
+"dark cliffs" → "basalt cliffs streaked with rain"
+"driving rain" → "horizontal sheets of cold rain"
+The replacement must be MORE visual, not just a synonym.
+
+TASK D — COMPOSITION CLOSE
+End with a specific composition sentence: camera angle + framing + depth layers.
+"Cinematic" or "wide shot" alone is LAZY. Specify: angle + framing + foreground-to-background depth.
+Example: "Framed as a low-angle wide shot with layered depth from the foreground deck through spray-filled air to the glowing village."
+
+LENGTH: 100–500 characters. You have room for richness — use it, but respect the ceiling. Count your characters BEFORE returning JSON.\nSDXL Turbo backend abstracted behind plain text. Keep prompts focused and descriptive.
+
+OUTPUT REQUIREMENTS:
+- Flowing natural language prose, 3–4 sentences
+- Front-load the primary subject in the first 10 words
+- 100–500 characters (HARD CEILING: 500)
+- Affirmative descriptions only (no "without X" phrasing)
+${platformNote ? `\nPLATFORM NOTE: ${platformNote}` : ''}
+
+Return ONLY valid JSON:
+{
+  "optimised": "your rewritten prompt",
+  "changes": ["TASK A: N anchors preserved", "TASK B: added [tex1] and [tex2]", "TASK C: upgraded [x] and [y]", "TASK D: composition close"],
+  "charCount": 300,
+  "tokenEstimate": 60
+}`;
+
+  return {
+    systemPrompt,
+    groupCompliance: enforceClipdropCleanup,
+  };
+}

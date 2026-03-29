@@ -251,10 +251,17 @@ export default function PlaygroundWorkspace({ providers, onProviderChange }: Pla
   // IN PARALLEL. Text colours up when Call 1 returns (~1-2s), tiers fill
   // when Call 2 returns (~2-3s). One click, both fire. No extra friction.
   // Human factors: §6 Temporal Compression — progressive reveal.
+  //
+  // v6.1.0: Accepts optional childProviderId from EnhancedEducationalPreview
+  // so Call 2 uses the correct provider context even when the workspace-level
+  // selectedProviderId is null (provider selected inside the child).
   const handleDescribeGenerate = useCallback(
-    (sentence: string) => {
+    (sentence: string, childProviderId?: string | null) => {
       const trimmed = sentence.trim();
       if (!trimmed) return;
+
+      // Use child's provider if provided, fall back to workspace-level
+      const effectiveProviderId = childProviderId ?? selectedProviderId;
 
       // Clear previous results (fresh generation)
       clearTiers();
@@ -262,17 +269,17 @@ export default function PlaygroundWorkspace({ providers, onProviderChange }: Pla
 
       // Build provider context for Call 2
       let ctx: TierGenerationProviderContext | null = null;
-      if (selectedProviderId) {
-        const provider = providers.find((p) => p.id === selectedProviderId);
+      if (effectiveProviderId) {
+        const provider = providers.find((p) => p.id === effectiveProviderId);
         if (provider) {
-          ctx = buildProviderContext(selectedProviderId, provider.name);
+          ctx = buildProviderContext(effectiveProviderId, provider.name);
         }
       }
 
       // Fire Call 1 (assess — matched phrases for text colouring)
       // and Call 2 (tier generation — 4 tier prompts) in PARALLEL
       assess(trimmed);
-      generateTiers(trimmed, selectedProviderId, ctx);
+      generateTiers(trimmed, effectiveProviderId, ctx);
 
       // Sync drift detection baseline
       markDriftSynced(trimmed);

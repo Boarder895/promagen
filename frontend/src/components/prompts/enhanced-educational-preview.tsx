@@ -1,24 +1,21 @@
 // src/components/prompts/enhanced-educational-preview.tsx
 // ============================================================================
-// ENHANCED EDUCATIONAL PREVIEW v2.1.0
+// ENHANCED EDUCATIONAL PREVIEW v6.0.0
 // ============================================================================
 // Full prompt builder experience for /studio/playground when no provider selected.
 // Educational mode: shows all 4 tiers, or single tier when provider selected.
 //
-// v2.1.0 (Jan 2026):
-// - Fixed DNA bar: now stretches FULL WIDTH between dropdown and Market Mood
-// - DNA bar shows 12 category segment indicators
-// - Beautiful gradient progress bar
-// - Creative, visually impressive design
-//
-// v2.0.0 (Jan 2026):
-// - DNA bar moved to header (inline between dropdown and Market Mood)
-// - Removed "· Prompt builder" text
-// - Provider selection stays on page, shows single tier only
-// - All 12 categories in 2-column grid (same order as real prompt builder)
-// - Button styling matches /providers/{provider} page
-// - Save button added (opens SavePromptModal)
-// - Clear button clears provider selection AND selections
+// v6.0.0 (Mar 2026):
+// - Optimise is now a PROPER BUTTON (not a toggle). One click = one Call 3.
+//   Deactivates after firing. Reactivates when text changes or provider changes.
+// - Generate button deactivates after firing. Reactivates on text change.
+// - Layout reorder: Describe → 4 Tier cards → Assembled prompt → Optimise
+//   button + Length → Optimised result → Score placeholder → Footer.
+// - TextLengthOptimizer toggle removed from header.
+// - Space reserved below optimised result for future scoring engine.
+// - Human factors: §3 Anticipatory Dopamine (deliberate button click),
+//   §11 Cognitive Load (information in processing order),
+//   §12 Von Restorff (button activation glow).
 //
 // Authority: docs/authority/prompt-intelligence.md §9
 // ============================================================================
@@ -31,9 +28,9 @@ import { FourTierPromptPreview } from '@/components/prompt-builder/four-tier-pro
 // SceneSelector REMOVED from Prompt Lab — algorithm-only path. Remains in standard builder.
 import { DescribeYourImage } from '@/components/providers/describe-your-image';
 // Removed: CompositionModeToggle, AspectRatioSelector, ExploreDrawer (dropdowns/AR removed)
-import { TextLengthOptimizer } from '@/components/providers/text-length-optimizer';
+// TextLengthOptimizer REMOVED — replaced by proper Optimise button (v6.0.0)
 import { LengthIndicator } from '@/components/providers/length-indicator';
-import { OptimizationTransparencyPanel } from '@/components/providers/optimization-transparency-panel';
+// OptimizationTransparencyPanel REMOVED — Call 3 is the only optimizer now (v6.0.0)
 import { SavePromptModal, type SavePromptData } from '@/components/prompts/save-prompt-modal';
 import { SaveIcon } from '@/components/prompts/library/save-icon';
 import { useSavedPrompts } from '@/hooks/use-saved-prompts';
@@ -101,7 +98,7 @@ export interface EnhancedEducationalPreviewProps {
   /** Called on every "Describe Your Image" textarea change */
   onDescribeTextChange?: (text: string) => void;
   /** Called when "Generate Prompt" clicked — fires Call 2 in parallel */
-  onDescribeGenerate?: (sentence: string) => void;
+  onDescribeGenerate?: (sentence: string, providerId?: string | null) => void;
   /** Called when user clicks Clear — resets AI state */
   onDescribeClear?: () => void;
   /** Whether the current text has drifted from last generation */
@@ -378,6 +375,17 @@ export default function EnhancedEducationalPreview({
   // ── External clear signal for DescribeYourImage (footer Clear All) ──
   const [clearSignal, setClearSignal] = useState(0);
 
+  // ── Wrap onDescribeGenerate to include local selectedProviderId ──────
+  // The workspace-level selectedProviderId is null when the user picks a
+  // provider inside this component. This wrapper passes the local provider
+  // so Call 2 fires with the correct context on first click.
+  const handleGenerateWithProvider = useCallback(
+    (sentence: string) => {
+      onDescribeGenerate?.(sentence, selectedProviderId);
+    },
+    [onDescribeGenerate, selectedProviderId],
+  );
+
   // Feedback system state (Phase L7)
   const [feedbackPending, setFeedbackPending] = useState<FeedbackPendingData | null>(null);
   const { getOverlap } = useFeedbackMemory();
@@ -621,7 +629,7 @@ export default function EnhancedEducationalPreview({
   const call3InputText = useMemo(() => {
     if (!selectedProviderId) return activeTierPromptText;
     const group = getProviderGroup(selectedProviderId);
-    if (group === 'clean-natural-language' && activeTier === 4) {
+    if ((group === 'clean-natural-language' || group?.startsWith('nl-')) && activeTier === 4) {
       const source = aiTierPrompts ?? generatedPrompts;
       const t3Text = source.tier3 ?? '';
       // Only use T3 if it actually has content; fall back to active tier otherwise
@@ -701,50 +709,36 @@ export default function EnhancedEducationalPreview({
   }, [selections, aiTierPrompts]);
 
   // ============================================================================
-  // Text Length Optimizer (Phase L4)
+  // Length Analysis (client-side — for LengthIndicator bar only)
   // ============================================================================
   const optimizerPlatformId = selectedProviderId ?? 'stability';
 
   const {
-    isOptimizerEnabled,
-    setOptimizerEnabled,
     analysis: optimizerAnalysis,
-    getOptimizedPrompt,
-    isToggleDisabled: isOptimizerDisabled,
-    tooltipContent: optimizerTooltipContent,
   } = usePromptOptimization({
     platformId: optimizerPlatformId,
     promptText: activeTierPromptText,
     selections,
   });
 
-  const optimizedResult = useMemo(() => getOptimizedPrompt(), [getOptimizedPrompt]);
-  const wasOptimized = optimizedResult.optimizedLength < optimizedResult.originalLength;
-
-  // ── Optimizer disabled in neutral mode (no provider selected) ──────────
-  // Prevents silently optimising for Stability when user hasn't chosen a platform.
-  const finalOptimizerDisabled = isOptimizerDisabled || !selectedProviderId;
-  const finalTooltipContent = !selectedProviderId
-    ? {
-        maxChars: '—',
-        sweetSpot: '—',
-        platformNote: 'Select an AI provider above to enable optimisation.',
-        benefit: 'The optimizer trims your prompt to the ideal length for the selected platform.',
-        qualityImpact: 'Each platform has different character limits and sweet spots.',
-      }
-    : optimizerTooltipContent;
-
   // ============================================================================
   // AI Disguise: Call 3 — AI Prompt Optimisation (ai-disguise.md §6)
   // ============================================================================
-  // When optimizer is toggled ON with a provider selected, fires Call 3.
+  // v6.0.0: Optimise is a PROPER BUTTON. One click = one Call 3.
+  // No auto-fire. No toggle. No debounced re-fire.
+  // Button deactivates after firing. Reactivates when text or provider changes.
   // AlgorithmCycling animation plays during the API call (§3 Anticipatory Dopamine).
-  // Client-side optimizer still runs for the length indicator bar.
-  // AI result overrides client-side result in display when available.
+  //
+  // Human factors:
+  //   §3 Anticipatory Dopamine — clicking a deliberate button creates the
+  //       awareness→anticipation→payoff arc. A toggle that auto-fires has no
+  //       anticipation phase.
+  //   §12 Von Restorff — button glow when active isolates it from the page.
 
   const {
     result: aiOptimiseResult,
     isOptimising: isAiOptimising,
+    error: aiOptimiseError,
     animationPhase,
     currentAlgorithm,
     algorithmCount,
@@ -777,82 +771,75 @@ export default function EnhancedEducationalPreview({
     };
   }, [selectedProviderId, selectedProvider?.name]);
 
-  // Fire Call 3 when optimizer toggled ON, and re-fire debounced when text changes while ON
-  // Fix 3: Aspect ratio / selection changes re-fire Call 3 so the optimised prompt stays in sync
-  const prevOptimizerEnabledRef = useRef(false);
-  const prevPromptTextRef = useRef('');
-  const reFireTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Ref for humanText — used by Call 3 for cross-referencing the original description.
-  // Must be a ref (not a dep) so Call 3 doesn't re-fire on every keystroke.
   const humanTextRef = useRef(humanText ?? '');
   humanTextRef.current = humanText ?? '';
 
+  // ── Optimise button activation state ─────────────────────────────────
+  // Tracks what was last optimised so the button reactivates on change.
+  // Button is ACTIVE when:
+  //   1. A provider is selected
+  //   2. Tier prompts exist (Call 2 has completed)
+  //   3. EITHER text has changed since last optimisation, OR provider changed
+  // Button DEACTIVATES after firing (stays off until inputs change).
+  const [lastOptimisedFor, setLastOptimisedFor] = useState<{
+    text: string;
+    providerId: string;
+  } | null>(null);
+
+  const canOptimise = useMemo(() => {
+    if (!selectedProviderId) return false;
+    if (!call3InputText) return false;
+    if (!aiTierPrompts && !activeTierPromptText) return false;
+    if (!aiOptimiseContext) return false;
+    if (isAiOptimising) return false;
+    // Never optimised yet → active
+    if (!lastOptimisedFor) return true;
+    // Text or provider changed since last optimisation → active
+    return (
+      lastOptimisedFor.text !== call3InputText ||
+      lastOptimisedFor.providerId !== selectedProviderId
+    );
+  }, [selectedProviderId, call3InputText, aiTierPrompts, activeTierPromptText, aiOptimiseContext, isAiOptimising, lastOptimisedFor]);
+
+  // ── Optimise button click handler ────────────────────────────────────
+  // One click = one Call 3. No auto-fire. No debounce. No re-fire.
+  const handleOptimise = useCallback(() => {
+    if (!selectedProviderId || !call3InputText || !aiOptimiseContext) return;
+    // Mark what we're optimising (deactivates button)
+    setLastOptimisedFor({ text: call3InputText, providerId: selectedProviderId });
+    // Clear previous result so animation plays fresh
+    clearAiOptimise();
+    // Fire Call 3
+    aiOptimise(call3InputText, selectedProviderId, aiOptimiseContext, humanTextRef.current);
+  }, [selectedProviderId, call3InputText, aiOptimiseContext, aiOptimise, clearAiOptimise]);
+
   // ── Clear stale Call 3 when Call 2 returns new content ─────────────
-  // Without this, Call 3 fires with stale template text BEFORE Call 2
-  // returns, then the re-fire guard blocks Call 3 from running again
-  // with the correct Call 2 text. Clearing the stale result allows
-  // the useEffect below to re-fire Call 3 with the right input.
+  // When Call 2 returns fresh tiers, the old optimised result is stale.
+  // Clear it so the user sees the fresh assembled prompt and can re-optimise.
   const prevAiTierForCall3Ref = useRef(aiTierPrompts);
   useEffect(() => {
     if (aiTierPrompts && aiTierPrompts !== prevAiTierForCall3Ref.current) {
       prevAiTierForCall3Ref.current = aiTierPrompts;
-      // Call 2 just returned new content — clear stale Call 3 result
-      // so the re-fire guard at line below doesn't block
-      if (isOptimizerEnabled) {
-        clearAiOptimise();
-      }
-    }
-  }, [aiTierPrompts, isOptimizerEnabled, clearAiOptimise]);
-
-  useEffect(() => {
-    const wasEnabled = prevOptimizerEnabledRef.current;
-    const prevText = prevPromptTextRef.current;
-    prevOptimizerEnabledRef.current = isOptimizerEnabled;
-    prevPromptTextRef.current = call3InputText;
-
-    // Toggled OFF → clear
-    if (!isOptimizerEnabled && wasEnabled) {
       clearAiOptimise();
-      if (reFireTimerRef.current) clearTimeout(reFireTimerRef.current);
-      return;
+      // Reset optimise baseline so button reactivates for the new content
+      setLastOptimisedFor(null);
     }
+  }, [aiTierPrompts, clearAiOptimise]);
 
-    // Not enabled or missing requirements → skip
-    if (!isOptimizerEnabled || !selectedProviderId || !call3InputText || !aiOptimiseContext) {
-      return;
-    }
-
-    // Just toggled ON → fire immediately
-    if (!wasEnabled) {
-      aiOptimise(call3InputText, selectedProviderId, aiOptimiseContext, humanTextRef.current);
-      return;
-    }
-
-    // Already ON and text changed → debounced re-fire (800ms)
-    // Guard: skip re-fire if Call 3 already returned a result or is in flight.
-    // This prevents the AI tier load from triggering a second Call 3 that
-    // overwrites a good bypass result with a shorter one.
-    if (call3InputText !== prevText && !aiOptimiseResult && !isAiOptimising) {
-      if (reFireTimerRef.current) clearTimeout(reFireTimerRef.current);
-      reFireTimerRef.current = setTimeout(() => {
-        aiOptimise(call3InputText, selectedProviderId, aiOptimiseContext, humanTextRef.current);
-      }, 800);
-    }
-
-    return () => {
-      if (reFireTimerRef.current) clearTimeout(reFireTimerRef.current);
-    };
-  }, [isOptimizerEnabled, selectedProviderId, call3InputText, aiOptimiseContext, aiOptimise, clearAiOptimise, aiOptimiseResult, isAiOptimising]);
-
-  // Effective optimised values: AI result takes priority over client-side
-  const effectiveOptimisedText = aiOptimiseResult?.optimised ?? optimizedResult.optimized;
-  const effectiveOptimisedLength = aiOptimiseResult?.charCount ?? optimizedResult.optimizedLength;
-  // Show the optimized section when EITHER:
-  // - Call 3 returned ANY result (enrichment OR compression — both are transformations)
-  // - Local optimizer trimmed the prompt (compression only)
+  // Effective optimised values: from Call 3 result only (no client-side fallback)
+  const effectiveOptimisedText = aiOptimiseResult?.optimised ?? '';
+  const effectiveOptimisedLength = aiOptimiseResult?.charCount ?? 0;
   const effectiveWasOptimized = aiOptimiseResult
     ? aiOptimiseResult.optimised !== activeTierPromptText
-    : wasOptimized;
+    : false;
+
+  // Call 3 ran but the prompt was already optimal — no text change needed.
+  // The assembled prompt box relabels to "Optimised prompt" with emerald styling
+  // so the user knows optimisation happened (it just had nothing to improve).
+  const isOptimisedButUnchanged = !!aiOptimiseResult && !effectiveWasOptimized;
+
+
 
   // ── Optimised prompt typewriter (Call 3) ────────────────────────────
   // Typewriter when aiOptimiseResult changes (Call 3 returned new content).
@@ -934,8 +921,11 @@ export default function EnhancedEducationalPreview({
   // Only notifies parent for heroText / Listen button text changes
   const handleProviderSelect = useCallback((providerId: string | null) => {
     setSelectedProviderId(providerId);
+    // Clear stale Call 3 result — previous provider's optimisation is invalid
+    clearAiOptimise();
+    setLastOptimisedFor(null);
     _onProviderChange?.(!!providerId);
-  }, [_onProviderChange]);
+  }, [_onProviderChange, clearAiOptimise]);
 
   // Handle category selection change
   // handleCategoryChange REMOVED — no dropdown UI in Prompt Lab
@@ -958,26 +948,26 @@ export default function EnhancedEducationalPreview({
   }, [activeTier]);
 
   // Handle clear all (clears EVERYTHING: selections, provider, scene,
-  // AI tiers, AI optimisation, optimizer toggle, human text via clearSignal)
+  // AI tiers, AI optimisation, human text via clearSignal)
   const handleClear = useCallback(() => {
     setSelections(EMPTY_SELECTIONS);
     setSelectedProviderId(null);
-    setOptimizerEnabled(false);
     clearAiOptimise();
+    setLastOptimisedFor(null);
     onDescribeClear?.();
     // Trigger DescribeYourImage internal reset (textarea, hasGenerated, formatWarning)
     setClearSignal((s) => s + 1);
-  }, [clearAiOptimise, onDescribeClear, setOptimizerEnabled]);
+  }, [clearAiOptimise, onDescribeClear]);
 
   // Handle tier selection — user clicks a tier card to highlight it
   const handleTierSelect = useCallback((tier: PlatformTier) => {
     setActiveTier(tier);
   }, []);
 
-  // Handle copy — uses optimized text when optimizer is on, otherwise activeTierPromptText
+  // Handle copy — uses optimized text when Call 3 result exists, otherwise activeTierPromptText
   // Also stores feedback pending data for post-copy feedback invitation
   const handleCopy = useCallback(async () => {
-    const text = isOptimizerEnabled && effectiveWasOptimized
+    const text = aiOptimiseResult && effectiveWasOptimized
       ? effectiveOptimisedText
       : activeTierPromptText;
     if (text) {
@@ -998,7 +988,7 @@ export default function EnhancedEducationalPreview({
         setFeedbackPending(pending);
       }
     }
-  }, [activeTierPromptText, isOptimizerEnabled, effectiveWasOptimized, effectiveOptimisedText, selectedProviderId, activeTier]);
+  }, [activeTierPromptText, aiOptimiseResult, effectiveWasOptimized, effectiveOptimisedText, selectedProviderId, activeTier]);
 
   // Inline copy: Optimized prompt box (matches standard builder pattern)
   const handleCopyOptimized = useCallback(async () => {
@@ -1052,61 +1042,82 @@ export default function EnhancedEducationalPreview({
   // Determine if we show single tier (provider selected) or all 4 (educational)
   const singleTierMode = selectedProviderId !== null;
 
+  // ── Provider guidance: §12 Von Restorff + §1 Curiosity Gap ────────
+  // After generation, if no provider is selected, glow the dropdown
+  // and show a text nudge. Both disappear once a provider is chosen.
+  const needsProviderGuidance = hasContent && !selectedProviderId && !!aiTierPrompts && !isTierGenerating;
+
   return (
+    <>
+    {/* Co-located styles: provider dropdown glow + drift hint */}
+    <style dangerouslySetInnerHTML={{ __html: `
+      @keyframes provider-glow-pulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); border-color: rgba(52, 211, 153, 0.25); }
+        50% { box-shadow: 0 0 16px 4px rgba(52, 211, 153, 0.12); border-color: rgba(52, 211, 153, 0.55); }
+      }
+      .provider-glow {
+        border-radius: clamp(8px, 0.6vw, 10px);
+        border: 2px solid rgba(52, 211, 153, 0.25);
+        animation: provider-glow-pulse 2s ease-in-out infinite;
+        padding: clamp(2px, 0.2vw, 4px);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .provider-glow { animation: none; border-color: rgba(52, 211, 153, 0.5); }
+      }
+    ` }} />
     <section
       className="flex h-full min-h-0 flex-col rounded-3xl bg-slate-950/70 shadow-sm ring-1 ring-white/10"
       aria-label="Enhanced Prompt Builder Preview"
     >
-      {/* Header - Full width DNA bar */}
-      <header className="shrink-0 border-b border-slate-800/50 p-4 md:px-6 md:pt-5">
-        {/* Main header row: Provider | Colour Legend | Optimizer */}
-        <div className="flex items-center gap-3">
-          <ProviderSelector
-            providers={providers}
-            selectedId={selectedProviderId}
-            onSelect={handleProviderSelect}
-          />
+      {/* Header - Provider + Colour Legend */}
+      <header
+        className="shrink-0 border-b border-slate-800/50"
+        style={{ padding: 'clamp(12px, 1.2vw, 20px) clamp(16px, 1.5vw, 24px)' }}
+      >
+        {/* Main header row: Provider | Colour Legend */}
+        <div className="flex items-center" style={{ gap: 'clamp(8px, 0.8vw, 14px)' }}>
+          {/* §12 Von Restorff: emerald glow when provider selection is the next step */}
+          <div className={needsProviderGuidance ? 'provider-glow' : ''}>
+            <ProviderSelector
+              providers={providers}
+              selectedId={selectedProviderId}
+              onSelect={handleProviderSelect}
+            />
+          </div>
 
           {/* Pro Promagen: Colour legend */}
           {hasContent && <LabCategoryColourLegend isPro={isPro} />}
-
-          {/* Text Length Optimizer toggle (Phase L4) — disabled when no provider */}
-          <TextLengthOptimizer
-            isEnabled={isOptimizerEnabled}
-            onToggle={setOptimizerEnabled}
-            platformId={optimizerPlatformId}
-            platformName={selectedProvider?.name ?? 'Select a provider'}
-            disabled={finalOptimizerDisabled}
-            tooltipContent={finalTooltipContent}
-            analysis={hasContent ? optimizerAnalysis : null}
-            compact
-          />
         </div>
 
         {/* Show selected provider tier info */}
         {selectedProvider && (
-          <div className="mt-3 flex items-center gap-2 text-xs text-slate-300">
-            <span className="font-medium text-white">{selectedProvider.name}</span>
-            <span>·</span>
-            <span>
+          <div
+            className="flex items-center text-white"
+            style={{
+              marginTop: 'clamp(6px, 0.5vw, 10px)',
+              gap: 'clamp(6px, 0.5vw, 8px)',
+              fontSize: 'clamp(0.68rem, 0.72vw, 0.82rem)',
+            }}
+          >
+            <span className="font-medium">{selectedProvider.name}</span>
+            <span className="text-white/60">·</span>
+            <span className="text-white/80">
               Tier {activeTier}: {TIER_CONFIGS[activeTier].name}
             </span>
           </div>
         )}
       </header>
 
-      {/* Main Content */}
-      <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30">
+      {/* Main Content — layout reorder v6.0.0 */}
+      {/* §11 Cognitive Load: information flows in the order the user processes it */}
+      {/* Describe → Tiers → Assembled → Optimise → Optimised → Score */}
+      <div
+        className="min-h-0 flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30"
+        style={{ padding: 'clamp(12px, 1.2vw, 20px) clamp(16px, 1.5vw, 24px)' }}
+      >
         {/* ════════════════════════════════════════════════════════ */}
-        {/* Scene Starters REMOVED — Prompt Lab is algorithm-only.  */}
-        {/* Scene Starters remain in standard builder.              */}
-        {/* ════════════════════════════════════════════════════════ */}
-
-        {/* ════════════════════════════════════════════════════════ */}
-        {/* Describe Your Image — Human Sentence Conversion         */}
-        {/* The primary input for the Prompt Lab. User types or     */}
-        {/* pastes natural text, clicks Generate, algorithms run.   */}
-        {/* Authority: human-sentence-conversion.md                  */}
+        {/* 1. Describe Your Image — Human Sentence Conversion      */}
+        {/* Authority: human-sentence-conversion.md                 */}
         {/* ════════════════════════════════════════════════════════ */}
         <DescribeYourImage
           categoryState={categoryStateForScene}
@@ -1114,12 +1125,12 @@ export default function EnhancedEducationalPreview({
           isLocked={false}
           defaultExpanded={true}
           onTextChange={onDescribeTextChange}
-          onGenerate={onDescribeGenerate}
+          onGenerate={handleGenerateWithProvider}
           onClear={() => {
             onDescribeClear?.();
             clearAiOptimise();
             setSelections(EMPTY_SELECTIONS);
-            setOptimizerEnabled(false);
+            setLastOptimisedFor(null);
           }}
           isDrifted={isDrifted}
           driftChangeCount={driftChangeCount}
@@ -1129,402 +1140,573 @@ export default function EnhancedEducationalPreview({
           coverageData={coverageData}
         />
 
-        {/* Full-width single column */}
-        <div className="space-y-4">
+        {/* ── Drift hint — §7 Spatial Framing ──────────────────────────── */}
+        {/* Positioned directly below the textarea where the action happens. */}
+        {/* Emerald (positive CTA), not amber (warning). Appears only when   */}
+        {/* text has changed since last generation.                           */}
+        {isDrifted && (driftChangeCount ?? 0) >= 1 && hasContent && (
+          <p
+            style={{
+              margin: 'clamp(6px, 0.5vw, 10px) 0 0 0',
+              fontSize: 'clamp(0.65rem, 0.7vw, 0.8rem)',
+              lineHeight: 1.4,
+              color: '#6EE7B7',
+            }}
+          >
+            Your description has changed — click <strong>Generate Prompt</strong> to update your prompts
+          </p>
+        )}
 
-            {/* ═══════════════════════════════════════════════════ */}
-            {/* REMOVED: Selection Echo Strip (dropdown chips)      */}
-            {/* REMOVED: 12 Category Dropdowns + Explore Drawers   */}
-            {/* REMOVED: Aspect Ratio Selector                     */}
-            {/* REMOVED: Live Diff Overlay (Static↔Dynamic)         */}
-            {/* Call 2 AI generates tier prompts directly from      */}
-            {/* human text — no dropdown intermediary needed.        */}
-            {/* ═══════════════════════════════════════════════════ */}
+        {/* Full-width single column — the prompt pipeline */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(10px, 1vw, 16px)' }}>
 
-            {/* ═══════════════════════════════════════════════════ */}
-            {/* Assembled Prompt — full-length prompt preview      */}
-            {/* Matches standard builder's assembled prompt box.   */}
-            {/* Shows colour-coded text for Pro, inline copy+save. */}
-            {/* ═══════════════════════════════════════════════════ */}
-            {hasContent && (
-              <div className="rounded-xl bg-slate-900/80 border border-white/10 p-4 space-y-2">
-                {/* Header row: dynamic label + stage badge + char count */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {isOptimizerEnabled && selectedProviderId && !effectiveWasOptimized ? (
-                      /* Optimizer ON but no trimming needed → this IS the optimized output */
-                      <span className="text-xs font-medium text-emerald-300 flex items-center gap-1.5">
+          {/* ════════════════════════════════════════════════════════ */}
+          {/* 2. Four Tier Prompt Preview — pick your tier             */}
+          {/* ════════════════════════════════════════════════════════ */}
+          <div className="rounded-xl bg-slate-900/80 border border-white/10" style={{ padding: 'clamp(10px, 1vw, 16px)' }}>
+            <FourTierPromptPreview
+              prompts={aiTierPrompts ?? generatedPrompts}
+              currentTier={activeTier}
+              onTierSelect={handleTierSelect}
+              compact={false}
+              showNegative={true}
+              singleTierMode={singleTierMode}
+              isPro={isPro || colourTermIndex.size > 0}
+              termIndex={colourTermIndex}
+              isTierGenerating={isTierGenerating}
+              generatedForProvider={generatedForProvider}
+              providers={providers}
+              activeCategories={activeCategories}
+              generationId={generationId}
+            />
+          </div>
+
+          {/* ── Provider guidance — §1 Curiosity Gap + §12 Von Restorff ── */}
+          {/* Text explains what to do. Dropdown glow (above) shows where.  */}
+          {/* Both disappear once a provider is selected.                    */}
+          {needsProviderGuidance && (
+            <div
+              className="rounded-lg border border-emerald-500/20 bg-emerald-950/15"
+              style={{
+                padding: 'clamp(10px, 0.9vw, 14px) clamp(14px, 1.2vw, 18px)',
+              }}
+            >
+              <p
+                className="text-emerald-300 font-medium"
+                style={{ fontSize: 'clamp(0.7rem, 0.76vw, 0.85rem)', lineHeight: 1.5 }}
+              >
+                ⚡ Select a provider above to see your prompt tailored for that platform
+              </p>
+              <p
+                className="text-emerald-200/70"
+                style={{ fontSize: 'clamp(0.62rem, 0.66vw, 0.75rem)', marginTop: 'clamp(3px, 0.3vw, 5px)' }}
+              >
+                Each platform has different syntax, length limits, and sweet spots — the prompt reshapes to match
+              </p>
+            </div>
+          )}
+
+          {/* ════════════════════════════════════════════════════════ */}
+          {/* 3. Assembled Prompt — full-length prompt for active tier */}
+          {/*    Colour-coded text, inline copy + save                 */}
+          {/* ════════════════════════════════════════════════════════ */}
+          {hasContent && (
+            <div
+              className={`rounded-xl border ${
+                isOptimisedButUnchanged
+                  ? 'border-emerald-600/50 bg-emerald-950/20'
+                  : 'bg-slate-900/80 border-white/10'
+              }`}
+              style={{ padding: 'clamp(10px, 1vw, 16px)' }}
+            >
+              {/* Header row: label + provider icon + char count */}
+              <div className="flex items-center justify-between" style={{ marginBottom: 'clamp(6px, 0.5vw, 10px)' }}>
+                <span
+                  className={`font-medium flex items-center ${'text-white'}`}
+                  style={{ fontSize: 'clamp(0.68rem, 0.72vw, 0.82rem)', gap: 'clamp(4px, 0.3vw, 6px)' }}
+                >
+                  Assembled prompt
+                  {selectedProvider && (
+                    <>
+                      <span className={'text-white/60'}>for</span>
+                      <span className={'text-white/80'}>{selectedProvider.name}</span>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={selectedProvider.localIcon || `/icons/providers/${selectedProvider.id}.png`}
+                        alt=""
+                        style={{ width: 'clamp(16px, 1.2vw, 20px)', height: 'clamp(16px, 1.2vw, 20px)' }}
+                        className="inline-block rounded-sm"
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                      />
+                    </>
+                  )}
+                </span>
+                <span
+                  className={`tabular-nums ${isOptimisedButUnchanged ? 'text-emerald-400/80' : 'text-white/80'}`}
+                  style={{ fontSize: 'clamp(0.65rem, 0.68vw, 0.78rem)' }}
+                >
+                  {activeTierPromptText.length} chars
+                </span>
+              </div>
+
+              {/* Full-length prompt text box */}
+              <div
+                className={`overflow-y-auto rounded-xl border scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30 ${
+                  isOptimisedButUnchanged
+                    ? 'border-emerald-600/40 bg-emerald-950/15'
+                    : 'border-slate-600 bg-slate-950/80'
+                }`}
+                style={{
+                  minHeight: 'clamp(60px, 5vw, 80px)',
+                  maxHeight: 'clamp(150px, 12vw, 200px)',
+                  padding: 'clamp(8px, 0.8vw, 12px)',
+                }}
+              >
+                <pre
+                  className="whitespace-pre-wrap font-sans leading-relaxed text-white"
+                  style={{ fontSize: 'clamp(0.7rem, 0.76vw, 0.85rem)' }}
+                >
+                  {colourTermIndex.size > 0
+                    ? (() => {
+                        const segments = parsePromptIntoSegments(assembledDisplayText, colourTermIndex);
+                        const hasAnatomy = segments.some((s) => s.category !== 'structural');
+                        if (!hasAnatomy) return assembledDisplayText;
+                        return segments.map((seg, i) => {
+                          const c = CATEGORY_COLOURS[seg.category] ?? CATEGORY_COLOURS.structural;
+                          return (
+                            <span key={i} style={{ color: c, textShadow: seg.weight >= 1.05 ? `0 0 10px ${c}50` : undefined }}>
+                              {seg.text}
+                            </span>
+                          );
+                        });
+                      })()
+                    : assembledDisplayText
+                  }
+                  {/* Typewriter cursor */}
+                  {isAssembledTyping && (
+                    <span className="animate-pulse" style={{ color: '#94A3B8' }}>▌</span>
+                  )}
+                  {/* Inline copy + save icons */}
+                  <span style={{ marginLeft: 'clamp(4px, 0.3vw, 6px)', display: 'inline-flex', float: 'right', gap: 'clamp(2px, 0.2vw, 4px)' }}>
+                    <SaveIcon
+                      positivePrompt={activeTierPromptText}
+                      platformId={selectedProviderId ?? 'playground'}
+                      platformName={selectedProvider?.name ?? 'Playground'}
+                      source="builder"
+                      tier={activeTier}
+                      selections={selections as unknown as Record<string, unknown>}
+                      size="sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleCopyAssembled}
+                      className={`inline-flex items-center justify-center rounded-md transition-all cursor-pointer ${
+                        copiedAssembled
+                          ? 'bg-emerald-500/20 text-emerald-400'
+                          : 'bg-white/5 text-white hover:bg-white/10 hover:text-white'
+                      }`}
+                      style={{ padding: 'clamp(2px, 0.2vw, 4px)' }}
+                      title={copiedAssembled ? 'Copied!' : 'Copy assembled prompt'}
+                      aria-label={copiedAssembled ? 'Copied to clipboard' : 'Copy assembled prompt to clipboard'}
+                    >
+                      {copiedAssembled ? (
+                        <svg style={{ width: 'clamp(12px, 0.9vw, 14px)', height: 'clamp(12px, 0.9vw, 14px)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <svg style={{ width: 'clamp(12px, 0.9vw, 14px)', height: 'clamp(12px, 0.9vw, 14px)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      )}
+                    </button>
+                  </span>
+                </pre>
+              </div>
+            </div>
+          )}
+
+          {/* ── Optimised but unchanged confirmation ───────────────── */}
+          {/* Shows when Call 3 ran and confirmed the prompt was already */}
+          {/* optimal — reassures the user optimisation DID happen.      */}
+          {isOptimisedButUnchanged && !isAiOptimising && (
+            <div
+              className="rounded-lg border border-emerald-500/25 bg-emerald-950/20"
+              style={{ padding: 'clamp(8px, 0.7vw, 12px) clamp(12px, 1vw, 16px)' }}
+            >
+              <div className="flex items-center" style={{ gap: 'clamp(6px, 0.5vw, 8px)' }}>
+                <span className="text-emerald-400" style={{ fontSize: 'clamp(0.8rem, 0.85vw, 1rem)' }}>✓</span>
+                <span className="text-emerald-200 font-medium" style={{ fontSize: 'clamp(0.68rem, 0.72vw, 0.82rem)' }}>
+                  Already optimised — no changes needed for {selectedProvider?.name ?? 'this platform'}
+                </span>
+              </div>
+              {aiOptimiseResult?.changes && aiOptimiseResult.changes.length > 0 && (
+                <div className="flex flex-wrap" style={{ marginTop: 'clamp(4px, 0.4vw, 6px)', gap: 'clamp(3px, 0.3vw, 5px)' }}>
+                  {aiOptimiseResult.changes.map((change, i) => (
+                    <span
+                      key={i}
+                      className="inline-flex items-center rounded-md bg-emerald-900/30 text-emerald-300"
+                      style={{
+                        padding: 'clamp(2px, 0.2vw, 3px) clamp(5px, 0.4vw, 7px)',
+                        fontSize: 'clamp(0.62rem, 0.66vw, 0.75rem)',
+                      }}
+                    >
+                      ✓ {change}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ════════════════════════════════════════════════════════ */}
+          {/* 4. Optimise Section — button + length + result           */}
+          {/*    §3 Anticipatory Dopamine: deliberate button click     */}
+          {/*    §12 Von Restorff: button glow when active             */}
+          {/* ════════════════════════════════════════════════════════ */}
+          {hasContent && (
+            <div
+              className="rounded-xl bg-slate-900/80 border border-white/10"
+              style={{ padding: 'clamp(10px, 1vw, 16px)', display: 'flex', flexDirection: 'column', gap: 'clamp(10px, 0.8vw, 14px)' }}
+            >
+              {/* Length Indicator — always visible when there's content */}
+              <LengthIndicator
+                analysis={optimizerAnalysis}
+                isOptimizerEnabled={!!aiOptimiseResult}
+                optimizedLength={aiOptimiseResult ? effectiveOptimisedLength : undefined}
+                willTrim={effectiveWasOptimized}
+                compact
+              />
+
+              {/* ── Optimise Button ─────────────────────────────────── */}
+              {/* Proper button: one click = one Call 3. Deactivates     */}
+              {/* after firing, reactivates on text/provider change.     */}
+              {/* Same activation pattern as Generate Prompt button.     */}
+              <button
+                type="button"
+                onClick={handleOptimise}
+                disabled={!canOptimise || isAiOptimising}
+                className={`
+                  group relative inline-flex items-center overflow-hidden rounded-lg font-semibold text-white
+                  transition-all duration-200
+                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/80
+                  ${
+                    isAiOptimising
+                      ? 'border-emerald-400/40 bg-gradient-to-r from-emerald-400/30 via-amber-300/20 to-emerald-400/30'
+                      : canOptimise
+                        ? 'border-emerald-400/60 bg-gradient-to-r from-emerald-400/30 via-teal-300/30 to-emerald-400/30 cursor-pointer hover:from-emerald-400/40 hover:via-teal-300/40 hover:to-emerald-400/40'
+                        : 'bg-slate-800/40 border-slate-700/30 cursor-not-allowed text-white/40'
+                  }
+                `}
+                style={{
+                  padding: 'clamp(8px, 0.7vw, 12px) clamp(16px, 1.4vw, 22px)',
+                  fontSize: 'clamp(0.72rem, 0.8vw, 0.88rem)',
+                  border: '1px solid',
+                  gap: 'clamp(6px, 0.5vw, 8px)',
+                  alignSelf: 'flex-start',
+                }}
+                aria-label={isAiOptimising ? 'Optimising prompt...' : canOptimise ? 'Optimise prompt' : 'Optimise prompt (generate first or change text)'}
+              >
+                {isAiOptimising ? (
+                  <span
+                    className="relative z-10 inline-flex items-center"
+                    style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}
+                  >
+                    <svg
+                      className="animate-spin"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      style={{
+                        width: 'clamp(14px, 1vw, 16px)',
+                        height: 'clamp(14px, 1vw, 16px)',
+                      }}
+                    >
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4} />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Optimising...
+                  </span>
+                ) : (
+                  <span
+                    className="relative z-10 inline-flex items-center"
+                    style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}
+                  >
+                    <svg
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      style={{
+                        width: 'clamp(14px, 1vw, 16px)',
+                        height: 'clamp(14px, 1vw, 16px)',
+                      }}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Optimise Prompt
+                  </span>
+                )}
+              </button>
+
+              {/* AI Disguise: Algorithm cycling animation (§3 Anticipatory Dopamine) */}
+              {/* Shows during Call 3 processing. Amber→emerald colour shift.          */}
+              {isAiOptimising && (
+                <AlgorithmCycling
+                  animationPhase={animationPhase}
+                  currentAlgorithm={currentAlgorithm}
+                  algorithmCount={algorithmCount}
+                />
+              )}
+
+              {/* ── Call 3 Error Display ────────────────────────────── */}
+              {aiOptimiseError && !isAiOptimising && (
+                <div
+                  className="rounded-lg border border-red-900/50 bg-red-950/30"
+                  style={{ padding: 'clamp(6px, 0.6vw, 10px) clamp(10px, 0.8vw, 14px)' }}
+                >
+                  <span className="text-red-300" style={{ fontSize: 'clamp(0.68rem, 0.72vw, 0.82rem)' }}>
+                    Optimisation failed — {aiOptimiseError}
+                  </span>
+                </div>
+              )}
+
+              {/* ── Optimised Result ─────────────────────────────────── */}
+              {/* Shows when Call 3 has returned a result.               */}
+              {/* Preserves: change chips, char count, typewriter effect */}
+              {effectiveWasOptimized && !isAiOptimising && (
+                <>
+                  {/* Stats banner */}
+                  <div
+                    className="rounded-lg border border-amber-900/50 bg-amber-950/30"
+                    style={{ padding: 'clamp(6px, 0.6vw, 10px) clamp(10px, 0.8vw, 14px)' }}
+                  >
+                    <div className="flex items-center" style={{ gap: 'clamp(6px, 0.5vw, 8px)' }}>
+                      <span className="text-amber-400">{effectiveOptimisedLength <= activeTierPromptText.length ? '↓' : '↑'}</span>
+                      <span style={{ fontSize: 'clamp(0.68rem, 0.72vw, 0.82rem)' }} className="text-amber-200">
+                        <span className="font-medium">Optimized:</span>{' '}
+                        {activeTierPromptText.length} → {effectiveOptimisedLength} chars{' '}
+                        <span className="text-amber-300">
+                          {effectiveOptimisedLength < activeTierPromptText.length
+                            ? `(saved ${activeTierPromptText.length - effectiveOptimisedLength})`
+                            : effectiveOptimisedLength > activeTierPromptText.length
+                              ? `(enriched +${effectiveOptimisedLength - activeTierPromptText.length})`
+                              : '(rewritten)'}
+                        </span>
+                      </span>
+                    </div>
+                    {/* Change descriptions from Call 3 */}
+                    {aiOptimiseResult?.changes && aiOptimiseResult.changes.length > 0 && (
+                      <div className="flex flex-wrap" style={{ marginTop: 'clamp(4px, 0.4vw, 6px)', gap: 'clamp(3px, 0.3vw, 5px)' }}>
+                        {aiOptimiseResult.changes.map((change, i) => (
+                          <span
+                            key={i}
+                            className="inline-flex items-center rounded-md bg-emerald-900/30 text-emerald-300"
+                            style={{
+                              padding: 'clamp(2px, 0.2vw, 3px) clamp(5px, 0.4vw, 7px)',
+                              fontSize: 'clamp(0.62rem, 0.66vw, 0.75rem)',
+                            }}
+                          >
+                            ✓ {change}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Optimized prompt preview with typewriter */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(4px, 0.4vw, 6px)' }}>
+                    <div className="flex items-center justify-between">
+                      <span
+                        className="font-medium text-emerald-300 flex items-center"
+                        style={{ fontSize: 'clamp(0.68rem, 0.72vw, 0.82rem)', gap: 'clamp(4px, 0.4vw, 6px)' }}
+                      >
                         Optimized prompt
                         {selectedProvider && (
                           <>
-                            <span className="text-slate-300">in</span>
-                            <span className="text-white/70">{selectedProvider.name}</span>
+                            <span className="text-white/60">in</span>
+                            <span className="text-white/80">{selectedProvider.name}</span>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={selectedProvider.localIcon || `/icons/providers/${selectedProvider.id}.png`}
                               alt=""
-                              style={{ width: 20, height: 20 }}
+                              style={{ width: 'clamp(16px, 1.2vw, 20px)', height: 'clamp(16px, 1.2vw, 20px)' }}
                               className="inline-block rounded-sm"
                               onError={(e) => { e.currentTarget.style.display = 'none'; }}
                             />
                           </>
                         )}
                       </span>
-                    ) : (
-                      /* Optimizer OFF, or optimizer ON but trimming occurred (bottom box has the optimized version) */
-                      <span className="text-xs font-medium text-white">Assembled prompt</span>
-                    )}
-                  </div>
-                  <span className={`text-xs tabular-nums ${isOptimizerEnabled && selectedProviderId && !effectiveWasOptimized ? 'text-emerald-400/70' : 'text-slate-200'}`}>
-                    {activeTierPromptText.length} chars
-                  </span>
-                </div>
-
-                {/* Full-length prompt text box — border shifts emerald only when this IS the optimized output */}
-                <div className={`min-h-[80px] max-h-[200px] overflow-y-auto rounded-xl border p-3 text-sm scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30 ${
-                  isOptimizerEnabled && selectedProviderId && !effectiveWasOptimized
-                    ? 'border-emerald-600/50 bg-emerald-950/20'
-                    : 'border-slate-600 bg-slate-950/80'
-                }`}>
-                  <pre className={`whitespace-pre-wrap font-sans text-[0.8rem] leading-relaxed ${
-                    isOptimizerEnabled && selectedProviderId && !effectiveWasOptimized ? 'text-emerald-100' : 'text-slate-100'
-                  }`}>
-                    {colourTermIndex.size > 0
-                      ? (() => {
-                          const segments = parsePromptIntoSegments(assembledDisplayText, colourTermIndex);
-                          const hasAnatomy = segments.some((s) => s.category !== 'structural');
-                          if (!hasAnatomy) return assembledDisplayText;
-                          return segments.map((seg, i) => {
-                            const c = CATEGORY_COLOURS[seg.category] ?? CATEGORY_COLOURS.structural;
-                            return (
-                              <span key={i} style={{ color: c, textShadow: seg.weight >= 1.05 ? `0 0 10px ${c}50` : undefined }}>
-                                {seg.text}
-                              </span>
-                            );
-                          });
-                        })()
-                      : assembledDisplayText
-                    }
-                    {/* Typewriter cursor */}
-                    {isAssembledTyping && (
-                      <span className="animate-pulse" style={{ color: '#94A3B8' }}>▌</span>
-                    )}
-                    {/* Inline copy + save icons — flows after last character, floats right */}
-                    <span className="ml-1 inline-flex float-right gap-1">
-                      <SaveIcon
-                        positivePrompt={activeTierPromptText}
-                        platformId={selectedProviderId ?? 'playground'}
-                        platformName={selectedProvider?.name ?? 'Playground'}
-                        source="builder"
-                        tier={activeTier}
-                        selections={selections as unknown as Record<string, unknown>}
-                        size="sm"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleCopyAssembled}
-                        className={`inline-flex items-center justify-center rounded-md p-1 transition-all cursor-pointer ${
-                          copiedAssembled
-                            ? 'bg-emerald-500/20 text-emerald-400'
-                            : isOptimizerEnabled && selectedProviderId
-                              ? 'bg-white/5 text-emerald-300 hover:bg-white/10 hover:text-emerald-200'
-                              : 'bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white'
-                        }`}
-                        title={copiedAssembled ? 'Copied!' : isOptimizerEnabled && selectedProviderId ? 'Copy optimized prompt' : 'Copy assembled prompt'}
-                        aria-label={copiedAssembled ? 'Copied to clipboard' : isOptimizerEnabled && selectedProviderId ? 'Copy optimized prompt to clipboard' : 'Copy assembled prompt to clipboard'}
+                      <span
+                        className="text-emerald-400/80 tabular-nums"
+                        style={{ fontSize: 'clamp(0.65rem, 0.68vw, 0.78rem)' }}
                       >
-                        {copiedAssembled ? (
-                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                          </svg>
-                        ) : (
-                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
+                        {effectiveOptimisedLength} chars
+                      </span>
+                    </div>
+                    <div
+                      className="overflow-y-auto rounded-xl border border-emerald-600/50 bg-emerald-950/20 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30"
+                      style={{
+                        minHeight: 'clamp(50px, 4vw, 60px)',
+                        maxHeight: 'clamp(120px, 10vw, 150px)',
+                        padding: 'clamp(8px, 0.8vw, 12px)',
+                      }}
+                    >
+                      <pre
+                        className="whitespace-pre-wrap font-sans leading-relaxed text-emerald-100"
+                        style={{ fontSize: 'clamp(0.7rem, 0.76vw, 0.85rem)' }}
+                      >
+                        {colourTermIndex.size > 0
+                          ? (() => {
+                              const segments = parsePromptIntoSegments(optimisedDisplayText, colourTermIndex);
+                              const hasAnatomy = segments.some((s) => s.category !== 'structural');
+                              if (!hasAnatomy) return optimisedDisplayText;
+                              return segments.map((seg, i) => {
+                                const c = CATEGORY_COLOURS[seg.category] ?? CATEGORY_COLOURS.structural;
+                                return (
+                                  <span key={i} style={{ color: c, textShadow: seg.weight >= 1.05 ? `0 0 10px ${c}50` : undefined }}>
+                                    {seg.text}
+                                  </span>
+                                );
+                              });
+                            })()
+                          : optimisedDisplayText
+                        }
+                        {/* Typewriter cursor */}
+                        {isOptimisedTyping && (
+                          <span className="animate-pulse" style={{ color: '#6EE7B7' }}>▌</span>
                         )}
-                      </button>
-                    </span>
-                  </pre>
-                </div>
-              </div>
-            )}
-
-            {/* 4-Tier Prompt Preview */}
-            <div className="rounded-xl bg-slate-900/80 border border-white/10 p-4">
-              <FourTierPromptPreview
-                prompts={aiTierPrompts ?? generatedPrompts}
-                currentTier={activeTier}
-                onTierSelect={handleTierSelect}
-                compact={false}
-                showNegative={true}
-                singleTierMode={singleTierMode}
-                isPro={isPro || colourTermIndex.size > 0}
-                termIndex={colourTermIndex}
-                isTierGenerating={isTierGenerating}
-                generatedForProvider={generatedForProvider}
-                providers={providers}
-                activeCategories={activeCategories}
-                generationId={generationId}
-              />
-            </div>
-
-            {/* ═══════════════════════════════════════════════════ */}
-            {/* Text Length Optimizer Output (Phase L4)             */}
-            {/* Shows length indicator, optimization result, and   */}
-            {/* transparency panel when optimizer is enabled.       */}
-            {/* Human factor: Loss Aversion — "23 tokens over"     */}
-            {/* creates urgency to trim.                           */}
-            {/* ═══════════════════════════════════════════════════ */}
-            {hasContent && (
-              <div className="rounded-xl bg-slate-900/80 border border-white/10 p-4 space-y-3">
-                {/* Length Indicator — always visible when there's content */}
-                <LengthIndicator
-                  analysis={optimizerAnalysis}
-                  isOptimizerEnabled={isOptimizerEnabled}
-                  optimizedLength={isOptimizerEnabled ? effectiveOptimisedLength : undefined}
-                  willTrim={isOptimizerEnabled && effectiveWasOptimized}
-                  compact
-                />
-
-                {/* AI Disguise: Algorithm cycling animation (§3 Anticipatory Dopamine) */}
-                {/* Shows during Call 3 processing. Amber→emerald colour shift.          */}
-                {isAiOptimising && (
-                  <AlgorithmCycling
-                    animationPhase={animationPhase}
-                    currentAlgorithm={currentAlgorithm}
-                    algorithmCount={algorithmCount}
-                  />
-                )}
-
-                {/* Optimization result — shows when optimizer produces changes (hidden during AI cycling) */}
-                {isOptimizerEnabled && effectiveWasOptimized && !isAiOptimising && (
-                  <>
-                    <div className="rounded-lg border border-amber-900/50 bg-amber-950/30 px-3 py-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-amber-400">{effectiveOptimisedLength <= optimizedResult.originalLength ? '↓' : '↑'}</span>
-                        <span className="text-xs text-amber-200">
-                          <span className="font-medium">Optimized:</span>{' '}
-                          {optimizedResult.originalLength} → {effectiveOptimisedLength} chars{' '}
-                          <span className="text-amber-300">
-                            {effectiveOptimisedLength < optimizedResult.originalLength
-                              ? `(saved ${optimizedResult.originalLength - effectiveOptimisedLength})`
-                              : effectiveOptimisedLength > optimizedResult.originalLength
-                                ? `(enriched +${effectiveOptimisedLength - optimizedResult.originalLength})`
-                                : '(rewritten)'}
-                          </span>
+                        {/* Inline copy + save icons */}
+                        <span style={{ marginLeft: 'clamp(4px, 0.3vw, 6px)', display: 'inline-flex', float: 'right', gap: 'clamp(2px, 0.2vw, 4px)' }}>
+                          <SaveIcon
+                            positivePrompt={activeTierPromptText}
+                            optimisedPrompt={effectiveOptimisedText}
+                            isOptimised={true}
+                            platformId={selectedProviderId ?? 'playground'}
+                            platformName={selectedProvider?.name ?? 'Playground'}
+                            source="builder"
+                            tier={activeTier}
+                            selections={selections as unknown as Record<string, unknown>}
+                            size="sm"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleCopyOptimized}
+                            className={`inline-flex items-center justify-center rounded-md transition-all cursor-pointer ${
+                              copiedOptimized
+                                ? 'bg-emerald-500/20 text-emerald-400'
+                                : 'bg-white/5 text-emerald-300 hover:bg-white/10 hover:text-emerald-200'
+                            }`}
+                            style={{ padding: 'clamp(2px, 0.2vw, 4px)' }}
+                            title={copiedOptimized ? 'Copied!' : 'Copy optimized prompt'}
+                            aria-label={copiedOptimized ? 'Copied to clipboard' : 'Copy optimized prompt to clipboard'}
+                          >
+                            {copiedOptimized ? (
+                              <svg style={{ width: 'clamp(12px, 0.9vw, 14px)', height: 'clamp(12px, 0.9vw, 14px)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            ) : (
+                              <svg style={{ width: 'clamp(12px, 0.9vw, 14px)', height: 'clamp(12px, 0.9vw, 14px)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                              </svg>
+                            )}
+                          </button>
                         </span>
-                      </div>
-                      {/* Show AI changes OR client-side removed terms */}
-                      {aiOptimiseResult?.changes && aiOptimiseResult.changes.length > 0 ? (
-                        <div className="mt-1.5 flex flex-wrap gap-1">
-                          {aiOptimiseResult.changes.map((change, i) => (
-                            <span
-                              key={i}
-                              className="inline-flex items-center rounded-md bg-emerald-900/30 px-1.5 py-0.5 text-xs text-emerald-300"
-                            >
-                              ✓ {change}
-                            </span>
-                          ))}
-                        </div>
-                      ) : optimizedResult.removedTermNames && optimizedResult.removedTermNames.length > 0 ? (
-                        <div className="mt-1.5 flex flex-wrap gap-1">
-                          {optimizedResult.removedTermNames.map((name, i) => (
-                            <span
-                              key={i}
-                              className="inline-flex items-center rounded-md bg-amber-900/30 px-1.5 py-0.5 text-xs text-amber-300"
-                            >
-                              ✕ {name}
-                            </span>
-                          ))}
-                        </div>
-                      ) : null}
-                    </div>
-
-                    {/* Transparency Panel — shows which phase achieved the target (client-side only) */}
-                    {!aiOptimiseResult && (
-                      <OptimizationTransparencyPanel
-                        removedTerms={optimizedResult.removedTerms ?? []}
-                        achievedAtPhase={optimizedResult.achievedAtPhase ?? -1}
-                        originalLength={optimizedResult.originalLength}
-                        optimizedLength={optimizedResult.optimizedLength}
-                        isPro={isPro}
-                      />
-                    )}
-
-                    {/* Optimized prompt preview */}
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-emerald-300 flex items-center gap-1.5">
-                          Optimized prompt
-                          {selectedProvider && (
-                            <>
-                              <span className="text-slate-300">in</span>
-                              <span className="text-white/70">{selectedProvider.name}</span>
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src={selectedProvider.localIcon || `/icons/providers/${selectedProvider.id}.png`}
-                                alt=""
-                                style={{ width: 20, height: 20 }}
-                                className="inline-block rounded-sm"
-                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                              />
-                            </>
-                          )}
-                        </span>
-                        <span className="text-xs text-emerald-400/70 tabular-nums">
-                          {effectiveOptimisedLength} chars
-                        </span>
-                      </div>
-                      <div className="min-h-[60px] max-h-[150px] overflow-y-auto rounded-xl border border-emerald-600/50 bg-emerald-950/20 p-3 text-sm scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30">
-                        <pre className="whitespace-pre-wrap font-sans text-[0.8rem] leading-relaxed text-emerald-100">
-                          {colourTermIndex.size > 0
-                            ? (() => {
-                                const segments = parsePromptIntoSegments(optimisedDisplayText, colourTermIndex);
-                                const hasAnatomy = segments.some((s) => s.category !== 'structural');
-                                if (!hasAnatomy) return optimisedDisplayText;
-                                return segments.map((seg, i) => {
-                                  const c = CATEGORY_COLOURS[seg.category] ?? CATEGORY_COLOURS.structural;
-                                  return (
-                                    <span key={i} style={{ color: c, textShadow: seg.weight >= 1.05 ? `0 0 10px ${c}50` : undefined }}>
-                                      {seg.text}
-                                    </span>
-                                  );
-                                });
-                              })()
-                            : optimisedDisplayText
-                          }
-                          {/* Typewriter cursor */}
-                          {isOptimisedTyping && (
-                            <span className="animate-pulse" style={{ color: '#6EE7B7' }}>▌</span>
-                          )}
-                          {/* Inline copy + save icons — flows after last character, floats right */}
-                          <span className="ml-1 inline-flex float-right gap-1">
-                            <SaveIcon
-                              positivePrompt={activeTierPromptText}
-                              optimisedPrompt={effectiveOptimisedText}
-                              isOptimised={true}
-                              platformId={selectedProviderId ?? 'playground'}
-                              platformName={selectedProvider?.name ?? 'Playground'}
-                              source="builder"
-                              tier={activeTier}
-                              selections={selections as unknown as Record<string, unknown>}
-                              size="sm"
-                            />
-                            <button
-                              type="button"
-                              onClick={handleCopyOptimized}
-                              className={`inline-flex items-center justify-center rounded-md p-1 transition-all cursor-pointer ${
-                                copiedOptimized
-                                  ? 'bg-emerald-500/20 text-emerald-400'
-                                  : 'bg-white/5 text-emerald-300 hover:bg-white/10 hover:text-emerald-200 cursor-pointer'
-                              }`}
-                              title={copiedOptimized ? 'Copied!' : 'Copy optimized prompt'}
-                              aria-label={copiedOptimized ? 'Copied to clipboard' : 'Copy optimized prompt to clipboard'}
-                            >
-                              {copiedOptimized ? (
-                                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
-                              ) : (
-                                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                </svg>
-                              )}
-                            </button>
-                          </span>
-                        </pre>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {/* Within optimal range — shows when optimizer ON but no trimming needed */}
-                {isOptimizerEnabled && !effectiveWasOptimized && selectedProviderId && !isAiOptimising && (
-                  <div className="rounded-lg border border-emerald-900/50 bg-emerald-950/30 px-3 py-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-emerald-400">✓</span>
-                        <span className="text-xs text-emerald-200">
-                          <span className="font-medium">Within optimal range</span> —{' '}
-                          {effectiveOptimisedLength} chars
-                        </span>
-                      </div>
-                      <span style={{ fontSize: 'clamp(10px, 0.65vw, 11px)' }} className="text-emerald-400/70">No trimming needed</span>
+                      </pre>
                     </div>
                   </div>
-                )}
-              </div>
-            )}
+                </>
+              )}
 
-            {/* Educational Note (only when no provider selected) */}
-            {!singleTierMode && (
-              <div className="p-3 rounded-lg bg-gradient-to-r from-sky-500/10 via-emerald-500/10 to-indigo-500/10 border border-white/10">
-                <p className="text-xs text-white/70">
-                  <strong>💡 Learn by comparison:</strong> Same vision, different syntaxes. Tier 1
-                  uses <code className="text-sky-400">(weights)</code>, Tier 2 uses{' '}
-                  <code className="text-purple-400">--params</code>, Tier 3 uses sentences. Select a
-                  provider above to lock in your preferred format.
-                </p>
-              </div>
-            )}
+              {/* ── Score Placeholder ─────────────────────────────────── */}
+              {/* §4 Zeigarnik Effect: visible space signals "more coming" */}
+              {/* This is where the scoring engine will render:             */}
+              {/*   - Score out of 100 (non-round decimal, e.g. 87.3)      */}
+              {/*   - 3 improvement directives                              */}
+              {/*   - Staged processing animation                           */}
+              {/* Deferred until top 5 platforms polished.                  */}
+            </div>
+          )}
+
+          {/* Educational Note (only when no provider selected) */}
+          {!singleTierMode && (
+            <div
+              className="rounded-lg bg-gradient-to-r from-sky-500/10 via-emerald-500/10 to-indigo-500/10 border border-white/10"
+              style={{ padding: 'clamp(8px, 0.8vw, 12px)' }}
+            >
+              <p style={{ fontSize: 'clamp(0.68rem, 0.72vw, 0.82rem)' }} className="text-white/80">
+                <strong>💡 Learn by comparison:</strong> Same vision, different syntaxes. Tier 1
+                uses <code className="text-sky-400">(weights)</code>, Tier 2 uses{' '}
+                <code className="text-purple-400">--params</code>, Tier 3 uses sentences. Select a
+                provider above to lock in your preferred format.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Footer Actions - matches /providers/{provider} styling */}
-      <footer className="shrink-0 border-t border-slate-800/50 p-4 md:px-6">
-        <div className="flex flex-wrap items-center justify-center gap-3">
+      {/* Footer Actions */}
+      <footer
+        className="shrink-0 border-t border-slate-800/50"
+        style={{ padding: 'clamp(10px, 1vw, 16px) clamp(16px, 1.5vw, 24px)' }}
+      >
+        <div className="flex flex-wrap items-center justify-center" style={{ gap: 'clamp(8px, 0.8vw, 12px)' }}>
           {/* Copy prompt button */}
           <button
             type="button"
             onClick={handleCopy}
             disabled={!hasContent}
             className={`
-              inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition-all
+              inline-flex items-center justify-center rounded-full border font-medium shadow-sm transition-all
               ${
                 hasContent
-                  ? 'border-slate-600 bg-slate-900 text-slate-50 hover:border-slate-400 hover:bg-slate-800 cursor-pointer'
-                  : 'cursor-not-allowed border-slate-800 bg-slate-900/50 text-slate-300'
+                  ? 'border-slate-600 bg-slate-900 text-white hover:border-slate-400 hover:bg-slate-800 cursor-pointer'
+                  : 'cursor-not-allowed border-slate-800 bg-slate-900/50 text-white/40'
               }
               focus-visible:outline-none focus-visible:ring focus-visible:ring-sky-400/80
             `}
+            style={{
+              padding: 'clamp(6px, 0.5vw, 8px) clamp(12px, 1vw, 16px)',
+              fontSize: 'clamp(0.72rem, 0.8vw, 0.88rem)',
+              gap: 'clamp(4px, 0.4vw, 6px)',
+            }}
           >
             {copied ? (
               <>
                 <svg
-                  className="h-4 w-4 text-green-400"
+                  className="text-emerald-400"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
+                  style={{ width: 'clamp(14px, 1vw, 16px)', height: 'clamp(14px, 1vw, 16px)' }}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
                 Copied!
               </>
             ) : (
               <>
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                  />
+                <svg
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  style={{ width: 'clamp(14px, 1vw, 16px)', height: 'clamp(14px, 1vw, 16px)' }}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
-                {isOptimizerEnabled && effectiveWasOptimized ? 'Copy optimized prompt' : 'Copy prompt'}
+                {aiOptimiseResult && effectiveWasOptimized ? 'Copy optimized prompt' : 'Copy prompt'}
               </>
             )}
           </button>
 
-          {/* Clear All button — purple gradient matching Dynamic/Randomise, white text */}
+          {/* Clear All button */}
           <button
             type="button"
             onClick={handleClear}
-            className="inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition-all focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80 border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-white hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 cursor-pointer"
+            className="inline-flex items-center justify-center rounded-full border font-medium shadow-sm transition-all focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80 border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-white hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 cursor-pointer"
+            style={{
+              padding: 'clamp(6px, 0.5vw, 8px) clamp(12px, 1vw, 16px)',
+              fontSize: 'clamp(0.72rem, 0.8vw, 0.88rem)',
+              gap: 'clamp(4px, 0.4vw, 6px)',
+            }}
           >
             Clear All
           </button>
@@ -1534,35 +1716,30 @@ export default function EnhancedEducationalPreview({
             type="button"
             onClick={() => setShowSaveModal(true)}
             disabled={!hasContent}
-            className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition-all focus-visible:outline-none focus-visible:ring focus-visible:ring-emerald-400/80 ${
+            className={`inline-flex items-center justify-center rounded-full border font-medium shadow-sm transition-all focus-visible:outline-none focus-visible:ring focus-visible:ring-emerald-400/80 ${
               hasContent
                 ? savedConfirmation
                   ? 'border-emerald-400 bg-emerald-500/20 text-emerald-300 cursor-pointer'
                   : 'border-emerald-500/70 bg-gradient-to-r from-emerald-600/20 to-teal-600/20 text-emerald-100 hover:from-emerald-600/30 hover:to-teal-600/30 hover:border-emerald-400 cursor-pointer'
-                : 'cursor-not-allowed border-slate-700 bg-slate-800/50 text-slate-300'
+                : 'cursor-not-allowed border-slate-700 bg-slate-800/50 text-white/40'
             }`}
+            style={{
+              padding: 'clamp(6px, 0.5vw, 8px) clamp(12px, 1vw, 16px)',
+              fontSize: 'clamp(0.72rem, 0.8vw, 0.88rem)',
+              gap: 'clamp(4px, 0.4vw, 6px)',
+            }}
           >
             {savedConfirmation ? (
               <>
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ width: 'clamp(14px, 1vw, 16px)', height: 'clamp(14px, 1vw, 16px)' }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
                 Saved!
               </>
             ) : (
               <>
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-                  />
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ width: 'clamp(14px, 1vw, 16px)', height: 'clamp(14px, 1vw, 16px)' }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                 </svg>
                 Save
               </>
@@ -1603,6 +1780,7 @@ export default function EnhancedEducationalPreview({
         suggestedName={suggestedSaveName}
       />
     </section>
+    </>
   );
 }
 

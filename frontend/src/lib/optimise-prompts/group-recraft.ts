@@ -27,9 +27,17 @@
 //   EXACT words listed, B: 2 textures, C: composition close). No decorative
 //   formatting, no explanations. Running on gpt-5.4 full model. Hypothesis:
 //   shorter prompt + bigger model = better instruction following.
+// v6 (27 Mar 2026): Scene-agnostic rewrite. v5 hardcoded Lighthouse-specific
+//   anchors and textures — scored 95 on test input but fails any other scene.
+//   TASK A now instructs GPT to extract anchors from the actual scene description
+//   dynamically rather than checking a hardcoded list. TASK B texture pool removed —
+//   GPT invents 2 plausible material descriptions per scene. Negative prompt now
+//   uses full Dynamic Negative Intelligence (7 failure-mode categories) instead of
+//   hardcoded Lighthouse negatives. Forced opener removed. idealMax fallback
+//   updated 350→400 to match platform-config.json fix.
 //
 // Authority: grouping-45-image-platforms-by-prompt-compatibility.md §Dedicated
-// Existing features preserved: Yes (new file).
+// Existing features preserved: Yes.
 // ============================================================================
 
 import type { OptimiseProviderContext, GroupPromptResult } from './types';
@@ -83,44 +91,56 @@ export function buildRecraftPrompt(
 ): GroupPromptResult {
   const platformNote = ctx.groupKnowledge ?? '';
   const idealMin = ctx.idealMin || 200;
-  const idealMax = ctx.idealMax || 350;
+  const idealMax = ctx.idealMax || 400;
 
-  const systemPrompt = `You optimise image prompts for Recraft. Strip all weight syntax and CLIP tokens. Output clean prose.
+  const systemPrompt = `You optimise image prompts for Recraft. Strip all weight syntax and CLIP tokens. Output clean photorealistic prose.
 
-You receive a SCENE DESCRIPTION (source of truth) and a REFERENCE DRAFT (may have lost details).
+You receive a SCENE DESCRIPTION (source of truth) and a REFERENCE DRAFT (starting point that may have lost details).
 
-Do these 3 things. Each is mandatory.
+Do these 3 tasks. All are mandatory.
 
-TASK A — REWRITE WITH EVERY ANCHOR
-Copy every visual element from the scene description into your output. Use the EXACT words:
-- "gallery deck" not "deck"
-- "enormous storm waves" not "huge waves" or "waves"
-- "jagged rocks" not "rocks"
-- "salt spray" must appear
-- "purple" AND "copper" must both appear
-- "pale gold arc" not just "beam"
-- "sheets of driving rain" not just "rain"
-- "tiny warm orange windows" — all three adjectives
-- "dark cliffs" not just "cliffs"
-If you weaken or drop ANY of these, your output is rejected.
+TASK A — ZERO ANCHOR LOSS
+Before writing anything, scan the SCENE DESCRIPTION and identify every named visual element: subjects, objects, colours, textures, spatial relationships, lighting qualities, and atmospheric details.
+Every one of those elements MUST appear in your output using the EXACT words or a stronger, more specific version. You may NEVER:
+- Replace a specific noun with a vaguer one ("enormous storm waves" → "waves" is a FAILURE)
+- Drop a named colour — every named colour in the scene must appear in your output
+- Remove a descriptive compound — every adjective in a noun phrase must survive ("tiny warm orange windows" loses nothing)
+- Summarise multiple anchors into one vague phrase
+If your output contains fewer named elements than the scene description, it is rejected.
 
-TASK B — ADD 2 TEXTURES
-Add exactly 2 material descriptions that are NOT in the original. Pick from: salt-crusted iron, rain-slicked stone, barnacle-covered rocks, lichen-spotted granite, weathered copper housing, spray-misted glass. Or invent plausible ones.
+TASK B — ADD 2 MATERIAL TEXTURES
+Add exactly 2 material/surface descriptions that are NOT already in the scene description. Invent plausible textures that belong in this specific scene — they must fit the subject matter, era, and environment. Generic textures ("smooth surface", "rough texture") are not acceptable. Be specific: "salt-crusted iron railing", "lichen-spotted granite", "rain-slicked cobblestones", "sun-bleached driftwood", "tarnished brass fittings" — the level of specificity depends entirely on the scene.
 
-TASK C — END WITH COMPOSITION
-Your last sentence must specify camera angle + framing + depth. Example: "Low-angle wide shot with layered depth from the storm-lashed deck through spray-filled air to the glowing village beneath dark cliff faces."
+TASK C — COMPOSITION CLOSE
+Your final sentence must specify: camera angle + framing + spatial depth layers. Create a clear sense of how the viewer is positioned relative to the scene — foreground, middle ground, background in that order.
 
-ALSO GENERATE A NEGATIVE PROMPT: 3 generic (blurry, watermark, low quality) + 5 scene-specific (calm sea, daytime, clear sky, modern buildings, extra people, flat lighting).
+NEGATIVE PROMPT — DYNAMIC NEGATIVE INTELLIGENCE:
+Analyse the positive prompt and generate scene-specific negatives. Do NOT use generic boilerplate as the majority.
 
-Output 3–4 sentences, minimum ${idealMin} characters, sweet spot ${idealMin}–${idealMax}. Start with "A cinematic photorealistic scene of..."${platformNote ? `\n${platformNote}` : ''}
+FAILURE-MODE CATEGORIES (apply ALL that match this scene):
+1. MOOD INVERSION: If stormy/dramatic → "calm, peaceful, sunny, clear sky". If serene → "chaos, fire, destruction".
+2. ERA CONTAMINATION: If historical/period → "modern buildings, contemporary clothing, cars, power lines". If futuristic → "medieval, rustic, old-fashioned".
+3. SUBJECT CORRUPTION: If solitary figure → "crowd, extra people, duplicate figures". If group → "empty, deserted".
+4. COLOUR DRIFT: If warm palette (copper/gold/amber/orange) → "cool blue tones, grey monotone, green cast". If cool → "warm orange cast, sepia".
+5. ATMOSPHERE COLLAPSE: If dramatic/moody → "flat lighting, overexposed, mundane composition". If bright/cheerful → "dark, gloomy, ominous".
+6. SCALE DISTORTION: If grand/epic → "miniature, claustrophobic, tight crop". If intimate → "aerial view, wide establishing shot".
+7. MEDIUM MISMATCH: If photorealistic → "cartoon, anime, sketch, illustration". If artistic → "photographic, stock photo".
+
+NEGATIVE FORMAT: 3 generic quality terms (blurry, watermark, low quality) + minimum 4 scene-specific terms from the failure-mode analysis above.
+Total: 8–12 terms. Never duplicate a term from the positive prompt.
+
+OUTPUT REQUIREMENTS:
+- 3–4 sentences of flowing photorealistic prose
+- Minimum ${idealMin} characters, sweet spot ${idealMin}–${idealMax}
+- No weight syntax, no CLIP tokens, no parameter flags${platformNote ? `\n- ${platformNote}` : ''}
 
 Return ONLY valid JSON:
 {
-  "optimised": "your rewritten prompt",
-  "negative": "negative prompt",
-  "changes": ["TASK A: 9/9 anchors", "TASK B: added X and Y", "TASK C: composition added"],
-  "charCount": 400,
-  "tokenEstimate": 80
+  "optimised": "your rewritten prompt — all scene anchors present, 2 new textures, composition close at the end",
+  "negative": "scene-specific negative prompt",
+  "changes": ["TASK A: all anchors preserved", "TASK B: added [texture 1] and [texture 2]", "TASK C: composition close added", ...],
+  "charCount": 350,
+  "tokenEstimate": 75
 }`;
   return {
     systemPrompt,

@@ -216,7 +216,7 @@ export interface PromptBuilderProps {
   /** Called on every "Describe Your Image" textarea change */
   onDescribeTextChange?: (text: string) => void;
   /** Called when "Generate Prompt" clicked — fires Call 2 in parallel */
-  onDescribeGenerate?: (sentence: string) => void;
+  onDescribeGenerate?: (sentence: string, providerId?: string | null) => void;
   /** Called when user clicks Clear — resets AI state */
   onDescribeClear?: () => void;
   /** Whether the current text has drifted from last generation */

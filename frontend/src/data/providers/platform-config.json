@@ -1089,7 +1089,7 @@
     "flux": {
       "promptStyle": "keywords",
       "separator": ", ",
-      "negativeSupport": "separate",
+      "negativeSupport": "none",
       "negativeSyntax": null,
       "categoryOrder": [
         "subject",
@@ -1166,6 +1166,8 @@
         "environment",
         "atmosphere",
         "composition",
+        "camera",
+        "materials",
         "fidelity"
       ],
       "wrapNegativeInPrompt": false,
@@ -1217,7 +1219,12 @@
         "platform-testing"
       ],
       "shorthandLevel": "FULL",
-      "compressionNotes": "Lightweight consumer tool"
+      "compressionNotes": "Lightweight consumer tool",
+      "qualitySuffix": [
+        "sharp focus",
+        "8K",
+        "intricate textures"
+      ]
     },
     "freepik": {
       "maxChars": 500,
@@ -1361,7 +1368,7 @@
     "ideogram": {
       "promptStyle": "natural",
       "separator": ", ",
-      "negativeSupport": "inline",
+      "negativeSupport": "separate",
       "negativeSyntax": "without {negative}",
       "categoryOrder": [
         "subject",
@@ -1567,8 +1574,8 @@
       "shorthandLevel": "MEDIUM",
       "architecture": "proprietary",
       "compressionNotes": "Video platform. 2500-char limit. Shot 1:/Shot 2: multi-shot. Separate negative field.",
-      "idealMin": 80,
-      "idealMax": 500,
+      "idealMin": 150,
+      "idealMax": 350,
       "idealWords": 70,
       "maxChars": 2500
     },
@@ -1775,8 +1782,8 @@
       "shorthandLevel": "MEDIUM",
       "architecture": "proprietary",
       "compressionNotes": "Video platform (Dream Machine). 3000-5000 char API limit. No negatives. @style keyword.",
-      "idealMin": 80,
-      "idealMax": 600,
+      "idealMin": 150,
+      "idealMax": 350,
       "idealWords": 80,
       "maxChars": 5000
     },
@@ -2390,8 +2397,8 @@
       "shorthandLevel": "MEDIUM",
       "architecture": "proprietary",
       "compressionNotes": "Design-first platform with SVG vector output. Separate negative field.",
-      "idealMin": 50,
-      "idealMax": 800,
+      "idealMin": 200,
+      "idealMax": 400,
       "idealWords": 80,
       "maxChars": 1500
     },

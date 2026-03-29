@@ -28,13 +28,27 @@
  * 'sd-clip-parenthetical'  — Stable Diffusion CLIP with (term:weight) syntax
  * 'sd-clip-double-colon'   — SD CLIP with term::weight syntax (Leonardo family)
  * 'midjourney'             — Midjourney dedicated (:: prose + -- parameters)
- * 'clean-natural-language'  — Plain NL, no weights, no negatives
+ * 'clean-natural-language'  — Plain NL, no weights, no negatives (T4 ONLY — T3 moved to dedicated builders)
  * 'dalle-api'              — DALL-E API family (NL + structured API params)
  * 'flux-architecture'      — T5-XXL encoder, prose-only, no weights
  * 'video-cinematic'        — Video-first platforms (Runway, Luma, Kling)
  * 'novelai'                — NovelAI dedicated ({{{term}}} triple-brace syntax)
  * 'ideogram'               — Ideogram dedicated (text-in-image, quote syntax)
  * 'recraft'                — Recraft dedicated (SVG, style taxonomy)
+ * 'nl-bing'                — Bing Image Creator (DALL-E 3, GPT rewrite)
+ * 'nl-google-imagen'       — Google Imagen (Expressive Chips)
+ * 'nl-imagine-meta'        — Meta Imagine (Emu model)
+ * 'nl-canva'               — Canva (Leonardo Phoenix)
+ * 'nl-adobe-firefly'       — Adobe Firefly (design-first, UI controls)
+ * 'nl-simplified'          — Simplified (14+ model aggregator)
+ * 'nl-visme'               — Visme (Dreamscape API)
+ * 'nl-vistacreate'         — VistaCreate (Bria.ai)
+ * 'nl-123rf'               — 123RF (stock photography)
+ * 'nl-myedit'              — MyEdit (Nano Banana Pro)
+ * 'nl-artbreeder'          — Artbreeder (hybrid)
+ * 'nl-pixlr'               — Pixlr (3 generation modes)
+ * 'nl-deepai'              — DeepAI (REST API, SD-based)
+ * 'nl-playground'          — Playground (PGv3 LLM encoder)
  */
 export type PlatformGroupId =
   | 'sd-clip-parenthetical'
@@ -46,7 +60,44 @@ export type PlatformGroupId =
   | 'video-cinematic'
   | 'novelai'
   | 'ideogram'
-  | 'recraft';
+  | 'recraft'
+  // ── T3 dedicated NL builders (v6.1) ────────────────────────────────
+  | 'nl-bing'
+  | 'nl-google-imagen'
+  | 'nl-imagine-meta'
+  | 'nl-canva'
+  | 'nl-adobe-firefly'
+  | 'nl-simplified'
+  | 'nl-visme'
+  | 'nl-vistacreate'
+  | 'nl-123rf'
+  | 'nl-myedit'
+  | 'nl-artbreeder'
+  | 'nl-pixlr'
+  | 'nl-deepai'
+  | 'nl-playground'
+  // ── T4 dedicated NL builders (v6.2) ────────────────────────────────
+  | 'nl-jasper-art'
+  | 'nl-craiyon'
+  | 'nl-hotpot'
+  | 'nl-picsart'
+  | 'nl-picwish'
+  | 'nl-photoleap'
+  | 'nl-microsoft-designer'
+  | 'nl-artguru'
+  | 'nl-artistly'
+  | 'nl-clipdrop'
+  | 'nl-bluewillow'
+  // ── SD CLIP dedicated builders (v6.3) ──────────────────────────────
+  | 'stability-dedicated'
+  | 'dreamlike-dedicated'
+  | 'dreamstudio-dedicated'
+  | 'fotor-dedicated'
+  | 'lexica-dedicated'
+  // ── Video dedicated builders (v6.3) ────────────────────────────────
+  | 'runway-dedicated'
+  | 'luma-ai-dedicated'
+  | 'kling-dedicated';
 
 /**
  * Maps every provider ID to its optimisation group.
@@ -55,13 +106,12 @@ export type PlatformGroupId =
  * 40 platforms across 10 groups.
  */
 export const PLATFORM_GROUP_MAP: Record<string, PlatformGroupId> = {
-  // ── SD CLIP Parenthetical: (term:weight) syntax, separate negatives ──
-  // 5 platforms
-  'stability':     'sd-clip-parenthetical',
-  'dreamlike':     'sd-clip-parenthetical',
-  'dreamstudio':   'sd-clip-parenthetical',
-  'fotor':         'sd-clip-parenthetical',        // Exposes full SD weight syntax
-  'lexica':        'sd-clip-parenthetical',
+  // ── SD CLIP Dedicated Builders (v6.3 — per-platform) ──────────────
+  'stability':     'stability-dedicated',
+  'dreamlike':     'dreamlike-dedicated',
+  'dreamstudio':   'dreamstudio-dedicated',
+  'fotor':         'fotor-dedicated',
+  'lexica':        'lexica-dedicated',
 
   // ── SD CLIP Double-Colon: term::weight syntax, separate negatives ────
   // 1 platform
@@ -71,33 +121,36 @@ export const PLATFORM_GROUP_MAP: Record<string, PlatformGroupId> = {
   // 1 platform
   'midjourney':    'midjourney',
 
-  // ── Clean Natural Language: no weights, prose-based ──────────────────
-  // 25 platforms (tier 3 + tier 4 — all use NL prose, differ in length)
-  'bing':              'clean-natural-language',
-  'google-imagen':     'clean-natural-language',
-  'imagine-meta':      'clean-natural-language',
-  'canva':             'clean-natural-language',
-  'adobe-firefly':     'clean-natural-language',
-  'jasper-art':        'clean-natural-language',
-  'craiyon':           'clean-natural-language',
-  'hotpot':            'clean-natural-language',
-  'simplified':        'clean-natural-language',
-  'picsart':           'clean-natural-language',
-  'visme':             'clean-natural-language',
-  'vistacreate':       'clean-natural-language',
-  '123rf':             'clean-natural-language',
-  'myedit':            'clean-natural-language',
-  'picwish':           'clean-natural-language',
-  'artbreeder':        'clean-natural-language',
-  'photoleap':         'clean-natural-language',
-  'pixlr':             'clean-natural-language',
-  'deepai':            'clean-natural-language',
-  'microsoft-designer': 'clean-natural-language',
-  'artguru':           'clean-natural-language',     // No exposed CLIP syntax
-  'artistly':          'clean-natural-language',     // Keyword auto-expander
-  'clipdrop':          'clean-natural-language',     // Plain text only
-  'playground':        'clean-natural-language',     // PGv3 is NL/LLM-integrated
-  'bluewillow':        'clean-natural-language',     // No MJ syntax support
+  // ── T3 Dedicated NL Builders (per-platform system prompts) ────────────
+  // v6.1: Each T3 NL platform gets its own builder with platform-aware
+  // length targets and strategy (refine/balance/enrich).
+  'bing':              'nl-bing',
+  'google-imagen':     'nl-google-imagen',
+  'imagine-meta':      'nl-imagine-meta',
+  'canva':             'nl-canva',
+  'adobe-firefly':     'nl-adobe-firefly',
+  'simplified':        'nl-simplified',
+  'visme':             'nl-visme',
+  'vistacreate':       'nl-vistacreate',
+  '123rf':             'nl-123rf',
+  'myedit':            'nl-myedit',
+  'artbreeder':        'nl-artbreeder',
+  'pixlr':             'nl-pixlr',
+  'deepai':            'nl-deepai',
+  'playground':        'nl-playground',
+
+  // ── T4 Dedicated NL Builders (v6.2) ───────────────────────────────
+  'jasper-art':        'nl-jasper-art',
+  'craiyon':           'nl-craiyon',
+  'hotpot':            'nl-hotpot',
+  'picsart':           'nl-picsart',
+  'picwish':           'nl-picwish',
+  'photoleap':         'nl-photoleap',
+  'microsoft-designer': 'nl-microsoft-designer',
+  'artguru':           'nl-artguru',
+  'artistly':          'nl-artistly',
+  'clipdrop':          'nl-clipdrop',
+  'bluewillow':        'nl-bluewillow',
 
   // ── DALL-E API: NL + structured params (quality, style) ──────────────
   // 1 platform
@@ -107,11 +160,10 @@ export const PLATFORM_GROUP_MAP: Record<string, PlatformGroupId> = {
   // 1 platform
   'flux':              'flux-architecture',
 
-  // ── Video Cinematic: motion-first, temporal syntax ───────────────────
-  // 3 platforms
-  'runway':            'video-cinematic',
-  'luma-ai':           'video-cinematic',
-  'kling':             'video-cinematic',
+  // ── Video Dedicated Builders (v6.3 — per-platform) ────────────────
+  'runway':            'runway-dedicated',
+  'luma-ai':           'luma-ai-dedicated',
+  'kling':             'kling-dedicated',
 
   // ── Dedicated Templates ──────────────────────────────────────────────
   // 3 platforms

@@ -88,18 +88,26 @@ const RequestSchema = z.object({
 
 const ResponseSchema = z
   .object({
-    /** The optimised prompt text */
-    optimised: z.string().max(5000),
+    /** The optimised prompt text — accepts both UK and US spelling */
+    optimised: z.string().max(5000).optional(),
+    optimized: z.string().max(5000).optional(),
     /** The optimised negative prompt (if applicable) */
-    negative: z.string().max(1000).optional(),
-    /** Brief descriptions of changes made (for transparency panel) */
-    changes: z.array(z.string().max(200)).max(20),
-    /** Character count of optimised prompt */
-    charCount: z.number().int(),
-    /** Estimated token count */
-    tokenEstimate: z.number().int(),
+    negative: z.string().max(5000).optional(),
+    /** Brief descriptions of changes made — no length limits (display-only metadata) */
+    changes: z.array(z.string()).optional().default([]),
+    /** Character count — optional metadata, overridden server-side anyway */
+    charCount: z.coerce.number().optional().default(0),
+    /** Estimated token count — optional metadata, never consumed */
+    tokenEstimate: z.coerce.number().optional().default(0),
   })
-  .strip();
+  .passthrough()
+  .transform((data) => ({
+    optimised: data.optimised || data.optimized || '',
+    negative: data.negative,
+    changes: data.changes ?? [],
+    charCount: Math.round(data.charCount ?? 0),
+    tokenEstimate: Math.round(data.tokenEstimate ?? 0),
+  }));
 
 export type OptimiseResult = z.infer<typeof ResponseSchema>;
 
@@ -184,7 +192,8 @@ export async function POST(req: NextRequest): Promise<Response> {
   // is the better primary input — the assembled T1 prompt has already
   // lost anchors through compression. Flipping prevents GPT's
   // "optimise = compress" instinct.
-  const proseGroups = new Set([
+  // Legacy group names that are prose-based (kept for safety)
+  const legacyProseGroups = new Set([
     "clean-natural-language",
     "recraft",
     "ideogram",
@@ -192,7 +201,20 @@ export async function POST(req: NextRequest): Promise<Response> {
     "flux-architecture",
     "video-cinematic",
   ]);
-  const isProseGroup = proseGroups.has(providerGroup ?? "");
+  // All nl-* dedicated builders are prose. All *-dedicated video builders are prose.
+  // SD CLIP builders (stability-dedicated, etc.) are NOT prose — they use keyword syntax.
+  const sdClipDedicated = new Set([
+    "stability-dedicated",
+    "dreamlike-dedicated",
+    "dreamstudio-dedicated",
+    "fotor-dedicated",
+    "lexica-dedicated",
+  ]);
+  const isProseGroup =
+    legacyProseGroups.has(providerGroup ?? "") ||
+    (providerGroup?.startsWith("nl-") ?? false) ||
+    (providerGroup?.endsWith("-dedicated") && !sdClipDedicated.has(providerGroup ?? "")) ||
+    false;
 
   // ── Build user message ──────────────────────────────────────────────
   // Prose groups: flip the framing — original sentence is the PRIMARY input
@@ -281,6 +303,8 @@ export async function POST(req: NextRequest): Promise<Response> {
       console.error(
         "[optimise-prompt] Schema validation failed:",
         validated.error.issues,
+        "\nGPT returned:",
+        JSON.stringify(jsonParsed).slice(0, 500),
       );
       return NextResponse.json(
         {
@@ -294,6 +318,18 @@ export async function POST(req: NextRequest): Promise<Response> {
 
     // ── Compliance gate: group-specific, then generic syntax enforcement ──
     const result = { ...validated.data };
+
+    // Safety: reject if optimised text is empty after normalisation
+    if (!result.optimised || result.optimised.trim().length === 0) {
+      console.error("[optimise-prompt] Empty optimised text after normalisation. GPT returned:", JSON.stringify(jsonParsed).slice(0, 500));
+      return NextResponse.json(
+        {
+          error: "EMPTY_RESULT",
+          message: "Engine returned an empty prompt. Please try again.",
+        },
+        { status: 502 },
+      );
+    }
 
     // Step 1: Group-specific compliance (if the builder declared one)
     if (groupCompliance) {
