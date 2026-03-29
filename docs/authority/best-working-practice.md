@@ -1,6 +1,6 @@
 # Best Working Practice
 
-**Last updated:** 25 March 2026
+**Last updated:** 29 March 2026
 
 ---
 
@@ -690,14 +690,16 @@ When you ask "does anything need updating in the docs?" or "tell me which lines 
 
 **AI Intelligence Engine docs:**
 
-- `docs/authority/ai-disguise.md` v4.0.0 ← Prompt Lab AI engine, 30-rule system prompt, P1–P12 post-processing, harmony scoring
-- `docs/authority/harmonizing-claude-openai.md` v2.0.0 ← Dual-assessor harmony engineering playbook, 7 proven patterns
-- `docs/authority/prompt-lab-v4-flow.md` v1.3.0 ← Check→Assess→Decide→Generate four-phase flow
-- `docs/authority/prompt-lab.md` v3.1.0 ← Studio section routes, Prompt Lab architecture
+- `docs/authority/ai-disguise.md` v5.0.0 ← Prompt Lab AI engine, v4.5 system prompt, post-processing pipelines, negative prompt rendering, harmony scoring
+- `docs/authority/harmonizing-claude-openai.md` v3.0.0 ← Three-assessor harmony engineering playbook, 7 proven patterns, Call 2 v4.5 fix programme, Call 3 builder architecture
+- `docs/authority/prompt-lab-v4-flow.md` v2.0.0 ← Check→Assess→Decide→Generate four-phase flow, Call 2 v4.5 status
+- `docs/authority/prompt-lab.md` v4.0.0 ← Studio section routes, Prompt Lab architecture, negative prompt window, race condition guards
 - `docs/authority/unified-prompt-brain.md` ← One Brain assembly architecture
-- `docs/authority/prompt-optimizer.md` ← Client-side 4-phase optimizer
+- `docs/authority/prompt-optimizer.md` v6.0.0 ← Client-side 4-phase optimizer + Call 3 server-side (43 independent builders, compliance gates, server-side charCount)
 - `docs/authority/prompt-intelligence.md` ← Intelligence layer, 12 categories, DNA scoring
 - `docs/authority/human-sentence-conversion.md` ← Call 1 spec
+- `docs/authority/trend-analysis.md` v6.0.0 ← Platform scoring data, dual-assessor trend tracking
+- `docs/authority/harmony-anti-regression.md` ← Call 3 harmony pass anti-regression rules
 
 **Data feed and gateway docs:**
 
@@ -711,7 +713,9 @@ When you ask "does anything need updating in the docs?" or "tell me which lines 
 **Platform and provider docs:**
 
 - `docs/authority/prompt-builder-page.md` ← Prompt builder page architecture
-- `docs/authority/ai_providers_affiliate.md` ← AI providers affiliate and referral rules
+- `docs/authority/ai_providers_affiliate.md` v2.0.0 ← AI providers affiliate and referral rules, negative support audit
+- `src/data/providers/platform-config.json` + `platform-config.ts` ← **Platform SSOT** (40 platforms — limits, tiers, negativeSupport, idealMin/Max, architecture)
+- `docs/authority/Prompt_Engineering_Specs_for_44_AI_Image_Platforms.md` ← Platform tier classification and routing logic
 
 **Infrastructure docs:**
 
@@ -750,7 +754,7 @@ A doc update is required whenever a change affects any of:
 - Deployment/runtime policy (Vercel/Fly env vars, secrets, headers, cache behaviour)
 - Provider integrations (rate limits, symbol formats, call limits, quotas, budget guard logic)
 - Testing invariants (new lock-in tests, renamed exports, type shape expectations)
-- **Harmony post-processing** (any change to P1–P12 functions, lookup set sizes, rule ceiling, or system prompt rules requires updating `ai-disguise.md` §7 and running the 115-test lockdown suite)
+- **Harmony post-processing** (any change to Call 2 post-processing functions in `src/lib/harmony-post-processing.ts`, Call 3 post-processing in `src/lib/optimise-prompts/harmony-post-processing.ts`, compliance functions in `harmony-compliance.ts`, lookup set sizes, rule ceiling, or system prompt rules requires updating `ai-disguise.md` §7 and running the harmony test suite)
 - Prompt builder category options or platform format rules changed
 - Voting system mechanics or activation requirements changed
 
@@ -758,25 +762,27 @@ A doc update is required whenever a change affects any of:
 
 ## Harmony Engineering Workflow (AI Tier Generation)
 
-**Purpose:** The Prompt Lab's AI tier generation system (Call 2) uses GPT-5.4-mini at runtime, with the system prompt written by Claude at development time. This creates a unique engineering challenge that requires specific workflows.
+**Purpose:** The Prompt Lab's AI tier generation system (Call 2) and platform-specific optimisation (Call 3) use GPT-5.4-mini at runtime, with system prompts written by Claude at development time. This creates a unique engineering challenge that requires specific workflows.
 
-**Authority:** `ai-disguise.md` v4.0.0 (§7 post-processing, §8 harmony engineering), `harmonizing-claude-openai.md` v2.0.0 (full methodology)
+**Authority:** `ai-disguise.md` v5.0.0 (§7 post-processing, §8 harmony engineering), `harmonizing-claude-openai.md` v3.0.0 (full methodology, three-assessor calibration, Call 2 v4.5 fix programme, Call 3 builder architecture)
 
 ### Read before modifying
 
 Before touching any post-processing code, read these files first:
 
-| File                                                | Lines | What it contains                                                                        |
-| --------------------------------------------------- | ----- | --------------------------------------------------------------------------------------- |
-| `src/lib/harmony-post-processing.ts`                | 342   | P1–P12 functions (7 active). This is the extracted module — route.ts imports from here. |
-| `src/lib/harmony-compliance.ts`                     | 486   | Compliance gate (P4/P5/P6/P9), rule ceiling tracking (`RULE_CEILING = 30`).             |
-| `src/app/api/generate-tier-prompts/route.ts`        | 523   | Call 2 route. System prompt lives in `buildSystemPrompt()` (lines 115–262).             |
-| `src/lib/__tests__/harmony-post-processing.test.ts` | 601   | 72-test lockdown suite. Real GPT fixtures.                                              |
-| `src/lib/__tests__/harmony-compliance.test.ts`      | 453   | 43-test compliance suite. Drift detection assertions.                                   |
+| File                                                  | Lines   | What it contains                                                                           |
+| ----------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------ |
+| `src/lib/harmony-post-processing.ts`                  | **272** | Call 2 post-processing (5 active functions). Imported by `generate-tier-prompts/route.ts`. |
+| `src/lib/optimise-prompts/harmony-post-processing.ts` | **439** | Call 3 post-processing (7 active functions). Imported via `resolve-group-prompt.ts`.       |
+| `src/lib/harmony-compliance.ts`                       | **833** | Compliance gate + rule ceiling tracking (`RULE_CEILING = 30`, `CURRENT_RULE_COUNT = 30`).  |
+| `src/app/api/generate-tier-prompts/route.ts`          | **650** | Call 2 route. v4.5 system prompt. Temperature 0.5, max_completion 2000.                    |
+| `src/app/api/optimise-prompt/route.ts`                | **406** | Call 3 route. 43 independent builders. Temperature 0.4 prose / 0.2 CLIP.                   |
 
-### 115-test lockdown suite
+**Note:** Harmony test files (`harmony-post-processing.test.ts`, `harmony-compliance.test.ts`) were documented at 601+453 lines — not present in current src.zip (may be excluded or relocated).
 
-All 115 harmony tests must pass before shipping any changes to the post-processing pipeline or system prompt rules. Run:
+### Harmony test suite
+
+All harmony tests must pass before shipping any changes to the post-processing pipeline or system prompt rules. Run:
 
 ```powershell
 # From: C:\Users\Proma\Projects\promagen\frontend
@@ -787,19 +793,47 @@ Any red test = post-processing drift. **Fix the code, not the test.** The only e
 
 ### Extraction pattern
 
-All P1–P12 functions live in `src/lib/harmony-post-processing.ts`. The route file (`route.ts`) imports `postProcessTiers()` from this module. **Never move functions back into route.ts** — the extraction enables testability.
+**Call 2:** 5 active functions in `src/lib/harmony-post-processing.ts` (272 lines): `deduplicateMjParams`, `stripTrailingPunctuation`, `fixT4SelfCorrection`, `fixT4MetaOpeners`, `mergeT4ShortSentences`. T1 also gets `enforceWeightCap` from compliance. P11 and P12 were removed from Call 2 on 28 Mar 2026 and now exist only in Call 3.
+
+**Call 3:** 7 active functions in `src/lib/optimise-prompts/harmony-post-processing.ts` (439 lines): all 5 from Call 2 plus `fixT3MetaOpeners` (P11) and `stripClipQualitativeAdjectives` (P12).
+
+**Never move functions back into route files** — the extraction enables testability. **No Call 3 builder may import from another builder** — complete isolation prevents cross-platform regressions.
 
 ### Rule ceiling
 
-The system prompt has 30 rules. The ceiling is enforced by `RULE_CEILING` in `harmony-compliance.ts` with a test assertion. Adding a new rule requires either:
+The system prompt has 30 rules. The ceiling is enforced by `RULE_CEILING` in `harmony-compliance.ts` with a test assertion (`RULE_CEILING = 30`, `CURRENT_RULE_COUNT = 30`). Adding a new rule requires either:
 
 - Replacing an existing rule
 - Building a post-processing code fix instead (preferred for mechanical artefacts)
 - Explicit Martin approval to raise the ceiling
 
-### Dual-assessor methodology
+### Three-assessor methodology (v3.0.0)
 
-Any system prompt change must be tested through both Claude and ChatGPT independently scoring the output. This is not optional — single-assessor testing is an anti-pattern. See `harmonizing-claude-openai.md` v2.0.0 §2 for the full cycle.
+For system-wide calibration (e.g., Call 2 v4.0→v4.5 fix programme), use three independent assessors: **Claude, ChatGPT, and Grok**. The triangulated median is the standard. This revealed a critical calibration finding: **Claude scores T3 approximately 5–6 points too high and T4 approximately 3–5 points too high** compared to the ChatGPT/Grok median. Claude under-penalises verb substitutions and anchor drops.
+
+For individual Call 3 builder harmony passes, **dual assessment (Claude + ChatGPT) is sufficient** — the harmony pass methodology is: send platform facts + blank canvas to ChatGPT → receive system prompt → test against Lighthouse Keeper → score → write builder.
+
+Single-assessor testing is an anti-pattern. See `harmonizing-claude-openai.md` v3.0.0 §2 for the full cycle.
+
+### Playground-first workflow (v3.0.0)
+
+System prompts must be validated in **OpenAI Playground** (GPT-5.4-mini, `json_object` response format, reasoning effort: medium) targeting **95+** before being coded into builder files. Skipping this step (as happened with Wave 4/Canva) caused long debugging cycles; following it (Waves 5–7) produced first-time 95/100 results. The Playground acts as an isolated test bed — no providerContext token overhead, no API route plumbing, just the system prompt and test input.
+
+### Verify before modifying (v3.0.0)
+
+All code changes must be traced to actual file contents. **Never assume from memory or prior session context.** When `src.zip` is uploaded, it is the ground truth — always extract and use those files, not cached copies. This principle was established after a session where assumed file state led to incorrect patches.
+
+### Deterministic fixes belong in code, not prompts (v3.0.0)
+
+If a bug can be expressed as deterministic logic, it **must** be a compliance gate or post-processing function — not a prompt rule. Examples: T1 syntax enforcement (`enforceT1Syntax`), negative contradiction detection (`enforceNegativeContradiction`), weight cap (`enforceWeightCap`). This is the highest-reliability approach and does not consume GPT attention budget.
+
+### Config entries cause silent misrouting (v3.0.0)
+
+Missing or incorrect config entries in `platform-config.json` cause high-impact, non-obvious failures. The Recraft bug (score 72→95 after adding one JSON entry) and the proseGroups set bug (28/40 platforms receiving wrong input framing and wrong temperature) both demonstrate this. When adding platforms or changing tiers, audit all config paths.
+
+### Claude must flag architectural problems proactively (v3.0.0)
+
+If Claude notices an architectural problem, inefficiency, or consolidation opportunity, it must flag it immediately — no code, just the observation. Don't wait to be asked. The three-file config structure (`platform-formats.json` + `prompt-limits.json` + `compression/platform-support.json`) was a consolidation candidate that should have been flagged proactively before it caused data bugs.
 
 ---
 
@@ -1314,6 +1348,7 @@ OUTPUT FORMAT:
 
 ## Changelog
 
+- **29 Mar 2026:** **HARMONY v3 + FIVE NEW PRINCIPLES + AUTHORITY DOC VERSION BUMPS.** Updated authority docs list: ai-disguise v4.0.0→v5.0.0, harmonizing v2.0.0→v3.0.0, prompt-lab-v4-flow v1.3.0→v2.0.0, prompt-lab v3.1.0→v4.0.0, prompt-optimizer added v6.0.0 (now covers Call 3 architecture). Added trend-analysis v6.0.0, harmony-anti-regression, platform-config SSOT, ai_providers_affiliate v2.0.0, Prompt Engineering Specs to authority list. Rewrote Harmony Engineering Workflow section: file table updated (Call 2 342→272 lines with 5 functions, Call 3 439 lines with 7 functions added, harmony-compliance 486→833 lines, generate-tier-prompts 523→650, optimise-prompt 406 lines added), extraction pattern split into Call 2 and Call 3, dual-assessor→three-assessor methodology with calibration finding (Claude +5-6pts T3, +3-5pts T4 vs median). Added 5 new subsections: Playground-first workflow (validate in OpenAI Playground targeting 95+ before coding), Verify before modifying (trace all changes to actual file contents, src.zip is ground truth), Deterministic fixes in code not prompts (compliance gates over prompt rules), Config entries cause silent misrouting (Recraft bug, proseGroups bug), Claude must flag architectural problems proactively (three-file config lesson). Updated doc-update trigger for harmony post-processing to reference both Call 2 and Call 3 files. Cross-ref: ai-disguise.md v5.0.0, harmonizing-claude-openai.md v3.0.0, prompt-optimizer.md v6.0.0, prompt-lab.md v4.0.0, prompt-lab-v4-flow.md v2.0.0.
 - **25 Mar 2026:** Added "Harmony Engineering Workflow" section: read-before-modifying file table, 115-test lockdown suite command, extraction pattern rule, rule ceiling (30) enforcement, dual-assessor mandate. Updated authority docs list: restructured into 5 categories (Core, AI Intelligence Engine, Data feed/gateway, Platform/provider, Infrastructure), added 13 new docs (ai-disguise v4.0.0, harmonizing v2.0.0, prompt-lab-v4-flow v1.3.0, architecture, test.md, prompt-lab, unified-prompt-brain, prompt-optimizer, prompt-intelligence, human-sentence-conversion, api-calming-efficiency, clerk-auth, stripe). Removed stale entries (TODO-api-integration, frontend companion docs). Updated code-standard ref from v3.0 to v4.0. Updated "definition of needs a doc update" to include harmony post-processing changes as trigger. Cross-ref: ai-disguise.md v4.0.0, harmonizing-claude-openai.md v2.0.0, test.md v1.0.0.
 - **19 Mar 2026:** Added 3 new subsections under UI Consistency + UX Patterns. (1) Blur-to-sharp image reveal animation: 15s CSS filter cycle (blur(18px)→blur(0) over 10s, hold 3s, reset), paired with fuchsia progress bar, `prefers-reduced-motion` disables filter entirely. Reference: ImageGenPreviewPanel. (2) Single-card crossfade rotation: 300ms fade-out/fade-in, `key={activeIdx}` for animation reset, navigation dots. Replaces auto-scroll when cards need full panel height for visual content. Reference: ImageGenPreviewPanel + ScenesPreviewPanel. (3) Pro page no-grey-text rule: stricter than site-wide banned colours — `/pro-promagen` prohibits ALL grey text including `text-slate-400` and `text-white/30`. All text must be bright (white, brand colours, category colours). Cross-refs: paid_tier.md §5.10 v6.0.0.
 - **18 Mar 2026:** Major update — 7 new subsections under UI Consistency + UX Patterns. (1) Tooltip standards: 400ms close delay, solid `rgba(15,23,42,0.97)` bg, sign-in as plain `<a>` not `SignInButton mode="modal"`, no question mark icons. (2) Cursor-pointer on all interactive elements. (3) SSOT colour constants: `prompt-colours.ts` as sole source of truth for 13 category colours, 6 consumers listed. (4) Debounced intent pattern: 150ms hover panel switching replacing failed intent triangle, full state table. (5) Auto-scroll animation pattern: 17s cycle spec, ResizeObserver distance, CSS custom property. (6) Shared hook state sync: synthetic StorageEvent for same-tab cross-hook sync. (7) "Show the tool, not the output" principle for feature showcases. Updated minimum text size from 9px to 10px floor. Cross-refs: code-standard.md §6.0.4/6.0.5/6.11-6.14, paid_tier.md §5.14/5.16.

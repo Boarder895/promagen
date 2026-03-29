@@ -162,7 +162,7 @@ describe('buildPlatformTermQualityLookup', () => {
       },
       {
         tier: '1',
-        platformId: 'nightcafe',
+        platformId: 'stability',
         terms: { beta: 40 },
         confidence: 0.3,
       },
@@ -176,9 +176,9 @@ describe('buildPlatformTermQualityLookup', () => {
 
     const lookup = buildPlatformTermQualityLookup(data)!;
     expect(lookup.tiers['1']!['leonardo']!.get('alpha')).toBe(70);
-    expect(lookup.tiers['1']!['nightcafe']!.get('beta')).toBe(40);
+    expect(lookup.tiers['1']!['stability']!.get('beta')).toBe(40);
     expect(lookup.tiers['2']!['midjourney']!.get('gamma')).toBe(90);
-    expect(lookup.confidences['1']!['nightcafe']).toBe(0.3);
+    expect(lookup.confidences['1']!['stability']).toBe(0.3);
   });
 });
 
@@ -345,7 +345,7 @@ describe('lookupPlatformTermQuality', () => {
         },
         {
           tier: '1',
-          platformId: 'nightcafe',
+          platformId: 'stability',
           terms: { 'neon glow': 30 },
           confidence: 1.0,
         },
@@ -356,7 +356,7 @@ describe('lookupPlatformTermQuality', () => {
         lookupPlatformTermQuality('neon glow', 'leonardo', 1, lookup, 50),
       ).toBe(90);
       expect(
-        lookupPlatformTermQuality('neon glow', 'nightcafe', 1, lookup, 50),
+        lookupPlatformTermQuality('neon glow', 'stability', 1, lookup, 50),
       ).toBe(30);
     });
 

@@ -977,13 +977,11 @@ const SAVED_PLATFORM_COLORS: Readonly<Record<string, string>> = {
   'microsoft-designer': '#0078D4',
   novelai: '#A855F7',
   canva: '#00C4CC',
-  nightcafe: '#D946EF',
   picsart: '#FF3366',
   craiyon: '#FBBF24',
   bluewillow: '#3B82F6',
   dreamstudio: '#A855F7',
   runway: '#EF4444',
-  freepik: '#0EA5E9',
   artbreeder: '#10B981',
   deepai: '#6366F1',
 };

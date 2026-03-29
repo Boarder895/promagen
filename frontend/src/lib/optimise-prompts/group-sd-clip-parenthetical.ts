@@ -6,7 +6,7 @@
 // parenthetical weight syntax: (term:1.3)
 //
 // Platforms: stability, artguru, artistly, clipdrop, dreamlike, dreamstudio,
-//            getimg, lexica, nightcafe, openart, playground, tensor-art
+//, lexica, playground
 //
 // Architecture knowledge baked in:
 //   - CLIP tokeniser processes in 77-token chunks

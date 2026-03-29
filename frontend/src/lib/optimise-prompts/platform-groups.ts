@@ -12,8 +12,8 @@
 //   - Platform-specific features (timestamps, LoRA, SVG output)
 //
 // v2.0.0 (26 Mar 2026): Deep research audit. 19 tier corrections applied.
-//   5 multi-engine aggregators removed (nightcafe, openart, tensor-art, getimg,
-//   freepik). 45→40 platforms. multi-engine group deleted. BlueWillow moved
+//   5 multi-engine aggregators removed (,
+//). 45→40 platforms. multi-engine group deleted. BlueWillow moved
 //   from generic to clean-natural-language. Fotor moved from NL to SD CLIP.
 //   artguru, artistly, clipdrop moved from SD CLIP to NL. playground moved
 //   from SD CLIP to NL.

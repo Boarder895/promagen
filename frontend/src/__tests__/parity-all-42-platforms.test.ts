@@ -529,7 +529,7 @@ describe('Regression: previously-fixed bugs', () => {
     expect((fmt.categoryOrder as string[]).length).toBeGreaterThanOrEqual(10);
   });
 
-  // getimg removed — multi-engine aggregator (v6.0.0 deep research audit)
+  // removed — multi-engine aggregator (v6.0.0 deep research audit)
 
   it('stability: sweetSpot ≥ 70 (was 50, truncating composition)', () => {
     expect(getPlatformFormat('stability').sweetSpot).toBeGreaterThanOrEqual(70);
@@ -586,7 +586,7 @@ describe('Regression: previously-fixed bugs', () => {
     }
   });
 
-  // v6.0.0: Updated after deep research audit. freepik removed (aggregator).
+  // v6.0.0: Updated after deep research audit. removed (aggregator).
   // artbreeder, pixlr, simplified moved to T3. remove-bg not a generation platform.
   it('T4 platforms have explicit configs (was fallback bug)', () => {
     const t4Platforms = [

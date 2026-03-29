@@ -1,17 +1,20 @@
 # Harmonizing Claude ↔ OpenAI — System Prompt Engineering Playbook
 
-**Version:** 2.0.0  
+**Version:** 3.0.0  
 **Created:** 23 March 2026  
-**Updated:** 25 March 2026  
+**Updated:** 29 March 2026  
 **Owner:** Promagen  
-**Status:** Active — proven methodology, applied to Call 2 (generic tiers) through 6 rounds + 3 stress tests. Ready to apply to Call 3 (platform-specific).  
-**Authority:** This document defines the repeatable methodology for engineering system prompts where Claude writes the instructions and GPT-5.4-mini executes them, with both Claude and ChatGPT independently scoring output quality.
+**Status:** Active — proven methodology, applied to Call 2 (v4.5 production-confirmed via three-assessor stress testing) and Call 3 (43 independent builder files, harmony pass in progress). Three-assessor scoring standard established (Claude, ChatGPT, Grok).  
+**Authority:** This document defines the repeatable methodology for engineering system prompts where Claude writes the instructions and GPT-5.4-mini executes them, with Claude, ChatGPT, and Grok independently scoring output quality.
 
 > **Cross-references:**
 >
-> - `ai-disguise.md` v4.0.0 — §6 (deployed system prompt SSoT reference), §7 (post-processing layer), §8 (harmony engineering summary)
-> - `prompt-lab.md` v3.1.0 — Prompt Lab architecture, component table
+> - `ai-disguise.md` v5.0.0 — §6 (deployed system prompt SSoT reference), §7 (post-processing layer), §8 (harmony engineering summary)
+> - `prompt-lab.md` v4.0.0 — Prompt Lab architecture, component table, negative prompt window
+> - `prompt-optimizer.md` v6.0.0 — Call 3 architecture (43 independent builders, compliance gates, server-side charCount)
+> - `prompt-lab-v4-flow.md` v2.0.0 — Call 2 v4.5 status, three-assessor methodology, GPT ceilings
 > - `human-sentence-conversion.md` v2.0.0 — Call 1 (parse-sentence) specification
+> - `platform-config.json` + `platform-config.ts` — Platform SSOT (40 platforms)
 > - `code-standard.md` — All code standards
 
 ---
@@ -22,21 +25,22 @@
 2. [The Harmony Model](#2-the-harmony-model)
 3. [Proven Patterns](#3-proven-patterns)
 4. [Anti-Patterns](#4-anti-patterns)
-5. [System Prompt Evolution — The 18 Rules](#5-system-prompt-evolution--the-18-rules)
+5. [System Prompt Evolution — The 30 Rules](#5-system-prompt-evolution--the-30-rules)
 6. [Post-Processing Layer](#6-post-processing-layer)
 7. [Scoring Methodology](#7-scoring-methodology)
 8. [Round-by-Round Journey](#8-round-by-round-journey)
-9. [Applying to Call 3 — Platform-Specific Optimisation](#9-applying-to-call-3--platform-specific-optimisation)
-10. [Decision Framework](#10-decision-framework)
-11. [Non-Regression Rules](#11-non-regression-rules)
+9. [Call 2 v4.0→v4.5 Fix Programme](#9-call-2-v40v45-fix-programme)
+10. [Call 3 — Platform-Specific Optimisation](#10-call-3--platform-specific-optimisation)
+11. [Decision Framework](#11-decision-framework)
+12. [Non-Regression Rules](#12-non-regression-rules)
 
 ---
 
 ## 1. Purpose
 
-Promagen uses a split-brain architecture where **Claude** (Anthropic) writes the system prompts and code, and **GPT-5.4-mini** (OpenAI) executes them at runtime to generate image prompts for 42 AI platforms. This creates a unique engineering challenge: the author of the instructions never sees them executed, and the executor never participated in designing them.
+Promagen uses a split-brain architecture where **Claude** (Anthropic) writes the system prompts and code, and **GPT-5.4-mini** (OpenAI) executes them at runtime to generate image prompts for 40 AI platforms. This creates a unique engineering challenge: the author of the instructions never sees them executed, and the executor never participated in designing them.
 
-This document captures the repeatable methodology that took Call 2's generic tier output from **62/100 to 96/100** across 6 rounds of iterative refinement + 3 stress tests (900-char complex inputs), with dual-assessor score convergence from a 20-point gap to a ≤1-point gap.
+This document captures the repeatable methodology that took Call 2's generic tier output from **62/100 to 96/100** across 6 rounds of iterative refinement + 3 stress tests (900-char complex inputs), with dual-assessor score convergence from a 20-point gap to a ≤1-point gap. The methodology was subsequently extended to a **three-assessor model** (Claude, ChatGPT, Grok) for the v4.0→v4.5 fix programme, and applied to Call 3 through 43 independent platform builder files.
 
 ### Why this doc exists
 
@@ -51,7 +55,7 @@ Without it, the next developer (or future Martin) would have to rediscover throu
 - What the 30 rules do and why each one exists
 - Why the post-processing pipeline was extracted to a separate testable module
 
-This doc is also the **playbook for Call 3** — the same methodology applied to 42 platform-specific system prompts.
+This doc is also the **playbook for Call 3** — the same methodology applied to 43 platform-specific system prompts (harmony pass in progress).
 
 ---
 
@@ -116,9 +120,11 @@ This doc is also the **playbook for Call 3** — the same methodology applied to
 - **ChatGPT is grading its own work** — catches things it knows it should have done better
 - **Score convergence** proves the output is objectively good, not just compliant with rules one assessor wrote
 
+**v3.0.0 upgrade — three-assessor model:** For the v4.0→v4.5 fix programme, **Grok** was added as a third independent assessor. Three human test scenes (station violinist, Victorian flower seller, sci-fi hangar mechanic) were scored by all three assessors. This revealed a critical calibration finding: **Claude scores T3 approximately 5–6 points too high and T4 approximately 3–5 points too high** compared to the ChatGPT/Grok median. Claude under-penalises verb substitutions and anchor drops. The triangulated median across three assessors is now the standard for calibration. Dual assessment (Claude + ChatGPT) remains sufficient for individual builder harmony passes; three-assessor is used for system-wide calibration.
+
 ### Key insight: ChatGPT doesn't know about post-processing
 
-ChatGPT grades raw GPT output. It doesn't know P1–P12 exist (7 post-processing functions in `harmony-post-processing.ts` + 4 compliance functions in `harmony-compliance.ts`). This means:
+ChatGPT grades raw GPT output. It doesn't know post-processing exists (5 functions in Call 2's `harmony-post-processing.ts` + compliance functions in `harmony-compliance.ts`; 7 functions in Call 3's separate `harmony-post-processing.ts`). This means:
 
 - ChatGPT's scores reflect the worst case the user could see (without safety nets)
 - Claude's scores reflect what the user actually sees (after safety nets)
@@ -195,9 +201,9 @@ Some GPT mechanical artefacts **cannot be eliminated via system prompt**. They a
 | T3 meta-commentary openers       | "BANNED PHRASES" list (11 phrases)          | P11 `fixT3MetaOpeners()` — 20 abstract nouns × 18 perception verbs      | R5     |
 | T1 CLIP-unfriendly adjectives    | "CLIP interprets LITERALLY"                 | P12 `stripClipQualitativeAdjectives()` — 10 adjectives, unweighted only | R5     |
 
-**File:** All functions extracted to `src/lib/harmony-post-processing.ts` (342 lines). Tested by `src/lib/__tests__/harmony-post-processing.test.ts` (72 tests).
+**File:** Call 2 functions in `src/lib/harmony-post-processing.ts` (272 lines). Call 3 functions in `src/lib/optimise-prompts/harmony-post-processing.ts` (439 lines).
 
-**Application to Call 3:** After the first round of testing, identify which errors persist despite rules. Build post-processing for those immediately — don't waste rounds trying to fix them via prompt alone.
+**Application to Call 3:** After the first round of testing, identify which errors persist despite rules. Build post-processing for those immediately — don't waste rounds trying to fix them via prompt alone. Call 3 now has its own 7-function post-processing pipeline.
 
 ### Pattern 5: Temperature Trade-offs
 
@@ -234,7 +240,7 @@ GPT doesn't just find synonym verbs for banned phrases — it rotates **nouns** 
 
 **The fix:** Don't ban individual nouns or verbs. Build lookup sets: a set of abstract nouns (scene, room, stillness, atmosphere, void, silence, mood, etc.) crossed with a set of perception/meta verbs (feels, carries, holds, evokes, captures, etc.). The code catch matches `"The [any noun in set] [any verb in set]"` and strips it.
 
-**Implementation:** P8 (T4, 23 nouns × 21 verbs) and P11 (T3, 20 nouns × 18 verbs) both use this pattern. The lookup sets are exported from `harmony-post-processing.ts` and their sizes are tested by drift-detection assertions in the 115-test lockdown suite.
+**Implementation:** P8 (T4, 23 nouns × 21 verbs) in both Call 2 and Call 3 post-processing. P11 (T3, 20 nouns × 18 verbs) now exists only in Call 3's `src/lib/optimise-prompts/harmony-post-processing.ts` (439 lines) — it was removed from Call 2 on 28 Mar 2026. The lookup sets are exported and their sizes are tested by drift-detection assertions.
 
 **Application to Call 3:** Any banned pattern will need a lookup-set code catch from day one. GPT will find evasion routes faster than you can add prompt rules.
 
@@ -256,6 +262,8 @@ After 3 rounds, the system prompt had 18 rules. By the end of 6 rounds, it reach
 
 **v2.0.0 evidence:** The T2 negative duplication was unfixable via prompt across 8 consecutive rounds (R1–R6 + 2 stress test reruns). Every prompt variant failed — abstract prohibition, mechanical counting self-check, WRONG/RIGHT examples. P1 catches it 100% of the time in code. Similarly, T3/T4 meta-language noun-substitution was unfixable via banned phrases — GPT rotated nouns faster than we could ban them. P8/P11 lookup-set catches work 100% at sentence-start patterns.
 
+**v3.0.0 update:** The T2 `--no` duplication was subsequently **root-cause fixed** in v4.4 — the JSON schema required both an inline `--no` block in the positive field AND a separate `negative` field, causing GPT to process negatives twice. Setting T2's `negative` field to empty string `""` eliminated the duplication (confirmed 4/4 consecutive clean outputs). P1 remains as a safety net but the root cause is now addressed. This is a rare case where what appeared to be an unfixable GPT behaviour was actually a schema design bug.
+
 ### Anti-Pattern 3: Scoring before convergence
 
 In Round 1, Claude scored T2 at 55 and ChatGPT scored it at 91. That 36-point gap meant neither score was reliable. Only after convergence (Round 5: gap = 3 points) could scores be trusted.
@@ -272,7 +280,7 @@ T4 (Plain Language) dropped from 94 to 82 between rounds — not because of a ru
 
 ## 5. System Prompt Evolution — The 30 Rules
 
-**SSoT:** `buildSystemPrompt()` in `src/app/api/generate-tier-prompts/route.ts` (lines 115–262). The function is dynamic — it adapts to provider context. Always read the code for current rules.
+**SSoT:** `buildSystemPrompt()` in `src/app/api/generate-tier-prompts/route.ts` (650 lines). The function is dynamic — it adapts to provider context. Always read the code for current rules. **Current version: v4.5** — 6 iterative versions (v4.0→v4.5) stress-tested with three human scenes and three assessors. See §9 for the full fix programme.
 
 **Rule ceiling:** 30 (enforced by `RULE_CEILING` in `harmony-compliance.ts` with test assertion). Raising requires explicit Martin approval.
 
@@ -322,54 +330,84 @@ T4 (Plain Language) dropped from 94 to 82 between rounds — not because of a ru
 
 ## 6. Post-Processing Layer
 
-**File:** `src/lib/harmony-post-processing.ts` (342 lines) — extracted from route.ts in v2.0.0 for testability.  
-**Test:** `src/lib/__tests__/harmony-post-processing.test.ts` (601 lines, 72 tests).  
-**Import:** `route.ts` imports `postProcessTiers()` from the extracted module.
+Two separate post-processing files exist — one for Call 2, one for Call 3. Both are extracted from their respective route files for testability.
 
-### Functions (7 active)
+### Call 2 Post-Processing
 
-| ID  | Function                           | Tier | What it does                                                                 | Catch rate               |
-| --- | ---------------------------------- | ---- | ---------------------------------------------------------------------------- | ------------------------ |
-| P1  | `deduplicateMjParams()`            | T2   | Merges all --no/--ar/--v/--s blocks, deduplicates terms, removes fusions     | 100%                     |
-| P2  | `stripTrailingPunctuation()`       | T1   | Strips trailing `.!?` from CLIP prompts                                      | 100%                     |
-| P3  | `fixT4SelfCorrection()`            | T4   | Strips "? No, it is" self-correction hallucinations                          | 100%                     |
-| P8  | `fixT4MetaOpeners()`               | T4   | Strips "The [abstract noun] [meta verb]" openers (23 nouns × 21 verbs)       | 100% (start of sentence) |
-| P10 | `mergeT4ShortSentences()`          | T4   | Merges final sentences under 10 words into previous via em-dash              | 100%                     |
-| P11 | `fixT3MetaOpeners()`               | T3   | Strips "The [abstract noun] [perception verb]" openers (20 nouns × 18 verbs) | 100% (start of sentence) |
-| P12 | `stripClipQualitativeAdjectives()` | T1   | Strips 10 CLIP-unfriendly adjectives from unweighted segments only           | 100% (unweighted)        |
+**File:** `src/lib/harmony-post-processing.ts` (272 lines) — extracted from route.ts in v2.0.0.  
+**Import:** `generate-tier-prompts/route.ts` imports `postProcessTiers()` from this module.
 
-### Compliance gate (separate file)
+**Functions (5 active — P11 and P12 removed 28 Mar 2026, migrated to Call 3 only):**
 
-**File:** `src/lib/harmony-compliance.ts` (486 lines) — deterministic syntax validation.
+| ID  | Function                     | Tier | What it does                                                             | Catch rate               |
+| --- | ---------------------------- | ---- | ------------------------------------------------------------------------ | ------------------------ |
+| P1  | `deduplicateMjParams()`      | T2   | Merges all --no/--ar/--v/--s blocks, deduplicates terms, removes fusions | 100%                     |
+| P2  | `stripTrailingPunctuation()` | T1   | Strips trailing `.!?` from CLIP prompts                                  | 100%                     |
+| P3  | `fixT4SelfCorrection()`      | T4   | Strips "? No, it is" self-correction hallucinations                      | 100%                     |
+| P8  | `fixT4MetaOpeners()`         | T4   | Strips "The [abstract noun] [meta verb]" openers (23 nouns × 21 verbs)   | 100% (start of sentence) |
+| P10 | `mergeT4ShortSentences()`    | T4   | Merges final sentences under 10 words into previous via em-dash          | 100%                     |
 
-| ID  | Function                   | Tier | Purpose                                            |
-| --- | -------------------------- | ---- | -------------------------------------------------- |
-| P4  | `enforceT1Syntax()`        | T1   | Converts wrong weight syntax for selected provider |
-| P5  | `enforceMjParameters()`    | T2   | Adds missing --ar/--v/--s/--no params              |
-| P6  | `detectT4MetaLanguage()`   | T4   | Flags meta-language (detection only)               |
-| P9  | `detectT4ShortSentences()` | T4   | Flags under-10-word sentences (detection only)     |
+T1 also gets `enforceWeightCap()` from `harmony-compliance.ts`.
 
-### Pipeline per tier
+**Pipeline per tier (Call 2):**
 
 ```
-T1: P12 (strip CLIP adjectives) → P2 (strip punctuation)
+T1: enforceWeightCap(8) → P2 (strip punctuation)
 T2: P1 (dedup MJ params) → [P5 in compliance gate adds missing params]
-T3: P11 (strip abstract meta-openers)
+T3: (no post-processing — P11 removed from Call 2)
 T4: P3 (self-correction) → P8 (meta-openers) → P10 (short sentence merge)
 ```
 
-### Integration point
+### Call 3 Post-Processing (v3.0.0)
+
+**File:** `src/lib/optimise-prompts/harmony-post-processing.ts` (439 lines) — separate from Call 2.  
+**Import:** `optimise-prompt/route.ts` imports from this module via `resolve-group-prompt.ts`.
+
+**Functions (7 active — includes P11 and P12 which were removed from Call 2):**
+
+| ID  | Function                           | Tier | What it does                                                                 | Catch rate               |
+| --- | ---------------------------------- | ---- | ---------------------------------------------------------------------------- | ------------------------ |
+| P1  | `deduplicateMjParams()`            | T2   | Merges all --no/--ar/--v/--s blocks, deduplicates terms                      | 100%                     |
+| P2  | `stripTrailingPunctuation()`       | T1   | Strips trailing `.!?` from CLIP prompts                                      | 100%                     |
+| P3  | `fixT4SelfCorrection()`            | T4   | Strips "? No, it is" self-correction hallucinations                          | 100%                     |
+| P8  | `fixT4MetaOpeners()`               | T4   | Strips "The [abstract noun] [meta verb]" openers                             | 100% (start of sentence) |
+| P10 | `mergeT4ShortSentences()`          | T4   | Merges final sentences under 10 words into previous via em-dash              | 100%                     |
+| P11 | `fixT3MetaOpeners()`               | T3   | Strips "The [abstract noun] [perception verb]" openers (20 nouns × 18 verbs) | 100% (start of sentence) |
+| P12 | `stripClipQualitativeAdjectives()` | T1   | Strips CLIP-unfriendly adjectives from unweighted segments only              | 100% (unweighted)        |
+
+### Compliance gate (shared by both Call 2 and Call 3)
+
+**File:** `src/lib/harmony-compliance.ts` (833 lines) — deterministic syntax validation.
+
+| ID  | Function                         | Tier | Purpose                                            |
+| --- | -------------------------------- | ---- | -------------------------------------------------- |
+| P4  | `enforceT1Syntax()`              | T1   | Converts wrong weight syntax for selected provider |
+| P5  | `enforceMjParameters()`          | T2   | Adds missing --ar/--v/--s/--no params              |
+| P6  | `detectT4MetaLanguage()`         | T4   | Flags meta-language (detection only)               |
+| P9  | `detectT4ShortSentences()`       | T4   | Flags under-10-word sentences (detection only)     |
+|     | `enforceWeightCap()`             | T1   | Caps maximum weight value                          |
+|     | `enforceClipKeywordCleanup()`    | T1   | Strips CLIP-unfriendly content                     |
+|     | `enforceNegativeContradiction()` | All  | Ensures negatives don't contradict positives       |
+|     | `runFullCompliance()`            | All  | Orchestrator for all compliance functions          |
+|     | `detectT3BannedPhrases()`        | T3   | Flags banned meta-commentary phrases               |
+
+**Rule ceiling:** `RULE_CEILING = 30`, `CURRENT_RULE_COUNT = 30`. Tracked with test assertion.
+
+### Integration points
 
 ```typescript
+// Call 2 (generate-tier-prompts/route.ts):
 import { postProcessTiers } from "@/lib/harmony-post-processing";
-
-// After Zod validation:
 const processed = postProcessTiers(validated.data);
+
+// Call 3 (optimise-prompt/route.ts):
+// Post-processing imported via resolve-group-prompt.ts
+// Compliance gates run after GPT response, before charCount measurement
 ```
 
 ### Non-regression rule
 
-`postProcessTiers()` MUST run on all Call 2 responses. Do not bypass, remove, or make conditional. All 7 functions are permanent safety nets. The 115-test lockdown suite (`harmony-post-processing.test.ts` + `harmony-compliance.test.ts`) must pass before shipping any changes.
+Both `postProcessTiers()` functions MUST run on their respective Call responses. Do not bypass, remove, or make conditional. All functions are permanent safety nets. **No Call 3 builder may import from another builder** — complete isolation prevents cross-platform regressions.
 
 ---
 
@@ -550,44 +588,113 @@ Three curated 900-char inputs designed to expose specific weaknesses. Each run t
 
 The remaining gap on complex scenes is **compositional intelligence** — GPT lists elements side-by-side instead of composing them into unified visual systems (e.g., "copper-orange sunset" + "cold blue mist" as separate tokens instead of one lighting-interaction token). Both assessors independently identified this across all 3 stress tests. This is an architectural limitation, not fixable via prompt rules or post-processing — it would require a pre-processing step that identifies the dominant visual truth before GPT sees the input.
 
+**GPT ceilings (permanent — confirmed v4.5):**
+
+- "reflect" → smear/ripple/shimmer/streak (T3/T4) — unfixable by prompting
+- "burn" → glow (T1/T4, cracked in T3/T4 on v4.5)
+- Run-to-run variance of 83–92 on identical inputs is expected
+- T4 verb softening in plain-language mode is a permanent ceiling
+
 ---
 
-## 9. Applying to Call 3 — Platform-Specific Optimisation
+## 9. Call 2 v4.0→v4.5 Fix Programme
 
-Call 3 (`POST /api/optimise-prompt`) takes an assembled prompt + provider context and returns a platform-optimised version. The same harmony methodology applies with these adjustments:
+**v3.0.0 addition.** After the initial 6 rounds + 3 stress tests reached 96/100, a second fix programme (v4.0→v4.5) was conducted using three-assessor methodology (Claude, ChatGPT, Grok) with three human test scenes: station violinist, Victorian flower seller, sci-fi hangar mechanic.
+
+### Baseline failures (v4.0)
+
+10-scene stress testing of the monolithic v4.0 file established systematic failure patterns:
+
+| Tier | Failure pattern                         | Root cause                                                                        |
+| ---- | --------------------------------------- | --------------------------------------------------------------------------------- |
+| T1   | Zero interaction tokens                 | No rule requiring element-acts-on-element pairs to merge                          |
+| T2   | Near-universal `--no` block duplication | JSON schema required both inline `--no` in positive and separate `negative` field |
+| T3   | Detached style tails + verb softening   | Missing verb fidelity rules, "captured" used as standalone ban-dodge              |
+| T4   | Signature anchors dropped               | 250-character ceiling below SSOT platform average (idealMax avg 277)              |
+
+### Fix versions
+
+| Version  | Fixes                | Key changes                                                                                                                                                                                         |
+| -------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **v4.1** | 6 targeted fixes     | T1 interaction token scanning, T4 anchor triage hierarchy, T4 value-add self-check, T4 anti-paraphrase opening, T3 "captured" standalone ban, T3 verb fidelity with WRONG/RIGHT examples            |
+| **v4.2** | 3 strengthened       | T1 interaction scan + 2 more WRONG/RIGHT examples, T3 verb fidelity expanded to 4 WRONG/RIGHT with aggressive rule, T4 value-add bar raised from "one word" to "one visual detail"                  |
+| **v4.3** | 2 additions          | T1 deduplication rule (remove standalone when interaction token created), T4 value-add reframed from "add a new element" to "convert one existing element into something richer"                    |
+| **v4.4** | 1 root-cause fix     | **T2 `--no` duplication root cause** — T2 `negative` JSON field set to empty string `""`. All negatives go inline after `--no` in the positive field only. Confirmed 4/4 consecutive clean outputs. |
+| **v4.5** | 1 SSOT-justified fix | **T4 character ceiling raised 250→325** based on `platform-config.json` (idealMax average 277, 7/15 T4 platforms accept 300+). Eliminated forced anchor drops.                                      |
+
+### Calibrated gains (three-assessor median)
+
+| Tier        | v4.0 baseline | v4.5 final | Gain                    |
+| ----------- | ------------- | ---------- | ----------------------- |
+| T1          | ~88           | ~95        | **+7**                  |
+| T2          | ~87           | ~95        | **+8**                  |
+| T3          | ~95           | ~95        | **+0** (already strong) |
+| T4          | ~80           | ~93        | **+13**                 |
+| **Overall** | ~88           | ~95        | **+7**                  |
+
+**Production status:** v4.5 confirmed as production file. The code in `generate-tier-prompts/route.ts` (650 lines) is the SSoT.
+
+---
+
+## 10. Call 3 — Platform-Specific Optimisation (In Progress)
+
+Call 3 (`POST /api/optimise-prompt`, 406 lines) takes an assembled prompt + provider context and returns a platform-optimised version. The harmony methodology has been applied with these results:
+
+### Architecture (implemented)
+
+**43 independent builder files** in `src/lib/optimise-prompts/group-*.ts` — each platform has its own system prompt with no shared imports between builders. Complete isolation prevents cross-platform regressions.
+
+**Routing:** `platform-groups.ts` (181 lines) maps each provider ID to a group. `resolve-group-prompt.ts` (205 lines) resolves the system prompt, falling back to `generic-fallback.ts` (78 lines).
+
+**Config:** GPT-5.4-mini, temperature 0.4 for prose groups, 0.2 for CLIP groups. proseGroups detection flips primary input for NL platforms (original sentence primary, assembled prompt secondary).
+
+**Post-processing:** `src/lib/optimise-prompts/harmony-post-processing.ts` (439 lines, 7 functions). Compliance gates in `harmony-compliance.ts` (833 lines). Server-side charCount measurement after all gates.
 
 ### Differences from Call 2
 
-| Aspect          | Call 2 (generic tiers)                   | Call 3 (platform-specific)                     |
-| --------------- | ---------------------------------------- | ---------------------------------------------- |
-| Input           | Human text (creative, variable length)   | Assembled prompt (structured, predictable)     |
-| Output          | 4 tier prompts (4 families)              | 1 optimised prompt (1 specific platform)       |
-| Temperature     | 0.5 (creative restructuring)             | 0.2 (precision, deterministic feel)            |
-| System prompt   | 30 rules for 4 families                  | Per-platform rules (~5–10 per platform)        |
-| Post-processing | P1–P12 (7 functions in extracted module) | TBD — build after Round 1 identifies artefacts |
-| Test matrix     | 1 input × 4 outputs                      | 1 input × 42 platforms                         |
+| Aspect          | Call 2 (generic tiers)                                       | Call 3 (platform-specific)                                   |
+| --------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| Input           | Human text (creative, variable length)                       | Assembled prompt (structured, predictable)                   |
+| Output          | 4 tier prompts (4 families)                                  | 1 optimised prompt (1 specific platform)                     |
+| Temperature     | 0.5 (creative restructuring)                                 | 0.4 prose / 0.2 CLIP (precision)                             |
+| System prompt   | 30 rules for 4 families (v4.5)                               | Per-platform rules in 43 independent builders                |
+| Post-processing | 5 functions (Call 2 `harmony-post-processing.ts`, 272 lines) | 7 functions (Call 3 `harmony-post-processing.ts`, 439 lines) |
+| Test matrix     | 3 scenes × 4 outputs × 3 assessors                           | 1 scene (Lighthouse Keeper) × 40 platforms                   |
 
-### Recommended approach
+### Harmony pass methodology (proven)
 
-1. **Start with 5 representative platforms** (one per tier + edge case): Leonardo (T1/CLIP), Midjourney (T2/MJ), DALL-E 3 (T3/NL), Canva (T4/Plain), Flux (T1/different encoder)
-2. **Write initial platform-specific system prompt** using Pattern 1 (concrete examples for each platform)
-3. **Run Round 1** — test with the mermaid scene (proven rich test input)
-4. **Score with dual assessment** — same methodology as Call 2
-5. **Build fixes** — apply proven patterns (examples, positioning, banned phrases)
-6. **Build post-processing** — whatever artefacts GPT produces that can't be prompt-fixed
-7. **Expand to all 42** once the 5-platform template is stable
+1. Send platform facts + blank canvas request to **ChatGPT** → receive improved system prompt
+2. Run against **Lighthouse Keeper** test scene in Prompt Lab
+3. Score output with dual assessment (Claude + ChatGPT)
+4. Bring results back → write builder file
+5. Repeat for next platform
 
-### What to carry forward from Call 2
+### Performance findings
 
-- Every per-platform example MUST include a complete output (Pattern 1)
-- Critical rules go first and last in each platform section (Pattern 2)
-- Ban directive language preemptively with 5+ synonyms (Pattern 3)
-- Budget 2 rounds for post-processing discovery (Pattern 4)
-- Keep Call 3 at temperature 0.2 — precision over creativity (Pattern 5)
+- **CLIP platforms:** Call 3 averages ~2pt gain (85→87) — marginal, may not justify API cost per platform
+- **NL platforms:** Call 3 averages ~6-8pt gain (88→94) — worth the API cost
+- **Pending decision:** Test each CLIP platform individually, retain Call 3 where it adds value, bypass where it doesn't
+
+### Harmony pass status
+
+| Platform      | Score  | Status                                |
+| ------------- | ------ | ------------------------------------- |
+| Adobe Firefly | 93/100 | ChatGPT-verified system prompt        |
+| 123RF         | 91/100 | ChatGPT-verified system prompt        |
+| Artbreeder    | —      | In progress (session ended mid-build) |
+| Remaining ~37 | —      | Not yet harmony-passed                |
+
+### What carried forward from Call 2
+
+- Every per-platform example includes a complete output (Pattern 1) ✓
+- Critical rules go first and last in each platform section (Pattern 2) ✓
+- Ban directive language preemptively with 5+ synonyms (Pattern 3) ✓
+- Post-processing catches mechanical artefacts (Pattern 4) ✓
+- Temperature tuned per group — 0.4 prose, 0.2 CLIP (Pattern 5, refined) ✓
 
 ---
 
-## 10. Decision Framework
+## 11. Decision Framework
 
 ### When to add a system prompt rule
 
@@ -616,22 +723,28 @@ Call 3 (`POST /api/optimise-prompt`) takes an assembled prompt + provider contex
 
 ---
 
-## 11. Non-Regression Rules
+## 12. Non-Regression Rules
 
-1. **This methodology is the standard for all GPT system prompt work** — Call 3, future Call 2 updates, any new API routes that use GPT
-2. **Dual assessment is mandatory** — never ship a system prompt change without testing through both Claude and ChatGPT
-3. **Post-processing cannot be removed** — even if GPT appears to stop producing artefacts, the safety net costs nothing and catches edge cases. All 7 functions (P1, P2, P3, P8, P10, P11, P12) are permanent.
-4. **Temperature must be documented and justified** — every API route must record its temperature and the rationale in the route file header
-5. **Concrete examples in every system prompt** — no rule without a WRONG/RIGHT pair or a structural example
-6. **Martin approves all changes before implementation** — ideas are proposed, not built. "Put it forward but don't implement it until I say so."
-7. **Post-processing extraction is permanent** — all functions live in `src/lib/harmony-post-processing.ts`, not in route.ts. Do not move them back.
-8. **115-test lockdown suite must pass before shipping** — `harmony-post-processing.test.ts` (72 tests) + `harmony-compliance.test.ts` (43 tests). Any red test = drift. Fix the code, not the test.
-9. **Rule ceiling is 30** — raising requires explicit approval. Tracked in `harmony-compliance.ts` with test assertion.
-10. **Lookup set sizes are tested** — T3 (20 nouns × 18 verbs), T4 (23 nouns × 21 verbs), CLIP (10 adjectives). Drift detection tests assert exact counts.
+1. **This methodology is the standard for all GPT system prompt work** — Call 2, Call 3, future Call 2 updates, any new API routes that use GPT
+2. **Three-assessor calibration for system-wide changes** — Claude, ChatGPT, Grok. Triangulated median is the standard. Claude scores T3 ~5-6pts and T4 ~3-5pts too high — use external assessors for calibration.
+3. **Dual assessment minimum for individual builder harmony passes** — never ship a builder change without testing through both Claude and ChatGPT
+4. **Call 2 post-processing cannot be removed** — 5 functions in `src/lib/harmony-post-processing.ts` (272 lines) are permanent safety nets. P11 and P12 were removed from Call 2 (28 Mar 2026) and now exist only in Call 3.
+5. **Call 3 post-processing cannot be removed** — 7 functions in `src/lib/optimise-prompts/harmony-post-processing.ts` (439 lines) are permanent. Compliance gates in `harmony-compliance.ts` (833 lines) are permanent.
+6. **No Call 3 builder may import from another builder** — complete isolation prevents cross-platform regressions
+7. **Temperature must be documented and justified** — every API route must record its temperature and the rationale in the route file header. Call 2: 0.5. Call 3: 0.4 prose / 0.2 CLIP.
+8. **Concrete examples in every system prompt** — no rule without a WRONG/RIGHT pair or a structural example
+9. **Martin approves all changes before implementation** — ideas are proposed, not built. "Put it forward but don't implement it until I say so."
+10. **Post-processing extraction is permanent** — Call 2 functions live in `src/lib/harmony-post-processing.ts`, Call 3 functions live in `src/lib/optimise-prompts/harmony-post-processing.ts`. Do not move them back into route files.
+11. **Rule ceiling is 30** — raising requires explicit approval. Tracked in `harmony-compliance.ts` with test assertion (`RULE_CEILING = 30`, `CURRENT_RULE_COUNT = 30`).
+12. **Server-side `charCount` measurement is mandatory** — never trust GPT self-reported counts. `result.charCount = result.optimised.length` after all compliance gates.
+13. **`effectiveWasOptimized` must compare text content** (`optimised !== activeTierPromptText`), NOT length — length comparison hides enriched prompts.
+14. **Deterministic fixes belong in code, not prompts** — if a bug can be expressed as deterministic logic, it must be a compliance gate or post-processing function, not a prompt rule.
 
 ---
 
 ## Changelog
+
+- **29 Mar 2026 (v3.0.0):** **THREE-ASSESSOR METHODOLOGY + CALL 2 v4.5 + CALL 3 ARCHITECTURE.** §1: Platform count 42→40. Added three-assessor reference. §2: Added three-assessor model (Claude, ChatGPT, Grok) with calibration finding (Claude +5-6pts T3, +3-5pts T4 vs median). Updated post-processing insight — Call 2 now 5 functions (P11/P12 removed 28 Mar), Call 3 has 7 functions. §3: Pattern 4 file reference updated — two files (272 + 439 lines). Pattern 7 implementation updated — P11 now Call 3 only. §4: Anti-Pattern 2 updated with v4.4 T2 root-cause fix (schema bug, not unfixable GPT behaviour). §5: SSoT reference updated — route.ts 650 lines, v4.5 confirmed. §6: Completely rewritten — split into Call 2 (272 lines, 5 functions) and Call 3 (439 lines, 7 functions) subsections. P11/P12 documented as removed from Call 2, migrated to Call 3 only. Pipeline per tier corrected. Compliance gate updated 486→833 lines with full function list including `enforceWeightCap`, `enforceClipKeywordCleanup`, `enforceNegativeContradiction`, `runFullCompliance`, `detectT3BannedPhrases`. §8: Added GPT ceilings section (reflect→smear, burn→glow, 83-92 variance). §9 NEW: Call 2 v4.0→v4.5 fix programme — baseline failures (T1 zero interactions, T2 `--no` duplication, T3 verb softening, T4 anchor drops), 5 fix versions with specific changes per version, calibrated three-assessor gains (T1 +7, T2 +8, T3 +0, T4 +13, overall +7). §10 (was §9): Rewritten from future plan to actual state — 43 independent builder files, routing (platform-groups.ts 181 lines, resolve-group-prompt.ts 205 lines), config (0.4 prose / 0.2 CLIP), harmony pass methodology, performance findings (CLIP ~2pt vs NL ~6-8pt), status table (Firefly 93/100, 123RF 91/100, Artbreeder in progress). §11 (was §10): Renumbered. §12 (was §11): Rewritten — three-assessor calibration (rule 2), dual minimum for builders (rule 3), Call 2/Call 3 post-processing split (rules 4-5), builder isolation (rule 6), temperature documentation (rule 7), server-side charCount (rule 12), effectiveWasOptimized text comparison (rule 13), deterministic-fixes-in-code principle (rule 14). 10→14 rules. Cross-references updated: ai-disguise v4.0.0→v5.0.0, prompt-lab v3.1.0→v4.0.0, added prompt-optimizer v6.0.0, prompt-lab-v4-flow v2.0.0, platform-config SSOT.
 
 - **25 Mar 2026 (v2.0.0):** **HARMONY ENGINEERING v2 + POST-PROCESSING EXTRACTION + TEST LOCKDOWN.** Six additional rounds (R1–R6 v2) with frozen valley test input, converged to ≤1 point dual-assessor gap across all tiers. Three 900-char stress tests (lighthouse, cellist, deep-sea diver) validated system at 94.5–96/100. Rule inventory expanded from 18 to 30: +T1-8 (semantic clustering + interaction merging), +T3-5 (opening diversity), +T4-5 (scene depth), +G1 emotional mandate, +T1-6 time-of-day weighting, +T3 "that feels" ban, +T4 limit 200→250. Post-processing expanded from P1+P2 to 7 functions (P1,P2,P3,P8,P10,P11,P12), all extracted to `harmony-post-processing.ts` (342 lines). P8/P11 broadened with abstract-noun × perception-verb lookup sets to counter GPT noun-substitution evasion (Pattern 7). 115-test lockdown suite: 72 post-processing + 43 compliance tests with drift detection. Added Pattern 7 (noun-substitution evasion), updated Patterns 3–4, expanded Anti-Pattern 2, updated §5 rule inventory, rewrote §6 post-processing, added v2 rounds + stress tests to §8, updated §9 Call 3 table, §10 exit criteria, §11 non-regression rules 7–10.
 

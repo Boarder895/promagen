@@ -20,8 +20,6 @@
   "dreamstudio": {},
   "flux": {},
   "fotor": {},
-  "freepik": {},
-  "getimg": {},
   "google-imagen": {},
   "hotpot": {},
   "ideogram": {},
@@ -32,10 +30,8 @@
   "microsoft-designer": {},
   "midjourney": {},
   "myedit": {},
-  "nightcafe": {},
   "novelai": {},
   "openai": {},
-  "openart": {},
   "photoleap": {},
   "picsart": {},
   "picwish": {},
@@ -86,20 +82,6 @@
     "seeds": false,
     "schedulers": false,
     "guidanceScale": false,
-    "batchGeneration": true
-  },
-  "tensor-art": {
-    "textToImage": true,
-    "imageToImage": true,
-    "inpainting": false,
-    "outpainting": false,
-    "negativePrompt": true,
-    "aspectRatio": true,
-    "upscaling": true,
-    "variations": true,
-    "seeds": true,
-    "schedulers": true,
-    "guidanceScale": true,
     "batchGeneration": true
   }
 }

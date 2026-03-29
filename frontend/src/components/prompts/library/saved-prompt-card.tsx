@@ -144,11 +144,6 @@ const PLATFORM_COLOURS: Record<string, { gradient: string; glow: string; accent:
     glow: 'rgba(6, 182, 212, 0.18)',
     accent: 'text-cyan-400',
   },
-  'nightcafe': {
-    gradient: 'from-fuchsia-500 via-purple-400 to-violet-500',
-    glow: 'rgba(217, 70, 239, 0.18)',
-    accent: 'text-fuchsia-400',
-  },
   'craiyon': {
     gradient: 'from-yellow-500 via-amber-400 to-orange-400',
     glow: 'rgba(251, 191, 36, 0.18)',

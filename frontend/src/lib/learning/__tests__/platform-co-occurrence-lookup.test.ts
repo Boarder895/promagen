@@ -386,7 +386,7 @@ describe('lookupPlatformCoOccurrence', () => {
         },
         {
           tier: '1',
-          platformId: 'nightcafe',
+          platformId: 'stability',
           pairs: [{ terms: ['alpha', 'beta'], weight: 20 }],
           confidence: 1.0,
         },
@@ -400,7 +400,7 @@ describe('lookupPlatformCoOccurrence', () => {
         lookupPlatformCoOccurrence(
           'beta',
           ['alpha'],
-          'nightcafe',
+          'stability',
           1,
           lookup,
           50,

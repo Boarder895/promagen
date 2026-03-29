@@ -107,7 +107,7 @@ describe('computePlatformCoOccurrence', () => {
     it('returns null when no platform meets PLATFORM_MIN_EVENTS', () => {
       const events = [
         ...generatePairEvents({ n: 20, platform: 'leonardo', tier: 1, termA: 'a', termB: 'b' }),
-        ...generatePairEvents({ n: 20, platform: 'nightcafe', tier: 1, termA: 'a', termB: 'b' }),
+        ...generatePairEvents({ n: 20, platform: 'stability', tier: 1, termA: 'a', termB: 'b' }),
         ...generatePairEvents({ n: 20, platform: 'craiyon', tier: 1, termA: 'a', termB: 'b' }),
       ];
       expect(computePlatformCoOccurrence(events)).toBeNull();
@@ -210,7 +210,7 @@ describe('computePlatformCoOccurrence', () => {
         // NightCafe: gamma+delta co-occur
         ...generatePairEvents({
           n: 60,
-          platform: 'nightcafe',
+          platform: 'stability',
           tier: 1,
           termA: 'gamma',
           termB: 'delta',
@@ -219,7 +219,7 @@ describe('computePlatformCoOccurrence', () => {
 
       const result = computePlatformCoOccurrence(events)!;
       const leonardo = result.tiers['1']!.platforms['leonardo']!;
-      const nightcafe = result.tiers['1']!.platforms['nightcafe']!;
+      const stabilityResult = result.tiers['1']!.platforms['stability']!;
 
       // Leonardo should have alpha|beta, not gamma|delta
       const leoPairs = leonardo.pairs.map((p) => p.terms.join('|'));
@@ -227,7 +227,7 @@ describe('computePlatformCoOccurrence', () => {
       expect(leoPairs).not.toContainEqual(expect.stringContaining('gamma'));
 
       // NightCafe should have gamma|delta, not alpha|beta
-      const ncPairs = nightcafe.pairs.map((p) => p.terms.join('|'));
+      const ncPairs = stabilityResult.pairs.map((p) => p.terms.join('|'));
       expect(ncPairs).toContainEqual(expect.stringContaining('gamma'));
       expect(ncPairs).not.toContainEqual(expect.stringContaining('alpha'));
     });
@@ -235,7 +235,7 @@ describe('computePlatformCoOccurrence', () => {
     it('reports correct platform counts in metadata', () => {
       const events = [
         ...generatePairEvents({ n: 60, platform: 'leonardo', tier: 1, termA: 'a', termB: 'b' }),
-        ...generatePairEvents({ n: 60, platform: 'nightcafe', tier: 1, termA: 'c', termB: 'd' }),
+        ...generatePairEvents({ n: 60, platform: 'stability', tier: 1, termA: 'c', termB: 'd' }),
         ...generatePairEvents({ n: 60, platform: 'midjourney', tier: 2, termA: 'e', termB: 'f' }),
       ];
 

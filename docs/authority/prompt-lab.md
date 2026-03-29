@@ -1,10 +1,10 @@
 # Studio Section Authority Document
 
-**Last updated:** 25 March 2026  
-**Version:** 3.2.0  
+**Last updated:** 29 March 2026  
+**Version:** 4.0.0  
 **Owner:** Promagen  
 **Authority:** This document defines the architecture, routes, and component behaviour for the Studio section (`/studio/*`).  
-**Cross-reference:** For AI Disguise full specification (including v4.0.0 system prompt, P1–P12 post-processing pipeline, and harmony engineering), see `ai-disguise.md` v4.0.0. For harmony engineering methodology, see `harmonizing-claude-openai.md` v2.0.0. For the v4 four-phase flow (Check→Assess→Decide→Generate), see `prompt-lab-v4-flow.md` v1.3.0. For human sentence conversion UI and term matching, see `human-sentence-conversion.md`. For colour-coded prompt anatomy, see `paid_tier.md` §5.14. For Prompt Lab parity features, see `paid_tier.md` §5.13. For standard builder architecture, see `prompt-builder-page.md`. For optimizer details, see `prompt-optimizer.md`. For human factors, see `human-factors.md`. For button styling standards, see `buttons.md`.
+**Cross-reference:** For AI Disguise full specification (including v4.0.0 system prompt, P1–P12 post-processing pipeline, and harmony engineering), see `ai-disguise.md` v4.0.0. For harmony engineering methodology, see `harmonizing-claude-openai.md` v2.0.0. For the v4 four-phase flow (Check→Assess→Decide→Generate), see `prompt-lab-v4-flow.md` v1.3.0. For human sentence conversion UI and term matching, see `human-sentence-conversion.md`. For colour-coded prompt anatomy, see `paid_tier.md` §5.14. For Prompt Lab parity features, see `paid_tier.md` §5.13. For standard builder architecture, see `prompt-builder-page.md`. For optimizer details (client-side + Call 3 server-side), see `prompt-optimizer.md` v6.0.0. For human factors, see `human-factors.md`. For button styling standards, see `buttons.md`. For platform SSOT, see `platform-config.json` + `platform-config.ts`.
 
 ---
 
@@ -14,7 +14,7 @@ The Studio section (`/studio/*`) contains Promagen's creative tool pages. It is 
 
 | Route                | Name       | Purpose                                       | Status |
 | -------------------- | ---------- | --------------------------------------------- | ------ |
-| `/studio/playground` | Prompt Lab | AI-powered prompt creation (all 42 platforms) | Active |
+| `/studio/playground` | Prompt Lab | AI-powered prompt creation (all 40 platforms) | Active |
 | `/studio/library`    | My Prompts | Saved prompts library                         | Active |
 
 **Removed (v6.0.0):** The Studio hub page with 4 feature cards (Library, Explore, Learn, Playground) was removed. `/studio` now redirects to `/`. The Explore page moved to `/prompts/explore`. Learn and Trending are not yet built.
@@ -39,9 +39,11 @@ src/app/studio/
 
 ### Overview
 
-The Prompt Lab is Promagen's AI-powered prompt creation environment. Unlike `/providers/[id]` (where the provider is pre-selected from the URL), the Prompt Lab lets users select any of the 42 platforms from a dropdown and see their prompt reshape in real time.
+The Prompt Lab is Promagen's AI-powered prompt creation environment. Unlike `/providers/[id]` (where the provider is pre-selected from the URL), the Prompt Lab lets users select any of the 40 platforms from a dropdown and see their prompt reshape in real time.
 
 **v3.0.0 (23 March 2026):** The Prompt Lab now features the AI Disguise system — three targeted API calls to GPT-5.4-mini that generate and optimise prompts directly from human text, disguised as "1,001 proprietary algorithms". See `ai-disguise.md` for full specification.
+
+**v4.0.0 (29 March 2026):** Call 2 system prompt advanced to v4.5 (6 targeted fixes from three-assessor stress testing). Call 3 expanded to 43 independent builder files with 406-line route. Negative prompt window added. Five critical bugs fixed (race condition, display bug, charCount, proseGroups, effectiveWasOptimized logic). See §AI Disguise Architecture and §Prompt Lab Features for details.
 
 **Auth gate:** Pro Promagen exclusive — NOT YET GATED (see `paid_tier.md` §5.13). Currently accessible to all users.
 
@@ -49,21 +51,23 @@ The Prompt Lab is Promagen's AI-powered prompt creation environment. Unlike `/pr
 
 ---
 
-### AI Disguise Architecture (v3.0.0)
+### AI Disguise Architecture (v3.0.0, updated v4.0.0)
 
 The Prompt Lab uses three API calls to GPT-5.4-mini, presented to the user as algorithmic processing:
 
-| Call                  | Route                             | Purpose                                                                                                    | When fired              | Visual                                      |
-| --------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------- | ----------------------- | ------------------------------------------- |
-| **Call 1** (existing) | `POST /api/parse-sentence`        | Extract human text → 12 category JSON                                                                      | "Generate Prompt" click | 12 category badges cycle in (150ms stagger) |
-| **Call 2** (v3.0.0)   | `POST /api/generate-tier-prompts` | Generate 4 tier prompts directly from human text (30-rule system prompt + P1–P12 post-processing pipeline) | In parallel with Call 1 | Tier cards populate with AI text            |
-| **Call 3** (new)      | `POST /api/optimise-prompt`       | Optimise assembled prompt for specific provider                                                            | "Optimise" toggle ON    | Algorithm cycling animation (101 names)     |
+| Call                  | Route                             | Purpose                                                                                              | When fired              | Visual                                      |
+| --------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------- | ----------------------- | ------------------------------------------- |
+| **Call 1** (existing) | `POST /api/parse-sentence`        | Extract human text → 12 category JSON                                                                | "Generate Prompt" click | 12 category badges cycle in (150ms stagger) |
+| **Call 2** (v3.0.0)   | `POST /api/generate-tier-prompts` | Generate 4 tier prompts directly from human text (**v4.5 system prompt** + post-processing pipeline) | In parallel with Call 1 | Tier cards populate with AI text            |
+| **Call 3** (v3.0.0)   | `POST /api/optimise-prompt`       | Optimise assembled prompt for specific provider via **43 independent builder files**                 | "Optimise" toggle ON    | Algorithm cycling animation (101 names)     |
 
 **Cost:** ~$0.008 per full generate + optimise cycle (GPT-5.4-mini).
 
 **Disguise principle:** The user never sees "AI" or "GPT" in any UI text. The system presents as "Prompt Intelligence Engine" with "101 algorithms". See `ai-disguise.md` §1.
 
-**Harmony engineering (v4.0.0):** Call 2's system prompt was refined through 6+ rounds of iterative testing + 3 stress tests (900-char complex inputs) between Claude (prompt author) and GPT-5.4-mini (executor), scoring 62→96/100 with dual-assessor convergence (≤1 point gap). A post-processing pipeline (7 functions in `harmony-post-processing.ts`, 342 lines) catches GPT mechanical artefacts server-side. A 115-test lockdown suite prevents drift. See `ai-disguise.md` v4.0.0 §6–§8 for full specification, `harmonizing-claude-openai.md` v2.0.0 for the methodology.
+**Harmony engineering (v4.0.0):** Call 2's system prompt was refined through v4.0→v4.5 across 6 iterative versions using three human test scenes (station violinist, Victorian flower seller, sci-fi hangar mechanic) and three independent AI assessors (Claude, ChatGPT, Grok). Post-processing runs through 5 active functions in `harmony-post-processing.ts` (272 lines) catching GPT mechanical artefacts server-side. Compliance gates in `harmony-compliance.ts` (833 lines) enforce deterministic syntax rules. See `ai-disguise.md` v4.0.0 §6–§8 for full specification, `harmonizing-claude-openai.md` v2.0.0 for the methodology, `prompt-lab-v4-flow.md` for the v4.0→v4.5 fix programme.
+
+**Calibration finding:** Claude scores T3 approximately 5–6 points too high and T4 approximately 3–5 points too high compared to the ChatGPT/Grok median, under-penalising verb substitutions and anchor drops. Use external assessors for calibration.
 
 #### Data Flow
 
@@ -72,7 +76,7 @@ User types human description → clicks "Generate Prompt"
   │
   ├─ Call 1 fires → 12 category badges cycle in → dropdowns populate → DNA score updates
   │
-  └─ Call 2 fires (parallel) → 4 tier cards fill with AI prompts
+  └─ Call 2 fires (parallel) → 4 tier cards fill with AI prompts (v4.5 system prompt)
      └─ If provider selected: "Generated for Leonardo AI" badge
      └─ AI text flows into assembled prompt box via activeTierPromptText
 
@@ -80,11 +84,15 @@ User clicks "Optimise" toggle
   │
   └─ Call 3 fires → algorithm cycling animation plays (160ms→deceleration→landing)
      └─ "✓ 97 algorithms applied" → optimised prompt fades in
+     └─ Negative prompt window appears (if platform has negativeSupport: 'separate')
 
 User switches provider (Leonardo → Midjourney)
   │
-  └─ Call 2 auto-re-fires with new provider context
-     └─ Tier cards update with Midjourney-tailored AI prompts
+  ├─ Call 2 auto-re-fires with new provider context
+  │  └─ Tier cards update with Midjourney-tailored AI prompts
+  │
+  └─ Stale Call 3 result cleared (clearAiOptimise)
+     └─ If optimizer still ON: Call 3 re-fires for new provider
 
 User clicks "Clear All"
   │
@@ -108,16 +116,18 @@ Call 2 and Call 3 system prompts are provider-aware:
 
 **Quality suffix:** Tier 1 platforms get `sharp focus, 8K, intricate textures` appended at the end.
 
-**v3.0.0→v4.0.0 additions (see `ai-disguise.md` v4.0.0 §6 for full 30-rule system prompt — code is SSoT):**
+**Call 2 system prompt v4.5 (code is SSoT — see `generate-tier-prompts/route.ts`):**
 
-- **No-provider default:** When no provider selected, Tier 1 MUST use parenthetical syntax `(term:1.3)`. Using `::` without provider context is wrong.
-- **`--no` flag mandatory for T2:** All negatives must follow `--no`. Inline negatives without `--no` are treated as positive prompt by Midjourney.
-- **`--v 7`:** Midjourney parameter updated from `--v 6`.
-- **Weight hierarchy:** Subject must carry highest weight in both T1 and T2. Abstract mood terms get lowest or no weight.
-- **Literal language for T1:** CLIP interprets literally — "schools of fish" not "clouds of fish".
-- **Expert value-add:** Every tier must include composition, lighting, or style elements the user didn't provide.
-- **v4.0.0 additions:** T1-8 semantic clustering + interaction merging, T3-5 opening diversity, T4-5 mandatory scene depth, G1 emotional atmosphere mandate, T1-6 time-of-day weighting, T3 "that feels" ban (11 banned phrases total).
-- **Post-processing pipeline:** 7 functions (P1–P12) in `harmony-post-processing.ts` catch GPT artefacts. See `ai-disguise.md` v4.0.0 §7.
+- **v4.0 base:** No-provider default (parenthetical syntax), `--no` flag mandatory for T2, `--v 7` for Midjourney, weight hierarchy (subject highest), literal language for T1, expert value-add, semantic clustering + interaction merging, T3 opening diversity, T4 mandatory scene depth, emotional atmosphere mandate, T1 time-of-day weighting, T3 "that feels" ban (11 banned phrases).
+- **v4.1:** T1 interaction token scanning, T4 anchor triage hierarchy, T4 value-add self-check, T4 anti-paraphrase opening, T3 "captured" standalone ban, T3 verb fidelity with WRONG/RIGHT examples.
+- **v4.2:** Strengthened 3 weak fixes from v4.1 based on 3-scene retest.
+- **v4.3:** T1 deduplication rule (remove standalone when interaction token created). T4 value-add reframed from "add a new element" to "convert one existing element into something richer."
+- **v4.4:** **T2 `--no` duplication root-cause fix** — T2 `negative` JSON field set to empty string `""`. All negatives go inline after `--no` in the positive field only.
+- **v4.5:** **T4 character ceiling raised 250→325** based on SSOT data (`platform-config.json` idealMax average is 277 characters, 7/15 T4 platforms accept 300+).
+
+**Post-processing pipeline:** 5 active functions + `postProcessTiers()` orchestrator in `harmony-post-processing.ts` (272 lines). See `ai-disguise.md` v4.0.0 §7.
+
+**GPT ceilings (permanent):** "reflect" → smear/ripple/shimmer/streak (T3/T4); "burn" → glow (T1/T4, cracked in T3/T4 on v4.5); run-to-run variance of 83–92 on identical inputs is expected.
 
 ---
 
@@ -164,7 +174,7 @@ Renders `HomepageGrid` with Prompt Lab–specific content:
 - **isStudioSubPage:** `true`
 - Tracks `hasProvider` state via callback from `PlaygroundWorkspace`
 
-#### PlaygroundWorkspace: `playground-workspace.tsx` (313 lines) — THE ORCHESTRATOR
+#### PlaygroundWorkspace: `playground-workspace.tsx` (369 lines) — THE ORCHESTRATOR
 
 **v3.0.0:** This is no longer a simple routing component. It is the AI Disguise orchestrator that lifts all AI hooks so state persists across provider ↔ no-provider component switches.
 
@@ -196,16 +206,16 @@ Both paths receive identical AI Disguise props: `aiTierPrompts`, `isTierGenerati
 
 ---
 
-### Prompt Lab Components (v3.0.0)
+### Prompt Lab Components (v4.0.0)
 
 #### Core Components
 
-| Component                    | File                                                         | Lines     | Purpose                                                                                                                                                                      |
-| ---------------------------- | ------------------------------------------------------------ | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PlaygroundWorkspace`        | `src/components/prompts/playground-workspace.tsx`            | 313       | AI Disguise orchestrator — lifts hooks, auto-re-fires, passes AI state down                                                                                                  |
-| `EnhancedEducationalPreview` | `src/components/prompts/enhanced-educational-preview.tsx`    | **2,014** | Lab preview — full-width layout, AI tier display, Call 3 wiring, algorithm animation, footer Clear All cascade via `clearSignal`                                             |
-| `FourTierPromptPreview`      | `src/components/prompt-builder/four-tier-prompt-preview.tsx` | **788**   | 4-tier prompt cards, colour-coded text (Pro), "Generated for" badge, **tier provider icons strip**, white tier labels, `providers` prop                                      |
-| `DescribeYourImage`          | `src/components/providers/describe-your-image.tsx`           | **722**   | Human text input — textarea, **engine bay gradient Generate button** (pulse + shimmer), **purple gradient Clear All**, `clearSignal` prop, format detection, drift indicator |
+| Component                    | File                                                         | Lines     | Purpose                                                                                                                                                                             |
+| ---------------------------- | ------------------------------------------------------------ | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PlaygroundWorkspace`        | `src/components/prompts/playground-workspace.tsx`            | **369**   | AI Disguise orchestrator — lifts hooks, auto-re-fires, passes AI state down                                                                                                         |
+| `EnhancedEducationalPreview` | `src/components/prompts/enhanced-educational-preview.tsx`    | **1,913** | Lab preview — full-width layout, AI tier display, Call 3 wiring, algorithm animation, **negative prompt window**, race condition guards, footer Clear All cascade via `clearSignal` |
+| `FourTierPromptPreview`      | `src/components/prompt-builder/four-tier-prompt-preview.tsx` | **942**   | 4-tier prompt cards, colour-coded text (Pro), "Generated for" badge, **tier provider icons strip**, white tier labels, `providers` prop                                             |
+| `DescribeYourImage`          | `src/components/providers/describe-your-image.tsx`           | **1,153** | Human text input — textarea, **engine bay gradient Generate button** (pulse + shimmer), **purple gradient Clear All**, `clearSignal` prop, format detection, drift indicator        |
 
 #### AI Disguise Components (new in v3.0.0)
 
@@ -214,36 +224,53 @@ Both paths receive identical AI Disguise props: `aiTierPrompts`, `isTierGenerati
 | `AlgorithmCycling` | `src/components/prompt-lab/algorithm-cycling.tsx` | 256   | Cycling animation during Call 3 — amber→emerald colour shift, slot-machine deceleration |
 | `DriftIndicator`   | `src/components/prompt-lab/drift-indicator.tsx`   | 136   | Amber pulsing "N changes detected" badge — §4 Zeigarnik Effect                          |
 
-#### AI Disguise Hooks (new in v3.0.0)
+#### AI Disguise Hooks (v4.0.0)
 
-| Hook                | File                               | Lines | Purpose                                                                                       |
-| ------------------- | ---------------------------------- | ----- | --------------------------------------------------------------------------------------------- |
-| `useTierGeneration` | `src/hooks/use-tier-generation.ts` | 224   | Call 2 — fires `/api/generate-tier-prompts`, AbortController for provider-switch cancellation |
-| `useAiOptimisation` | `src/hooks/use-ai-optimisation.ts` | 335   | Call 3 — fires `/api/optimise-prompt`, orchestrates 3-phase animation timing                  |
-| `useDriftDetection` | `src/hooks/use-drift-detection.ts` | 165   | Word-level diff, zero API calls, bag-of-words symmetric difference                            |
+| Hook                | File                               | Lines   | Purpose                                                                                       |
+| ------------------- | ---------------------------------- | ------- | --------------------------------------------------------------------------------------------- |
+| `useTierGeneration` | `src/hooks/use-tier-generation.ts` | **239** | Call 2 — fires `/api/generate-tier-prompts`, AbortController for provider-switch cancellation |
+| `useAiOptimisation` | `src/hooks/use-ai-optimisation.ts` | **337** | Call 3 — fires `/api/optimise-prompt`, orchestrates 3-phase animation timing, clear cascade   |
+| `useDriftDetection` | `src/hooks/use-drift-detection.ts` | 165     | Word-level diff, zero API calls, bag-of-words symmetric difference                            |
 
 #### AI Disguise API Routes (v4.0.0)
 
-| Route                             | File                                         | Lines   | Purpose                                                                                                                                                |
-| --------------------------------- | -------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `POST /api/parse-sentence`        | `src/app/api/parse-sentence/route.ts`        | **455** | Call 1 — GPT extracts human text → 12 category JSON + matched phrases for text colouring                                                               |
-| `POST /api/generate-tier-prompts` | `src/app/api/generate-tier-prompts/route.ts` | **523** | Call 2 — GPT generates 4 native tier prompts (30-rule system prompt). Imports `postProcessTiers()` from `harmony-post-processing.ts` (P1–P12 pipeline) |
-| `POST /api/optimise-prompt`       | `src/app/api/optimise-prompt/route.ts`       | **336** | Call 3 — GPT optimises assembled prompt for specific provider                                                                                          |
+| Route                             | File                                         | Lines   | Purpose                                                                                                                                                                                             |
+| --------------------------------- | -------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /api/parse-sentence`        | `src/app/api/parse-sentence/route.ts`        | **455** | Call 1 — GPT extracts human text → 12 category JSON + matched phrases for text colouring                                                                                                            |
+| `POST /api/generate-tier-prompts` | `src/app/api/generate-tier-prompts/route.ts` | **650** | Call 2 — GPT generates 4 native tier prompts (**v4.5 system prompt**, temp 0.5, max_completion 2000). Imports `postProcessTiers()` from `harmony-post-processing.ts`                                |
+| `POST /api/optimise-prompt`       | `src/app/api/optimise-prompt/route.ts`       | **406** | Call 3 — GPT optimises assembled prompt for specific provider. **43 independent builder files**, proseGroups detection, server-side charCount, compliance gates. Config: temp 0.4 prose / 0.2 CLIP. |
 
-#### Post-Processing Module (v4.0.0 — extracted from route.ts)
+#### Post-Processing Modules (v4.0.0)
 
-| File                                                | Lines   | Purpose                                                                                                                  |
-| --------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `src/lib/harmony-post-processing.ts`                | **342** | 7 active functions (P1, P2, P3, P8, P10, P11, P12) — catches GPT mechanical artefacts server-side. Imported by route.ts. |
-| `src/lib/harmony-compliance.ts`                     | **486** | Compliance gate (P4, P5, P6, P9) + rule ceiling tracking (`RULE_CEILING = 30`).                                          |
-| `src/lib/__tests__/harmony-post-processing.test.ts` | **601** | 72-test lockdown suite — real GPT fixtures from 6 rounds + 3 stress tests.                                               |
-| `src/lib/__tests__/harmony-compliance.test.ts`      | **453** | 43-test compliance suite — drift detection assertions for lookup set sizes.                                              |
+Two separate post-processing files exist — one for Call 2, one for Call 3:
 
-#### Data Files (new in v3.0.0)
+**Call 2 post-processing (`src/lib/harmony-post-processing.ts`):**
 
-| File                          | Lines | Purpose                                                                                                    |
-| ----------------------------- | ----- | ---------------------------------------------------------------------------------------------------------- |
-| `src/data/algorithm-names.ts` | 187   | 101 algorithm display names + 3 finale names + Fisher-Yates shuffle + `getAlgorithmCount()` (87–102 range) |
+| File                                 | Lines   | Purpose                                                                                                                                                      |
+| ------------------------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/lib/harmony-post-processing.ts` | **272** | 5 active functions + `postProcessTiers()` orchestrator — catches GPT mechanical artefacts on Call 2 responses. Imported by `generate-tier-prompts/route.ts`. |
+
+Active functions: `deduplicateMjParams` (T2 `--no` dedup), `stripTrailingPunctuation` (T1 period strip), `fixT4SelfCorrection`, `fixT4MetaOpeners`, `mergeT4ShortSentences`. T1 also gets `enforceWeightCap` (from harmony-compliance.ts).
+
+**Call 3 post-processing (`src/lib/optimise-prompts/harmony-post-processing.ts`):**
+
+| File                                                  | Lines   | Purpose                                                                                                                                                              |
+| ----------------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/lib/optimise-prompts/harmony-post-processing.ts` | **439** | 7 active functions + `postProcessTiers()` — catches GPT artefacts on Call 3 responses. Includes T3-specific `fixT3MetaOpeners` and `stripClipQualitativeAdjectives`. |
+
+**Compliance gate (shared by both Call 2 and Call 3):**
+
+| File                            | Lines   | Purpose                                                                                                                                                                                                                                                                                                      |
+| ------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/lib/harmony-compliance.ts` | **833** | Deterministic compliance functions: `enforceT1Syntax`, `enforceNegativeContradiction`, `enforceWeightCap`, `enforceMjParameters`, `enforceClipKeywordCleanup`, `detectT4MetaLanguage`, `detectT3BannedPhrases`, `runFullCompliance`. Rule ceiling tracking (`RULE_CEILING = 30`, `CURRENT_RULE_COUNT = 30`). |
+
+**Test files:** Harmony test files (`harmony-post-processing.test.ts`, `harmony-compliance.test.ts`) were documented at 601+453 lines (115-test lockdown suite) — not present in current src.zip (may be excluded from zip or relocated).
+
+#### Data Files (v4.0.0)
+
+| File                          | Lines   | Purpose                                                                                              |
+| ----------------------------- | ------- | ---------------------------------------------------------------------------------------------------- |
+| `src/data/algorithm-names.ts` | **484** | Algorithm display names + finale names + Fisher-Yates shuffle + `getAlgorithmCount()` (87–102 range) |
 
 #### Removed from Prompt Lab (v3.0.0)
 
@@ -261,17 +288,17 @@ Both paths receive identical AI Disguise props: `aiTierPrompts`, `isTierGenerati
 
 ---
 
-### Prompt Lab Features (v3.0.0)
+### Prompt Lab Features (v4.0.0)
 
-#### AI Disguise Features (new)
+#### AI Disguise Features (new in v3.0.0, updated v4.0.0)
 
-**1. AI Tier Generation (Call 2):** When "Generate Prompt" is clicked, Call 2 fires in parallel with Call 1. The AI generates 4 tier-native prompts directly from the user's human text, preserving poetry, spatial relationships, and creative intent. Template generators (`generators.ts`) are fallback only. `activeTierPromptText` uses `aiTierPrompts ?? generatedPrompts`.
+**1. AI Tier Generation (Call 2):** When "Generate Prompt" is clicked, Call 2 fires in parallel with Call 1. The AI generates 4 tier-native prompts directly from the user's human text, preserving poetry, spatial relationships, and creative intent. Template generators (`generators.ts`) are fallback only. `activeTierPromptText` uses `aiTierPrompts ?? generatedPrompts`. **v4.0.0:** System prompt at v4.5 with 6 iterative fixes (T1 interaction tokens, T2 `--no` root cause, T3 verb fidelity, T4 325-char ceiling, T1 dedup, T4 anchor triage).
 
 **2. "Generated for" Badge:** When a provider is selected and Call 2 has returned, a violet badge appears in the 4-tier header: "Generated for Leonardo AI". De-selecting the provider keeps the badge visible with the last-generated provider name. Switching providers re-fires Call 2 and updates the badge.
 
-**3. AI Prompt Optimisation (Call 3):** When the optimizer is toggled ON with a provider selected, Call 3 fires. The AI restructures the prompt for the specific provider — reordering by impact priority, applying provider-specific weight syntax, removing filler, strengthening quality anchors. Uses the effective optimised text (`aiOptimiseResult?.optimised ?? optimizedResult.optimized`) throughout.
+**3. AI Prompt Optimisation (Call 3):** When the optimizer is toggled ON with a provider selected, Call 3 fires. The AI restructures the prompt for the specific provider — reordering by impact priority, applying provider-specific weight syntax, removing filler, strengthening quality anchors. **v4.0.0:** 43 independent builder files (no shared imports between builders), proseGroups detection for input framing, server-side charCount measurement, compliance gates. Config: temp 0.4 prose / 0.2 CLIP.
 
-**4. Algorithm Cycling Animation:** During Call 3, 101 algorithm names cycle at 160–200ms in amber monospace text, decelerating to a slot-machine stop, landing on "✓ {87–102} algorithms applied" in emerald. Minimum 1.8s display time. 12s hard timeout. `prefers-reduced-motion` respected. Human factors: §3 Anticipatory Dopamine, §6 Temporal Compression, §18 Animation as Communication.
+**4. Algorithm Cycling Animation:** During Call 3, algorithm names cycle at 160–200ms in amber monospace text, decelerating to a slot-machine stop, landing on "✓ {87–102} algorithms applied" in emerald. Minimum 1.8s display time. 12s hard timeout. `prefers-reduced-motion` respected. Human factors: §3 Anticipatory Dopamine, §6 Temporal Compression, §18 Animation as Communication.
 
 **5. Prompt DNA Drift Detection:** Pure client-side word-level diff between current textarea text and last-generated text. Zero API calls. When `isDrifted && changeCount >= 3`, the Generate button pulses amber and changes to "Regenerate". Below 3 changes, only the amber badge appears. Human factor: §4 Zeigarnik Effect.
 
@@ -289,46 +316,54 @@ Both paths receive identical AI Disguise props: `aiTierPrompts`, `isTierGenerati
 
 **12. `clearSignal` Mechanism (v3.1.0):** Footer Clear All cannot directly access DescribeYourImage's internal state (`inputText`, `hasGenerated`). Solution: `EnhancedEducationalPreview` holds `const [clearSignal, setClearSignal] = useState(0)`. Footer `handleClear()` increments it. DescribeYourImage has a `useEffect` watching `clearSignal` that resets its own internal state + fires `onClear()`. Avoids lifting textarea state to parent.
 
+**13. Negative Prompt Window (v4.0.0):** For platforms with `negativeSupport: 'separate'`, an amber-styled negative prompt window renders below the optimised positive prompt. Call 3 negative takes priority; Call 2 tier negative is fallback. Shows provider name + icon, character count, inline copy button. Gated on `hasSeparateNegative && effectiveNegativeText`. Included in save handler alongside positive prompt. See `prompt-optimizer.md` v6.0.0 §14.8.
+
+**14. "Optimised but unchanged" State (v4.0.0):** When Call 3 runs but the optimised text is identical to the assembled text (`isOptimisedButUnchanged`), the assembled prompt box still relabels to emerald "Optimised prompt" so the user knows optimisation was attempted — it just had nothing to improve.
+
+**15. Race Condition Guards (v4.0.0):** Three separate `useEffect` hooks in EEP guard against stale Call 3 results: (a) `clearAiOptimise()` when `aiTierPrompts` changes (Call 2 returns new content), (b) `clearAiOptimise()` on provider change, (c) `clearAiOptimise()` in the Clear cascade.
+
 #### Retained Features (from v2.0.0)
 
-**13. Colour-coded prompts in all 4 tiers:** `FourTierPromptPreview` receives `isPro` and `termIndex` props. When `isPro=true`, each tier card renders prompt text via `parsePromptIntoSegments()` with `CATEGORY_COLOURS`.
+**16. Colour-coded prompts in all 4 tiers:** `FourTierPromptPreview` receives `isPro` and `termIndex` props. When `isPro=true`, each tier card renders prompt text via `parsePromptIntoSegments()` with `CATEGORY_COLOURS`.
 
-**14. Assembled prompt box:** Full-width box showing `activeTierPromptText` (AI tier text when available, template text as fallback). Colour-coded for Pro users. Inline `SaveIcon` + copy icons. `StageBadge` in header. Char count right-aligned.
+**17. Assembled prompt box:** Full-width box showing `activeTierPromptText` (AI tier text when available, template text as fallback). Colour-coded for Pro users. Inline `SaveIcon` + copy icons. `StageBadge` in header. Char count right-aligned.
 
-**15. Dynamic label switching:** When `isOptimizerEnabled && selectedProviderId`: label changes to "Optimized prompt in [Provider] [icon]" (emerald). Uses `effectiveWasOptimized` (AI result takes priority over client-side).
+**18. Dynamic label switching:** When `isOptimizerEnabled && selectedProviderId`: label changes to "Optimized prompt in [Provider] [icon]" (emerald). Uses `effectiveWasOptimized` (AI result takes priority over client-side). **v4.0.0:** `effectiveWasOptimized` now compares text content (`aiOptimiseResult.optimised !== activeTierPromptText`), NOT length — fixes display bug where enriched prompts were hidden.
 
-**16. Optimizer neutral mode:** When no provider selected, the optimizer toggle is force-disabled. Tooltip: "Select an AI provider above to enable optimisation."
+**19. Optimizer neutral mode:** When no provider selected, the optimizer toggle is force-disabled. Tooltip: "Select an AI provider above to enable optimisation."
 
-**17. Green "Within optimal range":** When optimizer ON + provider selected + no trimming needed + not actively optimising: emerald bar "✓ Within optimal range — X chars / No trimming needed".
+**20. Green "Within optimal range":** When optimizer ON + provider selected + no trimming needed + not actively optimising: emerald bar "✓ Within optimal range — X chars / No trimming needed".
 
-**18. LabCategoryColourLegend:** Positioned in header between `│` divider and Optimize toggle.
+**21. LabCategoryColourLegend:** Positioned in header between `│` divider and Optimize toggle.
 
-**19. Inline copy + save icons:** Copy + `SaveIcon` inside both assembled and optimized prompt boxes. All copy handlers call `incrementLifetimePrompts()`.
+**22. Inline copy + save icons:** Copy + `SaveIcon` inside both assembled and optimized prompt boxes. All copy handlers call `incrementLifetimePrompts()`. **v4.0.0:** Save handler now includes `negativePrompt` field.
 
-**20. DnaBar:** Still receives `conflictCount`, `hasHardConflicts`, `healthScore` from `useRealIntelligence` (simplified to return only DnaBar data, not full panel data).
+**23. DnaBar:** Still receives `conflictCount`, `hasHardConflicts`, `healthScore` from `useRealIntelligence` (simplified to return only DnaBar data, not full panel data).
 
 ---
 
-### Key Difference: Lab vs Standard Builder (v3.0.0)
+### Key Difference: Lab vs Standard Builder (v4.0.0)
 
-| Aspect                 | Standard Builder (`/providers/[id]`)             | Prompt Lab (`/studio/playground`)                                 |
-| ---------------------- | ------------------------------------------------ | ----------------------------------------------------------------- |
-| Header                 | Static: "Midjourney · Prompt builder"            | Dropdown: "[▼ Select Provider...]"                                |
-| Provider               | Pre-selected from URL                            | User selects from all 42                                          |
-| No provider state      | N/A (always has provider)                        | Shows `EnhancedEducationalPreview` full-width                     |
-| AI tier generation     | No — uses template `generators.ts`               | Yes — Call 2 generates AI-native tier prompts                     |
-| AI prompt optimisation | No — client-side 4-phase optimizer only          | Yes — Call 3 (AI) + client-side as fallback                       |
-| Algorithm cycling      | No                                               | Yes — 101 names, amber→emerald, slot-machine landing              |
-| Drift detection        | No                                               | Yes — word-level diff with "Regenerate" pulse                     |
-| Intelligence Panel     | Full panel (Conflicts, Suggestions, Market Mood) | **Removed** — DnaBar conflict count retained                      |
-| Layout                 | 3-column grid (builder + Intelligence Panel)     | Full-width single column                                          |
-| Prompt source          | Template assembly via `assemblePrompt()`         | AI tiers (Call 2) with template fallback                          |
-| Selection persistence  | Resets on URL change                             | Persists across provider switches                                 |
-| Colour coding          | Pro only (both boxes)                            | Pro only (all 4 tiers + both boxes)                               |
-| Generate button        | Standard                                         | Engine bay gradient (pulse + shimmer when text present)           |
-| Clear All              | Standard clear                                   | Purple gradient, full cascade, `clearSignal` for external trigger |
-| Tier provider icons    | None                                             | All providers for active tier shown as icon strip                 |
-| Post-processing        | None                                             | P1 (T2 `--no` dedup) + P2 (T1 period strip)                       |
+| Aspect                 | Standard Builder (`/providers/[id]`)             | Prompt Lab (`/studio/playground`)                                                    |
+| ---------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| Header                 | Static: "Midjourney · Prompt builder"            | Dropdown: "[▼ Select Provider...]"                                                   |
+| Provider               | Pre-selected from URL                            | User selects from all 40                                                             |
+| No provider state      | N/A (always has provider)                        | Shows `EnhancedEducationalPreview` full-width                                        |
+| AI tier generation     | No — uses template `generators.ts`               | Yes — Call 2 generates AI-native tier prompts (v4.5 system prompt)                   |
+| AI prompt optimisation | No — client-side 4-phase optimizer only          | Yes — Call 3 (43 builders, temp 0.4/0.2) + client-side as fallback                   |
+| Algorithm cycling      | No                                               | Yes — 101 names, amber→emerald, slot-machine landing                                 |
+| Drift detection        | No                                               | Yes — word-level diff with "Regenerate" pulse                                        |
+| Intelligence Panel     | Full panel (Conflicts, Suggestions, Market Mood) | **Removed** — DnaBar conflict count retained                                         |
+| Layout                 | 3-column grid (builder + Intelligence Panel)     | Full-width single column                                                             |
+| Prompt source          | Template assembly via `assemblePrompt()`         | AI tiers (Call 2) with template fallback                                             |
+| Selection persistence  | Resets on URL change                             | Persists across provider switches                                                    |
+| Colour coding          | Pro only (both boxes)                            | Pro only (all 4 tiers + both boxes)                                                  |
+| Generate button        | Standard                                         | Engine bay gradient (pulse + shimmer when text present)                              |
+| Clear All              | Standard clear                                   | Purple gradient, full cascade, `clearSignal` for external trigger                    |
+| Tier provider icons    | None                                             | All providers for active tier shown as icon strip                                    |
+| Post-processing        | None                                             | Call 2: 5 functions (dedup, strip, T4 fixes). Call 3: 7 functions + compliance gates |
+| Negative prompt        | None                                             | Amber window for `negativeSupport: 'separate'` platforms (v4.0.0)                    |
+| Stale result guards    | None                                             | 3 useEffect hooks clear Call 3 on tier change / provider change / clear (v4.0.0)     |
 
 ---
 
@@ -409,10 +444,13 @@ All Studio child pages use `HomepageGrid` with these standard props:
 - **Clear must cascade through ALL state: textarea, 12 category dropdowns, optimizer OFF, AI tiers, AI optimise, aspect ratio, scene, drift. Footer Clear All uses `clearSignal` to trigger DescribeYourImage internal reset.**
 - **Algorithm names never reference "AI", "GPT", "OpenAI", or "LLM" — see `ai-disguise.md` §1**
 - **Weight syntax is provider-specific — Leonardo uses `::`, SD uses `()` — never hardcode one as universal**
-- **Post-processing (`postProcessTiers()`) is mandatory on all Call 2 responses** — 7 functions (P1–P12) in `harmony-post-processing.ts` catch GPT mechanical artefacts. Do not bypass, remove, or make conditional. See `ai-disguise.md` v4.0.0 §7.
-- **115-test harmony lockdown suite must pass before shipping** — `harmony-post-processing.test.ts` (72 tests) + `harmony-compliance.test.ts` (43 tests). Any red test = drift. Fix the code, not the test.
+- **Post-processing is mandatory on all Call 2 AND Call 3 responses** — Call 2: 5 functions in `src/lib/harmony-post-processing.ts`. Call 3: 7 functions in `src/lib/optimise-prompts/harmony-post-processing.ts`. Do not bypass, remove, or make conditional.
 - **Rule ceiling is 30** — raising requires explicit Martin approval. Tracked in `harmony-compliance.ts` with test assertion.
-- **Post-processing extraction is permanent** — all P1–P12 functions live in `harmony-post-processing.ts`, imported by route.ts. Do not move them back.
+- **Post-processing extraction is permanent** — Call 2 functions live in `src/lib/harmony-post-processing.ts`, Call 3 functions live in `src/lib/optimise-prompts/harmony-post-processing.ts`. Do not move them back into route files.
+- **`effectiveWasOptimized` must compare text content** (`optimised !== activeTierPromptText`), NOT length — length comparison hides enriched prompts (v4.0.0 fix)
+- **Server-side `charCount` measurement is mandatory** — never trust GPT self-reported counts. `result.charCount = result.optimised.length` after all compliance gates.
+- **No Call 3 builder may import from another builder** — complete isolation prevents cross-platform regressions
+- **Stale Call 3 must be cleared when Call 2 returns new content** — `clearAiOptimise()` in the `aiTierPrompts` watcher effect
 
 ### UI Rules (v3.1.0)
 
@@ -434,30 +472,35 @@ All Studio child pages use `HomepageGrid` with these standard props:
 
 ## Related Documents
 
-| Topic                                             | Document                              |
-| ------------------------------------------------- | ------------------------------------- |
-| AI Disguise full specification                    | `ai-disguise.md` v4.0.0               |
-| Harmony engineering playbook                      | `harmonizing-claude-openai.md` v2.0.0 |
-| V4 four-phase flow (Check→Assess→Decide→Generate) | `prompt-lab-v4-flow.md` v1.3.0        |
-| Human sentence conversion UI + term matching      | `human-sentence-conversion.md`        |
-| Prompt builder architecture                       | `prompt-builder-page.md`              |
-| Colour-coded prompt anatomy                       | `paid_tier.md` §5.14                  |
-| Prompt Lab parity features                        | `paid_tier.md` §5.13                  |
-| Pro Gem Badge (lifetime counter)                  | `paid_tier.md` §5.15                  |
-| Prompt optimizer (client-side)                    | `prompt-optimizer.md`                 |
-| Human factors                                     | `human-factors.md`                    |
-| Button styling standards                          | `buttons.md`                          |
-| Homepage layout                                   | `homepage.md`                         |
-| Mission Control                                   | `mission-control.md`                  |
-| Engine Bay                                        | `ignition.md`                         |
-| Intelligence system                               | `prompt-intelligence.md` §9           |
-| Code standards                                    | `code-standard.md`                    |
-| SSOT colour constants                             | `code-standard.md` § 6.14             |
-| Master test document                              | `test.md`                             |
+| Topic                                             | Document                                      |
+| ------------------------------------------------- | --------------------------------------------- |
+| AI Disguise full specification                    | `ai-disguise.md` v4.0.0                       |
+| Harmony engineering playbook                      | `harmonizing-claude-openai.md` v2.0.0         |
+| V4 four-phase flow (Check→Assess→Decide→Generate) | `prompt-lab-v4-flow.md` v1.3.0                |
+| Human sentence conversion UI + term matching      | `human-sentence-conversion.md`                |
+| Prompt builder architecture                       | `prompt-builder-page.md`                      |
+| Colour-coded prompt anatomy                       | `paid_tier.md` §5.14                          |
+| Prompt Lab parity features                        | `paid_tier.md` §5.13                          |
+| Pro Gem Badge (lifetime counter)                  | `paid_tier.md` §5.15                          |
+| Prompt optimizer (client-side + Call 3)           | `prompt-optimizer.md` v6.0.0                  |
+| Platform SSOT                                     | `platform-config.json` + `platform-config.ts` |
+| Harmony anti-regression                           | `harmony-anti-regression.md`                  |
+| Trend analysis + scoring data                     | `trend-analysis.md` v6.0.0                    |
+| Human factors                                     | `human-factors.md`                            |
+| Button styling standards                          | `buttons.md`                                  |
+| Homepage layout                                   | `homepage.md`                                 |
+| Mission Control                                   | `mission-control.md`                          |
+| Engine Bay                                        | `ignition.md`                                 |
+| Intelligence system                               | `prompt-intelligence.md` §9                   |
+| Code standards                                    | `code-standard.md`                            |
+| SSOT colour constants                             | `code-standard.md` § 6.14                     |
+| Master test document                              | `test.md`                                     |
 
 ---
 
 ## Changelog
+
+- **29 Mar 2026 (v4.0.0):** **CALL 2 v4.5 + CALL 3 INDEPENDENT BUILDERS + NEGATIVE PROMPT + 5 BUG FIXES.** Updated version from 3.2.0→4.0.0. Platform count corrected from 42→40 throughout. §AI Disguise Architecture: Call 2 description updated to reference v4.5 system prompt (6 iterative versions, three-assessor methodology). Call 3 description updated to reference 43 independent builder files. Added calibration finding (Claude scores T3 ~5-6pts, T4 ~3-5pts too high). Harmony engineering summary rewritten: now references v4.0→v4.5, three test scenes, three assessors, two separate post-processing files. §Data Flow: Added negative prompt window to Optimise flow. Added stale Call 3 clear on provider switch. §Provider-Specific Prompt Syntax: Rewrote as versioned progression v4.0→v4.5 with specific fixes per version (T1 interaction tokens, T2 `--no` root cause, T3 verb fidelity, T4 325-char ceiling, T1 dedup, T4 anchor triage). Added GPT ceilings. Post-processing reference corrected: "7 functions (P1–P12)" → "5 active functions + postProcessTiers()". §Component Architecture: Updated all line counts to match src.zip ground truth — PlaygroundWorkspace 313→369, EEP 2,014→1,913, FourTierPromptPreview 788→942, DescribeYourImage 722→1,153, use-tier-generation 224→239, use-ai-optimisation 335→337, algorithm-names 187→484, generate-tier-prompts 523→650, optimise-prompt 336→406, harmony-post-processing (Call 2) 342→272, harmony-compliance 486→833. §Post-Processing Modules: Rewritten as two separate subsections — Call 2 (272 lines, 5 functions) and Call 3 (439 lines, 7 functions) with separate file paths. Compliance gate updated to 833 lines with full function list. Test files noted as not in current src.zip. §Prompt Lab Features: Added features 13 (negative prompt window), 14 (optimised-but-unchanged state), 15 (race condition guards). Feature 1 updated with v4.5 system prompt. Feature 3 updated with 43 builders and config details. Feature 18 updated with effectiveWasOptimized text comparison fix. Feature 22 updated with negativePrompt in save handler. §Comparison table: Added 3 rows (negative prompt, stale result guards, post-processing split). Updated Call 3 description and post-processing row. §Non-Regression Rules: Added 4 new AI Disguise rules (text comparison for effectiveWasOptimized, server-side charCount, no builder cross-imports, stale Call 3 clearing). Updated post-processing rule to reference both files. §Related Documents: Added platform-config SSOT, harmony-anti-regression, trend-analysis v6.0.0. Updated prompt-optimizer reference to v6.0.0. §Cross-reference header: Added prompt-optimizer v6.0.0, platform-config references.
 
 - **25 Mar 2026 (v3.2.0):** **HARMONY v2 INFRASTRUCTURE SYNC.** Cross-references updated: ai-disguise v3.0.0→v4.0.0, added harmonizing v2.0.0, added prompt-lab-v4-flow v1.3.0. Call 2 description updated: 18→30 system prompt rules, P1+P2→P1–P12 post-processing pipeline. Harmony engineering summary updated: 5→6+ rounds + 3 stress tests, 62→93 changed to 62→96, dual-assessor convergence (≤1 point gap). API Routes section updated to v4.0.0: route.ts 406→523 lines, parse-sentence 243→455 lines, optimise-prompt 315→336 lines. Added Post-Processing Module subsection: harmony-post-processing.ts (342 lines, 7 functions), harmony-compliance.ts (486 lines), 2 test files (601+453 lines, 115-test lockdown suite). Non-regression rules expanded: P1+P2→P1–P12 reference, added 115-test lockdown requirement, rule ceiling 30, extraction permanent. Related Documents: added harmonizing v2.0.0, prompt-lab-v4-flow v1.3.0, test.md.
 

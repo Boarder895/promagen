@@ -141,7 +141,7 @@
     "score": 94,
     "countryCode": "CO",
     "likeCount": 24,
-    "locationName": "Bogot\u00e1"
+    "locationName": "Bogotá"
   },
   {
     "platformId": "craiyon",
@@ -276,30 +276,6 @@
     "locationName": "Busan"
   },
   {
-    "platformId": "getimg",
-    "platformName": "Getimg.ai",
-    "platformIcon": "/icons/providers/getimg.png",
-    "brandColor": "#14B8A6",
-    "description": "space explorer on Mars surface, science fiction...",
-    "optimisedPrompt": "masterpiece, best quality, highly detailed, (space explorer on Mars surface:1.2), science fiction art, mercury vapour blue-white light, metallic accents, centered subject, wide shot, subway entrance steps descending, glass transparency, dry desert clarity, harsh fluorescent overhead spill, sharp focus, 8K, intricate textures",
-    "score": 93,
-    "countryCode": "CZ",
-    "likeCount": 3,
-    "locationName": "Brno"
-  },
-  {
-    "platformId": "getimg",
-    "platformName": "Getimg.ai",
-    "platformIcon": "/icons/providers/getimg.png",
-    "brandColor": "#14B8A6",
-    "description": "star navigator on bridge deck, science fiction art",
-    "optimisedPrompt": "masterpiece, best quality, highly detailed, (star navigator on bridge deck:1.2), science fiction art, mercury vapour blue-white light, metallic accents, centered subject, wide shot, subway entrance steps descending, glass transparency, dry desert clarity, harsh fluorescent overhead spill, sharp focus, 8K, intricate textures",
-    "score": 93,
-    "countryCode": "MX",
-    "likeCount": 31,
-    "locationName": "Mexico City"
-  },
-  {
     "platformId": "playground",
     "platformName": "Playground AI",
     "platformIcon": "/icons/providers/playground.png",
@@ -321,7 +297,7 @@
     "score": 93,
     "countryCode": "PL",
     "likeCount": 24,
-    "locationName": "Krak\u00f3w"
+    "locationName": "Kraków"
   },
   {
     "platformId": "pixlr",
@@ -405,43 +381,7 @@
     "score": 92,
     "countryCode": "CL",
     "likeCount": 1,
-    "locationName": "Valpara\u00edso"
-  },
-  {
-    "platformId": "getimg",
-    "platformName": "Getimg.ai",
-    "platformIcon": "/icons/providers/getimg.png",
-    "brandColor": "#14B8A6",
-    "description": "astronaut floating above Earth, science fiction...",
-    "optimisedPrompt": "masterpiece, best quality, highly detailed, (astronaut floating above Earth:1.2), science fiction art, cold blue pre-dawn twilight, cool tones, symmetrical composition, full body shot, industrial waterfront cranes, metal surface, cool midnight clarity after rainfall, mercury vapour blue-white light, sharp focus, 8K, intricate textures",
-    "score": 92,
-    "countryCode": "SE",
-    "likeCount": 0,
-    "locationName": "Stockholm"
-  },
-  {
-    "platformId": "getimg",
-    "platformName": "Getimg.ai",
-    "platformIcon": "/icons/providers/getimg.png",
-    "brandColor": "#14B8A6",
-    "description": "moon walker beside crater edge, science fiction...",
-    "optimisedPrompt": "masterpiece, best quality, highly detailed, (moon walker beside crater edge:1.2), science fiction art, harsh fluorescent overhead spill, monochrome, leading lines, medium shot, rooftop terrace overlooking cityscape, carbon fibre, mountain cold snap clarity, cold blue pre-dawn twilight, sharp focus, 8K, intricate textures",
-    "score": 92,
-    "countryCode": "VN",
-    "likeCount": 2,
-    "locationName": "Hanoi"
-  },
-  {
-    "platformId": "getimg",
-    "platformName": "Getimg.ai",
-    "platformIcon": "/icons/providers/getimg.png",
-    "brandColor": "#14B8A6",
-    "description": "orbital engineer inside station, science fictio...",
-    "optimisedPrompt": "masterpiece, best quality, highly detailed, (orbital engineer inside station:1.2), science fiction art, cold blue pre-dawn twilight, cool tones, symmetrical composition, full body shot, industrial waterfront cranes, metal surface, still night with crystalline atmosphere, mercury vapour blue-white light, sharp focus, 8K, intricate textures",
-    "score": 92,
-    "countryCode": "AE",
-    "likeCount": 47,
-    "locationName": "Sharjah"
+    "locationName": "Valparaíso"
   },
   {
     "platformId": "lexica",
@@ -456,18 +396,6 @@
     "locationName": "Tel Aviv"
   },
   {
-    "platformId": "nightcafe",
-    "platformName": "NightCafe",
-    "platformIcon": "/icons/providers/nightcafe.png",
-    "brandColor": "#D946EF",
-    "description": "brass submarine in underground river, steampunk",
-    "optimisedPrompt": "masterpiece, best quality, highly detailed, (brass submarine in underground river:1.2), steampunk, warm lamplight glowing from shopfront windows, metallic accents, aerial shot, establishing shot, bridge over calm river reflections, brass fittings, coal smoke haze, warm amber sodium streetlamp glow, soft bokeh halos around far-off lamps, sharp focus, 8K, intricate textures",
-    "score": 92,
-    "countryCode": "AT",
-    "likeCount": 12,
-    "locationName": "Vienna"
-  },
-  {
     "platformId": "hotpot",
     "platformName": "Hotpot.ai",
     "platformIcon": "/icons/providers/hotpot.png",
@@ -477,7 +405,7 @@
     "score": 92,
     "countryCode": "BR",
     "likeCount": 2,
-    "locationName": "S\u00e3o Paulo"
+    "locationName": "São Paulo"
   },
   {
     "platformId": "ideogram",
@@ -513,7 +441,7 @@
     "score": 92,
     "countryCode": "CL",
     "likeCount": 0,
-    "locationName": "Concepci\u00f3n"
+    "locationName": "Concepción"
   },
   {
     "platformId": "deepai",
@@ -525,7 +453,7 @@
     "score": 92,
     "countryCode": "CH",
     "likeCount": 31,
-    "locationName": "Z\u00fcrich"
+    "locationName": "Zürich"
   },
   {
     "platformId": "deepai",
@@ -717,7 +645,7 @@
     "score": 92,
     "countryCode": "CO",
     "likeCount": 0,
-    "locationName": "Medell\u00edn"
+    "locationName": "Medellín"
   },
   {
     "platformId": "picsart",
@@ -840,18 +768,6 @@
     "locationName": "Trondheim"
   },
   {
-    "platformId": "openart",
-    "platformName": "OpenArt",
-    "platformIcon": "/icons/providers/openart.png",
-    "brandColor": "#F43F5E",
-    "description": "amethyst grotto beneath waterfall, surrealism",
-    "optimisedPrompt": "masterpiece, best quality, highly detailed, (amethyst grotto beneath waterfall:1.2), surrealism, fire pit ember glow, holographic, centered subject, establishing shot, underground cavern, mineral surface, visible breath in freezing air, reflected light off wet stone, sharp focus, 8K, intricate textures, professional lighting",
-    "score": 91,
-    "countryCode": "SG",
-    "likeCount": 0,
-    "locationName": "Bedok"
-  },
-  {
     "platformId": "123rf",
     "platformName": "123RF AI Generator",
     "platformIcon": "/icons/providers/123rf.png",
@@ -957,7 +873,7 @@
     "score": 90,
     "countryCode": "PL",
     "likeCount": 0,
-    "locationName": "Wroc\u0142aw"
+    "locationName": "Wrocław"
   },
   {
     "platformId": "clipdrop",
@@ -1009,7 +925,7 @@
   },
   {
     "platformId": "openai",
-    "platformName": "DALL\u00b7E 3",
+    "platformName": "DALL·E 3",
     "platformIcon": "/icons/providers/openai.png",
     "brandColor": "#10B981",
     "description": "jazz musician playing saxophone under streetlam...",
@@ -1021,7 +937,7 @@
   },
   {
     "platformId": "openai",
-    "platformName": "DALL\u00b7E 3",
+    "platformName": "DALL·E 3",
     "platformIcon": "/icons/providers/openai.png",
     "brandColor": "#10B981",
     "description": "saxophone player performing in smoky basement c...",
@@ -1126,54 +1042,6 @@
     "countryCode": "AE",
     "likeCount": 3,
     "locationName": "Dubai"
-  },
-  {
-    "platformId": "freepik",
-    "platformName": "Freepik AI",
-    "platformIcon": "/icons/providers/freepik.png",
-    "brandColor": "#0EA5E9",
-    "description": "tropical parrot perched on jungle branch, illus...",
-    "optimisedPrompt": "tropical parrot perched on jungle branch, illustration, speckled sunbeam patterns under old oaks, vibrant colours, heavy humid tropical haze, highly detailed, low sun casting long copper shadows, vapour curling off rain-warmed asphalt, saturated, fine details, beautiful, stunning",
-    "score": 90,
-    "countryCode": "US",
-    "likeCount": 0,
-    "locationName": "Austin"
-  },
-  {
-    "platformId": "freepik",
-    "platformName": "Freepik AI",
-    "platformIcon": "/icons/providers/freepik.png",
-    "brandColor": "#0EA5E9",
-    "description": "hummingbird hovering beside bright flower, illu...",
-    "optimisedPrompt": "hummingbird hovering beside bright flower, illustration, warm sunset light filtered through haze, saturated, ground-level haze lifting with the morning sun, fine details, broken light filtering through dense branches, heavy humid tropical haze, vibrant colours, highly detailed, beautiful, stunning",
-    "score": 90,
-    "countryCode": "BE",
-    "likeCount": 17,
-    "locationName": "Ghent"
-  },
-  {
-    "platformId": "freepik",
-    "platformName": "Freepik AI",
-    "platformIcon": "/icons/providers/freepik.png",
-    "brandColor": "#0EA5E9",
-    "description": "peacock proudly displaying full plumage, illust...",
-    "optimisedPrompt": "peacock proudly displaying full plumage, illustration, sun-dappled woodland glade light, vibrant colours, heavy humid tropical haze, highly detailed, golden hour sidelight on wet surfaces, steam wisps rising from damp cobblestones, saturated, fine details, beautiful, stunning",
-    "score": 90,
-    "countryCode": "AT",
-    "likeCount": 31,
-    "locationName": "Graz"
-  },
-  {
-    "platformId": "freepik",
-    "platformName": "Freepik AI",
-    "platformIcon": "/icons/providers/freepik.png",
-    "brandColor": "#0EA5E9",
-    "description": "toucan pair sitting in rainforest canopy, illus...",
-    "optimisedPrompt": "toucan pair sitting in rainforest canopy, illustration, shifting leaf shadows on forest floor, vibrant colours, heavy humid tropical haze, highly detailed, diffused peach light through thin cirrus, low mist drifting along the street surface, saturated, fine details, beautiful, stunning",
-    "score": 90,
-    "countryCode": "BR",
-    "likeCount": 1,
-    "locationName": "Rio de Janeiro"
   },
   {
     "platformId": "bluewillow",
@@ -1305,7 +1173,7 @@
     "score": 90,
     "countryCode": "BE",
     "likeCount": 3,
-    "locationName": "Li\u00e8ge"
+    "locationName": "Liège"
   },
   {
     "platformId": "artguru",
@@ -1356,18 +1224,6 @@
     "locationName": "Adelaide"
   },
   {
-    "platformId": "nightcafe",
-    "platformName": "NightCafe",
-    "platformIcon": "/icons/providers/nightcafe.png",
-    "brandColor": "#D946EF",
-    "description": "steampunk airship above Victorian city, steampunk",
-    "optimisedPrompt": "masterpiece, best quality, highly detailed, (steampunk airship above Victorian city:1.2), steampunk, warm amber sodium streetlamp glow, sepia toned, golden spiral, aerial shot, cobblestone old town square, wood grain, diffused city lights bleeding through mist, heritage lamppost amber warmth, thick fog wrapping around concrete pillars, sharp focus, 8K, intricate textures",
-    "score": 89,
-    "countryCode": "TH",
-    "likeCount": 31,
-    "locationName": "Bangkok"
-  },
-  {
     "platformId": "novelai",
     "platformName": "NovelAI",
     "platformIcon": "/icons/providers/novelai.png",
@@ -1413,7 +1269,7 @@
     "score": 89,
     "countryCode": "RO",
     "likeCount": 1,
-    "locationName": "Timi\u0219oara"
+    "locationName": "Timișoara"
   },
   {
     "platformId": "flux",
@@ -1461,7 +1317,7 @@
     "score": 89,
     "countryCode": "BR",
     "likeCount": 0,
-    "locationName": "Bras\u00edlia"
+    "locationName": "Brasília"
   },
   {
     "platformId": "canva",
@@ -1512,18 +1368,6 @@
     "locationName": "Frankfurt"
   },
   {
-    "platformId": "freepik",
-    "platformName": "Freepik AI",
-    "platformIcon": "/icons/providers/freepik.png",
-    "brandColor": "#0EA5E9",
-    "description": "flamingo flock gathered in pink lagoon, illustr...",
-    "optimisedPrompt": "flamingo flock gathered in pink lagoon, illustration, burnished gold light from a setting sun, saturated, vapour curling off rain-warmed asphalt, fine details, speckled sunbeam patterns under old oaks, heavy humid tropical haze, vibrant colours, highly detailed, beautiful, stunning",
-    "score": 89,
-    "countryCode": "MX",
-    "likeCount": 2,
-    "locationName": "Canc\u00fan"
-  },
-  {
     "platformId": "simplified",
     "platformName": "Simplified",
     "platformIcon": "/icons/providers/simplified.png",
@@ -1569,7 +1413,7 @@
     "score": 89,
     "countryCode": "AR",
     "likeCount": 2,
-    "locationName": "C\u00f3rdoba"
+    "locationName": "Córdoba"
   },
   {
     "platformId": "pixlr",
@@ -1581,7 +1425,7 @@
     "score": 89,
     "countryCode": "CZ",
     "likeCount": 47,
-    "locationName": "Plze\u0148"
+    "locationName": "Plzeň"
   },
   {
     "platformId": "jasper-art",
@@ -1644,30 +1488,6 @@
     "locationName": "Toronto"
   },
   {
-    "platformId": "nightcafe",
-    "platformName": "NightCafe",
-    "platformIcon": "/icons/providers/nightcafe.png",
-    "brandColor": "#D946EF",
-    "description": "gear-driven locomotive at station, steampunk",
-    "optimisedPrompt": "masterpiece, best quality, highly detailed, (gear-driven locomotive at station:1.2), steampunk, warm amber sodium streetlamp glow, sepia toned, golden spiral, aerial shot, cobblestone old town square, copper patina, soft bokeh halos around far-off lamps, heritage lamppost amber warmth, low cloud bank pushing through city streets, sharp focus, 8K, intricate textures",
-    "score": 88,
-    "countryCode": "AU",
-    "likeCount": 31,
-    "locationName": "Sydney"
-  },
-  {
-    "platformId": "openart",
-    "platformName": "OpenArt",
-    "platformIcon": "/icons/providers/openart.png",
-    "brandColor": "#F43F5E",
-    "description": "gemstone cavern reflecting torchlight, surrealism",
-    "optimisedPrompt": "masterpiece, best quality, highly detailed, (gemstone cavern reflecting torchlight:1.2), surrealism, cool white moonlight, jewel tones, symmetrical composition, wide shot, dark forest, crystal texture, still night with crystalline atmosphere, fire pit ember glow, icy exhalations curling upward, sharp focus, 8K, intricate textures",
-    "score": 88,
-    "countryCode": "GB",
-    "likeCount": 47,
-    "locationName": "Edinburgh"
-  },
-  {
     "platformId": "stability",
     "platformName": "Stability AI / Stable Diffusion",
     "platformIcon": "/icons/providers/stability.png",
@@ -1701,7 +1521,7 @@
     "score": 88,
     "countryCode": "NO",
     "likeCount": 31,
-    "locationName": "Troms\u00f8"
+    "locationName": "Tromsø"
   },
   {
     "platformId": "ideogram",
@@ -1729,7 +1549,7 @@
   },
   {
     "platformId": "openai",
-    "platformName": "DALL\u00b7E 3",
+    "platformName": "DALL·E 3",
     "platformIcon": "/icons/providers/openai.png",
     "brandColor": "#10B981",
     "description": "trumpet soloist silhouetted on midnight rooftop...",
@@ -1741,7 +1561,7 @@
   },
   {
     "platformId": "openai",
-    "platformName": "DALL\u00b7E 3",
+    "platformName": "DALL·E 3",
     "platformIcon": "/icons/providers/openai.png",
     "brandColor": "#10B981",
     "description": "drummer lost in rhythm under single spotlight, ...",
@@ -1821,7 +1641,7 @@
     "score": 88,
     "countryCode": "PL",
     "likeCount": 47,
-    "locationName": "Gda\u0144sk"
+    "locationName": "Gdańsk"
   },
   {
     "platformId": "photoleap",
@@ -1929,7 +1749,7 @@
     "score": 88,
     "countryCode": "RO",
     "likeCount": 2,
-    "locationName": "Ia\u0219i"
+    "locationName": "Iași"
   },
   {
     "platformId": "pixlr",
@@ -1978,18 +1798,6 @@
     "countryCode": "IT",
     "likeCount": 5,
     "locationName": "Florence"
-  },
-  {
-    "platformId": "nightcafe",
-    "platformName": "NightCafe",
-    "platformIcon": "/icons/providers/nightcafe.png",
-    "brandColor": "#D946EF",
-    "description": "steam carriage on cobblestone road, steampunk",
-    "optimisedPrompt": "masterpiece, best quality, highly detailed, (steam carriage on cobblestone road:1.2), steampunk, heritage lamppost amber warmth, warm tones, leading lines, wide shot, harbour-side warehouse district, leather texture, dense mist threading between tall buildings, fireplace amber leaking through frosted glass, coal smoke haze, sharp focus, 8K, intricate textures",
-    "score": 87,
-    "countryCode": "SG",
-    "likeCount": 0,
-    "locationName": "Jurong East"
   },
   {
     "platformId": "playground",
@@ -2053,7 +1861,7 @@
   },
   {
     "platformId": "openai",
-    "platformName": "DALL\u00b7E 3",
+    "platformName": "DALL·E 3",
     "platformIcon": "/icons/providers/openai.png",
     "brandColor": "#10B981",
     "description": "piano virtuoso commanding concert hall stage, c...",
@@ -2148,18 +1956,6 @@
     "locationName": "Johor Bahru"
   },
   {
-    "platformId": "nightcafe",
-    "platformName": "NightCafe",
-    "platformIcon": "/icons/providers/nightcafe.png",
-    "brandColor": "#D946EF",
-    "description": "clockwork zeppelin docking at tower, steampunk",
-    "optimisedPrompt": "masterpiece, best quality, highly detailed, (clockwork zeppelin docking at tower:1.2), steampunk, heritage lamppost amber warmth, warm tones, leading lines, wide shot, harbour-side warehouse district, metal surface, thick fog wrapping around concrete pillars, soft interior light pooling on the pavement outside, coal smoke haze, sharp focus, 8K, intricate textures",
-    "score": 86,
-    "countryCode": "ES",
-    "likeCount": 0,
-    "locationName": "Barcelona"
-  },
-  {
     "platformId": "novelai",
     "platformName": "NovelAI",
     "platformIcon": "/icons/providers/novelai.png",
@@ -2182,30 +1978,6 @@
     "countryCode": "ZA",
     "likeCount": 5,
     "locationName": "Cape Town"
-  },
-  {
-    "platformId": "openart",
-    "platformName": "OpenArt",
-    "platformIcon": "/icons/providers/openart.png",
-    "brandColor": "#F43F5E",
-    "description": "diamond tunnel refracting sunbeams, surrealism",
-    "optimisedPrompt": "masterpiece, best quality, highly detailed, (diamond tunnel refracting sunbeams:1.2), surrealism, reflected light off wet stone, iridescent, fibonacci spiral, extreme wide shot, enchanted forest, glass transparency, ice crystal sparkle in air, cool white moonlight, sharp focus, 8K, intricate textures",
-    "score": 86,
-    "countryCode": "CH",
-    "likeCount": 0,
-    "locationName": "Basel"
-  },
-  {
-    "platformId": "openart",
-    "platformName": "OpenArt",
-    "platformIcon": "/icons/providers/openart.png",
-    "brandColor": "#F43F5E",
-    "description": "emerald chasm with hanging vines, surrealism",
-    "optimisedPrompt": "masterpiece, best quality, highly detailed, (emerald chasm with hanging vines:1.2), surrealism, cool white moonlight, jewel tones, symmetrical composition, wide shot, dark forest, crystal texture, cool midnight clarity after rainfall, fire pit ember glow, visible breath in freezing air, sharp focus, 8K, intricate textures",
-    "score": 86,
-    "countryCode": "DE",
-    "likeCount": 17,
-    "locationName": "Munich"
   },
   {
     "platformId": "stability",
@@ -2385,7 +2157,7 @@
     "score": 86,
     "countryCode": "PL",
     "likeCount": 12,
-    "locationName": "Pozna\u0144"
+    "locationName": "Poznań"
   },
   {
     "platformId": "picwish",
@@ -2472,18 +2244,6 @@
     "locationName": "Los Angeles"
   },
   {
-    "platformId": "openart",
-    "platformName": "OpenArt",
-    "platformIcon": "/icons/providers/openart.png",
-    "brandColor": "#F43F5E",
-    "description": "crystal cave with glowing pools, surrealism",
-    "optimisedPrompt": "masterpiece, best quality, highly detailed, (crystal cave with glowing pools:1.2), surrealism, reflected light off wet stone, iridescent, fibonacci spiral, extreme wide shot, enchanted forest, glass transparency, ice crystal sparkle in air, cool white moonlight, sharp focus, 8K, intricate textures",
-    "score": 85,
-    "countryCode": "GB",
-    "likeCount": 3,
-    "locationName": "Bristol"
-  },
-  {
     "platformId": "playground",
     "platformName": "Playground AI",
     "platformIcon": "/icons/providers/playground.png",
@@ -2505,7 +2265,7 @@
     "score": 85,
     "countryCode": "RO",
     "likeCount": 17,
-    "locationName": "Bra\u0219ov"
+    "locationName": "Brașov"
   },
   {
     "platformId": "canva",

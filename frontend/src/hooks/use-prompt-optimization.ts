@@ -303,7 +303,6 @@ function formatPlatformName(platformId: string): string {
     leonardo: 'Leonardo AI',
     novelai: 'NovelAI',
     deepai: 'DeepAI',
-    nightcafe: 'NightCafe',
     bluewillow: 'BlueWillow',
     '123rf': '123RF',
     picsart: 'Picsart',
@@ -316,8 +315,6 @@ function formatPlatformName(platformId: string): string {
     craiyon: 'Craiyon',
     playground: 'Playground AI',
     lexica: 'Lexica',
-    openart: 'OpenArt',
-    getimg: 'getimg.ai',
     clipdrop: 'ClipDrop',
     runway: 'Runway',
     ideogram: 'Ideogram',
@@ -336,9 +333,7 @@ function formatPlatformName(platformId: string): string {
     recraft: 'Recraft',
     kling: 'Kling AI',
     'luma-ai': 'Luma AI',
-    'tensor-art': 'Tensor.Art',
     simplified: 'Simplified',
-    freepik: 'Freepik',
   };
 
   const specialName = specialCases[platformId];

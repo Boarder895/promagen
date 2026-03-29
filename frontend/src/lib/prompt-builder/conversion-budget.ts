@@ -98,16 +98,12 @@ const STATIC_CEILINGS: Record<string, number> = {
   bluewillow: 30,
 
   // ── Tier 1: CLIP-Based ──
-  'tensor-art': 58, // 75 tokens ÷ 1.3
   leonardo: 154, // 200 tokens ÷ 1.3
   stability: 59, // 77 CLIP tokens ÷ 1.3
   dreamstudio: 59,
   lexica: 59,
   playground: 59,
-  nightcafe: 59,
-  getimg: 59,
   dreamlike: 59,
-  openart: 59,
   clipdrop: 59,
   artguru: 59,
   novelai: 59,
@@ -133,7 +129,6 @@ const STATIC_CEILINGS: Record<string, number> = {
   craiyon: 30,
   deepai: 30,
   fotor: 30,
-  freepik: 40,
   picsart: 30,
   pixlr: 30,
   simplified: 30,
@@ -309,14 +304,10 @@ const STATIC_CLIP_TOKEN_CEILINGS: Record<string, number> = {
   dreamstudio: 77,
   lexica: 77,
   playground: 77,
-  nightcafe: 77,
-  getimg: 77,
   dreamlike: 77,
-  openart: 77,
   clipdrop: 77,
   artguru: 77,
   novelai: 77,
-  'tensor-art': 75,
   leonardo: 200, // Leonardo allows extended prompt via chunking
 };
 

@@ -432,7 +432,7 @@ export function ProviderCell({
     : null;
 
   // ── BROWSER DIAGNOSTIC: Log tooltip data for specific providers ────
-  if (weatherDisplay && mapping && (provider.id === 'midjourney' || provider.id === 'nightcafe' || provider.id === 'artbreeder')) {
+  if (weatherDisplay && mapping && (provider.id === 'midjourney' || provider.id === 'artbreeder')) {
     console.debug('[PROVIDER-CELL-DIAG]', provider.id, '→', mapping.weatherId, {
       isLive: !!liveDisplay,
       isDemo: !!demoDisplay,

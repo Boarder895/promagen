@@ -35,7 +35,7 @@ const baseMeta: WeatherCategoryMeta = {
 // ============================================================================
 
 describe('Fix A: SD family qualityPrefix consistency', () => {
-  // v6.0.0: nightcafe, getimg, openart removed (multi-engine aggregators)
+  // v6.0.0: removed (multi-engine aggregators)
   // artguru, clipdrop, playground moved out of T1 (no exposed SD syntax)
   const sdPlatforms = [
     'stability', 'dreamstudio', 'lexica', 'fotor', 'leonardo', 'dreamlike',

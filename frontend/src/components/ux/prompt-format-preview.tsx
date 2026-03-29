@@ -37,7 +37,6 @@ export default function PromptFormatPreview({
       case 'stability':
       case 'lexica':
       case 'playground':
-      case 'nightcafe':
         return [
           `Positive: ${base}`,
           negatives ? `Negative: ${negatives}` : null,

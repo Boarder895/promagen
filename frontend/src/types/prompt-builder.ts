@@ -114,11 +114,8 @@ export const PLATFORMS_WITH_NATIVE_NEGATIVE: string[] = [
   'flux',
   'novelai',
   'playground',
-  'nightcafe',
   'lexica',
-  'openart',
   'dreamstudio',
-  'getimg',
   'dreamlike',
 ];
 

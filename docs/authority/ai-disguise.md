@@ -1,24 +1,25 @@
 # AI Disguise — Prompt Lab Intelligence Engine
 
-**Version:** 4.0.0  
+**Version:** 5.0.0  
 **Created:** 22 March 2026  
-**Updated:** 25 March 2026  
+**Updated:** 29 March 2026  
 **Owner:** Promagen  
-**Status:** Parts 1–4d BUILT and deployed. Part 5 passive learning pipeline DEFERRED. Part 6 (testing) BUILT — 115-test harmony lockdown suite.  
+**Status:** Parts 1–4e BUILT and deployed. Part 5 passive learning pipeline DEFERRED. Part 6 (testing) BUILT — 115-test harmony lockdown suite.  
 **Scope:** Prompt Lab (`/studio/playground`) ONLY. The standard builder (`/providers/[id]`) is untouched.  
 **Authority:** This document defines the architecture, API routes, animation system, provider switching behaviour, and learning pipeline for the Prompt Lab's AI-powered prompt generation and optimisation system.
 
 > **Cross-references:**
 >
-> - `prompt-lab.md` — Studio section routes, Prompt Lab architecture, component table (v3.0.0)
-> - `harmonizing-claude-openai.md` — Dual-assessor harmony engineering methodology (v1.0.0 — **STALE**, needs update to cover R6+ and stress tests)
+> - `prompt-lab.md` — Studio section routes, Prompt Lab architecture, component table (v3.2.0 — **STALE**, needs v4.0.0 update for negative prompt display)
+> - `harmonizing-claude-openai.md` — Dual/triple-assessor harmony engineering methodology (v2.0.0 — **STALE**, needs v3.0.0 update to cover v4.1–v4.5 fix programme and three-assessor scoring)
 > - `unified-prompt-brain.md` — One Brain assembly architecture (standard builder)
-> - `prompt-optimizer.md` — Client-side 4-phase optimizer (standard builder)
+> - `prompt-optimizer.md` — Client-side 4-phase optimizer + Call 3 architecture (v5.0.0 — **STALE**, needs v6.0.0 for negative prompt display and 43 independent builders)
 > - `prompt-builder-page.md` — Builder UI and `assemblePrompt()` integration
 > - `prompt-intelligence.md` — Intelligence layer, tier preview, colour coding
 > - `paid_tier.md` — Pro gating (Prompt Lab is Pro exclusive)
 > - `human-factors.md` — Zeigarnik Effect (§4), Anticipatory Dopamine (§3), Temporal Compression (§6)
 > - `code-standard.md` — All code standards (clamp, no grey text, co-located animations)
+> - `trend-analysis.md` — v6.0.0, per-platform scoring with three-assessor calibration
 
 ---
 
@@ -29,22 +30,23 @@
 3. [The Three API Calls](#3-the-three-api-calls)
 4. [Call 1 — Category Extraction (Existing)](#4-call-1--category-extraction-existing)
 5. [Call 2 — AI Tier Generation](#5-call-2--ai-tier-generation)
-6. [Call 2 — System Prompt (v3.0.0)](#6-call-2--system-prompt-v300)
-7. [Call 2 — Post-Processing Layer (v3.0.0)](#7-call-2--post-processing-layer-v300)
-8. [Call 2 — Harmony Engineering (v3.0.0)](#8-call-2--harmony-engineering-v300)
+6. [Call 2 — System Prompt (v4.5)](#6-call-2--system-prompt-v45)
+7. [Call 2 — Post-Processing Layer (v4.0.0)](#7-call-2--post-processing-layer-v400)
+8. [Call 2 — Harmony Engineering (v5.0.0)](#8-call-2--harmony-engineering-v500)
 9. [Call 3 — AI Prompt Optimisation](#9-call-3--ai-prompt-optimisation)
-10. [Provider Switching Behaviour](#10-provider-switching-behaviour)
-11. [Algorithm Cycling Animation System](#11-algorithm-cycling-animation-system)
-12. [The 101 Algorithm Names](#12-the-101-algorithm-names)
-13. [Algorithm Count Display](#13-algorithm-count-display)
-14. [Visual UX Flow](#14-visual-ux-flow)
-15. [Standard Builder Learning Pipeline](#15-standard-builder-learning-pipeline)
-16. [API Route Specifications](#16-api-route-specifications)
-17. [Security & Cost Controls](#17-security--cost-controls)
-18. [File Map](#18-file-map)
-19. [Non-Regression Rules](#19-non-regression-rules)
-20. [Decisions Log](#20-decisions-log)
-21. [Build Order](#21-build-order)
+10. [Negative Prompt Display (v5.0.0)](#10-negative-prompt-display-v500)
+11. [Provider Switching Behaviour](#11-provider-switching-behaviour)
+12. [Algorithm Cycling Animation System](#12-algorithm-cycling-animation-system)
+13. [The 101 Algorithm Names](#13-the-101-algorithm-names)
+14. [Algorithm Count Display](#14-algorithm-count-display)
+15. [Visual UX Flow](#15-visual-ux-flow)
+16. [Standard Builder Learning Pipeline](#16-standard-builder-learning-pipeline)
+17. [API Route Specifications](#17-api-route-specifications)
+18. [Security & Cost Controls](#18-security--cost-controls)
+19. [File Map](#19-file-map)
+20. [Non-Regression Rules](#20-non-regression-rules)
+21. [Decisions Log](#21-decisions-log)
+22. [Build Order](#22-build-order)
 
 ---
 
@@ -108,27 +110,28 @@ User types human description + clicks "Generate Prompt"
         │ PARALLEL                                      │
         ▼                                               ▼
 ┌──────────────────────┐              ┌──────────────────────────────┐
-│  CALL 1 (existing)   │              │  CALL 2 (v3.0.0)             │
+│  CALL 1 (existing)   │              │  CALL 2 (v4.5)               │
 │  /api/parse-sentence │              │  /api/generate-tier-prompts  │
 │                      │              │                              │
 │  GPT-5.4-mini        │              │  GPT-5.4-mini                │
 │  Extracts 12 cats    │              │  Generates 4 tier prompts    │
-│  → JSON categories   │              │  18-rule system prompt       │
-│                      │              │  + post-processing layer     │
-│  Visual: 12 category │              │  → tier1, tier2, tier3,      │
-│  badges cycle in     │              │    tier4 prompt text         │
-│  sequence (150ms     │              │                              │
+│  → JSON categories   │              │  30-rule system prompt       │
+│                      │              │  + 7 post-processing funcs   │
+│  Visual: 12 category │              │  + 4 compliance functions    │
+│  badges cycle in     │              │  → tier1, tier2, tier3,      │
+│  sequence (150ms     │              │    tier4 prompt text         │
+│  stagger)            │              │  → negative per tier         │
 │  stagger)            │              │  Visual: tier cards populate │
 │                      │              │  with AI-generated prompts   │
 └──────────┬───────────┘              └──────────────┬───────────────┘
            │                                         │
            ▼                                         ▼
 ┌──────────────────────┐              ┌──────────────────────────────┐
-│  Dropdowns populate  │              │  Post-processing:            │
-│  with matched terms  │              │  P1: T2 --no deduplication   │
-│  (existing UX)       │              │  P2: T1 trailing period strip│
-└──────────────────────┘              │  → Clean output to client    │
-                                      └──────────────────────────────┘
+│  Dropdowns populate  │              │  Post-processing (7 funcs):   │
+│  with matched terms  │              │  P1–P12 + P4/P5 compliance    │
+│  (existing UX)       │              │  → Clean output to client     │
+└──────────────────────┘              │  → Negative prompt per tier   │
+                                      └───────────────────────────────┘
 
 User selects provider → clicks "Optimise"
         │
@@ -185,7 +188,7 @@ Replace the string-template tier generators (`generators.ts`) with AI-generated 
 ### Route
 
 **Path:** `POST /api/generate-tier-prompts`  
-**File:** `src/app/api/generate-tier-prompts/route.ts` (523 lines — v4.0.0; post-processing extracted to `src/lib/harmony-post-processing.ts`)
+**File:** `src/app/api/generate-tier-prompts/route.ts` (650 lines — v4.5; post-processing extracted to `src/lib/harmony-post-processing.ts`)
 
 ### Request Schema
 
@@ -243,16 +246,49 @@ const ResponseSchema = z.object({
 
 ---
 
-## 6. Call 2 — System Prompt (v4.0.0)
+## 6. Call 2 — System Prompt (v4.5)
 
-**The system prompt is defined in code as the single source of truth.** See `buildSystemPrompt()` in `src/app/api/generate-tier-prompts/route.ts` (lines 115–262). The prompt is dynamic — it changes based on selected provider context (weight syntax, token limits, quality prefix).
+**The system prompt is defined in code as the single source of truth.** See `buildSystemPrompt()` in `src/app/api/generate-tier-prompts/route.ts` (lines 130–325). The prompt is dynamic — it changes based on selected provider context (weight syntax, token limits, quality prefix).
 
-The system prompt evolved through 6+ rounds of harmony engineering between Claude (system prompt author) and GPT-5.4-mini (executor). See §8 for methodology. The prompt went from 11 rules scoring 62/100 to 30 rules scoring 96/100, with 7 post-processing functions catching mechanical artefacts.
+The system prompt evolved through two phases: (1) 6+ rounds of harmony engineering (v1→v4.0, 11→30 rules, 62→96/100), then (2) a targeted fix programme (v4.0→v4.5, 6 versions in one session) driven by three-scene stress testing with three independent assessors (Claude, ChatGPT, Grok).
 
 **Rule count:** 30 (ceiling enforced by `RULE_CEILING` in `harmony-compliance.ts` with test assertion).  
 **Rule inventory:** T1 (8 rules), T2 (6 rules), T3 (5 rules), T4 (5 rules), Global (6 rules).
 
-> **⚠️ WARNING:** The system prompt text below is from v3.0.0 (23 March 2026) and is **STALE**. It shows 18 rules. The deployed prompt has 30 rules. Always read `buildSystemPrompt()` in the code for the current prompt. This section is preserved as historical reference for the harmony engineering journey.
+### v4.0→v4.5 Fix Programme (28–29 March 2026)
+
+Three-scene stress testing (station violinist, Victorian flower seller, sci-fi hangar mechanic) with three independent assessors (Claude, ChatGPT, Grok) identified 6 systematic failures in v4.0 output. Each fix was built, tested, and confirmed across all 3 scenes before the next fix was applied.
+
+| Version | Fix                      | What changed                                                                                                                                      | Impact (triangulated)                                    |
+| ------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| v4.1    | 6 targeted fixes         | T1 interaction preservation, T4 anchor triage hierarchy, T4 value-add self-check, T4 anti-paraphrase opening, T3 "captured" ban, T3 verb fidelity | T1 +5, T4 +7                                             |
+| v4.2    | 3 strengthened           | T1 interaction SCAN/COUNT instruction, T3 verb fidelity 4× WRONG/RIGHT, T4 value-add bar raised                                                   | T1 interaction tokens tripled (1→3)                      |
+| v4.3    | T1 dedup + T4 conversion | "When you create an interaction token, REMOVE the standalone" + T4 "CONVERT one existing element" replaces "add new"                              | T1 zero duplicates, T4 "bleach"/"rain-slick" conversions |
+| v4.4    | T2 negative root cause   | T2 `negative` JSON field set to empty string `""` — all negatives inline after `--no` only                                                        | T2 --no duplication permanently solved (4/4 clean)       |
+| v4.5    | T4 ceiling 250→325       | SSOT idealMax avg 277, 7/15 T4 platforms accept 300+. Raised to 325 with "2–3 sentences" guidance                                                 | T4 zero anchor drops on all 3 scenes                     |
+
+**Triangulated v4.0→v4.5 gains (median of 3 assessors, 3 scenes):**
+
+| Tier        | v4.0 median | v4.5 median | Gain    |
+| ----------- | ----------- | ----------- | ------- |
+| T1          | ~80         | ~87         | **+7**  |
+| T2          | ~86         | ~94         | **+8**  |
+| T3          | ~87         | ~88         | +1      |
+| T4          | ~74         | ~87         | **+13** |
+| **Overall** | **~82**     | **~89**     | **+7**  |
+
+### Confirmed GPT Ceilings (unfixable by prompting)
+
+- "reflect" → smear/shimmer/ripple/streak in T3/T4 — GPT's strongest verb preference
+- T1 "glowing" for "burning" — interaction token format forces "glowing through"
+- T4 verb softening (some verbs) — plain-language mode systematically simplifies
+- Run-to-run variance (83–92 on same file) — GPT makes different compositional choices each run
+
+### Scoring Calibration Finding
+
+Three-assessor comparison revealed Claude scores T3 ~5–6 points too high and T4 ~3–5 points too high compared to ChatGPT/Grok median. T1 and T2 calibration is accurate. Claude under-penalises verb substitutions and anchor drops.
+
+> **⚠️ WARNING:** The system prompt text below is from v3.0.0 (23 March 2026) and is **STALE**. It shows 18 rules. The deployed prompt has 30 rules + the v4.1–v4.5 fix additions. Always read `buildSystemPrompt()` in the code for the current prompt. This section is preserved as historical reference for the harmony engineering journey.
 
 ### System Prompt (Call 2 — v3.0.0, 23 March 2026) — HISTORICAL REFERENCE
 
@@ -395,10 +431,12 @@ When `providerId` is null, `{providerBlock}` is empty — generic best-practice 
 
 **v3.0.0:** Added P1 + P2. **v4.0.0:** Expanded to 7 functions (P1, P2, P3, P8, P10, P11, P12), extracted to testable module, 115-test lockdown suite.
 
-After GPT returns validated JSON, the post-processing pipeline runs server-side before the response reaches the client. These catch GPT mechanical artefacts that system prompt rules cannot prevent. Proven across 6 harmony rounds + 3 stress tests (900-char complex inputs).
+**v4.4 update (T2 --no duplication):** The root cause of T2 negative duplication was identified and fixed in the system prompt (v4.4): GPT was processing negatives twice because the JSON schema demanded both inline `--no` and a separate `negative` field. Setting `tier2.negative` to empty string `""` eliminated the double-processing. P1 remains as a permanent safety net but now rarely fires — 4/4 consecutive outputs clean post-fix.
 
-**File:** `src/lib/harmony-post-processing.ts` (342 lines) — extracted from route.ts for testability.  
-**Test:** `src/lib/__tests__/harmony-post-processing.test.ts` (601 lines, 72 tests).  
+After GPT returns validated JSON, the post-processing pipeline runs server-side before the response reaches the client. These catch GPT mechanical artefacts that system prompt rules cannot prevent. Proven across 6 harmony rounds + 3 stress tests (900-char complex inputs) + 3-scene fix programme (v4.1–v4.5).
+
+**File:** `src/lib/harmony-post-processing.ts` (272 lines) — extracted from route.ts for testability.  
+**Test:** `src/lib/__tests__/harmony-post-processing.test.ts` (72 tests).  
 **Import:** `route.ts` imports `postProcessTiers()` from the extracted module.
 
 ### Pipeline per tier
@@ -448,18 +486,39 @@ The system prompt rules **reduce** GPT errors. The post-processing functions **c
 
 ---
 
-## 8. Call 2 — Harmony Engineering (v4.0.0)
+## 8. Call 2 — Harmony Engineering (v5.0.0)
 
-**v3.0.0:** 5 rounds (62→93). **v4.0.0:** 6 rounds + 3 stress tests (62→96), dual-assessor converged (≤1 point gap), 30 system prompt rules, 7 post-processing functions, 115-test lockdown suite.
+**v3.0.0:** 5 rounds (62→93). **v4.0.0:** 6 rounds + 3 stress tests (62→96), dual-assessor converged (≤1 point gap), 30 system prompt rules, 7 post-processing functions, 115-test lockdown suite. **v5.0.0:** Targeted fix programme (v4.1–v4.5) with three-scene stress testing and three independent assessors. Overall +7 triangulated.
 
 ### Methodology
+
+**Phase 1 — Harmony Rounds (v1→v4.0, 22–25 March):**
 
 1. Claude writes/updates the system prompt rules in `route.ts`
 2. GPT-5.4-mini generates 4 tier prompts from a test input
 3. Both Claude and ChatGPT independently score each tier on structural correctness (0–100)
 4. Both identify bugs and suggest improvements
 5. Claude builds fixes, cycle repeats
-6. **v4.0.0:** After score convergence, 3 stress tests (900-char complex inputs) validated the system under load
+6. After score convergence, 3 stress tests (900-char complex inputs) validated the system under load
+
+**Phase 2 — Fix Programme (v4.0→v4.5, 28–29 March):**
+
+1. 10-scene baseline established with dual assessors (Claude + ChatGPT)
+2. Systematic failure patterns identified from trend analysis
+3. 6 targeted fixes built, each tested on 3 human scenes (station violinist, Victorian flower seller, sci-fi hangar mechanic)
+4. **Three independent assessors** (Claude, ChatGPT, Grok) score each scene
+5. Triangulated median used as the calibrated score (Claude scores ~5pts high on T3/T4)
+6. Each fix version confirmed across all 3 scenes before proceeding to the next
+
+### Three-Assessor Calibration
+
+| Assessor | T1/T2 accuracy | T3 bias       | T4 bias                      | Role                              |
+| -------- | -------------- | ------------- | ---------------------------- | --------------------------------- |
+| Claude   | Accurate (±2)  | +5–6 pts high | +3–5 pts high                | Structural analysis, fix tracking |
+| ChatGPT  | Accurate (±2)  | Accurate      | Accurate                     | External calibration authority    |
+| Grok     | Accurate (±2)  | −2 pts harsh  | −5 pts harsh on anchor drops | Speed scoring, harsh baseline     |
+
+**Triangulated scoring rule:** Use the median of all three assessors. When only Claude scores, apply −5 to T3 and −3 to T4 for calibration.
 
 ### Proven Patterns
 
@@ -505,124 +564,231 @@ The system prompt rules **reduce** GPT errors. The post-processing functions **c
 
 ## 9. Call 3 — AI Prompt Optimisation
 
-Unchanged from v2.0.0. See `src/app/api/optimise-prompt/route.ts` (315 lines).
+**Path:** `POST /api/optimise-prompt`  
+**File:** `src/app/api/optimise-prompt/route.ts` (406 lines)  
+**Config:** gpt-5.4-mini, temperature 0.4 (prose) / 0.2 (CLIP)  
+**Builders:** 43 independent per-platform builder files in `src/lib/optimise-prompts/group-*.ts`
 
-**Path:** `POST /api/optimise-prompt`
+### Architecture
 
-_Full specification remains as documented in v2.0.0 §6. Call 3 system prompt has not been through harmony engineering yet — that is the next planned phase._
+Each of the 40 platforms has its own dedicated builder file with no shared imports (following the Recraft pattern). Routing: `resolve-group-prompt.ts` maps provider ID → group → builder → system prompt.
+
+### Key findings from harmony pass
+
+- CLIP platforms gain ~2pts (85→87, marginal). NL platforms gain ~6–8pts (88→94, worth the API cost).
+- Google Imagen Call 3 actively degrades output (assembled T3 scores 94, optimised scores 90) — **high-priority open issue**.
+- Harmony pass status: Adobe Firefly 93/100, 123RF 91/100 (ChatGPT-verified). Artbreeder was in progress.
+
+### Returns
+
+```typescript
+{
+  optimised: string;      // Platform-specific optimised positive prompt
+  negative?: string;      // Platform-specific negative prompt (NEW: now rendered in UI — see §10)
+  changes: string[];      // Brief descriptions for transparency chips
+  charCount: number;      // Server-side measured (not GPT self-reported)
+  tokenEstimate: number;  // Approximate token count
+}
+```
+
+### Negative Prompt (Dynamic Negative Intelligence)
+
+Call 3 generates a platform-specific negative prompt for every platform. For platforms with `negativeSupport: 'separate'` (22 platforms), this negative is now **rendered in the Prompt Lab UI** as an amber-themed window below the optimised positive prompt (see §10). For `inline` platforms (Midjourney, BlueWillow), negatives are inside the positive after `--no`. For `none`/`converted` platforms (21 platforms), negatives are flipped to positive reinforcement.
+
+### Compliance gates (server-side, post-GPT)
+
+- `enforceNegativeContradiction()` — strips terms from negative that also appear in positive (CLIP confusion prevention)
+- Character count measured server-side after all gates (GPT self-reported counts were wrong — fixed 27 March)
+
+### Pending
+
+- **Google Imagen degradation** — Call 3 makes NL output worse. High priority.
+- **CLIP group cost-benefit** — ~2pt gain doesn't justify API cost. Test per-platform individually.
+- **Call 3 harmony pass** — system prompts not yet through full harmony engineering.
 
 ---
 
-## 10. Provider Switching Behaviour
+## 10. Negative Prompt Display (v5.0.0)
+
+**Added:** 29 March 2026. Renders the AI-generated negative prompt in the Prompt Lab for platforms with a separate negative prompt input field.
+
+### Problem
+
+Call 2 and Call 3 both generate negative prompts per tier/platform. The data was stored in the hook (`aiOptimiseResult.negative`) but never rendered — invisible to the user. For platforms like Leonardo, Stability, NightCafe, etc., the user opens the platform, sees TWO input boxes (positive + negative), pastes the positive, and the negative box sits empty. The AI-generated negative — scene-specific, platform-optimised, contradiction-checked — was thrown away.
+
+### Solution
+
+For platforms with `negativeSupport: 'separate'` (22 platforms), an amber-themed negative prompt window appears below the emerald optimised positive prompt window. Each window has its own inline copy + save icons.
+
+### Which platforms get the negative window
+
+**22 platforms with `negativeSupport: 'separate'`:**
+ArtGuru, Artbreeder, Artistly, Craiyon, DreamLike, DreamStudio, Fotor, Freepik, GetImg, Ideogram, Kling AI, Leonardo, Lexica, NightCafe, NovelAI, OpenArt, Pixlr, Playground, Recraft, Simplified, Stability, Tensor.Art.
+
+**2 platforms with `negativeSupport: 'inline'`** (Midjourney, BlueWillow) — negatives are already inside the positive after `--no`. No separate window needed.
+
+**21 platforms with `negativeSupport: 'none'`/'converted'`** — negatives are flipped to positive reinforcement ("blurry" → "sharp focus"). No separate window needed.
+
+### Config fixes applied (29 March 2026)
+
+11 platforms had incorrect `negativeSupport` values in `platform-config.json`. Verified by deep research audit against each platform's actual UI:
+
+| Platform   | Was     | Now      | Evidence                                          |
+| ---------- | ------- | -------- | ------------------------------------------------- |
+| GetImg     | MISSING | separate | Official guide at getimg.ai                       |
+| NightCafe  | MISSING | separate | Advanced Settings → Negative Prompts              |
+| OpenArt    | MISSING | separate | Dedicated field with autofill                     |
+| Freepik    | MISSING | separate | Announced on X, confirmed on site                 |
+| Tensor.Art | none    | separate | "Negative" button in prompt section               |
+| Craiyon    | none    | separate | "Exclude" field below main prompt                 |
+| Kling AI   | none    | separate | Dedicated negative prompt setting                 |
+| Pixlr      | none    | separate | Toggleable "Remove" prompt box                    |
+| Simplified | none    | separate | Available on SD/Gemini Flash/Qwen models          |
+| Artbreeder | none    | separate | Contest pages + Prompter tool (medium confidence) |
+| Artistly   | none    | separate | Reviews confirm feature (medium confidence)       |
+
+### UI implementation
+
+| Element            | Details                                                                                                                     |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| Label              | "Optimized positive prompt in {Platform} {icon}" (was "Optimized prompt")                                                   |
+| Negative window    | "Optimized negative prompt in {Platform} {icon}" — amber theme (`border-amber-600/50`, `bg-amber-950/20`, `text-amber-100`) |
+| Negative copy      | Inline copy icon inside the negative window                                                                                 |
+| Negative save      | Inline save icon inside the negative window                                                                                 |
+| Bottom copy button | Copies positive only. Toast: "Negative prompt also available above" (3.5s, amber, animated)                                 |
+| Bottom save button | Text changes to "Save complete prompt" — saves both positive + negative                                                     |
+| Priority           | `effectiveNegativeText`: Call 3 negative > Call 2 tier negative > empty                                                     |
+
+### Data flow
+
+```
+Call 2 → tier1.negative, tier2.negative, tier3.negative, tier4.negative (generic)
+Call 3 → aiOptimiseResult.negative (platform-specific, optimised)
+
+effectiveNegativeText = aiOptimiseResult?.negative   (if optimiser ON)
+                     ?? generatedPrompts.negative[tierKey]  (if optimiser OFF)
+                     ?? ''                                   (no negative available)
+```
+
+### What's NOT built yet
+
+- **My Prompts page (`/studio/library`) card display:** Saved prompts include the negative in the payload (`negativePrompt` field), but the card UI on the library page does not yet show two sections with two copy icons. This is a future build.
+
+---
+
+## 11. Provider Switching Behaviour
 
 Unchanged from v2.0.0. See v2.0.0 §7.
 
 ---
 
-## 11. Algorithm Cycling Animation System
+## 12. Algorithm Cycling Animation System
 
 Unchanged from v2.0.0. See v2.0.0 §8.
 
 ---
 
-## 12. The 101 Algorithm Names
+## 13. The 101 Algorithm Names
 
 Unchanged from v2.0.0. See v2.0.0 §9.
 
 ---
 
-## 13. Algorithm Count Display
+## 14. Algorithm Count Display
 
 Unchanged from v2.0.0. See v2.0.0 §10.
 
 ---
 
-## 14. Visual UX Flow
+## 15. Visual UX Flow
 
 Unchanged from v2.0.0. See v2.0.0 §11.
 
 ---
 
-## 15. Standard Builder Learning Pipeline
+## 16. Standard Builder Learning Pipeline
 
 Unchanged from v2.0.0. See v2.0.0 §12.
 
 ---
 
-## 16. API Route Specifications
+## 17. API Route Specifications
 
-### `/api/generate-tier-prompts` (Call 2) — UPDATED v3.0.0
+### `/api/generate-tier-prompts` (Call 2) — UPDATED v4.5
 
-| Property              | Value                                                                 |
-| --------------------- | --------------------------------------------------------------------- |
-| Method                | POST                                                                  |
-| Runtime               | nodejs                                                                |
-| Dynamic               | force-dynamic                                                         |
-| Max duration          | 15s                                                                   |
-| Rate limit            | 20/hour prod, 200/hour dev                                            |
-| Rate limit key        | `generate-tier-prompts`                                               |
-| Auth required         | No (Pro gate is at page level)                                        |
-| Model                 | gpt-5.4-mini                                                          |
-| Temperature           | **0.5** (up from 0.3 — enables creative T3 restructuring)             |
-| Max completion tokens | **2000** (up from 1500 — headroom for mandatory additions)            |
-| Response format       | json_object                                                           |
-| Cache                 | no-store                                                              |
-| **Post-processing**   | **P1+P2+P3+P8+P10+P11+P12** via `harmony-post-processing.ts` — see §7 |
-| System prompt rules   | **30 rules** (up from 18) — see §6                                    |
+| Property              | Value                                                                      |
+| --------------------- | -------------------------------------------------------------------------- |
+| Method                | POST                                                                       |
+| Runtime               | nodejs                                                                     |
+| Dynamic               | force-dynamic                                                              |
+| Max duration          | 15s                                                                        |
+| Rate limit            | 20/hour prod, 200/hour dev                                                 |
+| Rate limit key        | `generate-tier-prompts`                                                    |
+| Auth required         | No (Pro gate is at page level)                                             |
+| Model                 | gpt-5.4-mini                                                               |
+| Temperature           | **0.5** (up from 0.3 — enables creative T3 restructuring)                  |
+| Max completion tokens | **2000** (up from 1500 — headroom for mandatory additions)                 |
+| Response format       | json_object                                                                |
+| Cache                 | no-store                                                                   |
+| **Post-processing**   | **P1+P2+P3+P8+P10+P11+P12** via `harmony-post-processing.ts` — see §7      |
+| System prompt rules   | **30 rules** (v4.5 — see §6). v4.1–v4.5 fix additions on top of v4.0 base. |
+| **File lines**        | **650** (up from 523 at v4.0.0)                                            |
 
 ### `/api/optimise-prompt` (Call 3)
 
-| Property              | Value                                                    |
-| --------------------- | -------------------------------------------------------- |
-| Method                | POST                                                     |
-| Runtime               | nodejs                                                   |
-| Dynamic               | force-dynamic                                            |
-| Max duration          | 15s                                                      |
-| Rate limit            | 30/hour prod, 200/hour dev                               |
-| Rate limit key        | `optimise-prompt`                                        |
-| Auth required         | No (Pro gate is at page level)                           |
-| Model                 | gpt-5.4-mini                                             |
-| Temperature           | 0.2 (low — optimisation should be deterministic-feeling) |
-| Max completion tokens | 1200                                                     |
-| Response format       | json_object                                              |
-| Cache                 | no-store                                                 |
+| Property              | Value                                                                          |
+| --------------------- | ------------------------------------------------------------------------------ |
+| Method                | POST                                                                           |
+| Runtime               | nodejs                                                                         |
+| Dynamic               | force-dynamic                                                                  |
+| Max duration          | 15s                                                                            |
+| Rate limit            | 30/hour prod, 200/hour dev                                                     |
+| Rate limit key        | `optimise-prompt`                                                              |
+| Auth required         | No (Pro gate is at page level)                                                 |
+| Model                 | gpt-5.4-mini                                                                   |
+| Temperature           | **0.4 prose / 0.2 CLIP** (prose raised from 0.2 for NL enrichment)             |
+| Max completion tokens | 1200                                                                           |
+| Response format       | json_object                                                                    |
+| Cache                 | no-store                                                                       |
+| **File lines**        | **406** (up from 315 at v2.0.0)                                                |
+| **Builders**          | **43 independent per-platform files** in `src/lib/optimise-prompts/group-*.ts` |
 
 ---
 
-## 17. Security & Cost Controls
+## 18. Security & Cost Controls
 
 Unchanged from v2.0.0. See v2.0.0 §14.
 
 ---
 
-## 18. File Map
+## 19. File Map
 
 ### New Files (all BUILT)
 
-| File                                                | Purpose                                                                       | Actual lines |
-| --------------------------------------------------- | ----------------------------------------------------------------------------- | ------------ |
-| `src/app/api/generate-tier-prompts/route.ts`        | Call 2 API route (imports post-processing from lib)                           | **523**      |
-| `src/lib/harmony-post-processing.ts`                | **NEW v4.0.0** — Extracted post-processing pipeline (P1,P2,P3,P8,P10,P11,P12) | **342**      |
-| `src/lib/harmony-compliance.ts`                     | Compliance gate (P4,P5,P6,P9) + rule ceiling tracking                         | **486**      |
-| `src/lib/__tests__/harmony-post-processing.test.ts` | **NEW v4.0.0** — 72-test lockdown suite for post-processing                   | **601**      |
-| `src/lib/__tests__/harmony-compliance.test.ts`      | 43-test compliance gate regression suite                                      | **453**      |
-| `src/app/api/optimise-prompt/route.ts`              | Call 3 API route                                                              | 315          |
-| `src/hooks/use-tier-generation.ts`                  | Hook for Call 2 (AI tier generation)                                          | 224          |
-| `src/hooks/use-ai-optimisation.ts`                  | Hook for Call 3 (AI optimisation + animation timing)                          | 335          |
-| `src/hooks/use-drift-detection.ts`                  | Prompt DNA Drift Detection (zero API calls)                                   | 165          |
-| `src/data/algorithm-names.ts`                       | 101 cycling + 3 finale names + shuffle + count                                | 187          |
-| `src/components/prompt-lab/algorithm-cycling.tsx`   | Cycling animation component (amber→emerald)                                   | 256          |
-| `src/components/prompt-lab/drift-indicator.tsx`     | "N changes detected" amber badge                                              | 136          |
+| File                                              | Purpose                                                      | Actual lines |
+| ------------------------------------------------- | ------------------------------------------------------------ | ------------ |
+| `src/app/api/generate-tier-prompts/route.ts`      | Call 2 API route (v4.5, imports post-processing from lib)    | **650**      |
+| `src/lib/harmony-post-processing.ts`              | Extracted post-processing pipeline (P1,P2,P3,P8,P10,P11,P12) | **272**      |
+| `src/lib/harmony-compliance.ts`                   | Compliance gate (P4,P5,P6,P9) + rule ceiling tracking        | **833**      |
+| `src/app/api/optimise-prompt/route.ts`            | Call 3 API route (43 independent builders)                   | **406**      |
+| `src/hooks/use-tier-generation.ts`                | Hook for Call 2 (AI tier generation)                         | **239**      |
+| `src/hooks/use-ai-optimisation.ts`                | Hook for Call 3 (AI optimisation + animation timing)         | **337**      |
+| `src/hooks/use-drift-detection.ts`                | Prompt DNA Drift Detection (zero API calls)                  | 165          |
+| `src/data/algorithm-names.ts`                     | 101 cycling + 3 finale names + shuffle + count               | **484**      |
+| `src/components/prompt-lab/algorithm-cycling.tsx` | Cycling animation component (amber→emerald)                  | 256          |
+| `src/components/prompt-lab/drift-indicator.tsx`   | "N changes detected" amber badge                             | 136          |
+| `src/lib/optimise-prompts/group-*.ts`             | **43 independent per-platform builder files** (Call 3)       | varies       |
 
 ### Modified Files (all BUILT)
 
 | File                                                         | Change                                                                                                                                  | Actual lines |
 | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| `src/components/prompts/playground-workspace.tsx`            | AI Disguise orchestrator — lifts hooks, auto-re-fires, cascade clear                                                                    | 313          |
-| `src/components/prompts/enhanced-educational-preview.tsx`    | Call 3 wiring, `AlgorithmCycling`, full-width layout, cascade clear via `clearSignal`, footer Clear All (purple gradient, full cascade) | **2,014**    |
-| `src/components/providers/describe-your-image.tsx`           | Engine bay gradient Generate button (pulse + shimmer), purple gradient Clear All, `clearSignal` prop, format detection, drift indicator | **722**      |
+| `src/components/prompts/playground-workspace.tsx`            | AI Disguise orchestrator — lifts hooks, auto-re-fires, cascade clear                                                                    | **369**      |
+| `src/components/prompts/enhanced-educational-preview.tsx`    | Call 3 wiring, negative prompt display (§10), full-width layout, cascade clear, footer buttons                                          | **1,913**    |
+| `src/components/providers/describe-your-image.tsx`           | Engine bay gradient Generate button (pulse + shimmer), purple gradient Clear All, `clearSignal` prop, format detection, drift indicator | **1,153**    |
 | `src/components/providers/prompt-builder.tsx`                | Pass-through AI Disguise props (`onDescribeClear`, `onDescribeGenerate`, etc.)                                                          | 3,644        |
-| `src/components/prompt-builder/four-tier-prompt-preview.tsx` | "Generated for X" badge, tier provider icons strip, white tier labels, `providers` prop                                                 | **788**      |
+| `src/components/prompt-builder/four-tier-prompt-preview.tsx` | "Generated for X" badge, tier provider icons strip, white tier labels, `providers` prop                                                 | **942**      |
+| `src/data/providers/platform-config.json`                    | **11 negativeSupport fixes** (29 March) — 22 separate, 2 inline, 21 none                                                                | SSOT         |
 
 ### Untouched Files (explicitly protected)
 
@@ -637,7 +803,7 @@ Unchanged from v2.0.0. See v2.0.0 §14.
 
 ---
 
-## 19. Non-Regression Rules
+## 20. Non-Regression Rules
 
 ### Standard Builder Protection
 
@@ -684,9 +850,19 @@ Unchanged from v2.0.0. See v2.0.0 §14.
 29. **115-test harmony lockdown suite must pass before shipping** — `harmony-post-processing.test.ts` (72 tests) + `harmony-compliance.test.ts` (43 tests). Any red test = post-processing drift. Fix the code, not the test.
 30. **Rule ceiling is 30** — adding a new system prompt rule requires either replacing an existing rule, building a post-processing code fix instead, or explicit Martin approval to raise the ceiling. Rule count tracked in `harmony-compliance.ts` with test enforcement.
 
+### v5.0.0 Rules
+
+31. **T2 `negative` JSON field MUST be empty string** — all T2 negatives go inline after `--no` in the positive field. The separate `negative` field causes GPT to process negatives twice, producing duplication. Do NOT revert to `"negative": "..."` for T2.
+32. **T4 character ceiling is 325** — SSOT-justified (idealMax avg 277, 7/15 T4 platforms accept 300+). Do NOT lower back to 250 without retesting.
+33. **Negative prompt window appears ONLY for `negativeSupport: 'separate'` platforms** (22 platforms). Do NOT show for `inline` or `none`/`converted` platforms.
+34. **`effectiveNegativeText` priority: Call 3 > Call 2 > empty** — when optimiser is ON, Call 3 negative takes priority. When OFF, Call 2 tier negative shown. Do NOT show Call 2 when Call 3 is available.
+35. **Save handler must save both positive and negative** — `handleSavePrompt` uses `effectiveNegativeText` for the `negativePrompt` field. Do NOT revert to saving only Call 2 negative.
+36. **Bottom copy button copies positive only + toast** — "Negative prompt also available above" toast for 3.5s. Each section has its own inline copy. Do NOT make the bottom copy button copy both.
+37. **Three-assessor scoring is the standard** — Claude, ChatGPT, Grok. Use triangulated median. Claude alone is +5 on T3, +3 on T4.
+
 ---
 
-## 20. Decisions Log
+## 21. Decisions Log
 
 | #   | Decision                                                                                      | Rationale                                                                                                                                                                                                                                             | Date        |
 | --- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
@@ -722,16 +898,23 @@ Unchanged from v2.0.0. See v2.0.0 §14.
 | D30 | P8/P11 broadened with abstract-noun + perception-verb lookup sets                             | GPT substitutes nouns to dodge bans. Lookup sets (20+ nouns × 18+ verbs) catch all variants.                                                                                                                                                          | 25 Mar 2026 |
 | D31 | T4 character limit raised 200 → 250                                                           | GPT exceeded 200 chars in all 6 rounds. Mandatory scene depth + mood phrase needs headroom.                                                                                                                                                           | 25 Mar 2026 |
 | D32 | 115-test harmony lockdown suite created                                                       | 72 post-processing + 43 compliance tests. Real GPT fixtures from 6 rounds + 3 stress tests.                                                                                                                                                           | 25 Mar 2026 |
+| D33 | v4.1–v4.5 fix programme: 6 versions in one session                                            | Three-scene stress testing with three assessors identified 6 systematic failures. Each fix targeted one root cause. Triangulated +7 overall.                                                                                                          | 28 Mar 2026 |
+| D34 | T2 `negative` field set to empty string                                                       | Root cause of T2 --no duplication: GPT processed negatives twice (inline + separate JSON field). Setting `negative: ""` eliminates double-processing. 4/4 consecutive clean outputs post-fix.                                                         | 28 Mar 2026 |
+| D35 | T4 character ceiling raised 250 → 325                                                         | SSOT idealMax avg 277. At 250, T4 always dropped one anchor. At 325, zero drops across 3 scenes. SSOT-justified: 7/15 T4 platforms accept 300+.                                                                                                       | 29 Mar 2026 |
+| D36 | Three-assessor scoring (Claude + ChatGPT + Grok)                                              | Claude scores T3 ~5pts and T4 ~3-5pts high. Triangulated median is the calibrated score. Assessor gap collapsed from 23pts (v4.3) to 4pts (v4.5).                                                                                                     | 28 Mar 2026 |
+| D37 | Negative prompt display for 22 `separate` platforms                                           | `aiOptimiseResult.negative` was returned by API, stored in hook, never rendered. Now visible in amber window. 11 config fixes applied after deep research audit.                                                                                      | 29 Mar 2026 |
+| D38 | Bottom copy = positive only + toast; Save = both                                              | User pastes into two separate platform input boxes. Bottom copy gives positive, toast says "Negative prompt also available above." Each section has inline copy. Save captures both.                                                                  | 29 Mar 2026 |
+| D39 | 11 `negativeSupport` config fixes in platform-config.json                                     | Deep research audit verified all 40 platforms' actual UIs. GetImg, NightCafe, OpenArt, Tensor.Art, Craiyon, Kling, Pixlr, Simplified, Freepik, Artbreeder, Artistly all have separate negative fields.                                                | 29 Mar 2026 |
 
 ---
 
-## 21. Build Order
+## 22. Build Order
 
 ### Part 1 — Foundation (API routes + data) ✅ BUILT
 
-1. ✅ Created `src/data/algorithm-names.ts` — 187 lines
-2. ✅ Created `src/app/api/generate-tier-prompts/route.ts` — **523 lines** (was 406 at v3.0.0; post-processing extracted to `harmony-post-processing.ts`)
-3. ✅ Created `src/app/api/optimise-prompt/route.ts` — 315 lines
+1. ✅ Created `src/data/algorithm-names.ts` — 484 lines
+2. ✅ Created `src/app/api/generate-tier-prompts/route.ts` — **650 lines** (v4.5; post-processing extracted to `harmony-post-processing.ts`)
+3. ✅ Created `src/app/api/optimise-prompt/route.ts` — **406 lines** (43 independent builders)
 
 ### Part 2 — Hooks ✅ BUILT
 
@@ -784,23 +967,40 @@ Unchanged from v2.0.0. See v2.0.0 §14.
 35. ✅ T1-8 interaction merging (Option B — dual-lighting WRONG/RIGHT)
 36. ✅ 3 stress tests (900-char inputs): lighthouse, cellist, deep-sea diver
 
+### Part 4e — Fix Programme + Negative Display (v5.0.0) ✅ BUILT
+
+37. ✅ v4.1: 6 targeted fixes from 10-scene dual-assessor trend analysis (D33)
+38. ✅ v4.2: 3 weak fixes strengthened with WRONG/RIGHT examples (D33)
+39. ✅ v4.3: T1 interaction dedup + T4 value-add reframed as conversion (D33)
+40. ✅ v4.4: T2 negative field set to empty string — root cause fix (D34)
+41. ✅ v4.5: T4 character ceiling 250 → 325 — SSOT-justified (D35)
+42. ✅ Three-assessor scoring methodology established: Claude + ChatGPT + Grok (D36)
+43. ✅ 3-scene × 3-assessor × 6-version stress testing completed
+44. ✅ Negative prompt window: amber theme, 22 platforms, inline copy + save (D37)
+45. ✅ 11 `negativeSupport` config fixes in `platform-config.json` (D39)
+46. ✅ Save handler updated: saves both positive + negative (D38)
+47. ✅ Bottom copy toast: "Negative prompt also available above" (D38)
+48. ✅ Save button text: "Save complete prompt" for separate-negative platforms (D38)
+
 ### Part 5 — Learning Pipeline (passive) ⏳ DEFERRED
 
-37. ⏳ Add learning pair logging to telemetry route — NOT YET BUILT
-38. ⏳ Extend prompt-telemetry schema to include AI generation data — NOT YET BUILT
+49. ⏳ Add learning pair logging to telemetry route — NOT YET BUILT
+50. ⏳ Extend prompt-telemetry schema to include AI generation data — NOT YET BUILT
 
 ### Part 6 — Testing ✅ BUILT (v4.0.0)
 
-39. ✅ `harmony-post-processing.test.ts` — 72 tests covering all P1–P12 functions (D32)
-40. ✅ `harmony-compliance.test.ts` — 43 tests covering syntax conversion, MJ params, T3/T4 detection, rule ceiling
-41. ✅ Drift detection tests — assert lookup set sizes (T3: 20 nouns × 18 verbs, T4: 23 nouns × 21 verbs, CLIP: 10 adjectives)
-42. ✅ Full pipeline integration tests — verify P3→P8→P10 chain order and cross-tier no-op behaviour
-43. ⏳ Integration test: full flow from human text → AI tiers → AI optimisation — NOT YET BUILT
-44. ⏳ Animation timing tests (minimum display, deceleration, landing) — NOT YET BUILT
+51. ✅ `harmony-post-processing.test.ts` — 72 tests covering all P1–P12 functions (D32)
+52. ✅ `harmony-compliance.test.ts` — 43 tests covering syntax conversion, MJ params, T3/T4 detection, rule ceiling
+53. ✅ Drift detection tests — assert lookup set sizes (T3: 20 nouns × 18 verbs, T4: 23 nouns × 21 verbs, CLIP: 10 adjectives)
+54. ✅ Full pipeline integration tests — verify P3→P8→P10 chain order and cross-tier no-op behaviour
+55. ⏳ Integration test: full flow from human text → AI tiers → AI optimisation — NOT YET BUILT
+56. ⏳ Animation timing tests (minimum display, deceleration, landing) — NOT YET BUILT
 
 ---
 
 ## Changelog
+
+- **29 March 2026 (v5.0.0):** **FIX PROGRAMME + NEGATIVE PROMPT DISPLAY.** Call 2 system prompt evolved v4.0→v4.5 through 6 targeted fix versions: v4.1 (6 fixes from trend analysis), v4.2 (3 strengthened), v4.3 (T1 dedup + T4 conversion reframe), v4.4 (T2 negative root cause — empty negative field), v4.5 (T4 ceiling 250→325). Three-scene stress testing (station violinist, Victorian flower seller, sci-fi hangar) with three independent assessors (Claude, ChatGPT, Grok). Triangulated gains: T1 +7, T2 +8, T3 +1, T4 +13, overall +7. Scoring calibration: Claude T3 +5pts high, T4 +3-5pts high vs median. GPT ceilings documented: "reflect"→"smear" permanent, T4 verb softening permanent, run-to-run variance 83–92. Negative prompt display built: amber-themed window for 22 `separate` platforms (up from 11 — 11 config fixes after deep research audit), inline copy + save icons, toast on bottom copy, "Save complete prompt" button text. Call 3 §9 rewritten: 406 lines (up from 315), 43 independent per-platform builders, temperature 0.4/0.2 (prose/CLIP), `aiOptimiseResult.negative` now rendered. New §10 added (Negative Prompt Display). Sections renumbered 10–21→11–22. File map updated with current line counts (route.ts 650, compliance 833, EEP 1,913). Non-regression rules expanded 30→37. Decisions log D33–D39. Build order Part 4e added (12 items, all BUILT).
 
 - **25 March 2026 (v4.0.0):** **HARMONY ENGINEERING v2 + POST-PROCESSING EXTRACTION + TEST LOCKDOWN.** Six additional harmony rounds (R1–R6) with dual Claude/ChatGPT assessment, converged to ≤1 point gap across all tiers. Three 900-char stress tests (lighthouse, cellist, deep-sea diver) validated system at 94.5–96/100. System prompt rules expanded from 18 to 30 (ceiling raised 27→30, Martin-approved): +T1-8 semantic clustering with interaction merging, +T3-5 opening sentence diversity, +T4-5 mandatory scene depth, +G1 emotional atmosphere mandate, +T1-6 time-of-day weighting, +T3 "that feels" ban. Post-processing expanded from P1+P2 to 7 functions: +P3 (T4 self-correction), +P8 (T4 meta-openers, broadened with 23 abstract nouns × 21 meta verbs), +P10 (T4 short sentence merge), +P11 (T3 meta-openers, broadened with 20 abstract nouns × 18 perception verbs), +P12 (T1 CLIP qualitative adjective stripper). All post-processing extracted from route.ts to `src/lib/harmony-post-processing.ts` (342 lines) for testability. 115-test lockdown suite created: `harmony-post-processing.test.ts` (72 tests) + `harmony-compliance.test.ts` (43 tests). Drift detection tests assert lookup set sizes. T4 character limit raised 200→250 (D31). Decisions log expanded D26→D32. Non-regression rules expanded 27→30. Build order: Part 4d added (11 items), Part 6 updated from DEFERRED to BUILT.
 

@@ -1,8 +1,8 @@
 # Prompt Optimizer — Authority Documentation
 
-**Version:** 5.0.0
+**Version:** 6.0.0
 **Authority:** This is the single source of truth for the prompt optimizer subsystem.
-**Last updated:** 23 March 2026
+**Last updated:** 29 March 2026
 
 ---
 
@@ -22,6 +22,9 @@ No competitor provides this. Most generators either hard-truncate or silently dr
 - Prompt Lab optimizer behaviour → `prompt-lab.md` (neutral mode, dynamic label, "Within optimal range")
 - AI Disguise system (Call 3 AI optimisation) → `ai-disguise.md` §6
 - Colour-coded prompt text in optimizer output → `code-standard.md` § 6.14 (SSOT colours)
+- Call 3 independent builder architecture → `harmonizing-claude-openai.md`
+- Platform SSOT → `platform-config.json` + `platform-config.ts`
+- Harmony pass anti-regression → `harmony-anti-regression.md`
 
 ---
 
@@ -29,20 +32,49 @@ No competitor provides this. Most generators either hard-truncate or silently dr
 
 ### 2.1 File Map
 
-| File                                    | Path                                         | Lines | Purpose                                                                                                         |
-| --------------------------------------- | -------------------------------------------- | ----- | --------------------------------------------------------------------------------------------------------------- |
-| **prompt-optimizer.ts**                 | `src/lib/`                                   | 1,604 | Core engine: 4 pipelines, 5-phase optimization, 217 redundancy pairs, 59 compression rules, semantic similarity |
-| **clip-bpe-tokenizer.ts**               | `src/lib/`                                   | 367   | CLIP BPE tokenization: exact token counts when vocab loaded, improved heuristic (~93%) as fallback              |
-| **use-prompt-optimization.ts**          | `src/hooks/`                                 | 356   | React hook: manages toggle state, real-time length analysis, platform-specific tooltips                         |
-| **prompt-limits.ts**                    | `src/types/`                                 | 310   | TypeScript types: PromptLimit, LengthStatus, ImpactCategory, ModelArchitecture                                  |
-| **prompt-limits.json**                  | `src/data/providers/`                        | 558   | Platform-specific limits for all 42 platforms: maxChars, idealMin/Max, tokenLimit, architecture                 |
-| **prompt-limits.schema.json**           | `src/data/providers/`                        | 117   | JSON Schema validation for prompt-limits.json                                                                   |
-| **optimization-transparency-panel.tsx** | `src/components/providers/`                  | 419   | Pro-only UI panel showing optimization reasoning grouped by phase                                               |
-| **text-length-optimizer.tsx**           | `src/components/providers/`                  | 392   | Toggle component: OFF=Core Colours gradient outline, ON=purple gradient fill                                    |
-| **platform-optimization.ts**            | `src/lib/prompt-intelligence/engines/`       | 589   | Platform formatting engine: prompt assembly, smart trim, category ordering                                      |
-| **platform-optimization.test.ts**       | `src/lib/prompt-intelligence/engines/tests/` | 420   | Jest tests for platform formatting                                                                              |
+#### Client-Side Optimizer (original subsystem)
 
-**Total:** 10 files, ~5,087 lines
+| File                                    | Path                                         | Lines | Purpose                                                                                                                                    |
+| --------------------------------------- | -------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| **prompt-optimizer.ts**                 | `src/lib/`                                   | 1,604 | Core engine: 4 pipelines, 5-phase optimization, 217 redundancy pairs, 59 compression rules, semantic similarity                            |
+| **clip-bpe-tokenizer.ts**               | `src/lib/`                                   | 367   | CLIP BPE tokenization: exact token counts when vocab loaded, improved heuristic (~93%) as fallback                                         |
+| **use-prompt-optimization.ts**          | `src/hooks/`                                 | 360   | React hook: manages toggle state, real-time length analysis, platform-specific tooltips                                                    |
+| **prompt-limits.ts**                    | `src/types/`                                 | 310   | TypeScript types: PromptLimit, LengthStatus, ImpactCategory, ModelArchitecture                                                             |
+| **platform-config.json**                | `src/data/providers/`                        | ~80KB | **SSOT** for all 40 platforms: limits, tiers, negativeSupport, idealMin/Max, architecture. Replaced `prompt-limits.json` (deleted 26 Mar). |
+| **platform-config.ts**                  | `src/data/providers/`                        | 225   | TypeScript adapter for platform-config.json — typed accessors for all platform fields                                                      |
+| **optimization-transparency-panel.tsx** | `src/components/providers/`                  | 610   | Pro-only UI panel showing optimization reasoning grouped by phase                                                                          |
+| **text-length-optimizer.tsx**           | `src/components/providers/`                  | 392   | Toggle component: OFF=Core Colours gradient outline, ON=purple gradient fill                                                               |
+| **platform-optimization.ts**            | `src/lib/prompt-intelligence/engines/`       | 589   | Platform formatting engine: prompt assembly, smart trim, category ordering                                                                 |
+| **platform-optimization.test.ts**       | `src/lib/prompt-intelligence/engines/tests/` | 420   | Jest tests for platform formatting                                                                                                         |
+
+**Client-side total:** 10 files, ~5,247 lines
+
+#### Call 3 Server-Side Optimizer (AI Disguise — added v5.0.0)
+
+| File                                | Path                           | Lines  | Purpose                                                                                                                    |
+| ----------------------------------- | ------------------------------ | ------ | -------------------------------------------------------------------------------------------------------------------------- |
+| **route.ts**                        | `src/app/api/optimise-prompt/` | 406    | Call 3 API route: receives assembled prompt + provider context, calls GPT-5.4-mini, returns optimised prompt with metadata |
+| **use-ai-optimisation.ts**          | `src/hooks/`                   | 337    | React hook: manages Call 3 lifecycle, algorithm cycling animation, result state, clear cascade                             |
+| **platform-groups.ts**              | `src/lib/optimise-prompts/`    | 181    | Maps each provider ID to its builder group                                                                                 |
+| **resolve-group-prompt.ts**         | `src/lib/optimise-prompts/`    | 205    | Resolves the system prompt for a given provider — returns group-specific or generic fallback                               |
+| **harmony-post-processing.ts**      | `src/lib/optimise-prompts/`    | 439    | Post-processing functions P1–P12 that run on all Call 3 responses before returning to client                               |
+| **harmony-compliance.ts**           | `src/lib/`                     | 833    | Compliance gates: `enforceT1Syntax`, `enforceNegativeContradiction` — deterministic fixes applied after GPT                |
+| **generic-fallback.ts**             | `src/lib/optimise-prompts/`    | 78     | Fallback system prompt for any platform without a dedicated builder                                                        |
+| **types.ts**                        | `src/lib/optimise-prompts/`    | 57     | Shared TypeScript types for the builder system                                                                             |
+| **index.ts**                        | `src/lib/optimise-prompts/`    | —      | Barrel exports                                                                                                             |
+| **43 builder files** (`group-*.ts`) | `src/lib/optimise-prompts/`    | varies | Independent per-platform/per-group system prompts — no shared imports between builders                                     |
+| **compression-utils.ts**            | `src/data/providers/`          | —      | Compression utilities (migrated from deleted `compression/` folder)                                                        |
+
+**Call 3 total:** 49 files in `src/lib/optimise-prompts/` + route + hook + harmony-compliance
+
+#### Deleted Files (v6.0.0)
+
+| File                        | Reason                                                                    |
+| --------------------------- | ------------------------------------------------------------------------- |
+| `prompt-limits.json`        | Replaced by `platform-config.json` SSOT (26 Mar 2026)                     |
+| `prompt-limits.schema.json` | Replaced by `platform-config.ts` typed adapter                            |
+| `compression/` folder       | Consolidated to `compression-utils.ts` in `src/data/providers/`           |
+| `group-multi-engine.ts`     | 5 aggregator groups removed — all platforms now have independent builders |
 
 ### 2.2 Offline Tools (Python)
 
@@ -73,7 +105,7 @@ User selects terms in Prompt Builder
            ▼
 ┌──────────────────────────┐
 │  Prompt Optimizer         │  prompt-optimizer.ts
-│  optimizePromptGold()     │  ← THIS SUBSYSTEM
+│  optimizePromptGold()     │  ← CLIENT-SIDE SUBSYSTEM
 │                           │
 │  1. Detect strategy       │  detectStrategy() → keywords|midjourney|natural|plain
 │  2. Route to pipeline     │  4 optimizer pipelines (§3)
@@ -104,6 +136,8 @@ User selects terms in Prompt Builder
 │ fill    │  │                          │
 └─────────┘  └──────────────────────────┘
 ```
+
+**In the Prompt Lab**, the client-side optimizer is overlaid by Call 3 (AI Disguise). See §14.7 for the parallel architecture.
 
 ---
 
@@ -310,11 +344,11 @@ Provides exact CLIP token counts for Tier 1 platforms by implementing the BPE (B
 
 ```typescript
 // Load real vocab for exact counts (optional)
-import vocabData from '@/data/clip-bpe-vocab.json';
+import vocabData from "@/data/clip-bpe-vocab.json";
 loadClipVocab(vocabData);
 
 // Returns exact count if vocab loaded, improved heuristic otherwise
-const tokens = clipTokenCount('masterpiece, dramatic lighting');
+const tokens = clipTokenCount("masterpiece, dramatic lighting");
 
 // Check if real vocab is loaded
 const isExact = isVocabLoaded();
@@ -365,23 +399,21 @@ Phase 4 of the pipeline. Rewrites verbose phrases to shorter equivalents that pr
 
 ## 5. Platform Limits Database
 
-`prompt-limits.json` contains per-platform optimization data for all 42 platforms.
+**SSOT: `platform-config.json`** — single source of truth for all 40 platforms. Replaced the former `prompt-limits.json` (deleted 26 Mar 2026) and consolidated limits, tier assignments, negative support, and ideal ranges into one file. The TypeScript adapter `platform-config.ts` (225 lines) provides typed accessors.
 
-### 5.1 Fields Per Platform
+### 5.1 Fields Per Platform (relevant to optimizer)
 
-| Field                 | Type                                                                | Purpose                                           |
-| --------------------- | ------------------------------------------------------------------- | ------------------------------------------------- |
-| `maxChars`            | number \| null                                                      | Hard character limit (null = unlimited)           |
-| `idealMin`            | number                                                              | Sweet spot lower bound                            |
-| `idealMax`            | number                                                              | Sweet spot upper bound (optimization target)      |
-| `idealWords`          | number                                                              | Approximate word count for sweet spot             |
-| `tokenLimit`          | number \| null                                                      | CLIP token limit (77 for Tier 1, null for others) |
-| `platformNote`        | string                                                              | Human-readable platform description               |
-| `optimizationBenefit` | string                                                              | Why optimization helps                            |
-| `qualityImpact`       | string                                                              | Estimated improvement (e.g., "15-25%")            |
-| `impactCategory`      | `'high'` \| `'moderate'` \| `'low'`                                 | Optimization priority tier                        |
-| `architecture`        | `'clip-based'` \| `'transformer'` \| `'proprietary'` \| `'unknown'` | Text encoder type                                 |
-| `sources`             | string[]                                                            | Research sources                                  |
+| Field             | Type                                                                | Purpose                                           |
+| ----------------- | ------------------------------------------------------------------- | ------------------------------------------------- |
+| `maxChars`        | number \| null                                                      | Hard character limit (null = unlimited)           |
+| `idealMin`        | number                                                              | Sweet spot lower bound                            |
+| `idealMax`        | number                                                              | Sweet spot upper bound (optimization target)      |
+| `tokenLimit`      | number \| null                                                      | CLIP token limit (77 for Tier 1, null for others) |
+| `negativeSupport` | `'inline'` \| `'separate'` \| `'none'`                              | How the platform handles negative prompts         |
+| `tier`            | `1` \| `2` \| `3` \| `4`                                            | Platform tier assignment                          |
+| `architecture`    | `'clip-based'` \| `'transformer'` \| `'proprietary'` \| `'unknown'` | Text encoder type                                 |
+
+**Note:** `platform-formats.json` still exists and holds `_assemblyDefaults` (quality prefix/suffix, category ordering). Deferred merge into `platform-config.json` once SSOT is confirmed stable.
 
 ### 5.2 Distribution
 
@@ -389,8 +421,8 @@ Phase 4 of the pipeline. Rewrites verbose phrases to shorter equivalents that pr
 | ------------ | ------ | ----------- | --------------- | ---------- |
 | clip-based   | 13     | 13          | 0               | 0          |
 | transformer  | 7      | 0           | 7               | 0          |
-| proprietary  | 22     | 0           | 14              | 8          |
-| **Total**    | **42** | **13**      | **21**          | **8**      |
+| proprietary  | 20     | 0           | 14              | 6          |
+| **Total**    | **40** | **13**      | **21**          | **6**      |
 
 ### 5.3 Length Status
 
@@ -415,7 +447,7 @@ interface UsePromptOptimizationOptions {
   promptText: string; // Current assembled prompt text
   selections: PromptSelections; // Current category selections
   isMidjourneyFamily?: boolean; // Uses --no syntax
-  compositionMode?: 'static' | 'dynamic'; // Disabled in static mode
+  compositionMode?: "static" | "dynamic"; // Disabled in static mode
 }
 ```
 
@@ -450,7 +482,7 @@ interface UsePromptOptimizationReturn {
 
 ### 7.1 Text Length Optimizer Toggle (v1.1.0)
 
-`text-length-optimizer.tsx` — 347 lines
+`text-length-optimizer.tsx` — 392 lines
 
 **Visual states:**
 
@@ -462,7 +494,7 @@ interface UsePromptOptimizationReturn {
 
 ### 7.2 Optimization Transparency Panel (v1.0.0)
 
-`optimization-transparency-panel.tsx` — 419 lines
+`optimization-transparency-panel.tsx` — 610 lines
 
 **Pro-only.** Collapsible panel showing exactly why the optimizer made each decision. Grouped by phase:
 
@@ -580,7 +612,7 @@ function findRedundantTerms(termTexts: string[]): Map<string, string> {
 ### 10.3 Midjourney Parameter Protection
 
 ```typescript
-const paramSplitIndex = promptText.indexOf(' --');
+const paramSplitIndex = promptText.indexOf(" --");
 let creativeText = promptText.slice(0, paramSplitIndex);
 let paramsSuffix = promptText.slice(paramSplitIndex);
 // Optimise only creativeText, then rejoin: optimised + paramsSuffix
@@ -604,11 +636,13 @@ Fallback: if the reconstructed clause doesn't match the prompt string exactly, i
 ## 11. Security & Safety
 
 - **No localStorage** — optimizer state always resets between sessions
-- **All processing client-side** — no external API calls
+- **Client-side processing** — the 4-phase pipeline runs entirely client-side with no external API calls
+- **Server-side AI processing** — Call 3 runs server-side via `/api/optimise-prompt` (GPT-5.4-mini). No API keys or model names are exposed to the client. All AI calls are presented to users as "algorithms" (AI Disguise principle).
 - **Type-safe throughout** — strict TypeScript with `readonly` arrays
 - **No mutation** — `REDUNDANCY_PAIRS`, `COMPRESSION_RULES`, and `STRATEGY_WEIGHTS` are `const`
-- **JSON schema validation** — `prompt-limits.json` validated against `prompt-limits.schema.json` at build time
+- **SSOT validation** — `platform-config.json` is the single source of truth for all platform limits. The TypeScript adapter `platform-config.ts` provides type-safe access.
 - **Graceful degradation** — missing semantic-pairs.json or clip-bpe-vocab.json causes zero errors
+- **Compliance gates** — `harmony-compliance.ts` (833 lines) enforces deterministic fixes (T1 syntax, negative contradiction) after GPT returns its response. These are code-level guarantees, not prompt rules.
 
 ---
 
@@ -616,42 +650,53 @@ Fallback: if the reconstructed clause doesn't match the prompt string exactly, i
 
 ### 12.1 Consumed by Optimizer
 
-| Dependency              | Import                | Purpose                                       |
-| ----------------------- | --------------------- | --------------------------------------------- |
-| `prompt-trimmer.ts`     | `getPromptLimit()`    | Look up platform character/token limits       |
-| `platform-tiers.ts`     | `getPlatformTierId()` | Determine tier for routing                    |
+| Dependency              | Import                | Purpose                                                                                                                                                                                                                                          |
+| ----------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `prompt-trimmer.ts`     | `getPromptLimit()`    | Look up platform character/token limits                                                                                                                                                                                                          |
+| `platform-tiers.ts`     | `getPlatformTierId()` | Determine tier for routing                                                                                                                                                                                                                       |
 | `prompt-builder.ts`     | `getPlatformFormat()` | Get promptStyle + qualityPrefix/qualitySuffix. Note: `weightedCategories` may include weather-derived overrides merged upstream by `assembleTierAware()` (weather base layer, platform wins on conflicts). Optimizer receives the merged output. |
-| `clip-bpe-tokenizer.ts` | `clipTokenCount()`    | Exact/heuristic CLIP token counts             |
+| `clip-bpe-tokenizer.ts` | `clipTokenCount()`    | Exact/heuristic CLIP token counts                                                                                                                                                                                                                |
 
 ### 12.2 Consumers of Optimizer
 
-| Consumer                              | Import                         | Purpose                                 |
-| ------------------------------------- | ------------------------------ | --------------------------------------- |
-| `use-prompt-optimization.ts`          | `optimizePromptGoldStandard()` | React hook wraps the engine             |
-| `optimization-transparency-panel.tsx` | Types from optimizer           | Displays removedTerms by phase (Pro only) |
-| `prompt-builder.tsx` (standard)       | Via hook                       | Copy-to-clipboard triggers optimization; separate optimized prompt box when `wasOptimized` |
-| `enhanced-educational-preview.tsx` (Lab) | Via hook (client-side) + `useAiOptimisation` (AI) | Dynamic label switching; neutral mode; "Within optimal range" feedback; colour-coded optimized text. **v5.0.0:** AI result (`effectiveOptimisedText`) overrides client-side in display. Client-side still feeds LengthIndicator. Transparency Panel hidden when AI result available. |
+| Consumer                                 | Import                                            | Purpose                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ---------------------------------------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `use-prompt-optimization.ts`             | `optimizePromptGoldStandard()`                    | React hook wraps the engine                                                                                                                                                                                                                                                                                                                                                                              |
+| `optimization-transparency-panel.tsx`    | Types from optimizer                              | Displays removedTerms by phase (Pro only)                                                                                                                                                                                                                                                                                                                                                                |
+| `prompt-builder.tsx` (standard)          | Via hook                                          | Copy-to-clipboard triggers optimization; separate optimized prompt box when `wasOptimized`                                                                                                                                                                                                                                                                                                               |
+| `enhanced-educational-preview.tsx` (Lab) | Via hook (client-side) + `useAiOptimisation` (AI) | Dynamic label switching; neutral mode; "Within optimal range" feedback; colour-coded optimized text. **v5.0.0:** AI result (`effectiveOptimisedText`) overrides client-side in display. Client-side still feeds LengthIndicator. Transparency Panel hidden when AI result available. **v6.0.0:** Negative prompt window added. Race condition fix — Call 3 clears stale when Call 2 returns new content. |
 
 ### 12.3 Data Dependencies
 
 ```
-prompt-limits.json ──────→ prompt-trimmer.ts ──────→ prompt-optimizer.ts
-platform-formats.json ──→ prompt-builder.ts ──────→ prompt-optimizer.ts
-platform-tiers.ts ────────────────────────────────→ prompt-optimizer.ts
-semantic-pairs.json (optional) ───────────────────→ prompt-optimizer.ts
-clip-bpe-vocab.json (optional) ──────────────────→ clip-bpe-tokenizer.ts
+platform-config.json ────→ platform-config.ts ──→ prompt-trimmer.ts ──→ prompt-optimizer.ts
+platform-formats.json ──→ prompt-builder.ts ─────────────────────────→ prompt-optimizer.ts
+platform-tiers.ts ───────────────────────────────────────────────────→ prompt-optimizer.ts
+semantic-pairs.json (optional) ──────────────────────────────────────→ prompt-optimizer.ts
+clip-bpe-vocab.json (optional) ─────────────────────────────────────→ clip-bpe-tokenizer.ts
 ```
+
+**Deleted dependency:** `prompt-limits.json` → removed 26 Mar 2026. All platform limits now flow through `platform-config.json` → `platform-config.ts`.
 
 ---
 
 ## 13. Open Items
 
-| #   | Item                                                                                          | Status                                                              |
-| --- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| 1   | Python tools (`generate-semantic-pairs.py`, `generate-clip-vocab.py`) not yet present in repo | Planned — system degrades gracefully without them                   |
-| 2   | `semantic-pairs.json` not yet generated                                                       | Planned — only hand-curated pairs used until then                   |
-| 3   | `clip-bpe-vocab.json` not yet generated                                                       | Planned — improved heuristic (~93%) used as fallback                |
-| 4   | ~~Pro/tier wiring for Transparency Panel~~                                                    | **RESOLVED (v4.0.0)** — `isPro` now correctly passed in both standard builder and Prompt Lab |
+| #   | Item                                                                                          | Status                                                                                                                                                                                                       |
+| --- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | Python tools (`generate-semantic-pairs.py`, `generate-clip-vocab.py`) not yet present in repo | Planned — system degrades gracefully without them                                                                                                                                                            |
+| 2   | `semantic-pairs.json` not yet generated                                                       | Planned — only hand-curated pairs used until then                                                                                                                                                            |
+| 3   | `clip-bpe-vocab.json` not yet generated                                                       | Planned — improved heuristic (~93%) used as fallback                                                                                                                                                         |
+| 4   | ~~Pro/tier wiring for Transparency Panel~~                                                    | **RESOLVED (v4.0.0)** — `isPro` now correctly passed in both standard builder and Prompt Lab                                                                                                                 |
+| 5   | ~~`aiOptimiseResult.negative` never rendered in Prompt Lab UI~~                               | **RESOLVED (v6.0.0)** — Negative prompt window now rendered for `negativeSupport: 'separate'` platforms. Call 3 negative takes priority, Call 2 tier negative as fallback. Amber styling. See §14.8.         |
+| 6   | ~~proseGroups bug — 28/40 platforms receiving wrong input framing and wrong temperature~~     | **RESOLVED (v6.0.0)** — `proseGroups` in route.ts now includes legacy group names + all `nl-*` dedicated builders + `*-dedicated` video builders. SD CLIP dedicated builders explicitly excluded. See §14.9. |
+| 7   | ~~charCount bug — GPT self-reported counts were unreliable~~                                  | **RESOLVED (v6.0.0)** — `result.charCount = result.optimised.length` measured server-side after all compliance gates.                                                                                        |
+| 8   | ~~Race condition — stale Call 3 persisted when Call 2 returned new content~~                  | **RESOLVED (v6.0.0)** — EEP now calls `clearAiOptimise()` when `aiTierPrompts` changes.                                                                                                                      |
+| 9   | ~~Display bug — enriched prompts hidden when `effectiveOptimisedLength < originalLength`~~    | **RESOLVED (v6.0.0)** — `effectiveWasOptimized` now compares text content (`aiOptimiseResult.optimised !== activeTierPromptText`) not length.                                                                |
+| 10  | Google Imagen Call 3 actively degrades output (assembled T3 scores 94, optimised scores 90)   | **HIGH PRIORITY** — open. Needs decision: bypass Call 3 for this platform or fix builder.                                                                                                                    |
+| 11  | Harmony pass incomplete — Artbreeder was in progress when session ended                       | **Medium** — Adobe Firefly (93/100) and 123RF (91/100) complete. Remaining platforms need ChatGPT-verified system prompts.                                                                                   |
+| 12  | CLIP platforms — Call 3 averages only ~2pt gain (85→87) vs NL ~6-8pt gain (88→94)             | **Pending decision** — test each CLIP platform individually, retain Call 3 where it adds value, bypass where it doesn't.                                                                                     |
+| 13  | `platform-formats.json` still holds `_assemblyDefaults`                                       | **Deferred** — fold into `platform-config.json` once SSOT is confirmed stable, then delete `platform-formats.json` entirely.                                                                                 |
 
 ---
 
@@ -676,10 +721,10 @@ const finalOptimizerDisabled = isOptimizerDisabled || !selectedProviderId;
 
 In the Prompt Lab, the assembled prompt box **changes identity** when the optimizer is enabled:
 
-| Condition | Label | Border | Text colour | Copy tooltip |
-| --- | --- | --- | --- | --- |
-| `!isOptimizerEnabled \|\| !selectedProviderId` | "Assembled prompt" | `border-slate-600 bg-slate-950/80` | `text-slate-100` | "Copy assembled prompt" |
-| `isOptimizerEnabled && selectedProviderId` | "Optimized prompt in [Provider] [icon]" | `border-emerald-600/50 bg-emerald-950/20` | `text-emerald-100` | "Copy optimized prompt" |
+| Condition                                      | Label                                   | Border                                    | Text colour        | Copy tooltip            |
+| ---------------------------------------------- | --------------------------------------- | ----------------------------------------- | ------------------ | ----------------------- |
+| `!isOptimizerEnabled \|\| !selectedProviderId` | "Assembled prompt"                      | `border-slate-600 bg-slate-950/80`        | `text-slate-100`   | "Copy assembled prompt" |
+| `isOptimizerEnabled && selectedProviderId`     | "Optimized prompt in [Provider] [icon]" | `border-emerald-600/50 bg-emerald-950/20` | `text-emerald-100` | "Copy optimized prompt" |
 
 **Critical design decision:** The condition is `isOptimizerEnabled && selectedProviderId` — it does **NOT** include `wasOptimized`. The label switches the moment the optimizer is enabled with a provider, regardless of whether trimming occurred. This was a deliberate correction (18 March 2026) after an incorrect implementation that only switched when `wasOptimized` was true.
 
@@ -709,20 +754,22 @@ The `OptimizationTransparencyPanel` in the Prompt Lab was previously hardcoded t
 
 ### 14.6 Standard Builder vs Lab Optimizer Behaviour
 
-| Aspect | Standard Builder (`prompt-builder.tsx`) | Prompt Lab (`enhanced-educational-preview.tsx`) |
-| --- | --- | --- |
-| Optimizer always available | Yes (provider always known from URL) | No — disabled until provider selected (neutral mode) |
-| Optimized prompt display | Separate box below assembled (visible when `wasOptimized`) | Same box — label dynamically switches (uses `effectiveWasOptimized`) |
-| Label switch condition | N/A (separate boxes) | `isOptimizerEnabled && selectedProviderId` (uses `effectiveWasOptimized` from AI result priority) |
-| Primary optimizer | Client-side 4-phase pipeline only | **AI (Call 3)** with client-side as fallback |
-| "Within optimal range" | Not shown | Emerald bar when no trimming needed + not actively AI optimising |
-| Transparency Panel | `isPro` from hook | `isPro` from hook. **Hidden when AI result available** (AI changes shown as emerald chips instead) |
-| Colour-coded output | Pro only | Pro only |
-| Copy handler | `handleCopyOptimized` (separate button) | Same button — copies `effectiveOptimisedText` (AI result priority) |
-| Re-fire behaviour | N/A (manual only) | Debounced 800ms re-fire when `activeTierPromptText` changes while ON |
-| Visual during processing | None | Algorithm cycling animation (101 names, amber→emerald, 1.8s min) |
+| Aspect                     | Standard Builder (`prompt-builder.tsx`)                    | Prompt Lab (`enhanced-educational-preview.tsx`)                                                                       |
+| -------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Optimizer always available | Yes (provider always known from URL)                       | No — disabled until provider selected (neutral mode)                                                                  |
+| Optimized prompt display   | Separate box below assembled (visible when `wasOptimized`) | Same box — label dynamically switches (uses `effectiveWasOptimized`)                                                  |
+| Label switch condition     | N/A (separate boxes)                                       | `isOptimizerEnabled && selectedProviderId` (uses `effectiveWasOptimized` from AI result priority)                     |
+| Primary optimizer          | Client-side 4-phase pipeline only                          | **AI (Call 3)** with client-side as fallback                                                                          |
+| "Within optimal range"     | Not shown                                                  | Emerald bar when no trimming needed + not actively AI optimising                                                      |
+| Transparency Panel         | `isPro` from hook                                          | `isPro` from hook. **Hidden when AI result available** (AI changes shown as emerald chips instead)                    |
+| Colour-coded output        | Pro only                                                   | Pro only                                                                                                              |
+| Copy handler               | `handleCopyOptimized` (separate button)                    | Same button — copies `effectiveOptimisedText` (AI result priority)                                                    |
+| Re-fire behaviour          | N/A (manual only)                                          | Debounced 800ms re-fire when `activeTierPromptText` changes while ON                                                  |
+| Visual during processing   | None                                                       | Algorithm cycling animation (101 names, amber→emerald, 1.8s min)                                                      |
+| Negative prompt window     | N/A                                                        | Amber window for `negativeSupport: 'separate'` platforms — Call 3 negative priority, Call 2 fallback (v6.0.0)         |
+| "Optimised but unchanged"  | N/A                                                        | `isOptimisedButUnchanged` — assembled box relabels to emerald "Optimised prompt" even when text is identical (v6.0.0) |
 
-### 14.7 AI Disguise Overlay (v5.0.0 — 23 March 2026)
+### 14.7 AI Disguise Overlay (v5.0.0 — 23 March 2026, updated v6.0.0)
 
 The Prompt Lab now uses a dedicated AI-powered optimisation path (Call 3) that overlays the client-side optimizer. The client-side 4-phase pipeline continues to run independently — it feeds the length indicator bar and provides the fallback if the AI call fails or times out.
 
@@ -738,19 +785,23 @@ User toggles "Optimise" ON (with provider selected)
        ├─ Algorithm cycling animation plays during API call (1.8s min)
        │
        └─ AI response arrives → effective values override client-side:
-          effectiveOptimisedText = aiOptimiseResult?.optimised ?? optimizedResult.optimized
-          effectiveOptimisedLength = aiOptimiseResult?.charCount ?? optimizedResult.optimizedLength
-          effectiveWasOptimized = aiOptimiseResult ? (AI length < original) : wasOptimized
+          effectiveOptimisedText = aiOptimiseResult?.optimised ?? ''
+          effectiveOptimisedLength = aiOptimiseResult?.charCount ?? 0
+          effectiveWasOptimized = aiOptimiseResult
+            ? aiOptimiseResult.optimised !== activeTierPromptText
+            : false
 ```
+
+**v6.0.0 change:** `effectiveWasOptimized` now compares **text content** (`optimised !== activeTierPromptText`), not length. This fixes a display bug where enriched prompts (longer than the original) were hidden because the old length comparison returned false.
 
 **Key implementation details:**
 
-1. **Separate hook:** `useAiOptimisation` (335 lines, `src/hooks/use-ai-optimisation.ts`) — NOT a modification of `use-prompt-optimization.ts`. Clean separation — no modal `isLabMode` logic.
+1. **Separate hook:** `useAiOptimisation` (337 lines, `src/hooks/use-ai-optimisation.ts`) — NOT a modification of `use-prompt-optimization.ts`. Clean separation — no modal `isLabMode` logic.
 
 2. **Effective values override:** Three computed values in `enhanced-educational-preview.tsx` replace direct use of `optimizedResult.*` throughout the component:
    - `effectiveOptimisedText` — AI result takes priority
    - `effectiveOptimisedLength` — AI char count takes priority
-   - `effectiveWasOptimized` — AI comparison takes priority
+   - `effectiveWasOptimized` — AI text comparison takes priority
 
 3. **Transparency Panel conditional:** When `aiOptimiseResult` is available, the `OptimizationTransparencyPanel` (showing client-side phase/removal data) is hidden. Instead, emerald "✓ change description" chips from `aiOptimiseResult.changes` are shown.
 
@@ -758,12 +809,99 @@ User toggles "Optimise" ON (with provider selected)
 
 5. **Clear cascade:** When the user clicks Clear, `clearAiOptimise()` is called alongside `setOptimizerEnabled(false)`. This prevents stale AI results persisting into the next generation cycle.
 
-6. **Provider-specific syntax:** Call 3 system prompt enforces the exact provider weight syntax (Leonardo `::`, SD `()`, etc.) with MANDATORY/CRITICAL instructions. Also enforces the 4-word weight wrapping rule and quality suffix for Tier 1. See `ai-disguise.md` §6 for full system prompt.
+6. **Race condition fix (v6.0.0):** When Call 2 returns fresh tiers, `clearAiOptimise()` is called to discard the previous Call 3 result. Additionally, provider changes and the Clear button both trigger `clearAiOptimise()`. Three separate useEffect hooks guard against stale results.
+
+7. **Provider-specific syntax:** Call 3 system prompt enforces the exact provider weight syntax (Leonardo `::`, SD `()`, etc.) with MANDATORY/CRITICAL instructions. Also enforces the 4-word weight wrapping rule and quality suffix for Tier 1. See `ai-disguise.md` §6 for full system prompt.
 
 **What the client-side optimizer still does in the Lab:**
+
 - Feeds the `LengthIndicator` bar (always runs regardless of AI)
 - Provides instant feedback on prompt length before AI responds
 - Acts as complete fallback if Call 3 fails, times out (12s), or returns invalid data
+
+### 14.8 Negative Prompt Window (v6.0.0 — 29 March 2026)
+
+The Prompt Lab now renders a dedicated negative prompt window for platforms with `negativeSupport: 'separate'`. This resolves the high-priority open issue where `aiOptimiseResult.negative` (Dynamic Negative Intelligence) was returned by the API and stored in the hook but never displayed to the user.
+
+**Implementation:**
+
+```typescript
+const hasSeparateNegative = aiOptimiseContext?.negativeSupport === "separate";
+const effectiveNegativeText = useMemo(() => {
+  if (!hasSeparateNegative) return "";
+  // Call 3 negative takes priority (platform-specific, optimised)
+  if (aiOptimiseResult?.negative) return aiOptimiseResult.negative;
+  // Fallback: Call 2 negative for the active tier
+  if (generatedPrompts) {
+    const tierKey = `tier${activeTier}` as keyof GeneratedPrompts["negative"];
+    return generatedPrompts.negative[tierKey] || "";
+  }
+  return "";
+}, [hasSeparateNegative, aiOptimiseResult, generatedPrompts, activeTier]);
+```
+
+**UI details:**
+
+- Gated on `hasSeparateNegative && effectiveNegativeText` — only renders when there's content for a platform that supports separate negatives
+- Amber styling: `border-amber-600/50 bg-amber-950/20`, `text-amber-300` label
+- Shows provider name and icon in header
+- Character count displayed (`effectiveNegativeText.length` chars)
+- Inline copy button for the negative prompt
+- Included in the save handler alongside the positive prompt
+
+### 14.9 Call 3 Independent Builder Architecture (v6.0.0)
+
+Call 3 routes each platform to an independent builder file containing the full GPT system prompt. No builder imports from another builder — complete isolation prevents cross-platform regressions.
+
+**Builder inventory: 43 files** in `src/lib/optimise-prompts/`:
+
+- 5 SD CLIP builders: `group-stability.ts`, `group-dreamlike.ts`, `group-dreamstudio.ts`, `group-fotor.ts`, `group-lexica.ts`
+- 1 Midjourney builder: `group-midjourney.ts`
+- 25 NL builders (14 T3, 11 T4): `group-nl-*.ts` (e.g., `group-nl-adobe-firefly.ts`, `group-nl-google-imagen.ts`)
+- 6 legacy group builders: `group-clean-natural-language.ts`, `group-dalle-api.ts`, `group-flux-architecture.ts`, `group-sd-clip-parenthetical.ts`, `group-sd-clip-double-colon.ts`, `group-video-cinematic.ts`
+- 3 dedicated builders: `group-recraft.ts`, `group-ideogram.ts`, `group-novelai.ts`
+- 3 video builders: `group-kling.ts`, `group-luma-ai.ts`, `group-runway.ts`
+
+**Routing:** `platform-groups.ts` (181 lines) maps each provider ID to a group. `resolve-group-prompt.ts` (205 lines) resolves the system prompt from the matching builder, falling back to `generic-fallback.ts` (78 lines) if no dedicated builder exists.
+
+**Post-processing:** `harmony-post-processing.ts` (439 lines) runs mandatory P1–P12 functions on every Call 3 response. Compliance gates in `harmony-compliance.ts` (833 lines) enforce deterministic syntax rules (`enforceT1Syntax`, `enforceNegativeContradiction`) that cannot be reliably handled by prompt instructions alone.
+
+**Server-side charCount:** GPT self-reported character counts were found to be unreliable. Route.ts now measures `result.charCount = result.optimised.length` after all compliance gates have run. This is the authoritative count returned to the client.
+
+**proseGroups detection (v6.0.0 fix):** Route.ts determines whether a platform is prose-based to flip the primary input (original sentence becomes primary, assembled prompt becomes secondary). The detection logic:
+
+```typescript
+// Legacy group names (kept for safety)
+const legacyProseGroups = new Set([
+  "clean-natural-language",
+  "recraft",
+  "ideogram",
+  "dalle-api",
+  "flux-architecture",
+  "video-cinematic",
+]);
+// SD CLIP dedicated builders are NOT prose
+const sdClipDedicated = new Set([
+  "stability-dedicated",
+  "dreamlike-dedicated",
+  "dreamstudio-dedicated",
+  "fotor-dedicated",
+  "lexica-dedicated",
+]);
+const isProseGroup =
+  legacyProseGroups.has(providerGroup) ||
+  providerGroup?.startsWith("nl-") ||
+  (providerGroup?.endsWith("-dedicated") &&
+    !sdClipDedicated.has(providerGroup));
+```
+
+**Config:** GPT-5.4-mini, temperature 0.4 for prose groups, 0.2 for CLIP groups.
+
+**Performance findings (from dual-assessor scoring):**
+
+- CLIP platforms: Call 3 averages ~2pt gain (85→87) — marginal, may not justify API cost per platform
+- NL platforms: Call 3 averages ~6-8pt gain (88→94) — worth the API cost
+- Harmony pass status: Adobe Firefly 93/100, 123RF 91/100 (ChatGPT-verified system prompts). Artbreeder in progress.
 
 ---
 
@@ -786,6 +924,10 @@ When modifying the optimizer subsystem:
 - **Client-side optimizer MUST continue running in Lab** — it feeds the `LengthIndicator` bar and acts as fallback. Do NOT skip it when AI is available.
 - **Transparency Panel is hidden when `aiOptimiseResult` is available** — AI changes shown as emerald chips instead. Do NOT show both simultaneously.
 - **Clear cascade must call `clearAiOptimise()` AND `setOptimizerEnabled(false)`** — prevents stale AI results and re-fire on cleared text
+- **`effectiveWasOptimized` must compare text content** (`optimised !== activeTierPromptText`), NOT length — length comparison hides enriched prompts (v6.0.0)
+- **Server-side `charCount` measurement is mandatory** — never trust GPT self-reported character counts. `result.charCount = result.optimised.length` must run after all compliance gates.
+- **No builder may import from another builder** — complete isolation prevents cross-platform regressions
+- **Post-processing (P1–P12) is mandatory on all Call 3 responses** — do not bypass or remove any function from `harmony-post-processing.ts`
 
 **Existing features preserved:** Yes (required for every change)
 
@@ -793,6 +935,7 @@ When modifying the optimizer subsystem:
 
 ## Changelog
 
+- **29 Mar 2026 (v6.0.0):** **INDEPENDENT BUILDER ARCHITECTURE + BUG FIXES + NEGATIVE RENDERING** — §2.1: File map split into Client-Side and Call 3 Server-Side sections. Added 43 builder files, `harmony-post-processing.ts` (439 lines), `harmony-compliance.ts` (833 lines), `platform-config.json` + `platform-config.ts` (SSOT replacing deleted `prompt-limits.json`). Removed deleted files: `prompt-limits.json`, `prompt-limits.schema.json`, `compression/` folder, `group-multi-engine.ts`. Updated line counts: `optimization-transparency-panel.tsx` 419→610, `use-ai-optimisation.ts` 335→337, `use-prompt-optimization.ts` 356→360, route.ts now documented at 406 lines. §5: Rewrote Platform Limits Database to reference `platform-config.json` SSOT. Platform count corrected from 42 to 40. §11: Updated Security section — no longer claims "all processing client-side" (Call 3 is server-side GPT). Removed reference to deleted schema validation files. Added compliance gates and AI Disguise principle. §12.3: Updated data dependency diagram — `platform-config.json` replaces `prompt-limits.json`. §13: Resolved 5 open items (#5 negative rendering, #6 proseGroups bug, #7 charCount bug, #8 race condition, #9 display bug). Added 4 new open items (#10 Google Imagen degradation, #11 harmony pass incomplete, #12 CLIP Call 3 cost/benefit, #13 platform-formats.json deferred merge). §14.6: Added 2 rows to comparison table (negative prompt window, optimised-but-unchanged state). §14.7: Updated `effectiveWasOptimized` logic from length comparison to text comparison. Updated hook line count 335→337. Added race condition fix documentation. §14.8: New section — Negative prompt window implementation with Call 3 priority, Call 2 fallback, amber UI, negativeSupport gating. §14.9: New section — Call 3 independent builder architecture. 43 builders, routing via platform-groups.ts + resolve-group-prompt.ts, post-processing P1–P12, compliance gates, server-side charCount measurement, proseGroups detection logic, GPT-5.4-mini config (temp 0.4 prose / 0.2 CLIP), performance findings (CLIP ~2pt vs NL ~6-8pt), harmony pass status. §15: Added 4 new non-regression rules (text comparison for effectiveWasOptimized, server-side charCount mandatory, no builder cross-imports, post-processing mandatory). Cross-references: Added `harmonizing-claude-openai.md`, `platform-config.json`, `harmony-anti-regression.md`.
 - **23 Mar 2026 (v5.0.0):** **AI DISGUISE OVERLAY — CALL 3 AI OPTIMISATION IN PROMPT LAB** — §14.6: Updated comparison table (10 aspects, up from 7). Added: primary optimizer (AI vs client-side), re-fire behaviour, visual during processing, effective values in label/copy. Updated: label condition now uses `effectiveWasOptimized`, Transparency Panel hidden when AI result available, copy handler uses `effectiveOptimisedText`. §14.7: New section documenting AI Disguise overlay architecture — Call 3 (`/api/optimise-prompt`, GPT-5.4-mini) as primary optimizer in Lab, client-side 4-phase pipeline as fallback + LengthIndicator feed. Documented: separate `useAiOptimisation` hook (335 lines), effective value override pattern, Transparency Panel conditional, debounced 800ms re-fire via `reFireTimerRef`, clear cascade (`clearAiOptimise` + `setOptimizerEnabled(false)`), provider-specific weight syntax enforcement, 4-word rule, quality suffix. §15: Added 5 new non-regression rules (separate hook, effective value priority, client-side must keep running, Transparency Panel conditional, clear cascade). Updated `wasOptimized` rule to reference `effectiveWasOptimized`. Added cross-reference to `ai-disguise.md` §6.
 - **18 Mar 2026 (v4.0.0):** **LAB OPTIMIZER PARITY + NEUTRAL MODE + DYNAMIC LABEL** — Added §14 documenting all Prompt Lab–specific optimizer behaviours. §14.1: Neutral mode — optimizer force-disabled when no provider selected via `finalOptimizerDisabled`, tooltip "Select an AI provider above to enable optimisation." §14.2: Dynamic label switching — assembled prompt box label/border/text transitions from slate to emerald when `isOptimizerEnabled && selectedProviderId`. Documented the deliberate exclusion of `wasOptimized` from the condition. §14.3: "Within optimal range" emerald bar when no trimming needed. §14.4: Colour-coded optimized text (Pro only) via `parsePromptIntoSegments()`. §14.5: `isPro` wiring fix — `OptimizationTransparencyPanel` in Lab corrected from hardcoded `false` to hook value. §14.6: Standard Builder vs Lab comparison table (7 aspects). Updated §12.2 consumers table (added Lab with specific behaviours). Updated open items: #4 resolved (isPro now wired). Updated file line count: text-length-optimizer.tsx 347→392. Added §15 Non-Regression Rules (10 rules). Added cross-references to `prompt-lab.md` and `code-standard.md` § 6.14.
 - **24 Feb 2026 (v3.0.0):** Phase C — Semantic similarity engine, prompt compression/rewriting (59 rules), real CLIP BPE tokenization. See §9 for full feature table.

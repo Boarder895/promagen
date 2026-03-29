@@ -163,9 +163,9 @@ describe('/go/[providerId] outbound redirect', () => {
     jest.doMock('@/data/providers/providers.json', () => {
       return [
         {
-          id: 'openart',
+          id: 'stability',
           name: 'OpenArt',
-          website: 'https://openart.ai',
+          website: 'https://stability.ai',
           affiliateUrl: null,
         },
       ];
@@ -174,10 +174,10 @@ describe('/go/[providerId] outbound redirect', () => {
     const { GET } = await import('@/app/go/[providerId]/route');
 
     const req = new Request(
-      'https://promagen.local/go/openart?src=leaderboard&utm_medium=email',
+      'https://promagen.local/go/stability?src=leaderboard&utm_medium=email',
     ) as unknown as NextRequest;
 
-    const res = await GET(req, { params: Promise.resolve({ providerId: 'openart' }) });
+    const res = await GET(req, { params: Promise.resolve({ providerId: 'stability' }) });
 
     expect(res.status).toBe(302);
 
@@ -185,7 +185,7 @@ describe('/go/[providerId] outbound redirect', () => {
     expect(location).toBeTruthy();
 
     const url = new URL(location as string);
-    expect(url.hostname).toBe('openart.ai');
+    expect(url.hostname).toBe('stability.ai');
     expect(url.searchParams.get('utm_medium')).toBe('email');
 
     expectPromagenResponseHeaders(res);
@@ -195,9 +195,9 @@ describe('/go/[providerId] outbound redirect', () => {
     jest.doMock('@/data/providers/providers.json', () => {
       return [
         {
-          id: 'openart',
+          id: 'stability',
           name: 'OpenArt',
-          website: 'https://openart.ai',
+          website: 'https://stability.ai',
           affiliateUrl: null,
         },
       ];
@@ -206,9 +206,9 @@ describe('/go/[providerId] outbound redirect', () => {
     const { GET } = await import('@/app/go/[providerId]/route');
 
     const req = new Request(
-      'https://promagen.local/go/openart?src=leaderboard',
+      'https://promagen.local/go/stability?src=leaderboard',
     ) as unknown as NextRequest;
-    const res = await GET(req, { params: Promise.resolve({ providerId: 'openart' }) });
+    const res = await GET(req, { params: Promise.resolve({ providerId: 'stability' }) });
 
     expect(res.status).toBe(302);
     expect(res.headers.get('Cache-Control')).toBe('no-store');

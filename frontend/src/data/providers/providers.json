@@ -417,40 +417,6 @@
     "apiDocsUrl": "https://lexica.art/docs"
   },
   {
-    "id": "openart",
-    "name": "OpenArt",
-    "country": "US",
-    "countryCode": "US",
-    "hqCity": "San Francisco",
-    "timezone": "America/Los_Angeles",
-    "supportHours": "24/7",
-    "score": 77,
-    "imageQualityRank": 14,
-    "incumbentAdjustment": false,
-    "trend": "up",
-    "tags": [
-      "Community",
-      "Models"
-    ],
-    "website": "https://openart.ai",
-    "affiliateUrl": "https://openart.ai/affiliates",
-    "requiresDisclosure": false,
-    "tagline": "Community-driven model discovery and creation.",
-    "tip": "Try different community models for niche styles.",
-    "supportsPrefill": true,
-    "visualStyles": "Community-sourced styles, wide variety",
-    "apiAvailable": false,
-    "affiliateProgramme": true,
-    "localIcon": "/icons/providers/openart.png",
-    "socials": {
-      "youtube": "https://www.youtube.com/@openart_ai",
-      "discord": "https://discord.com/invite/openart-ai",
-      "x": "https://x.com/openart_ai"
-    },
-    "apiDocsUrl": null,
-    "archived": true
-  },
-  {
     "id": "123rf",
     "name": "123RF AI Generator",
     "country": "MY",
@@ -557,38 +523,6 @@
       "x": "https://x.com/Microsoft"
     },
     "apiDocsUrl": null
-  },
-  {
-    "id": "nightcafe",
-    "name": "NightCafe",
-    "country": "AU",
-    "countryCode": "AU",
-    "hqCity": "Cairns",
-    "timezone": "Australia/Brisbane",
-    "supportHours": "24/7",
-    "score": 71,
-    "imageQualityRank": 19,
-    "incumbentAdjustment": false,
-    "trend": "up",
-    "tags": [
-      "Community",
-      "Experiment"
-    ],
-    "website": "https://nightcafe.studio",
-    "affiliateUrl": "https://nightcafe.studio/pages/partner-program",
-    "requiresDisclosure": false,
-    "tagline": "An experiment hub with lots of styles/models.",
-    "tip": "Explore community trends and remix workflows.",
-    "supportsPrefill": false,
-    "visualStyles": "Art-forward, stylised, community-trend aesthetics",
-    "apiAvailable": false,
-    "affiliateProgramme": true,
-    "localIcon": "/icons/providers/nightcafe.png",
-    "socials": {
-      "x": "https://x.com/NightCafeStudio"
-    },
-    "apiDocsUrl": null,
-    "archived": true
   },
   {
     "id": "picsart",
@@ -965,43 +899,6 @@
     "apiDocsUrl": "https://docs.runwayml.com/"
   },
   {
-    "id": "freepik",
-    "name": "Freepik AI",
-    "country": "ES",
-    "countryCode": "ES",
-    "hqCity": "Málaga",
-    "timezone": "Europe/Madrid",
-    "supportHours": "Mon-Fri 9AM-6PM CET",
-    "score": 75,
-    "imageQualityRank": 27,
-    "incumbentAdjustment": false,
-    "trend": "up",
-    "tags": [
-      "Stock",
-      "Templates"
-    ],
-    "website": "https://www.freepik.com",
-    "affiliateUrl": "https://www.freepik.com/affiliate-program",
-    "requiresDisclosure": false,
-    "tagline": "Stock-friendly AI generation with templates.",
-    "tip": "Great for design projects needing stock-like assets.",
-    "supportsPrefill": false,
-    "visualStyles": "Stock photo aesthetics, template-ready",
-    "apiAvailable": true,
-    "affiliateProgramme": true,
-    "localIcon": "/icons/providers/freepik.png",
-    "socials": {
-      "linkedin": "https://www.linkedin.com/company/freepik-corp/",
-      "instagram": "https://www.instagram.com/freepik/",
-      "facebook": "https://www.facebook.com/Freepik",
-      "youtube": "https://www.youtube.com/@Freepik",
-      "tiktok": "https://www.tiktok.com/@freepik",
-      "x": "https://x.com/freepik"
-    },
-    "apiDocsUrl": "https://developers.freepik.com/",
-    "archived": true
-  },
-  {
     "id": "simplified",
     "name": "Simplified",
     "country": "US",
@@ -1309,41 +1206,6 @@
     "apiDocsUrl": "https://clipdrop.co/apis"
   },
   {
-    "id": "getimg",
-    "name": "Getimg.ai",
-    "country": "PL",
-    "countryCode": "PL",
-    "hqCity": "Warsaw",
-    "timezone": "Europe/Warsaw",
-    "supportHours": "24/7",
-    "score": 75,
-    "imageQualityRank": 39,
-    "incumbentAdjustment": false,
-    "trend": "up",
-    "tags": [
-      "API",
-      "Custom Models"
-    ],
-    "website": "https://getimg.ai",
-    "affiliateUrl": "https://getimg.ai/affiliates",
-    "requiresDisclosure": false,
-    "tagline": "API-first platform with custom model support.",
-    "tip": "Great for developers needing API access.",
-    "supportsPrefill": true,
-    "visualStyles": "Wide range via custom models",
-    "apiAvailable": true,
-    "affiliateProgramme": true,
-    "localIcon": "/icons/providers/getimg.png",
-    "socials": {
-      "x": "https://x.com/getimg_ai",
-      "tiktok": "https://www.tiktok.com/@getimg_ai",
-      "instagram": "https://www.instagram.com/getimg.ai/",
-      "discord": "https://discord.com/invite/5KsUXSzVwS"
-    },
-    "apiDocsUrl": "https://docs.getimg.ai/",
-    "archived": true
-  },
-  {
     "id": "imagine-meta",
     "name": "Imagine (Meta)",
     "country": "US",
@@ -1509,39 +1371,5 @@
       "youtube": "https://www.youtube.com/@LumaLabsAI"
     },
     "apiDocsUrl": "https://docs.lumalabs.ai/"
-  },
-  {
-    "id": "tensor-art",
-    "name": "Tensor.Art",
-    "country": "SG",
-    "countryCode": "SG",
-    "hqCity": "Singapore",
-    "timezone": "Asia/Singapore",
-    "supportHours": "24/7",
-    "score": 82,
-    "imageQualityRank": 20,
-    "incumbentAdjustment": false,
-    "trend": "up",
-    "tags": [
-      "Community",
-      "Models",
-      "SDXL",
-      "Flux"
-    ],
-    "website": "https://tensor.art",
-    "affiliateUrl": null,
-    "requiresDisclosure": false,
-    "tagline": "Community model hub with free SD, SDXL, and Flux image generation.",
-    "tip": "Multi-model platform. Use SD/SDXL keyword syntax for best results. LoRA and ControlNet supported.",
-    "supportsPrefill": true,
-    "visualStyles": "Anime, realistic, illustration, 3D, all styles via community models",
-    "apiAvailable": true,
-    "affiliateProgramme": false,
-    "localIcon": "/icons/providers/tensor-art.png",
-    "socials": {
-      "x": "https://x.com/ArtTensor"
-    },
-    "apiDocsUrl": "https://tensor.art/articles",
-    "archived": true
   }
 ]

@@ -32,9 +32,9 @@ export const TIER_CONFIGS: Record<PlatformTier, TierConfig> = {
     syntaxFeatures: ['(term:weight)', '::weight', 'comma-separated'],
     tolerance: 'high',
     platforms: [
-      'stability', 'leonardo', 'clipdrop', 'nightcafe', 'dreamstudio',
-      'lexica', 'novelai', 'dreamlike', 'getimg', 'openart',
-      'playground', 'artguru', 'tensor-art'
+      'stability', 'leonardo', 'clipdrop', 'dreamstudio',
+      'lexica', 'novelai', 'dreamlike',
+      'playground', 'artguru'
     ]
   },
   2: {
@@ -68,7 +68,7 @@ export const TIER_CONFIGS: Record<PlatformTier, TierConfig> = {
     tolerance: 'low',
     platforms: [
       'canva', 'craiyon', 'deepai', 'pixlr', 'picwish', 'fotor',
-      'visme', 'vistacreate', 'myedit', 'simplified', 'freepik',
+      'visme', 'vistacreate', 'myedit', 'simplified',
       'picsart', 'photoleap', 'artbreeder', '123rf', 'artistly'
     ]
   }

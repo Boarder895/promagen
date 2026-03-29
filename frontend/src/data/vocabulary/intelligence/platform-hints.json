@@ -36,7 +36,7 @@
       ],
       "qualityBoosters": [
         "masterpiece",
-        "best quality", 
+        "best quality",
         "highly detailed",
         "8k resolution",
         "trending on artstation",
@@ -213,10 +213,22 @@
         "Use alchemy for enhanced quality"
       ],
       "modelRecommendations": {
-        "photoreal": ["Leonardo Diffusion XL", "PhotoReal"],
-        "anime": ["Anime Pastel Dream", "DreamShaper"],
-        "concept": ["Leonardo Creative", "RPG 4.0"],
-        "illustration": ["Illustration", "3D Animation Style"]
+        "photoreal": [
+          "Leonardo Diffusion XL",
+          "PhotoReal"
+        ],
+        "anime": [
+          "Anime Pastel Dream",
+          "DreamShaper"
+        ],
+        "concept": [
+          "Leonardo Creative",
+          "RPG 4.0"
+        ],
+        "illustration": [
+          "Illustration",
+          "3D Animation Style"
+        ]
       },
       "alchemyFeatures": [
         "High Resolution",
@@ -279,7 +291,7 @@
       ],
       "contentTypes": [
         "Photo",
-        "Graphic", 
+        "Graphic",
         "Art"
       ],
       "styleModifiers": [
@@ -425,35 +437,6 @@
       ],
       "accessNotes": "Available through Vertex AI and Google Cloud"
     },
-    "nightcafe": {
-      "id": "nightcafe",
-      "name": "NightCafe",
-      "tier": "freemium",
-      "promptStyle": "mixed",
-      "syntax": {
-        "separator": ", ",
-        "weightingSyntax": null,
-        "weightingExample": null,
-        "negativePromptSupport": true,
-        "negativePrefix": null,
-        "maxLength": 1000,
-        "tokenBased": false
-      },
-      "bestPractices": [
-        "Choose algorithm based on desired output",
-        "Use their style presets",
-        "Combine modifiers for unique styles",
-        "Daily free credits available",
-        "Good for artistic/painterly styles"
-      ],
-      "algorithms": [
-        "SDXL",
-        "Stable Diffusion",
-        "DALL-E",
-        "CLIP-Guided",
-        "Neural Style Transfer"
-      ]
-    },
     "craiyon": {
       "id": "craiyon",
       "name": "Craiyon (DALL-E mini)",
@@ -543,25 +526,64 @@
   },
   "tierOptimization": {
     "free": {
-      "platforms": ["stable-diffusion", "bing-image-creator", "craiyon", "comfyui"],
+      "platforms": [
+        "stable-diffusion",
+        "bing-image-creator",
+        "craiyon",
+        "comfyui"
+      ],
       "promptStrategy": "Focus on quality boosters and clear subject description",
       "lengthAdvice": "Keep prompts concise due to token limits",
-      "recommendedTerms": ["detailed", "high quality", "sharp focus", "clear"],
-      "avoidTerms": ["complex technical terms", "excessive modifiers"]
+      "recommendedTerms": [
+        "detailed",
+        "high quality",
+        "sharp focus",
+        "clear"
+      ],
+      "avoidTerms": [
+        "complex technical terms",
+        "excessive modifiers"
+      ]
     },
     "freemium": {
-      "platforms": ["leonardo", "playground", "ideogram", "nightcafe", "flux", "canva"],
+      "platforms": [
+        "leonardo",
+        "playground",
+        "ideogram",
+        "flux",
+        "canva"
+      ],
       "promptStrategy": "Balance between technical and natural language",
       "lengthAdvice": "Can use longer, more descriptive prompts",
-      "recommendedTerms": ["highly detailed", "professional quality", "artistic"],
-      "avoidTerms": ["overly complex weighting", "excessive negatives"]
+      "recommendedTerms": [
+        "highly detailed",
+        "professional quality",
+        "artistic"
+      ],
+      "avoidTerms": [
+        "overly complex weighting",
+        "excessive negatives"
+      ]
     },
     "paid": {
-      "platforms": ["midjourney", "dall-e", "firefly", "dreamstudio", "imagen"],
+      "platforms": [
+        "midjourney",
+        "dall-e",
+        "firefly",
+        "dreamstudio",
+        "imagen"
+      ],
       "promptStrategy": "Use full natural language for best results",
       "lengthAdvice": "Longer, more detailed prompts typically perform better",
-      "recommendedTerms": ["specific style references", "detailed scene descriptions", "mood and atmosphere"],
-      "avoidTerms": ["basic quality terms", "technical syntax where not supported"]
+      "recommendedTerms": [
+        "specific style references",
+        "detailed scene descriptions",
+        "mood and atmosphere"
+      ],
+      "avoidTerms": [
+        "basic quality terms",
+        "technical syntax where not supported"
+      ]
     }
   },
   "universalGuidelines": {

@@ -33,7 +33,7 @@
       "negativeSyntax": "without",
       "separateNegative": false,
       "hints": [
-        "DALL\u00b7E prefers natural, descriptive sentences",
+        "DALL·E prefers natural, descriptive sentences",
         "Avoid keyword lists; use flowing descriptions",
         "Be specific about what you want, not just style terms",
         "Excellent at following precise instructions"
@@ -203,28 +203,6 @@
         "camera"
       ]
     },
-    "nightcafe": {
-      "tier": 2,
-      "prefersKeywords": true,
-      "prefersEarlierTokens": true,
-      "separateNegative": true,
-      "hints": [
-        "NightCafe supports multiple AI models",
-        "Keyword prompts work well",
-        "Good community and style presets",
-        "Negative prompt available"
-      ],
-      "strongCategories": [
-        "style",
-        "lighting",
-        "atmosphere"
-      ],
-      "trimPriority": [
-        "materials",
-        "fidelity",
-        "camera"
-      ]
-    },
     "playground": {
       "tier": 2,
       "prefersKeywords": true,
@@ -291,27 +269,6 @@
         "atmosphere"
       ]
     },
-    "openart": {
-      "tier": 2,
-      "prefersKeywords": true,
-      "prefersEarlierTokens": true,
-      "separateNegative": true,
-      "hints": [
-        "OpenArt supports multiple models",
-        "Keyword-style prompts work best",
-        "Good for exploring different styles"
-      ],
-      "strongCategories": [
-        "style",
-        "subject",
-        "lighting"
-      ],
-      "trimPriority": [
-        "materials",
-        "fidelity",
-        "atmosphere"
-      ]
-    },
     "dreamstudio": {
       "tier": 2,
       "prefersKeywords": true,
@@ -333,27 +290,6 @@
         "atmosphere",
         "materials",
         "action"
-      ]
-    },
-    "getimg": {
-      "tier": 2,
-      "prefersKeywords": true,
-      "prefersEarlierTokens": true,
-      "separateNegative": true,
-      "hints": [
-        "GetImg offers multiple model options",
-        "Keyword prompts work well",
-        "Good for batch generation"
-      ],
-      "strongCategories": [
-        "style",
-        "subject",
-        "lighting"
-      ],
-      "trimPriority": [
-        "materials",
-        "fidelity",
-        "atmosphere"
       ]
     },
     "dreamlike": {
@@ -426,7 +362,7 @@
       "prefersEarlierTokens": false,
       "separateNegative": false,
       "hints": [
-        "Bing Image Creator uses DALL\u00b7E",
+        "Bing Image Creator uses DALL·E",
         "Natural language works best",
         "Free tier has daily limits"
       ],
@@ -729,27 +665,6 @@
         "atmosphere"
       ]
     },
-    "freepik": {
-      "tier": 3,
-      "prefersNaturalLanguage": true,
-      "prefersEarlierTokens": false,
-      "separateNegative": false,
-      "hints": [
-        "Freepik AI is designed for designers",
-        "Simple prompts work well",
-        "Good for graphic design assets"
-      ],
-      "strongCategories": [
-        "style",
-        "subject",
-        "composition"
-      ],
-      "trimPriority": [
-        "fidelity",
-        "materials",
-        "atmosphere"
-      ]
-    },
     "simplified": {
       "tier": 3,
       "prefersNaturalLanguage": true,
@@ -908,18 +823,5 @@
       "text rendering"
     ],
     "tips": "Natural language descriptions outperform keyword lists. Specify lighting, camera, and composition details."
-  },
-  "tensor-art": {
-    "strengths": [
-      "model variety",
-      "SDXL quality",
-      "LoRA support",
-      "community models"
-    ],
-    "weaknesses": [
-      "consistency across models",
-      "plain language prompts"
-    ],
-    "tips": "Multi-model platform. Use SD/SDXL keyword syntax with CLIP weighting. LoRA and ControlNet supported."
   }
 }

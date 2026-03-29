@@ -1,6 +1,6 @@
 export type ProviderId =
   | "openai" | "bing" | "midjourney" | "stability" | "leonardo" | "ideogram"
-  | "playground" | "nightcafe" | "lexica" | "openart" | "adobe" | "canva"
+  | "playground" | "lexica" | "adobe" | "canva"
   | "picsart" | "pixlr" | "deepai" | "fotor" | "flux" | "novelai" | "i23rf" | "artistly";
 
 export type PromptInputs = {
@@ -37,17 +37,9 @@ export const PROVIDER_BUILDERS: Record<ProviderId, Builder> = {
     const positive = [styleTag, idea].filter(Boolean).join(", ");
     return { text: negative?.trim() ? `${positive}\nNEGATIVE: ${negative.trim()}` : positive, note: "Copied for Playground." };
   },
-  nightcafe: ({ idea, negative, styleTag }) => {
-    const positive = [styleTag, idea].filter(Boolean).join(", ");
-    return { text: negative?.trim() ? `${positive}\nNEGATIVE: ${negative.trim()}` : positive, note: "Copied for NightCafe." };
-  },
   lexica: ({ idea, negative, styleTag }) => {
     const positive = [styleTag, idea].filter(Boolean).join(", ");
     return { text: negative?.trim() ? `${positive}\nNEGATIVE: ${negative.trim()}` : positive, note: "Copied for Lexica." };
-  },
-  openart: ({ idea, negative, styleTag }) => {
-    const positive = [styleTag, idea].filter(Boolean).join(", ");
-    return { text: negative?.trim() ? `${positive}\nNEGATIVE: ${negative.trim()}` : positive, note: "Copied for OpenArt." };
   },
   adobe: ({ idea }) => ({ text: idea.trim(), note: "Copied for Firefly." }),
   canva: ({ idea }) => ({ text: idea.trim(), note: "Copied for Canva." }),
@@ -55,7 +47,7 @@ export const PROVIDER_BUILDERS: Record<ProviderId, Builder> = {
   pixlr: ({ idea, styleTag }) => ({ text: [styleTag, idea].filter(Boolean).join(", "), note: "Copied for Pixlr." }),
   deepai: ({ idea }) => ({ text: idea.trim(), note: "Copied for DeepAI." }),
   fotor: ({ idea, styleTag }) => ({ text: [idea, styleTag].filter(Boolean).join(", "), note: "Copied for Fotor." }),
-  flux: ({ idea, styleTag }) => ({ text: [styleTag, idea].filter(Boolean).join(" — "), note: "Copied for Flux." }),
+  flux: ({ idea, styleTag }) => ({ text: [styleTag, idea].filter(Boolean).join(" ï¿½ "), note: "Copied for Flux." }),
   novelai: ({ idea, styleTag }) => ({ text: [styleTag, idea].filter(Boolean).join(", "), note: "Copied for NovelAI." }),
   i23rf: ({ idea, styleTag }) => ({ text: [idea, styleTag].filter(Boolean).join(", "), note: "Copied for 123RF." }),
   artistly: ({ idea }) => ({ text: idea.trim(), note: "Copied for Artistly." }),
@@ -65,9 +57,7 @@ export const PROVIDER_BUILDERS: Record<ProviderId, Builder> = {
 export function buildDeepLink(providerId: ProviderId, prompt: string): string | undefined {
   switch (providerId) {
     case "playground": return `https://playgroundai.com/create?prompt=${enc(prompt)}`;
-    case "lexica": return `https://lexica.art/?q=${enc(prompt)}`;
-    case "openart": return `https://openart.ai/create?prompt=${enc(prompt)}`;
-    case "deepai": return `https://deepai.org/machine-learning-model/text2img?text=${enc(prompt)}`;
+    case "lexica": return `https://lexica.art/?q=${enc(prompt)}`;    case "deepai": return `https://deepai.org/machine-learning-model/text2img?text=${enc(prompt)}`;
     default: return undefined;
   }
 }

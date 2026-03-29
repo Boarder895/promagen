@@ -1,23 +1,25 @@
 # Prompt Lab v4.0 — Check → Assess → Decide → Generate
 
-**Version:** 1.3.0  
+**Version:** 2.0.0  
 **Created:** 24 March 2026  
-**Updated:** 25 March 2026  
+**Updated:** 29 March 2026  
 **Owner:** Promagen  
-**Status:** APPROVED — ready to build. Backend contract (Call 2 gapIntent/categoryDecisions) already deployed. Client-side 4-phase UI not yet built.  
+**Status:** APPROVED — ready to build. Backend contract (Call 2 gapIntent/categoryDecisions) already deployed. Call 2 system prompt at v4.5 (production-confirmed via three-assessor stress testing). Call 3 expanded to 43 independent builder files. Client-side 4-phase UI not yet built.  
 **Scope:** Prompt Lab (`/studio/playground`) ONLY. Standard builder (`/providers/[id]`) is untouched.  
 **Authority:** This document defines the agreed architecture for the Prompt Lab's new intelligent flow. No code is written until this doc is approved.
 
 > **Cross-references:**
 >
 > - `ai-disguise.md` v4.0.0 — Disguise principle, naming conventions, security hardening, post-processing layer (§7)
-> - `prompt-lab.md` v3.1.0 — Current Prompt Lab architecture (superseded by this doc on completion)
+> - `prompt-lab.md` v4.0.0 — Current Prompt Lab architecture (superseded by this doc on completion)
+> - `prompt-optimizer.md` v6.0.0 — Client-side optimizer + Call 3 server-side architecture (43 independent builders, compliance gates, negative rendering)
 > - `human-sentence-conversion.md` v2.0.0 — Call 1 current spec (to be rewritten per §3)
-> - `harmonizing-claude-openai.md` v2.0.0 — Harmony methodology for system prompt engineering, 30-rule inventory, 7 post-processing functions
+> - `harmonizing-claude-openai.md` v2.0.0 — Harmony methodology for system prompt engineering, 30-rule inventory, post-processing pipeline
 > - `human-factors.md` v1.1.0 — Curiosity Gap, Cognitive Load, Anticipatory Dopamine, Temporal Compression
 > - `code-standard.md` v4.0 — All code standards (clamp, no grey text, co-located animations, cursor-pointer)
-> - `best-working-practice.md` — Docs-first gate, SSOT discipline, security-first development
+> - `best-working-practice.md` — Docs-first gate, SSOT discipline, security-first development, verify-before-modifying, playground-first workflow
 > - `prompt-intelligence.md` — 12 category definitions, semantic tags, DNA scoring
+> - `platform-config.json` + `platform-config.ts` — Platform SSOT (40 platforms)
 
 ---
 
@@ -209,7 +211,7 @@ When a toggle is set to Manual, the dropdown shows keyword/phrase choices releva
 ### What happens
 
 1. Call 2 fires with the composite input: human text + side notes + engine-fill instructions
-2. **Server-side:** GPT response passes through `postProcessTiers()` pipeline (P1–P12) before reaching the client — catches mechanical artefacts like duplicate negatives, meta-language openers, CLIP-unfriendly adjectives. See `ai-disguise.md` §7 for the full pipeline.
+2. **Server-side:** GPT response passes through `postProcessTiers()` pipeline before reaching the client — 5 active functions in `harmony-post-processing.ts` (272 lines) catch mechanical artefacts like duplicate negatives, meta-language openers, T4 self-correction. Compliance gates in `harmony-compliance.ts` (833 lines) enforce deterministic syntax rules. See `ai-disguise.md` §7 for the full pipeline.
 3. The 4 tier boxes populate with intelligent, post-processed prompts
 4. If a provider is selected, Call 3 is available for platform-specific optimisation (unchanged from current behaviour)
 
@@ -453,13 +455,37 @@ The system prompt for Call 2 must be updated to understand the composite input:
 
 The updated Call 2 system prompt must be harmony-tested with the new input format. The existing 30 rules remain; additional rules for `categoryDecisions` handling may be needed. The rule ceiling is 30 (per `harmony-compliance.ts`, test-enforced). Raising requires explicit Martin approval.
 
-**Post-processing note:** Call 2 output passes through `postProcessTiers()` (imported from `src/lib/harmony-post-processing.ts`) before reaching the client. The 7 post-processing functions (P1, P2, P3, P8, P10, P11, P12) handle GPT mechanical artefacts. The v4 flow does not change this pipeline — it runs on all Call 2 responses regardless of gapIntent. The 115-test lockdown suite (`harmony-post-processing.test.ts` + `harmony-compliance.test.ts`) must pass before shipping any changes.
+**Current system prompt state (v4.5):** The Call 2 system prompt has been through v4.0→v4.5 with 6 iterative versions, stress-tested using three human test scenes (station violinist, Victorian flower seller, sci-fi hangar mechanic) and three independent AI assessors (Claude, ChatGPT, Grok). Key fixes shipped: T1 interaction token scanning + deduplication, T2 `--no` duplication root-cause fix (negative field set to `""`), T3 verb fidelity with WRONG/RIGHT examples, T4 character ceiling raised 250→325, T4 anchor triage hierarchy. Final externally calibrated gains from v4.0 to v4.5: T1 +7, T2 +8, T3 +0 (already strong), T4 +13, overall +7. Martin confirmed v4.5 as production file.
+
+**Calibration finding:** Claude scores T3 approximately 5–6 points too high and T4 approximately 3–5 points too high compared to the ChatGPT/Grok median, under-penalising verb substitutions and anchor drops. Use external assessors for calibration.
+
+**GPT ceilings (permanent):** "reflect" → smear/ripple/shimmer/streak (T3/T4); "burn" → glow (T1/T4, cracked in T3/T4 on v4.5); run-to-run variance of 83–92 on identical inputs is expected.
+
+**Post-processing note:** Call 2 output passes through `postProcessTiers()` (imported from `src/lib/harmony-post-processing.ts`, 272 lines) before reaching the client. The 5 active post-processing functions (`deduplicateMjParams`, `stripTrailingPunctuation`, `fixT4SelfCorrection`, `fixT4MetaOpeners`, `mergeT4ShortSentences`) handle GPT mechanical artefacts. T1 also gets `enforceWeightCap` from `harmony-compliance.ts`. A separate Call 3 post-processing file exists at `src/lib/optimise-prompts/harmony-post-processing.ts` (439 lines, 7 functions). The v4 flow does not change either pipeline — they run on all Call 2/Call 3 responses regardless of gapIntent.
 
 ---
 
-## 10. Call 3 — Unchanged
+## 10. Call 3 — Expanded (v6.0.0)
 
-Call 3 (`POST /api/optimise-prompt`) is unaffected by this change. It takes an assembled prompt and optimises it for a specific provider. Its input comes from Call 2's output, which has the same format (4 tier prompts with positive/negative strings). The only difference is that Call 2's output will be higher quality because the input is richer.
+Call 3 (`POST /api/optimise-prompt`, 406 lines) has been significantly expanded since this doc was first written. It is still unaffected by the 4-phase flow itself (its input comes from Call 2's output), but the architecture is now much richer:
+
+**43 independent builder files** in `src/lib/optimise-prompts/` — each platform has its own system prompt with no shared imports between builders. Routing via `platform-groups.ts` (181 lines) + `resolve-group-prompt.ts` (205 lines), falling back to `generic-fallback.ts` (78 lines).
+
+**Config:** GPT-5.4-mini, temperature 0.4 for prose groups, 0.2 for CLIP groups.
+
+**Post-processing:** `src/lib/optimise-prompts/harmony-post-processing.ts` (439 lines, 7 functions) runs on all Call 3 responses. Compliance gates in `harmony-compliance.ts` (833 lines) enforce deterministic syntax rules (`enforceT1Syntax`, `enforceNegativeContradiction`).
+
+**Server-side charCount:** GPT self-reported counts are unreliable. Route.ts measures `result.charCount = result.optimised.length` after all compliance gates.
+
+**Dynamic Negative Intelligence:** Call 3 returns a `negative` field which is now rendered in the Prompt Lab UI as an amber negative prompt window for platforms with `negativeSupport: 'separate'`.
+
+**proseGroups detection:** Route.ts flips the primary input for prose-based groups (original sentence primary, assembled prompt secondary). Includes legacy group names + all `nl-*` dedicated builders, excluding SD CLIP dedicated builders.
+
+**Performance findings:** CLIP platforms gain ~2pts from Call 3 (85→87, marginal). NL platforms gain ~6-8pts (88→94). Pending decision: test each CLIP platform individually, retain Call 3 where it adds value, bypass where it doesn't.
+
+**Harmony pass status:** Adobe Firefly 93/100, 123RF 91/100 (ChatGPT-verified system prompts). Artbreeder in progress. Remaining platforms need ChatGPT-verified system prompts.
+
+See `prompt-optimizer.md` v6.0.0 §14.9 for full Call 3 architecture documentation.
 
 ---
 
@@ -801,16 +827,18 @@ Remove-Item -Path "src\app\api\parse-sentence\__tests__\parse-sentence.test.ts",
 
 ### Modified (existing files)
 
-| File                                                      | Current lines | Change                                                                                        |
-| --------------------------------------------------------- | ------------- | --------------------------------------------------------------------------------------------- |
-| `src/app/api/parse-sentence/route.ts`                     | 244           | System prompt rewrite, response schema change                                                 |
-| `src/app/api/generate-tier-prompts/route.ts`              | **523**       | Request schema update (gapIntent/categoryDecisions already deployed), system prompt additions |
-| `src/lib/harmony-post-processing.ts`                      | **342**       | **No change expected** — post-processing pipeline is independent of v4 flow                   |
-| `src/hooks/use-sentence-conversion.ts`                    | 260           | Rewrite or replace for new Call 1 response format                                             |
-| `src/hooks/use-tier-generation.ts`                        | 224           | Add `categoryDecisions` to generate call                                                      |
-| `src/components/providers/describe-your-image.tsx`        | 712           | Side note pills, assessment box integration                                                   |
-| `src/components/prompts/playground-workspace.tsx`         | 313           | Orchestrate 4-phase flow, side note state (currently stripped — "Stripped v4 decision UI")    |
-| `src/components/prompts/enhanced-educational-preview.tsx` | 2,014         | Wire new flow when no provider selected                                                       |
+| File                                                      | Current lines | Change                                                                                     |
+| --------------------------------------------------------- | ------------- | ------------------------------------------------------------------------------------------ |
+| `src/app/api/parse-sentence/route.ts`                     | **455**       | System prompt rewrite, response schema change                                              |
+| `src/app/api/generate-tier-prompts/route.ts`              | **650**       | Request schema update (gapIntent/categoryDecisions already deployed), v4.5 system prompt   |
+| `src/lib/harmony-post-processing.ts`                      | **272**       | **No change expected** — Call 2 post-processing (5 functions) is independent of v4 flow    |
+| `src/lib/optimise-prompts/harmony-post-processing.ts`     | **439**       | **No change expected** — Call 3 post-processing (7 functions) is independent of v4 flow    |
+| `src/lib/harmony-compliance.ts`                           | **833**       | **No change expected** — compliance gates are independent of v4 flow                       |
+| `src/hooks/use-sentence-conversion.ts`                    | 260           | Rewrite or replace for new Call 1 response format                                          |
+| `src/hooks/use-tier-generation.ts`                        | **239**       | Add `categoryDecisions` to generate call                                                   |
+| `src/components/providers/describe-your-image.tsx`        | **1,153**     | Side note pills, assessment box integration                                                |
+| `src/components/prompts/playground-workspace.tsx`         | **369**       | Orchestrate 4-phase flow, side note state (currently stripped — "Stripped v4 decision UI") |
+| `src/components/prompts/enhanced-educational-preview.tsx` | **1,913**     | Wire new flow when no provider selected                                                    |
 
 ### New files
 
@@ -827,7 +855,7 @@ Remove-Item -Path "src\app\api\parse-sentence\__tests__\parse-sentence.test.ts",
 | `src/app/api/parse-sentence/__tests__/parse-sentence.test.ts` | 275   | Rebuild after Call 1 rewrite |
 | `src/hooks/__tests__/use-sentence-conversion.test.ts`         | 107   | Rebuild after hook rewrite   |
 
-> **⚠️ DO NOT DELETE `src/lib/__tests__/harmony-compliance.test.ts` (453 lines) or `src/lib/__tests__/harmony-post-processing.test.ts` (601 lines).** These are part of the 115-test harmony lockdown suite and are NOT affected by the v4 flow. They test post-processing functions that are independent of the v4 client-side flow.
+> **⚠️ Harmony test files** (`harmony-compliance.test.ts`, `harmony-post-processing.test.ts`) were documented at 453+601 lines (115-test lockdown suite). These are NOT present in the current src.zip — they may have been excluded from the zip or relocated. If they exist in the repo, they are part of the harmony lockdown suite and must NOT be deleted. They test post-processing functions that are independent of the v4 client-side flow.
 
 ---
 
@@ -862,13 +890,16 @@ Remove-Item -Path "src\app\api\parse-sentence\__tests__\parse-sentence.test.ts",
 
 ### Harmony rules (carried from harmonizing-claude-openai.md v2.0.0)
 
-19. **Dual assessment mandatory** — no system prompt ships without testing through both Claude and ChatGPT.
+19. **Three-assessor methodology mandatory** — no system prompt ships without testing through Claude, ChatGPT, and Grok. Claude scores T3 ~5-6pts and T4 ~3-5pts too high vs ChatGPT/Grok median — use external assessors for calibration.
 20. **Concrete examples in every system prompt** — no rule without a WRONG/RIGHT pair.
-21. **Post-processing cannot be removed** — all 7 functions (P1, P2, P3, P8, P10, P11, P12) in `harmony-post-processing.ts` are permanent safety nets. The v4 flow does not change this pipeline.
-22. **Martin approves all changes before implementation** — ideas proposed, not built.
-23. **Post-processing extraction is permanent** — all functions live in `src/lib/harmony-post-processing.ts`, imported by route.ts. Do not move them back into route.ts.
-24. **115-test harmony lockdown suite must pass before shipping** — `harmony-post-processing.test.ts` (72 tests) + `harmony-compliance.test.ts` (43 tests). Any red test = post-processing drift.
-25. **Rule ceiling is 30** — raising requires explicit approval. Tracked in `harmony-compliance.ts` with test assertion.
+21. **Call 2 post-processing cannot be removed** — all 5 functions (`deduplicateMjParams`, `stripTrailingPunctuation`, `fixT4SelfCorrection`, `fixT4MetaOpeners`, `mergeT4ShortSentences`) + `enforceWeightCap` in `src/lib/harmony-post-processing.ts` (272 lines) are permanent safety nets. The v4 flow does not change this pipeline.
+22. **Call 3 post-processing cannot be removed** — 7 functions in `src/lib/optimise-prompts/harmony-post-processing.ts` (439 lines) + compliance gates in `harmony-compliance.ts` (833 lines) are permanent. The v4 flow does not change this pipeline.
+23. **Martin approves all changes before implementation** — ideas proposed, not built.
+24. **Post-processing extraction is permanent** — Call 2 functions live in `src/lib/harmony-post-processing.ts`, Call 3 functions live in `src/lib/optimise-prompts/harmony-post-processing.ts`. Do not move them back into route files.
+25. **No Call 3 builder may import from another builder** — complete isolation prevents cross-platform regressions.
+26. **Rule ceiling is 30** — raising requires explicit approval. Tracked in `harmony-compliance.ts` with test assertion (`RULE_CEILING = 30`, `CURRENT_RULE_COUNT = 30`).
+27. **Server-side `charCount` measurement is mandatory** — never trust GPT self-reported counts. `result.charCount = result.optimised.length` after all compliance gates.
+28. **`effectiveWasOptimized` must compare text content** (`optimised !== activeTierPromptText`), NOT length — length comparison hides enriched prompts.
 
 ---
 
@@ -905,17 +936,19 @@ Remove-Item -Path "src\app\api\parse-sentence\__tests__\parse-sentence.test.ts",
 
 These items are explicitly parked for after the core Check → Assess → Decide → Generate flow is working. They are not forgotten — they are deferred.
 
-| Item                            | Description                                                                                                                                            | Source                                  |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------- |
-| **Education loop**              | After generation, show what the engine chose for each engine-filled category. Small preview per category so the user learns what good terms look like. | Conversation 24 Mar 2026                |
-| **Learning pipeline**           | Passive data collection from Prompt Lab generations for future system prompt improvement.                                                              | ai-disguise.md §15, Build Order Part 5  |
-| **Per-platform system prompts** | Move from generic system prompt to per-platform templates (18 templates: 7 group + 11 dedicated).                                                      | Conversation 24 Mar 2026 (last 3 chats) |
-| **Batch conversion**            | User uploads multiple sentences, each parsed as separate prompt.                                                                                       | human-sentence-conversion.md §16.1      |
-| **Conversation mode**           | Back-and-forth: "Make it more dramatic" → engine adjusts.                                                                                              | human-sentence-conversion.md §16.2      |
+| Item                            | Description                                                                                                                                                                                                                                                                                                                                      | Source                                  |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------- |
+| **Education loop**              | After generation, show what the engine chose for each engine-filled category. Small preview per category so the user learns what good terms look like.                                                                                                                                                                                           | Conversation 24 Mar 2026                |
+| **Learning pipeline**           | Passive data collection from Prompt Lab generations for future system prompt improvement.                                                                                                                                                                                                                                                        | ai-disguise.md §15, Build Order Part 5  |
+| **Per-platform system prompts** | ~~Move from generic system prompt to per-platform templates (18 templates: 7 group + 11 dedicated).~~ **DONE (v6.0.0):** 43 independent builder files in `src/lib/optimise-prompts/group-*.ts` with no shared imports. Harmony pass in progress — Adobe Firefly 93/100, 123RF 91/100 (ChatGPT-verified). See `prompt-optimizer.md` v6.0.0 §14.9. | Conversation 24 Mar 2026 (last 3 chats) |
+| **Batch conversion**            | User uploads multiple sentences, each parsed as separate prompt.                                                                                                                                                                                                                                                                                 | human-sentence-conversion.md §16.1      |
+| **Conversation mode**           | Back-and-forth: "Make it more dramatic" → engine adjusts.                                                                                                                                                                                                                                                                                        | human-sentence-conversion.md §16.2      |
 
 ---
 
 ## Changelog
+
+- **29 Mar 2026 (v2.0.0):** **CALL 2 v4.5 + CALL 3 ARCHITECTURE + THREE-ASSESSOR METHODOLOGY.** Status updated: backend at v4.5 (production-confirmed), Call 3 at 43 independent builders, client-side 4-phase UI still not built. Cross-references updated: prompt-lab.md v3.1.0→v4.0.0, added prompt-optimizer.md v6.0.0, added platform-config.json SSOT, updated best-working-practice principles. §6 Phase 4: post-processing reference corrected — 5 active functions in 272 lines + compliance gates in 833 lines (was "7 functions P1–P12 in 342 lines"). §9 Harmony requirement: Added Call 2 v4.5 system prompt status documenting 6 iterative versions (v4.0→v4.5), three human test scenes (station violinist, Victorian flower seller, sci-fi hangar mechanic), three independent AI assessors (Claude, ChatGPT, Grok), externally calibrated gains (T1 +7, T2 +8, T3 +0, T4 +13, overall +7). Added calibration finding (Claude +5-6pts T3, +3-5pts T4 vs ChatGPT/Grok median). Added GPT ceilings (reflect→smear, burn→glow, 83-92 variance). Post-processing corrected to 5 functions/272 lines. Added Call 3 post-processing file (439 lines, 7 functions). §10 Call 3: Rewritten from "unchanged" to full section — 43 independent builder files, 406-line route, proseGroups detection, server-side charCount, negative prompt rendering, compliance gates (833 lines), harmony pass status (Firefly 93, 123RF 91), performance findings (CLIP ~2pt vs NL ~6-8pt). §17 Files Affected: All line counts updated to src.zip ground truth — generate-tier-prompts 523→650, harmony-post-processing 342→272, use-tier-generation 224→239, DescribeYourImage 712→1,153, PlaygroundWorkspace 313→369, EEP 2,014→1,913, parse-sentence corrected to 455. Added Call 3 post-processing (439 lines) and harmony-compliance (833 lines) to modified files. Harmony test file warning updated — files noted as not in current src.zip. §18 Non-Regression Rules: Harmony section rewritten — dual→three-assessor with calibration note (rule 19), post-processing split into Call 2 5 functions (rule 21) and Call 3 7 functions + compliance (rule 22), builder isolation (rule 25), server-side charCount mandatory (rule 27), effectiveWasOptimized text comparison (rule 28). Rule count 25→28. §20 Parking Lot: per-platform system prompts marked DONE (43 builders, harmony pass in progress).
 
 - **25 Mar 2026 (v1.3.0):** **HARMONY INFRASTRUCTURE SYNC.** Cross-references updated: ai-disguise.md v3.0.0→v4.0.0, harmonizing-claude-openai.md v1.0.0→v2.0.0. Status clarified: backend contract (gapIntent/categoryDecisions) deployed, client-side 4-phase UI not yet built. §6 Phase 4: added post-processing pipeline step (postProcessTiers runs P1–P12 server-side before client delivery). §9 Harmony requirement: rule count 18→30, rule ceiling 27→30, added post-processing pipeline note and 115-test lockdown requirement. §17 Files Affected: route.ts line count 588→523 (refactored — post-processing extracted), added harmony-post-processing.ts (342 lines) to modified files, removed harmony-compliance.test.ts from delete list (part of 115-test lockdown suite — DO NOT DELETE), added warning about protecting test files. §18 Non-Regression Rules: harmony rules expanded from 4 to 7 — added extraction permanent, 115-test lockdown, rule ceiling 30. Non-regression rule count: 22→25.
 
@@ -929,6 +962,6 @@ These items are explicitly parked for after the core Check → Assess → Decide
 
 ---
 
-_This document is the authority for the Prompt Lab v4 flow. Backend contract (Call 2 gapIntent/categoryDecisions) is deployed. Client-side 4-phase UI is approved and ready to build._
+_This document is the authority for the Prompt Lab v4 flow. Backend contract (Call 2 gapIntent/categoryDecisions) is deployed. Call 2 system prompt at v4.5 (production-confirmed). Call 3 expanded to 43 independent builders (see `prompt-optimizer.md` v6.0.0). Client-side 4-phase UI is approved and ready to build._
 
 _**Key principle:** The engine cares about the user's intent. Check → Assess → Decide → Generate is a conversation, not a function call._

@@ -183,21 +183,6 @@
       "estimatedUsers": 1000000,
       "notes": "Founded 2022. Search engine for AI art + generation. Popular for prompt discovery."
     },
-    "openart": {
-      "foundingYear": 2022,
-      "socialReach": {
-        "youtube": 8000,
-        "x": 35000,
-        "instagram": 0,
-        "facebook": 0,
-        "linkedin": 0,
-        "tiktok": 0,
-        "discord": 80000,
-        "reddit": 0
-      },
-      "estimatedUsers": 1500000,
-      "notes": "Founded 2022. Multi-model platform. Strong custom training features."
-    },
     "123rf": {
       "foundingYear": 2005,
       "socialReach": {
@@ -242,21 +227,6 @@
       },
       "estimatedUsers": 100000000,
       "notes": "Bing founded 2009 (Microsoft). Image Creator uses DALL-E 3. Part of Copilot ecosystem. Incumbent giant."
-    },
-    "nightcafe": {
-      "foundingYear": 2019,
-      "socialReach": {
-        "youtube": 20000,
-        "x": 85000,
-        "instagram": 150000,
-        "facebook": 200000,
-        "linkedin": 0,
-        "tiktok": 0,
-        "discord": 250000,
-        "reddit": 0
-      },
-      "estimatedUsers": 5000000,
-      "notes": "Founded 2019 Australia. Early AI art pioneer. 23% market share (third largest). Strong community features."
     },
     "picsart": {
       "foundingYear": 2011,
@@ -423,21 +393,6 @@
       "estimatedUsers": 5000000,
       "notes": "Founded 2018. Co-created Stable Diffusion. Strong video AI (Gen-2, Gen-3). $4B valuation."
     },
-    "freepik": {
-      "foundingYear": 2010,
-      "socialReach": {
-        "youtube": 100000,
-        "x": 150000,
-        "instagram": 800000,
-        "facebook": 2000000,
-        "linkedin": 0,
-        "tiktok": 0,
-        "discord": 0,
-        "reddit": 0
-      },
-      "estimatedUsers": 50000000,
-      "notes": "Founded 2010 Spain. 50M users. Major stock resource. Added AI Pikaso generator 2023."
-    },
     "simplified": {
       "foundingYear": 2020,
       "socialReach": {
@@ -573,21 +528,6 @@
       "estimatedUsers": 3000000,
       "notes": "Founded 2020 Paris. Acquired by Stability AI 2023. Editing tools + Stable Diffusion generation."
     },
-    "getimg": {
-      "foundingYear": 2022,
-      "socialReach": {
-        "youtube": 3000,
-        "x": 20000,
-        "instagram": 15000,
-        "facebook": 0,
-        "linkedin": 0,
-        "tiktok": 10000,
-        "discord": 30000,
-        "reddit": 0
-      },
-      "estimatedUsers": 1000000,
-      "notes": "Founded 2022 Poland. API-first platform. Custom model training. Developer-focused."
-    },
     "imagine-meta": {
       "foundingYear": 2004,
       "socialReach": {
@@ -622,21 +562,16 @@
   "recraft": {
     "score": 50,
     "trend": "up",
-    "notes": "New addition \u2014 awaiting market data"
+    "notes": "New addition — awaiting market data"
   },
   "kling": {
     "score": 50,
     "trend": "up",
-    "notes": "New addition \u2014 awaiting market data"
+    "notes": "New addition — awaiting market data"
   },
   "luma-ai": {
     "score": 50,
     "trend": "up",
-    "notes": "New addition \u2014 awaiting market data"
-  },
-  "tensor-art": {
-    "score": 50,
-    "trend": "up",
-    "notes": "New addition \u2014 awaiting market data"
+    "notes": "New addition — awaiting market data"
   }
 }

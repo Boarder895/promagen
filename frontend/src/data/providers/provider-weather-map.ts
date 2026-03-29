@@ -67,7 +67,6 @@ export const PROVIDER_WEATHER_MAP: Readonly<Record<string, ProviderWeatherMappin
   'openai':             { weatherId: 'provider-san-francisco', vibesCity: 'San Francisco', lat: 37.7749, lon: -122.4194 },
   'playground':         { weatherId: 'provider-san-francisco', vibesCity: 'San Francisco', lat: 37.7749, lon: -122.4194 },
   'lexica':             { weatherId: 'provider-san-francisco', vibesCity: 'San Francisco', lat: 37.7749, lon: -122.4194 },
-  'openart':            { weatherId: 'provider-san-francisco', vibesCity: 'San Francisco', lat: 37.7749, lon: -122.4194 },
   'picsart':            { weatherId: 'provider-san-francisco', vibesCity: 'San Francisco', lat: 37.7749, lon: -122.4194 },
   'deepai':             { weatherId: 'provider-san-francisco', vibesCity: 'San Francisco', lat: 37.7749, lon: -122.4194 },
   'bluewillow':         { weatherId: 'provider-san-francisco', vibesCity: 'San Francisco', lat: 37.7749, lon: -122.4194 },
@@ -94,10 +93,8 @@ export const PROVIDER_WEATHER_MAP: Readonly<Record<string, ProviderWeatherMappin
   'jasper-art':         { weatherId: 'provider-austin',        vibesCity: 'Austin',        lat: 30.2672, lon: -97.7431  },
 
   // ─── Warsaw (provider-warsaw) ───────────────────────────────────────────
-  'getimg':             { weatherId: 'provider-warsaw',        vibesCity: 'Warsaw',        lat: 52.2297, lon: 21.0122   },
 
   // ─── Málaga (provider-malaga) ───────────────────────────────────────────
-  'freepik':            { weatherId: 'provider-malaga',        vibesCity: 'Málaga',        lat: 36.7213, lon: -4.4214   },
 
   // ─── Limassol (provider-limassol) ───────────────────────────────────────
   'vistacreate':        { weatherId: 'provider-limassol',      vibesCity: 'Limassol',      lat: 34.6786, lon: 33.0413   },
@@ -109,7 +106,6 @@ export const PROVIDER_WEATHER_MAP: Readonly<Record<string, ProviderWeatherMappin
   'novelai':            { weatherId: 'provider-sheridan',      vibesCity: 'Sheridan',      lat: 44.7972, lon: -106.956  },
 
   // ─── Cairns (provider-cairns) ───────────────────────────────────────────
-  'nightcafe':          { weatherId: 'provider-cairns',        vibesCity: 'Cairns',        lat: -16.9186, lon: 145.7781 },
 
   // ─── London (lse-london) ───────────────────────────────────────────────
   'stability':          { weatherId: 'lse-london',             vibesCity: 'London',        lat: 51.5074, lon: -0.1276   },
@@ -148,7 +144,6 @@ export const PROVIDER_WEATHER_MAP: Readonly<Record<string, ProviderWeatherMappin
   'recraft':            { weatherId: 'wbag-san-francisco',     vibesCity: 'San Francisco', lat: 37.7749, lon: -122.4194 },
   'kling':              { weatherId: 'wbag-beijing',           vibesCity: 'Beijing',       lat: 39.9042, lon: 116.4074  },
   'luma-ai':            { weatherId: 'wbag-palo-alto',        vibesCity: 'Palo Alto',     lat: 37.4419, lon: -122.1430 },
-  'tensor-art':         { weatherId: 'wbag-singapore',        vibesCity: 'Singapore',     lat: 1.3521,  lon: 103.8198  },
 
   // ─── Taipei (twse-taipei) ──────────────────────────────────────────────
   'myedit':             { weatherId: 'twse-taipei',            vibesCity: 'Taipei',        lat: 25.033,  lon: 121.5654  },

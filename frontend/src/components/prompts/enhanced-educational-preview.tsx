@@ -358,6 +358,8 @@ export default function EnhancedEducationalPreview({
   const [copied, setCopied] = useState(false);
   const [copiedOptimized, setCopiedOptimized] = useState(false);
   const [copiedAssembled, setCopiedAssembled] = useState(false);
+  const [copiedNegative, setCopiedNegative] = useState(false);
+  const [showNegativeToast, setShowNegativeToast] = useState(false);
 
   // ── Generation ID: increments on every new API response ────────────
   // MUST be synchronous (ref, not useState+useEffect) so it's already
@@ -839,7 +841,21 @@ export default function EnhancedEducationalPreview({
   // so the user knows optimisation happened (it just had nothing to improve).
   const isOptimisedButUnchanged = !!aiOptimiseResult && !effectiveWasOptimized;
 
-
+  // ── Negative prompt support ──────────────────────────────────────────
+  // Platforms with negativeSupport: 'separate' have a dedicated negative prompt
+  // input field. Show the negative prompt window for these platforms only.
+  const hasSeparateNegative = aiOptimiseContext?.negativeSupport === 'separate';
+  const effectiveNegativeText = useMemo(() => {
+    if (!hasSeparateNegative) return '';
+    // Call 3 negative takes priority (platform-specific, optimised)
+    if (aiOptimiseResult?.negative) return aiOptimiseResult.negative;
+    // Fallback: Call 2 negative for the active tier
+    if (generatedPrompts) {
+      const tierKey = `tier${activeTier}` as keyof GeneratedPrompts['negative'];
+      return generatedPrompts.negative[tierKey] || '';
+    }
+    return '';
+  }, [hasSeparateNegative, aiOptimiseResult, generatedPrompts, activeTier]);
 
   // ── Optimised prompt typewriter (Call 3) ────────────────────────────
   // Typewriter when aiOptimiseResult changes (Call 3 returned new content).
@@ -976,6 +992,12 @@ export default function EnhancedEducationalPreview({
       incrementLifetimePrompts();
       setTimeout(() => setCopied(false), 2000);
 
+      // Show negative prompt toast for separate-negative platforms
+      if (hasSeparateNegative && effectiveNegativeText) {
+        setShowNegativeToast(true);
+        setTimeout(() => setShowNegativeToast(false), 3500);
+      }
+
       // Store feedback pending for post-copy invitation
       if (!isDismissedRecently()) {
         const pending: FeedbackPendingData = {
@@ -988,7 +1010,7 @@ export default function EnhancedEducationalPreview({
         setFeedbackPending(pending);
       }
     }
-  }, [activeTierPromptText, aiOptimiseResult, effectiveWasOptimized, effectiveOptimisedText, selectedProviderId, activeTier]);
+  }, [activeTierPromptText, aiOptimiseResult, effectiveWasOptimized, effectiveOptimisedText, selectedProviderId, activeTier, hasSeparateNegative, effectiveNegativeText]);
 
   // Inline copy: Optimized prompt box (matches standard builder pattern)
   const handleCopyOptimized = useCallback(async () => {
@@ -1011,6 +1033,15 @@ export default function EnhancedEducationalPreview({
     }
   }, [activeTierPromptText]);
 
+  // Inline copy: Negative prompt box (for separate-negative platforms)
+  const handleCopyNegative = useCallback(async () => {
+    if (effectiveNegativeText) {
+      await navigator.clipboard.writeText(effectiveNegativeText);
+      setCopiedNegative(true);
+      setTimeout(() => setCopiedNegative(false), 2000);
+    }
+  }, [effectiveNegativeText]);
+
   // Handle save
   const handleSavePrompt = useCallback(
     (data: SavePromptData) => {
@@ -1021,7 +1052,7 @@ export default function EnhancedEducationalPreview({
         platformId: selectedProviderId || 'playground',
         platformName: selectedProvider?.name || 'Playground',
         positivePrompt: activeTierPromptText,
-        negativePrompt: generatedPrompts.negative[negativeTierKey] || '',
+        negativePrompt: effectiveNegativeText || generatedPrompts.negative[negativeTierKey] || '',
         selections: selections,
         customValues: {},
         families: [],
@@ -1036,7 +1067,7 @@ export default function EnhancedEducationalPreview({
       setSavedConfirmation(true);
       setTimeout(() => setSavedConfirmation(false), 2000);
     },
-    [activeTier, activeTierPromptText, generatedPrompts, savePrompt, selectedProvider, selectedProviderId, selections],
+    [activeTier, activeTierPromptText, effectiveNegativeText, generatedPrompts, savePrompt, selectedProvider, selectedProviderId, selections],
   );
 
   // Determine if we show single tier (provider selected) or all 4 (educational)
@@ -1519,7 +1550,7 @@ export default function EnhancedEducationalPreview({
                         className="font-medium text-emerald-300 flex items-center"
                         style={{ fontSize: 'clamp(0.68rem, 0.72vw, 0.82rem)', gap: 'clamp(4px, 0.4vw, 6px)' }}
                       >
-                        Optimized prompt
+                        {hasSeparateNegative && effectiveNegativeText ? 'Optimized positive prompt' : 'Optimized prompt'}
                         {selectedProvider && (
                           <>
                             <span className="text-white/60">in</span>
@@ -1613,6 +1644,91 @@ export default function EnhancedEducationalPreview({
                       </pre>
                     </div>
                   </div>
+
+                  {/* ── Negative prompt window (separate-negative platforms only) ── */}
+                  {hasSeparateNegative && effectiveNegativeText && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(4px, 0.4vw, 6px)' }}>
+                      <div className="flex items-center justify-between">
+                        <span
+                          className="font-medium text-amber-300 flex items-center"
+                          style={{ fontSize: 'clamp(0.68rem, 0.72vw, 0.82rem)', gap: 'clamp(4px, 0.4vw, 6px)' }}
+                        >
+                          Optimized negative prompt
+                          {selectedProvider && (
+                            <>
+                              <span className="text-white/60">in</span>
+                              <span className="text-white/80">{selectedProvider.name}</span>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={selectedProvider.localIcon || `/icons/providers/${selectedProvider.id}.png`}
+                                alt=""
+                                style={{ width: 'clamp(16px, 1.2vw, 20px)', height: 'clamp(16px, 1.2vw, 20px)' }}
+                                className="inline-block rounded-sm"
+                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                              />
+                            </>
+                          )}
+                        </span>
+                        <span
+                          className="text-amber-400/80 tabular-nums"
+                          style={{ fontSize: 'clamp(0.65rem, 0.68vw, 0.78rem)' }}
+                        >
+                          {effectiveNegativeText.length} chars
+                        </span>
+                      </div>
+                      <div
+                        className="overflow-y-auto rounded-xl border border-amber-600/50 bg-amber-950/20 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30"
+                        style={{
+                          minHeight: 'clamp(36px, 3vw, 44px)',
+                          maxHeight: 'clamp(80px, 6vw, 100px)',
+                          padding: 'clamp(8px, 0.8vw, 12px)',
+                        }}
+                      >
+                        <pre
+                          className="whitespace-pre-wrap font-sans leading-relaxed text-amber-100"
+                          style={{ fontSize: 'clamp(0.7rem, 0.76vw, 0.85rem)' }}
+                        >
+                          {effectiveNegativeText}
+                          {/* Inline copy + save icons */}
+                          <span style={{ marginLeft: 'clamp(4px, 0.3vw, 6px)', display: 'inline-flex', float: 'right', gap: 'clamp(2px, 0.2vw, 4px)' }}>
+                            <SaveIcon
+                              positivePrompt={activeTierPromptText}
+                              optimisedPrompt={effectiveOptimisedText}
+                              isOptimised={true}
+                              platformId={selectedProviderId ?? 'playground'}
+                              platformName={selectedProvider?.name ?? 'Playground'}
+                              source="builder"
+                              tier={activeTier}
+                              selections={selections as unknown as Record<string, unknown>}
+                              size="sm"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleCopyNegative}
+                              className={`inline-flex items-center justify-center rounded-md transition-all cursor-pointer ${
+                                copiedNegative
+                                  ? 'bg-amber-500/20 text-amber-400'
+                                  : 'bg-white/5 text-amber-300 hover:bg-white/10 hover:text-amber-200'
+                              }`}
+                              style={{ padding: 'clamp(2px, 0.2vw, 4px)' }}
+                              title={copiedNegative ? 'Copied!' : 'Copy negative prompt'}
+                              aria-label={copiedNegative ? 'Copied to clipboard' : 'Copy negative prompt to clipboard'}
+                            >
+                              {copiedNegative ? (
+                                <svg style={{ width: 'clamp(12px, 0.9vw, 14px)', height: 'clamp(12px, 0.9vw, 14px)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                              ) : (
+                                <svg style={{ width: 'clamp(12px, 0.9vw, 14px)', height: 'clamp(12px, 0.9vw, 14px)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                              )}
+                            </button>
+                          </span>
+                        </pre>
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
 
@@ -1697,6 +1813,16 @@ export default function EnhancedEducationalPreview({
             )}
           </button>
 
+          {/* Negative prompt toast */}
+          {showNegativeToast && (
+            <span
+              className="text-amber-300 animate-pulse font-medium"
+              style={{ fontSize: 'clamp(0.68rem, 0.72vw, 0.82rem)' }}
+            >
+              Negative prompt also available above
+            </span>
+          )}
+
           {/* Clear All button */}
           <button
             type="button"
@@ -1741,7 +1867,7 @@ export default function EnhancedEducationalPreview({
                 <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ width: 'clamp(14px, 1vw, 16px)', height: 'clamp(14px, 1vw, 16px)' }}>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                 </svg>
-                Save
+                {hasSeparateNegative && effectiveNegativeText ? 'Save complete prompt' : 'Save'}
               </>
             )}
           </button>

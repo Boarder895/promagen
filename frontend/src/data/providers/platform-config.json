@@ -1,9 +1,10 @@
 {
   "_meta": {
     "version": "1.1.0",
-    "description": "Single source of truth for all per-platform configuration. 40 active platforms, 5 archived (removed aggregators).",
-    "updated": "2026-03-27",
-    "totalPlatforms": 40
+    "description": "Single source of truth for all per-platform configuration. 40 active platforms.",
+    "updated": "2026-03-29",
+    "totalPlatforms": 40,
+    "activePlatforms": 40
   },
   "_assemblyDefaults": {
     "promptStyle": "natural",
@@ -458,7 +459,7 @@
     "artbreeder": {
       "promptStyle": "natural",
       "separator": ", ",
-      "negativeSupport": "none",
+      "negativeSupport": "separate",
       "negativeSyntax": null,
       "categoryOrder": [
         "subject",
@@ -562,7 +563,7 @@
     "artistly": {
       "promptStyle": "natural",
       "separator": ", ",
-      "negativeSupport": "none",
+      "negativeSupport": "separate",
       "negativeSyntax": null,
       "categoryOrder": [
         "subject",
@@ -828,7 +829,7 @@
     "craiyon": {
       "promptStyle": "natural",
       "separator": ", ",
-      "negativeSupport": "none",
+      "negativeSupport": "separate",
       "negativeSyntax": null,
       "categoryOrder": [
         "subject",
@@ -1226,46 +1227,6 @@
         "intricate textures"
       ]
     },
-    "freepik": {
-      "maxChars": 500,
-      "idealMin": 100,
-      "idealMax": 300,
-      "idealWords": 40,
-      "tokenLimit": null,
-      "platformNote": "Stock-focused generator; clear, commercial-style prompts work best.",
-      "optimizationBenefit": "Better stock-style outputs with focused descriptions.",
-      "qualityImpact": "8-12%",
-      "impactCategory": "moderate",
-      "architecture": "proprietary",
-      "limitSources": [
-        "freepik-ai-docs",
-        "platform-testing"
-      ],
-      "tier": null,
-      "shorthandLevel": "MINIMAL",
-      "_removed": true,
-      "_removedReason": "Multi-engine aggregator. Dynamic model routing not supported."
-    },
-    "getimg": {
-      "maxChars": 1000,
-      "idealMin": 200,
-      "idealMax": 350,
-      "idealWords": 45,
-      "tokenLimit": 77,
-      "platformNote": "API-first platform with multiple SD models; CLIP limits apply.",
-      "optimizationBenefit": "Prevents token truncation across model variants.",
-      "qualityImpact": "15-20%",
-      "impactCategory": "high",
-      "architecture": "clip-based",
-      "limitSources": [
-        "getimg-api-docs",
-        "sd-community"
-      ],
-      "tier": null,
-      "shorthandLevel": "MINIMAL",
-      "_removed": true,
-      "_removedReason": "Multi-engine aggregator. Dynamic model routing not supported."
-    },
     "google-imagen": {
       "promptStyle": "natural",
       "separator": ", ",
@@ -1541,7 +1502,7 @@
     "kling": {
       "promptStyle": "natural",
       "separator": ", ",
-      "negativeSupport": "none",
+      "negativeSupport": "separate",
       "negativeSyntax": null,
       "categoryOrder": [
         "subject",
@@ -1949,26 +1910,6 @@
       "compressionNotes": "CyberLink consumer tool",
       "groupKnowledge": "Nano Banana Pro (Google) backend. NL prose. No special syntax."
     },
-    "nightcafe": {
-      "maxChars": 1000,
-      "idealMin": 200,
-      "idealMax": 400,
-      "idealWords": 50,
-      "tokenLimit": 77,
-      "platformNote": "Multiple model options; CLIP limits apply to SD models.",
-      "optimizationBenefit": "Prevents style bleeding across model variants.",
-      "qualityImpact": "15-20%",
-      "impactCategory": "high",
-      "architecture": "clip-based",
-      "limitSources": [
-        "nightcafe-faq",
-        "sd-community"
-      ],
-      "tier": null,
-      "shorthandLevel": "MINIMAL",
-      "_removed": true,
-      "_removedReason": "Multi-engine aggregator. Dynamic model routing not supported."
-    },
     "novelai": {
       "promptStyle": "keywords",
       "separator": ", ",
@@ -2096,26 +2037,6 @@
       "tier": 3,
       "shorthandLevel": "LOW",
       "compressionNotes": "DALL-E 3, GPT-4 preprocessing"
-    },
-    "openart": {
-      "maxChars": 1000,
-      "idealMin": 200,
-      "idealMax": 350,
-      "idealWords": 45,
-      "tokenLimit": 77,
-      "platformNote": "Multiple SD models available; CLIP limits apply across variants.",
-      "optimizationBenefit": "Consistent quality across community models.",
-      "qualityImpact": "15-20%",
-      "impactCategory": "high",
-      "architecture": "clip-based",
-      "limitSources": [
-        "openart-docs",
-        "sd-community"
-      ],
-      "tier": null,
-      "shorthandLevel": "MINIMAL",
-      "_removed": true,
-      "_removedReason": "Multi-engine aggregator. Dynamic model routing not supported."
     },
     "photoleap": {
       "promptStyle": "natural",
@@ -2261,7 +2182,7 @@
     "pixlr": {
       "promptStyle": "natural",
       "separator": ", ",
-      "negativeSupport": "none",
+      "negativeSupport": "separate",
       "negativeSyntax": null,
       "categoryOrder": [
         "subject",
@@ -2455,7 +2376,7 @@
     "simplified": {
       "promptStyle": "natural",
       "separator": ", ",
-      "negativeSupport": "none",
+      "negativeSupport": "separate",
       "negativeSyntax": null,
       "categoryOrder": [
         "subject",
@@ -2675,26 +2596,6 @@
       "shorthandLevel": "MINIMAL",
       "compressionNotes": "Template-based design tool",
       "groupKnowledge": "Bria.ai backend. NL prose. ~3000 chars capacity. No special syntax."
-    },
-    "tensor-art": {
-      "_removed": true,
-      "_removedReason": "Multi-engine aggregator. Dynamic model routing not supported.",
-      "tier": null,
-      "promptStyle": "keywords",
-      "separator": ", ",
-      "negativeSupport": "none",
-      "shorthandLevel": "MINIMAL",
-      "maxChars": 1000,
-      "idealMin": 200,
-      "idealMax": 350,
-      "idealWords": 45,
-      "tokenLimit": 77,
-      "platformNote": "Removed: multi-engine aggregator (historical reference).",
-      "optimizationBenefit": "",
-      "qualityImpact": "",
-      "impactCategory": "moderate",
-      "architecture": "clip-based",
-      "limitSources": []
     }
   }
 }

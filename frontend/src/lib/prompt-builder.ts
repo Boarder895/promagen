@@ -163,10 +163,7 @@ const PLATFORM_FAMILIES: Record<string, PlatformFamily> = {
   dreamstudio: 'stable-diffusion',
   lexica: 'stable-diffusion',
   playground: 'stable-diffusion',
-  nightcafe: 'stable-diffusion',
-  getimg: 'stable-diffusion',
   dreamlike: 'stable-diffusion',
-  openart: 'stable-diffusion',
   artistly: 'natural',
   clipdrop: 'stable-diffusion',
 
@@ -202,7 +199,6 @@ const PLATFORM_FAMILIES: Record<string, PlatformFamily> = {
   photoleap: 'natural',
   picsart: 'natural',
   '123rf': 'natural',
-  freepik: 'natural',
   artguru: 'stable-diffusion',
   artbreeder: 'natural',
   myedit: 'natural',
@@ -211,7 +207,6 @@ const PLATFORM_FAMILIES: Record<string, PlatformFamily> = {
   recraft: 'natural',
   kling: 'natural',
   'luma-ai': 'natural',
-  'tensor-art': 'stable-diffusion',
 };
 
 function getPlatformFamily(platformId: string): PlatformFamily {
@@ -1994,8 +1989,8 @@ export function supportsNegativePrompts(platformId: string): boolean {
  *
  * Platforms with native support (free text allowed):
  * - Inline: midjourney, bluewillow, ideogram (use --no or "without")
- * - Separate: stability, leonardo, flux, novelai, playground, nightcafe,
- *             lexica, openart, dreamstudio, getimg, dreamlike
+ * - Separate: stability, leonardo, flux, novelai, playground,
+ *             lexica, dreamstudio, dreamlike
  *
  * Platforms without native support (dropdown only, no free text):
  * - Converted: All natural language platforms (DALL-E, Firefly, Canva, etc.)

@@ -1,4 +1,4 @@
-// Promagen Top 20 Platforms — single source of truth (ordered by popularity)
+// Promagen Top 20 Platforms ï¿½ single source of truth (ordered by popularity)
 export type Platform = {
   id: string; // stable ID for your system (slug-like)
   name: string; // display name
@@ -60,7 +60,6 @@ export const PLATFORMS_20: Platform[] = [
     notes: 'API + affiliate',
   },
   { id: 'pixlr', name: 'Pixlr', rank: 8, kind: 'affiliate', markers: ['??'] },
-  { id: 'nightcafe', name: 'NightCafe', rank: 9, kind: 'affiliate', markers: ['??'] },
   { id: 'fotor', name: 'Fotor', rank: 10, kind: 'affiliate', markers: ['??'] },
   { id: 'deepai', name: 'DeepAI', rank: 11, kind: 'api', markers: ['??'] },
   {
@@ -80,7 +79,6 @@ export const PLATFORMS_20: Platform[] = [
     markers: ['??'],
     notes: 'Discord UI',
   },
-  { id: 'openart', name: 'OpenArt', rank: 15, kind: 'affiliate', markers: ['??'] },
   { id: 'playground', name: 'Playground AI', rank: 16, kind: 'ui_only', markers: ['??'] },
   { id: 'novelai', name: 'NovelAI', rank: 17, kind: 'api', markers: ['??', '??'] },
   {

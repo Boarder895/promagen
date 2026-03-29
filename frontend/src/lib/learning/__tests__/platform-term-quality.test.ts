@@ -161,7 +161,7 @@ describe('computePlatformTermQuality', () => {
       // 60 total events, but spread across 3 platforms = 20 each (below 50)
       const events = [
         ...generatePlatformEvents({ n: 20, platform: 'leonardo', tier: 1, term: 'test' }),
-        ...generatePlatformEvents({ n: 20, platform: 'nightcafe', tier: 1, term: 'test' }),
+        ...generatePlatformEvents({ n: 20, platform: 'stability', tier: 1, term: 'test' }),
         ...generatePlatformEvents({ n: 20, platform: 'craiyon', tier: 1, term: 'test' }),
       ];
       expect(computePlatformTermQuality(events)).toBeNull();
@@ -247,7 +247,7 @@ describe('computePlatformTermQuality', () => {
         }),
         // NightCafe: neon glow = bad, boring flat = good (reversed!)
         ...generateMixedPlatformEvents({
-          platform: 'nightcafe',
+          platform: 'stability',
           tier: 1,
           goodTerm: 'boring flat',
           badTerm: 'neon glow',
@@ -257,15 +257,15 @@ describe('computePlatformTermQuality', () => {
 
       const result = computePlatformTermQuality(events)!;
       const leonardo = result.tiers['1']!.platforms['leonardo']!;
-      const nightcafe = result.tiers['1']!.platforms['nightcafe']!;
+      const stabilityResult = result.tiers['1']!.platforms['stability']!;
 
       // Neon glow: high on Leonardo, low on NightCafe
       expect(leonardo.terms['neon glow']!.score).toBeGreaterThan(50);
-      expect(nightcafe.terms['neon glow']!.score).toBeLessThan(50);
+      expect(stabilityResult.terms['neon glow']!.score).toBeLessThan(50);
 
       // Boring flat: low on Leonardo, high on NightCafe
       expect(leonardo.terms['boring flat']!.score).toBeLessThan(50);
-      expect(nightcafe.terms['boring flat']!.score).toBeGreaterThan(50);
+      expect(stabilityResult.terms['boring flat']!.score).toBeGreaterThan(50);
     });
 
     it('counts platforms independently in metadata', () => {
