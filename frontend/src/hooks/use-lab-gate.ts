@@ -22,7 +22,7 @@
 
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { usePromagenAuth } from '@/hooks/use-promagen-auth';
 
@@ -114,12 +114,12 @@ export function useLabGate(): UseLabGateResult {
   const isPro = userTier === 'paid';
   const isAuthenticated = isLoaded && isSignedIn === true;
 
-  const [generationsUsed, setGenerationsUsed] = useState(0);
-
-  // Read stored usage on mount
-  useEffect(() => {
-    setGenerationsUsed(readUsage());
-  }, []);
+  // ★ Initialize directly from localStorage (no useEffect race).
+  // Previous version used useState(0) + useEffect → brief flash where
+  // isExhausted=false, workspace renders, then effect fires and overlay
+  // rips it away mid-interaction. Lazy initializer runs synchronously
+  // on first render, so the correct state is available immediately.
+  const [generationsUsed, setGenerationsUsed] = useState(() => readUsage());
 
   const isExhausted = !isPro && generationsUsed >= FREE_DAILY_LIMIT;
   const canGenerate = isAuthenticated && (isPro || !isExhausted);

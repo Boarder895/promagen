@@ -19,7 +19,8 @@
 
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 
 export interface RichTooltipLine {
   label: string;
@@ -79,28 +80,47 @@ export function RichTooltip({ children, lines, title, glowColour }: RichTooltipP
   const [align, setAlign] = useState<TooltipAlign>('center');
   const triggerRef = useRef<HTMLSpanElement>(null);
 
-  // Detect edge position when hovered
-  useEffect(() => {
-    if (!isHovered || !triggerRef.current) return;
+  // ★ Portal rendering — escape parent stacking contexts (backdrop-blur, overflow-hidden)
+  const [isMounted, setIsMounted] = useState(false);
+  const [tooltipCoords, setTooltipCoords] = useState({ top: 0, left: 0, triggerWidth: 0 });
+
+  useEffect(() => { setIsMounted(true); }, []);
+
+  // Calculate position + edge detection when hovered
+  const calculatePosition = useCallback(() => {
+    if (!triggerRef.current) return;
 
     const rect = triggerRef.current.getBoundingClientRect();
     const viewportWidth = window.innerWidth;
 
-    // Calculate position as percentage of viewport
+    // Edge detection
     const leftEdge = rect.left / viewportWidth;
     const rightEdge = rect.right / viewportWidth;
 
+    let newAlign: TooltipAlign = 'center';
     if (leftEdge < LEFT_EDGE_THRESHOLD) {
-      // Near left edge (within exchange rail zone) - align tooltip to start from left (opens rightward)
-      setAlign('left');
+      newAlign = 'left';
     } else if (rightEdge > 1 - RIGHT_EDGE_THRESHOLD) {
-      // Near right edge - align tooltip to end at right (opens leftward)
-      setAlign('right');
-    } else {
-      // Center is fine
-      setAlign('center');
+      newAlign = 'right';
     }
-  }, [isHovered]);
+    setAlign(newAlign);
+
+    // Calculate fixed position — tooltip appears above the trigger
+    setTooltipCoords({
+      top: rect.top - 12, // 12px gap above trigger (mb-3 equivalent)
+      left: newAlign === 'left' ? rect.left : newAlign === 'right' ? rect.right : rect.left + rect.width / 2,
+      triggerWidth: rect.width,
+    });
+  }, []);
+
+  const handleEnter = useCallback(() => {
+    calculatePosition();
+    setIsHovered(true);
+  }, [calculatePosition]);
+
+  const handleLeave = useCallback(() => {
+    setIsHovered(false);
+  }, []);
 
   if (lines.length === 0) {
     return <>{children}</>;
@@ -118,104 +138,92 @@ export function RichTooltip({ children, lines, title, glowColour }: RichTooltipP
 
     switch (align) {
       case 'left':
-        // Align left edge of tooltip with left edge of trigger
-        return `translateX(0%) ${yOffset} ${scale}`;
+        return `translateY(-100%) ${yOffset} ${scale}`;
       case 'right':
-        // Align right edge of tooltip with right edge of trigger
-        return `translateX(-100%) ${yOffset} ${scale}`;
+        return `translateX(-100%) translateY(-100%) ${yOffset} ${scale}`;
       case 'center':
       default:
-        return `translateX(-50%) ${yOffset} ${scale}`;
-    }
-  };
-
-  // Calculate left position based on alignment
-  const getLeftPosition = (): string => {
-    switch (align) {
-      case 'left':
-        return '0';
-      case 'right':
-        return '100%';
-      case 'center':
-      default:
-        return '50%';
+        return `translateX(-50%) translateY(-100%) ${yOffset} ${scale}`;
     }
   };
 
   return (
-    <span
-      ref={triggerRef}
-      className="relative inline-flex"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {/* Trigger element */}
-      <span className="cursor-help">{children}</span>
-
-      {/* Tooltip card - positioned above with edge-aware alignment */}
+    <>
       <span
-        role="tooltip"
-        className="
-          pointer-events-none absolute bottom-full mb-3
-          whitespace-nowrap rounded-xl px-4 py-3
-          text-xs text-slate-100
-          transition-all duration-200 ease-out
-        "
-        style={{
-          left: getLeftPosition(),
-          zIndex: 9999,
-          opacity: isHovered ? 1 : 0,
-          transform: getTransform(isHovered),
-          visibility: isHovered ? 'visible' : 'hidden',
-          background: 'rgba(15, 23, 42, 0.97)',
-          border: `1px solid ${isHovered ? glowBorder : 'rgba(148, 163, 184, 0.2)'}`,
-          boxShadow: isHovered
-            ? `0 0 40px 8px ${glowRgba}, 0 0 80px 16px ${glowSoft}, inset 0 0 25px 3px ${glowRgba}`
-            : '0 4px 20px rgba(0, 0, 0, 0.4)',
-        }}
+        ref={triggerRef}
+        className="relative inline-flex"
+        onMouseEnter={handleEnter}
+        onMouseLeave={handleLeave}
       >
-        {/* Ethereal glow overlay - top radial */}
-        <span
-          className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
-          style={{
-            background: `radial-gradient(ellipse at 50% 0%, ${glowRgba} 0%, transparent 70%)`,
-            opacity: isHovered ? 1 : 0,
-            transition: 'opacity 200ms ease-out',
-          }}
-        />
-
-        {/* Bottom glow accent */}
-        <span
-          className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
-          style={{
-            background: `radial-gradient(ellipse at 50% 100%, ${glowSoft} 0%, transparent 60%)`,
-            opacity: isHovered ? 0.6 : 0,
-            transition: 'opacity 200ms ease-out',
-          }}
-        />
-
-        {/* Content */}
-        <span className="relative z-10 flex flex-col gap-1.5">
-          {title && (
-            <span
-              className="mb-1.5 pb-2 font-semibold text-white"
-              style={{
-                borderBottom: `1px solid ${hexToRgba(baseColour, 0.3)}`,
-                textShadow: isHovered ? `0 0 12px ${glowRgba}` : 'none',
-              }}
-            >
-              {title}
-            </span>
-          )}
-          {lines.map((line, i) => (
-            <span key={i} className="flex items-start gap-2 text-[11px]">
-              <span className="text-slate-400 shrink-0">{line.label}:</span>
-              <span className="text-slate-200">{line.value}</span>
-            </span>
-          ))}
-        </span>
+        {/* Trigger element */}
+        <span className="cursor-help">{children}</span>
       </span>
-    </span>
+
+      {/* ★ Portal-rendered tooltip — escapes all parent stacking contexts */}
+      {isMounted && isHovered &&
+        createPortal(
+          <span
+            role="tooltip"
+            className="
+              pointer-events-none
+              whitespace-nowrap rounded-xl px-4 py-3
+              text-xs text-slate-100
+              transition-all duration-200 ease-out
+            "
+            style={{
+              position: 'fixed',
+              top: tooltipCoords.top,
+              left: tooltipCoords.left,
+              zIndex: 99999,
+              opacity: 1,
+              transform: getTransform(true),
+              visibility: 'visible',
+              background: 'rgba(15, 23, 42, 0.97)',
+              border: `1px solid ${glowBorder}`,
+              boxShadow: `0 0 40px 8px ${glowRgba}, 0 0 80px 16px ${glowSoft}, inset 0 0 25px 3px ${glowRgba}`,
+            }}
+          >
+            {/* Ethereal glow overlay - top radial */}
+            <span
+              className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
+              style={{
+                background: `radial-gradient(ellipse at 50% 0%, ${glowRgba} 0%, transparent 70%)`,
+              }}
+            />
+
+            {/* Bottom glow accent */}
+            <span
+              className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
+              style={{
+                background: `radial-gradient(ellipse at 50% 100%, ${glowSoft} 0%, transparent 60%)`,
+                opacity: 0.6,
+              }}
+            />
+
+            {/* Content */}
+            <span className="relative z-10 flex flex-col gap-1.5">
+              {title && (
+                <span
+                  className="mb-1.5 pb-2 font-semibold text-white"
+                  style={{
+                    borderBottom: `1px solid ${hexToRgba(baseColour, 0.3)}`,
+                    textShadow: `0 0 12px ${glowRgba}`,
+                  }}
+                >
+                  {title}
+                </span>
+              )}
+              {lines.map((line, i) => (
+                <span key={i} className="flex items-start gap-2 text-[11px]">
+                  <span className="text-slate-400 shrink-0">{line.label}:</span>
+                  <span className="text-slate-200">{line.value}</span>
+                </span>
+              ))}
+            </span>
+          </span>,
+          document.body,
+        )}
+    </>
   );
 }
 

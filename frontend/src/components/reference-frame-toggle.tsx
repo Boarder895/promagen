@@ -18,6 +18,7 @@
 'use client';
 
 import { useCallback, useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { SignInButton } from '@clerk/nextjs';
 import type { ReferenceFrame } from '@/lib/location';
 
@@ -73,11 +74,28 @@ export function ReferenceFrameToggle({
   const [showGreenwichInfo, setShowGreenwichInfo] = useState(false);
   const greenwichTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
+  // ★ Portal-based tooltip: render at document.body to escape parent stacking contexts
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const [isMounted, setIsMounted] = useState(false);
+  const [tooltipCoords, setTooltipCoords] = useState({ top: 0, left: 0 });
+
+  useEffect(() => { setIsMounted(true); }, []);
+
+  const calculatePosition = useCallback(() => {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    setTooltipCoords({
+      top: rect.bottom + 8, // 8px gap below trigger
+      left: rect.left,
+    });
+  }, []);
+
   // Greenwich tooltip: 400ms close delay (matches weather/commodity tooltips)
   const handleGreenwichEnter = useCallback(() => {
     if (greenwichTimerRef.current) clearTimeout(greenwichTimerRef.current);
+    calculatePosition();
     setShowGreenwichInfo(true);
-  }, []);
+  }, [calculatePosition]);
   const handleGreenwichLeave = useCallback(() => {
     greenwichTimerRef.current = setTimeout(() => setShowGreenwichInfo(false), 400);
   }, []);
@@ -224,19 +242,27 @@ export function ReferenceFrameToggle({
     <div className="relative">
       {/* Toggle button with tooltip trigger */}
       <div
+        ref={triggerRef}
         className="relative"
         onMouseEnter={handleGreenwichEnter}
         onMouseLeave={handleGreenwichLeave}
       >
         {/* Wrap in SignInButton for anonymous users */}
         {!isAuthenticated ? <SignInButton mode="modal">{toggleButton}</SignInButton> : toggleButton}
+      </div>
 
-        {/* Greenwich educational tooltip — 400ms close delay, solid bg, matches weather/commodity tooltip style */}
-        {showGreenwichInfo && !showUpgradePrompt && (
+      {/* ★ Greenwich educational tooltip — portal-rendered at document.body
+          to escape backdrop-blur stacking context in homepage-grid.tsx */}
+      {isMounted && showGreenwichInfo && !showUpgradePrompt &&
+        createPortal(
           <div
             role="tooltip"
-            className="absolute left-0 top-full z-50 mt-2 rounded-lg border border-purple-500/30 shadow-xl"
+            className="rounded-lg border border-purple-500/30 shadow-xl"
             style={{
+              position: 'fixed',
+              top: tooltipCoords.top,
+              left: tooltipCoords.left,
+              zIndex: 99999,
               width: 'clamp(260px, 22vw, 340px)',
               background: 'rgba(15, 23, 42, 0.97)',
               backdropFilter: 'blur(12px)',
@@ -302,14 +328,24 @@ export function ReferenceFrameToggle({
                 </div>
               )}
             </div>
-          </div>
+          </div>,
+          document.body,
         )}
 
-        {/* Upgrade prompt (for free signed-in users) */}
-        {showUpgradePrompt && isAuthenticated && !isPaidUser && (
+      {/* ★ Upgrade prompt — also portal-rendered */}
+      {isMounted && showUpgradePrompt && isAuthenticated && !isPaidUser &&
+        createPortal(
           <div
             role="alert"
-            className="absolute left-0 top-full z-50 mt-2 w-72 rounded-lg border border-purple-500/30 bg-slate-800/95 p-4 shadow-xl backdrop-blur-sm"
+            className="rounded-lg border border-purple-500/30 bg-slate-800/95 shadow-xl backdrop-blur-sm"
+            style={{
+              position: 'fixed',
+              top: tooltipCoords.top,
+              left: tooltipCoords.left,
+              zIndex: 99999,
+              width: 'clamp(260px, 20vw, 288px)',
+              padding: 'clamp(12px, 1.2vw, 16px)',
+            }}
           >
             {/* Arrow */}
             <div className="absolute -top-1.5 left-4 h-3 w-3 rotate-45 border-l border-t border-purple-500/30 bg-slate-800/95" />
@@ -377,16 +413,15 @@ export function ReferenceFrameToggle({
                 type="button"
                 className="w-full rounded-full border border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 px-4 py-2 text-sm font-semibold text-purple-100 shadow-sm transition-all hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80"
                 onClick={() => {
-                  // TODO: Navigate to upgrade page or open upgrade modal
                   setShowUpgradePrompt(false);
                 }}
               >
                 Upgrade to Pro Promagen
               </button>
             </div>
-          </div>
+          </div>,
+          document.body,
         )}
-      </div>
     </div>
   );
 }
