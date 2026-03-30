@@ -578,7 +578,7 @@
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 150,
-      "sweetSpot": 80,
+      "sweetSpot": 150,
       "tips": "Artistly auto-expands keywords into full descriptions. Short focused input works best.",
       "exampleOutput": "A samurai warrior in dramatic fighting pose, cinematic lighting, detailed armor",
       "impactPriority": [
@@ -595,7 +595,7 @@
         "intricate textures"
       ],
       "qualityNegative": [],
-      "groupKnowledge": "Smart Prompt Enhancer auto-expands short inputs into detailed prompts. Keep input concise. ~200 chars.",
+      "groupKnowledge": "Natural prose, 50–200 chars. Preserve all visual anchors from the scene description. Use the full character range.",
       "tier": 4,
       "supportsWeighting": false,
       "maxChars": 500,
@@ -603,7 +603,7 @@
       "idealMax": 200,
       "idealWords": 30,
       "limitsTokenLimit": null,
-      "platformNote": "Smart Prompt Enhancer auto-expands input. Keep concise.",
+      "platformNote": "Smart Prompt Enhancer auto-expands input. Preserve all anchors.",
       "optimizationBenefit": "Provides richer seed text for auto-expansion.",
       "qualityImpact": "8-12%",
       "impactCategory": "moderate",

@@ -117,7 +117,7 @@ If the scene has too many anchors to fit in 200 chars, prioritise:
 2. Setting and time of day
 3. Dominant colours and lighting
 4. Atmosphere and mood
-Drop secondary spatial details last. Count your characters BEFORE returning JSON.\nSmart Prompt Enhancer auto-expands short inputs. Keep your prompt short and specific — the platform enriches it automatically.
+Drop secondary spatial details last. Count your characters BEFORE returning JSON.\nArtistly has a Smart Prompt Enhancer that expands input, but your output must still contain all visual anchors from the scene description. Use the full 50–200 character range — do NOT compress below 150 unless the scene genuinely has few visual elements.
 
 OUTPUT REQUIREMENTS:
 - Flowing natural language prose, 2–3 sentences
