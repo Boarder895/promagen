@@ -1,20 +1,26 @@
 // src/lib/optimise-prompts/group-nl-artistly.ts
 // ============================================================================
-// DEDICATED BUILDER: Artistly — Independent System Prompt (v3.0.0)
+// DEDICATED BUILDER: Artistly — Independent System Prompt (v4.0.0)
 // ============================================================================
 // Tier 4 | negativeSupport: none | architecture: natural-language
 //
-// ★ SSOT REFERENCE IMPLEMENTATION (v3.0.0 — 30 Mar 2026)
-//   Character limits are read from ctx (sourced from platform-config.json):
-//     ctx.idealMin  → minimum acceptable output length
-//     ctx.idealMax  → hard ceiling (never exceed)
-//     ctx.sweetSpot → soft target for dense scenes
-//   Both the system prompt AND the compliance gate use these values.
-//   Change platform-config.json → Call 3 behaviour changes. One source of truth.
+// ★ SSOT REFERENCE IMPLEMENTATION (v4.0.0 — 31 Mar 2026)
 //
-// Platform knowledge: Artistly auto-expands short inputs via a Smart Prompt
-//   Enhancer. The optimiser delivers an anchor-dense seed prompt in clean
-//   natural prose inside the effective range.
+//   KEY ARCHITECTURAL CHANGE from v3:
+//     GPT's job:  aim for idealMin–idealMax (the quality target range).
+//     Gate's job:  strip bad syntax + enforce maxChars (the platform limit).
+//     The gate does NOT hard-trim to idealMax. If GPT returns 236 chars of
+//     clean prose and maxChars is 500, the gate passes it through untouched.
+//     Destructive trimming only fires when the platform limit is exceeded.
+//
+//   Config values from ctx (sourced from platform-config.json):
+//     ctx.idealMin  → quality floor (GPT target, soft warning if under)
+//     ctx.idealMax  → quality ceiling (GPT target, soft warning if over)
+//     ctx.sweetSpot → soft target for dense scenes (GPT target)
+//     ctx.maxChars  → platform hard limit (gate enforces this)
+//
+// Platform knowledge: Artistly auto-expands short inputs via Smart Prompt
+//   Enhancer. The optimiser delivers an anchor-dense seed prompt.
 //
 // FULLY INDEPENDENT — no shared imports from other builders.
 // Existing features preserved: Yes.
@@ -27,9 +33,11 @@ import type { ComplianceResult } from "@/lib/harmony-compliance";
 // CONSTANTS (behavioural — NOT character limits, those come from ctx)
 // ============================================================================
 
-// If clause-dropping would shrink more than this in one step, reject it
-// and fall back to boundary trimming. Prevents catastrophic over-compression.
+// If clause-dropping would shrink more than this in one step, reject it.
 const MAX_SINGLE_DROP = 70;
+
+// Fallback hard ceiling when maxChars is null (platform has no stated limit).
+const DEFAULT_HARD_CEILING = 5000;
 
 const CLIP_QUALITY_TOKENS = [
   "masterpiece", "best quality", "highly detailed",
@@ -140,7 +148,7 @@ function stripClipQualityTokens(text: string): { text: string; fixes: string[] }
 }
 
 // ============================================================================
-// COMPRESSION HELPERS
+// COMPRESSION HELPERS (only used when above platform hard limit)
 // ============================================================================
 
 function compressByFillerRemoval(text: string): string {
@@ -181,39 +189,57 @@ function trimTrailingClause(text: string): string {
   return text;
 }
 
+// ── Point 4: prefer comma boundaries over word boundaries ────────────
+// Cutting at a comma loses a whole clause cleanly.
+// Cutting at a space can orphan an adjective from its noun ("black" without "mountains").
 function hardTrimAtBoundary(text: string, ceiling: number): string {
   const cleaned = pruneDanglingTail(text);
   if (cleaned.length <= ceiling) return cleaned;
+
   const slice = cleaned.slice(0, ceiling + 1);
-  const lastBoundary = Math.max(
-    slice.lastIndexOf(","), slice.lastIndexOf(";"),
-    slice.lastIndexOf("."), slice.lastIndexOf(" "),
-  );
-  const trimmed = lastBoundary > Math.floor(ceiling * 0.7)
-    ? slice.slice(0, lastBoundary)
-    : cleaned.slice(0, ceiling);
-  return pruneDanglingTail(trimmed);
+
+  // Prefer structural boundaries (comma, semicolon, period) over word boundary
+  const lastComma = slice.lastIndexOf(",");
+  const lastSemicolon = slice.lastIndexOf(";");
+  const lastPeriod = slice.lastIndexOf(".");
+  const bestStructural = Math.max(lastComma, lastSemicolon, lastPeriod);
+
+  // Only fall back to word boundary if no structural boundary in the back 40%
+  const floorPos = Math.floor(ceiling * 0.6);
+  if (bestStructural > floorPos) {
+    return pruneDanglingTail(slice.slice(0, bestStructural));
+  }
+
+  // No good structural boundary — use last space
+  const lastSpace = slice.lastIndexOf(" ");
+  if (lastSpace > floorPos) {
+    return pruneDanglingTail(slice.slice(0, lastSpace));
+  }
+
+  // Edge case: no good boundary at all — hard cut
+  return pruneDanglingTail(cleaned.slice(0, ceiling));
 }
 
 // ============================================================================
-// INTELLIGENT TRIM — 5-stage compression pipeline
+// PLATFORM LIMIT TRIM — only fires when above maxChars
 // ============================================================================
-// All limits (min, max, softTarget) are passed as parameters, NOT hardcoded.
-// The builder function reads them from ctx and passes them in.
+// This is the safety net. GPT should have stayed under idealMax (200).
+// If GPT overshot to e.g. 236, and that's under maxChars (500), the gate
+// does NOT trim — it passes through with a soft warning.
+// This pipeline only runs when the text exceeds the platform hard limit.
 // ============================================================================
 
-function intelligentTrim(
+function platformLimitTrim(
   text: string,
-  min: number,
-  max: number,
+  hardCeiling: number,
+  idealMin: number,
 ): { text: string; fixes: string[] } {
   const fixes: string[] = [];
   let current = pruneDanglingTail(text);
 
-  if (current.length <= max) return { text: current, fixes };
+  if (current.length <= hardCeiling) return { text: current, fixes };
 
   const startLength = current.length;
-  let safeCeilingCandidate: string | null = null;
 
   // Stage 1: filler removal
   const stage1 = compressByFillerRemoval(current);
@@ -221,8 +247,8 @@ function intelligentTrim(
     fixes.push(`Compression stage 1: removed filler (${current.length} -> ${stage1.length})`);
     current = stage1;
   }
-  if (current.length <= max) {
-    fixes.push(`Trimmed to ${current.length} chars within ceiling`);
+  if (current.length <= hardCeiling) {
+    fixes.push(`Within platform limit at ${current.length} chars`);
     return { text: current, fixes };
   }
 
@@ -232,13 +258,10 @@ function intelligentTrim(
     fixes.push(`Compression stage 2: tightened phrasing (${current.length} -> ${stage2.length})`);
     current = stage2;
   }
-  if (current.length <= max) {
-    fixes.push(`Trimmed to ${current.length} chars within ceiling`);
+  if (current.length <= hardCeiling) {
+    fixes.push(`Within platform limit at ${current.length} chars`);
     return { text: current, fixes };
   }
-
-  // Save a ceiling-respecting candidate as rescue fallback
-  safeCeilingCandidate = hardTrimAtBoundary(current, max);
 
   // Stage 3: weak ending removal
   const stage3 = compressWeakEnding(current);
@@ -246,22 +269,18 @@ function intelligentTrim(
     fixes.push(`Compression stage 3: removed weak ending (${current.length} -> ${stage3.length})`);
     current = stage3;
   }
-  if (current.length <= max) {
-    fixes.push(`Trimmed to ${current.length} chars within ceiling`);
+  if (current.length <= hardCeiling) {
+    fixes.push(`Within platform limit at ${current.length} chars`);
     return { text: current, fixes };
   }
 
-  // Refresh ceiling candidate after weak-ending removal
-  const refreshed = hardTrimAtBoundary(current, max);
-  if (refreshed.length >= min) safeCeilingCandidate = refreshed;
-
   // Stage 4: clause drops (with catastrophe guard)
   let loopGuard = 0;
-  while (current.length > max && loopGuard < 5) {
+  while (current.length > hardCeiling && loopGuard < 5) {
     const next = trimTrailingClause(current);
     if (next === current) break;
     const drop = current.length - next.length;
-    if (next.length < min || drop > MAX_SINGLE_DROP) {
+    if (next.length < idealMin || drop > MAX_SINGLE_DROP) {
       fixes.push(`Compression stage 4.${loopGuard + 1}: rejected clause drop (${current.length} -> ${next.length}, drop=${drop})`);
       break;
     }
@@ -270,23 +289,17 @@ function intelligentTrim(
     loopGuard += 1;
   }
 
-  // Stage 5: hard boundary trim
-  if (current.length > max) {
+  // Stage 5: hard boundary trim (comma-preferred)
+  if (current.length > hardCeiling) {
     const before = current.length;
-    current = hardTrimAtBoundary(current, max);
+    current = hardTrimAtBoundary(current, hardCeiling);
     if (current.length < before) {
       fixes.push(`Compression stage 5: boundary trim (${before} -> ${current.length})`);
     }
   }
 
-  // Under-length rescue: if we dropped below min, use the safest candidate
-  if (current.length < min && safeCeilingCandidate && safeCeilingCandidate.length >= min) {
-    fixes.push(`Under-length rescue: used ceiling candidate (${current.length} -> ${safeCeilingCandidate.length})`);
-    current = safeCeilingCandidate;
-  }
-
   if (current.length < startLength) {
-    fixes.push(`Final length ${current.length}/${max}`);
+    fixes.push(`Final length ${current.length}/${hardCeiling}`);
   }
 
   return { text: current, fixes };
@@ -296,20 +309,25 @@ function intelligentTrim(
 // COMPLIANCE GATE FACTORY
 // ============================================================================
 // Returns a compliance function with ctx limits captured via closure.
-// The groupCompliance signature is (text: string) => ComplianceResult —
-// the limits are baked in, not passed at call time.
+//
+// v4.0 architecture:
+//   1. Strip bad syntax (weights, flags, CLIP tokens, negatives) — always
+//   2. If length <= maxChars (500): pass through. Log soft warning if over idealMax.
+//   3. If length > maxChars (500): run platformLimitTrim to bring under the hard limit.
+//   4. Log diagnostics for under-length or good-density.
 // ============================================================================
 
 function createArtistlyCompliance(
-  min: number,
-  max: number,
+  idealMin: number,
+  idealMax: number,
   softTarget: number,
+  hardCeiling: number,
 ): (text: string) => ComplianceResult {
   return function enforceArtistlyCleanup(text: string): ComplianceResult {
     const fixes: string[] = [];
     let cleaned = text;
 
-    // Strip unsupported syntax
+    // ── Always: strip unsupported syntax ───────────────────────────────
     const weightResult = stripWeightSyntax(cleaned);
     cleaned = weightResult.text;
     if (weightResult.changed) fixes.push("Stripped unsupported weight syntax");
@@ -328,15 +346,22 @@ function createArtistlyCompliance(
       .replace(/\bno\s+[^,.;:!?]+/gi, "");
     cleaned = pruneDanglingTail(cleaned);
 
-    // Intelligent trim using config-driven limits
-    const trimResult = intelligentTrim(cleaned, min, max);
-    cleaned = trimResult.text;
-    fixes.push(...trimResult.fixes);
+    // ── Length enforcement: maxChars only ──────────────────────────────
+    if (cleaned.length > hardCeiling) {
+      // Above platform limit — must trim to prevent rejection
+      const trimResult = platformLimitTrim(cleaned, hardCeiling, idealMin);
+      cleaned = trimResult.text;
+      fixes.push(...trimResult.fixes);
+    } else if (cleaned.length > idealMax) {
+      // Between idealMax and hardCeiling — GPT overshot the quality target
+      // but the platform will accept it. Pass through with soft warning.
+      fixes.push(`Above ideal range (${cleaned.length}/${idealMax} chars) — platform limit is ${hardCeiling}`);
+    }
 
-    // Diagnostics
-    if (cleaned.length > 0 && cleaned.length < min) {
-      fixes.push(`Below minimum length (${cleaned.length}/${min} chars)`);
-    } else if (cleaned.length >= softTarget && cleaned.length <= max) {
+    // ── Diagnostics ───────────────────────────────────────────────────
+    if (cleaned.length > 0 && cleaned.length < idealMin) {
+      fixes.push(`Below ideal minimum (${cleaned.length}/${idealMin} chars)`);
+    } else if (cleaned.length >= softTarget && cleaned.length <= idealMax) {
       fixes.push(`Good density for Artistly (${cleaned.length} chars)`);
     }
 
@@ -353,9 +378,10 @@ export function buildArtistlyPrompt(
   ctx: OptimiseProviderContext,
 ): GroupPromptResult {
   // ★ Read limits from ctx (sourced from platform-config.json)
-  const min = ctx.idealMin;
-  const max = ctx.idealMax;
+  const idealMin = ctx.idealMin;
+  const idealMax = ctx.idealMax;
   const sweetSpot = ctx.sweetSpot;
+  const hardCeiling = ctx.maxChars ?? DEFAULT_HARD_CEILING;
   const platformNote = ctx.groupKnowledge ?? "";
 
   const systemPrompt = `You are an expert prompt optimiser for "Artistly".
@@ -364,7 +390,7 @@ ARTISTLY BEHAVIOUR
 - Plain natural-language prose only.
 - No weight syntax, no parameter flags, no CLIP boilerplate.
 - Artistly auto-expands prompts via a Smart Prompt Enhancer, so your job is to supply an anchor-dense seed prompt, not a generic summary.
-- HARD OUTPUT RANGE: ${min}–${max} characters (inclusive). Never exceed ${max}. Avoid going under ${min}.
+- TARGET OUTPUT RANGE: ${idealMin}–${idealMax} characters. Aim for ${sweetSpot}–${idealMax} on dense cinematic scenes.
 
 YOU RECEIVE TWO INPUTS
 1. SCENE DESCRIPTION — the user's original visual intent. This is the SOURCE OF TRUTH.
@@ -396,9 +422,9 @@ Front-load the primary subject in the first 8–10 words.
 TASK C — LENGTH DISCIPLINE
 Before returning JSON:
 1) Count characters in "optimised" exactly.
-2) If > ${max}, compress by removing filler and tightening phrasing. Only then drop the least important clause.
-3) If < ${min}, add missing anchors from the SCENE DESCRIPTION until you are within range.
-Aim for ${sweetSpot}–${max} characters on dense cinematic scenes.
+2) If > ${idealMax}, compress by removing filler and tightening phrasing. Only then drop the least important clause.
+3) If < ${idealMin}, add missing anchors from the SCENE DESCRIPTION until you are within range.
+Aim for ${sweetSpot}–${idealMax} characters on dense cinematic scenes.
 
 STRICTLY FORBIDDEN
 - (term:1.3)
@@ -414,7 +440,7 @@ ${platformNote ? `PLATFORM NOTE: ${platformNote}\n` : ""}Return ONLY valid JSON:
   "changes": [
     "TASK A: preserved key visual anchors from the scene description",
     "TASK B: rewritten into vivid Artistly prose",
-    "TASK C: kept within ${min}-${max} characters"
+    "TASK C: kept within ${idealMin}-${idealMax} characters"
   ],
   "charCount": 176,
   "tokenEstimate": 32
@@ -422,7 +448,7 @@ ${platformNote ? `PLATFORM NOTE: ${platformNote}\n` : ""}Return ONLY valid JSON:
 
   return {
     systemPrompt,
-    // ★ Compliance gate reads limits from ctx via closure — not hardcoded
-    groupCompliance: createArtistlyCompliance(min, max, sweetSpot),
+    // ★ Gate enforces maxChars (platform limit), NOT idealMax (quality target)
+    groupCompliance: createArtistlyCompliance(idealMin, idealMax, sweetSpot, hardCeiling),
   };
 }
