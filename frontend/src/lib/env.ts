@@ -82,7 +82,7 @@ export const env = Object.freeze({
   // Backwards-compatible keys already used by robots.ts / seo.ts
   siteUrl,
   siteName: raw.NEXT_PUBLIC_SITE_NAME ?? 'Promagen',
-  siteTagline: raw.NEXT_PUBLIC_SITE_TAGLINE ?? 'AI Prompt Builder for 42+ Image Generators',
+  siteTagline: raw.NEXT_PUBLIC_SITE_TAGLINE ?? 'AI Prompt Builder for 40 Image Generators',
 
   nodeEnv: raw.NODE_ENV ?? 'development',
   isProd: (raw.NODE_ENV ?? 'development') === 'production',

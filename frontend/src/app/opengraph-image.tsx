@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 // OG metadata
-export const alt = 'Promagen — AI prompt builder for 42+ image generators';
+export const alt = 'Promagen — AI prompt builder for 40 image generators';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -60,7 +60,7 @@ export default function OpengraphImage() {
               lineHeight: 1.35,
             }}
           >
-            AI Prompt Builder for 42+ Image Generators
+            AI Prompt Builder for 40 Image Generators
           </div>
 
           {/* Subtitle — matches SEO description keywords */}

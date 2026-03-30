@@ -710,7 +710,7 @@ export default function CommunityPulse() {
           className="shrink-0 text-emerald-400"
           style={{ fontSize: 'clamp(0.5625rem, 0.65vw, 0.75rem)' }}
         >
-          42 platforms
+          40 platforms
         </span>
       </div>
     </div>

@@ -563,7 +563,7 @@
     "artistly": {
       "promptStyle": "natural",
       "separator": ", ",
-      "negativeSupport": "separate",
+      "negativeSupport": "none",
       "negativeSyntax": null,
       "categoryOrder": [
         "subject",
@@ -642,7 +642,7 @@
         "style",
         "lighting"
       ],
-      "tips": "Bing uses DALL·E. Keep prompts simple and descriptive.",
+      "tips": "Bing uses DALL\u00b7E. Keep prompts simple and descriptive.",
       "exampleOutput": "A dramatic portrait of a samurai warrior in a fighting stance with cinematic golden hour lighting",
       "groupKnowledge": "Model selector (DALL-E 3, GPT-4o, MAI-Image-1). ~480 char limit. 5 aspect ratios via UI.",
       "maxChars": 480,
@@ -750,7 +750,7 @@
       ],
       "tips": "Canva works best with short, focused prompts. Use UI style presets.",
       "exampleOutput": "samurai warrior, fighting, dramatic lighting",
-      "groupKnowledge": "Powered by Leonardo Phoenix. Three output types (image/graphic/video). Style and aspect ratio set via UI controls, not in prompt. Prefers clear descriptive natural language with visual specifics — subject, setting, mood, lighting, colour.",
+      "groupKnowledge": "Powered by Leonardo Phoenix. Three output types (image/graphic/video). Style and aspect ratio set via UI controls, not in prompt. Prefers clear descriptive natural language with visual specifics \u2014 subject, setting, mood, lighting, colour.",
       "tier": 3,
       "maxChars": 500,
       "idealMin": 50,
@@ -1135,7 +1135,7 @@
         "lighting",
         "environment"
       ],
-      "groupKnowledge": "T5-XXL encoder, not CLIP. Reads full sentences — prose outperforms tags. No weight syntax. No negative prompts on Flux 1. guidance_scale 3.5 — follows prompt faithfully. Best-in-class photorealism and text rendering.",
+      "groupKnowledge": "T5-XXL encoder, not CLIP. Reads full sentences \u2014 prose outperforms tags. No weight syntax. No negative prompts on Flux 1. guidance_scale 3.5 \u2014 follows prompt faithfully. Best-in-class photorealism and text rendering.",
       "maxChars": 2000,
       "idealMin": 300,
       "idealMax": 500,
@@ -1605,7 +1605,7 @@
         "8K",
         "intricate textures"
       ],
-      "groupKnowledge": "CLIP encoder with double-colon weight syntax term::weight. \"Elements\" = LoRAs (max 4, combined weight ≤1.00). ~1,000-char limit. Front-loading emphasis critical.",
+      "groupKnowledge": "CLIP encoder with double-colon weight syntax term::weight. \"Elements\" = LoRAs (max 4, combined weight \u22641.00). ~1,000-char limit. Front-loading emphasis critical.",
       "maxChars": 1000,
       "idealMin": 250,
       "idealMax": 400,
@@ -1769,7 +1769,7 @@
       "wrapNegativeInPrompt": false,
       "tokenLimit": 400,
       "sweetSpot": 200,
-      "tips": "Microsoft Designer uses DALL·E. Keep prompts simple and descriptive.",
+      "tips": "Microsoft Designer uses DALL\u00b7E. Keep prompts simple and descriptive.",
       "exampleOutput": "A dramatic portrait of a samurai warrior in a fighting stance with cinematic golden hour lighting",
       "impactPriority": [
         "subject",
@@ -2010,7 +2010,7 @@
       "negativeWrapPrefix": "without ",
       "tokenLimit": 400,
       "sweetSpot": 250,
-      "tips": "DALL·E prefers full sentences. Avoid technical jargon. Be descriptive.",
+      "tips": "DALL\u00b7E prefers full sentences. Avoid technical jargon. Be descriptive.",
       "exampleOutput": "A portrait of a samurai warrior in a fighting stance with dramatic cinematic lighting, golden hour atmosphere, without blur or text",
       "impactPriority": [
         "subject",
@@ -2019,7 +2019,7 @@
         "style",
         "lighting"
       ],
-      "groupKnowledge": "DALL-E 3 via GPT-4 rewriting. Quality (standard/hd) and style (vivid/natural) are API params — do not include in prompt. Prompt is always rewritten by GPT-4 before generation.",
+      "groupKnowledge": "DALL-E 3 via GPT-4 rewriting. Quality (standard/hd) and style (vivid/natural) are API params \u2014 do not include in prompt. Prompt is always rewritten by GPT-4 before generation.",
       "maxChars": 4000,
       "idealMin": 200,
       "idealMax": 400,
@@ -2065,7 +2065,7 @@
       "exampleOutput": "atmospheric cityscape, warm tones, dramatic lighting",
       "sweetSpot": 30,
       "tokenLimit": 75,
-      "tips": "Photoleap is mobile-first — use short, punchy prompts focused on subject and style.",
+      "tips": "Photoleap is mobile-first \u2014 use short, punchy prompts focused on subject and style.",
       "groupKnowledge": "Mobile-first SD-based platform. NL prose. No special syntax.",
       "maxChars": 500,
       "idealMin": 100,
@@ -2313,7 +2313,7 @@
       "sweetSpot": 100,
       "tokenLimit": 200,
       "tips": "Recraft excels at vector art, design, and text in images. Use structured prompts: style + subject + detail + background.",
-      "groupKnowledge": "Design-first platform with SVG vector output capability. Hierarchical style/substyle taxonomy (25+ options). Text positioning control. 'Artistic level' slider inverts — lower = more prompt adherence. Excels at vector art, icons, logos, illustrations. Separate negative prompt field supported.",
+      "groupKnowledge": "Design-first platform with SVG vector output capability. Hierarchical style/substyle taxonomy (25+ options). Text positioning control. 'Artistic level' slider inverts \u2014 lower = more prompt adherence. Excels at vector art, icons, logos, illustrations. Separate negative prompt field supported.",
       "tier": 3,
       "shorthandLevel": "MEDIUM",
       "architecture": "proprietary",

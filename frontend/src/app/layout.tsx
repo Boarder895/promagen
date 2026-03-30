@@ -27,14 +27,14 @@ const SPEED_INSIGHTS_SAMPLE_RATE = 0.2;
 export const metadata: Metadata = {
   title: 'Promagen',
   description:
-    'AI prompt builder with 10,000+ phrases for 42+ image generators. Elo-ranked leaderboard and live financial market data.',
+    'AI prompt builder with 10,000+ phrases for 40 image generators. Elo-ranked leaderboard and live financial market data.',
   metadataBase: new URL(SITE),
   robots: { index: true, follow: true },
   alternates: { canonical: '/' },
   openGraph: {
-    title: 'AI Prompt Builder for 42+ Image Generators | Promagen',
+    title: 'AI Prompt Builder for 40 Image Generators | Promagen',
     description:
-      'Build prompts for Midjourney, DALL·E & 40+ AI image generators. 10,000+ phrase vocabulary, Elo-ranked leaderboard, and live financial market data.',
+      'Build prompts for Midjourney, DALL·E & 40 AI image generators. 10,000+ phrase vocabulary, Elo-ranked leaderboard, and live financial market data.',
     type: 'website',
     url: SITE,
     images: [
@@ -42,16 +42,16 @@ export const metadata: Metadata = {
         url: '/og.png',
         width: 1200,
         height: 630,
-        alt: 'Promagen — AI prompt builder for 42+ image generators',
+        alt: 'Promagen — AI prompt builder for 40 image generators',
       },
     ],
     siteName: 'Promagen',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'AI Prompt Builder for 42+ Image Generators | Promagen',
+    title: 'AI Prompt Builder for 40 Image Generators | Promagen',
     description:
-      'Build prompts for Midjourney, DALL·E & 40+ AI image generators. 10,000+ phrase vocabulary, Elo-ranked leaderboard, and live financial market data.',
+      'Build prompts for Midjourney, DALL·E & 40 AI image generators. 10,000+ phrase vocabulary, Elo-ranked leaderboard, and live financial market data.',
     images: ['/og.png'],
   },
 };

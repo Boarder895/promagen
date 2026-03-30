@@ -10,8 +10,9 @@
 // - Providers + exchanges are sync JSON reads (instant)
 // - Weather fetch is non-blocking with 2s timeout + empty fallback
 //   (client-side useWeather() refreshes after hydration anyway)
-// - Prompt of the Moment is client-fetched with module-level prefetch
-//   (fires at JS parse time, before React hydrates)
+// - ★ POTM generated SERVER-SIDE using SSR weather data — arrives in the
+//   initial HTML, eliminating the 2-second client-fetch waterfall.
+//   The client hook still handles 3-minute rotation refreshes.
 //
 // Authority: docs/authority/homepage.md
 //
@@ -33,16 +34,52 @@ import { getProviders } from '@/lib/providers/api';
 import { getHomepageExchanges } from '@/lib/exchange-order';
 import { getWeatherIndex } from '@/lib/weather/fetch-weather';
 import type { ExchangeWeatherData } from '@/components/exchanges/types';
+import type { ExchangeWeatherFull } from '@/lib/weather/weather-types';
+import type { PromptOfTheMoment } from '@/types/homepage';
+import { generatePotmData } from '@/lib/homepage/generate-potm-data';
 
 // ============================================================================
 // METADATA (SEO)
 // ============================================================================
 
 export const metadata: Metadata = {
-  title: 'AI Prompt Builder for 42+ Image Generators | Promagen',
+  title: 'AI Prompt Builder for 40 Image Generators | Promagen',
   description:
     'Build prompts for Midjourney, DALL·E & 40+ AI image generators. 10,000+ phrase vocabulary, Elo-ranked leaderboard, and intelligent weather-driven prompts.',
 };
+
+// ============================================================================
+// WEATHER CONVERSION HELPER
+// ============================================================================
+
+/**
+ * Convert SSR ExchangeWeatherData → ExchangeWeatherFull for the POTM generator.
+ * The SSR weatherIndex uses short field names (tempC, windKmh); the prompt
+ * generator expects the full field names (temperatureC, windSpeedKmh).
+ */
+function toWeatherFull(w: ExchangeWeatherData): ExchangeWeatherFull {
+  return {
+    temperatureC: w.tempC ?? 15,
+    temperatureF: w.tempF ?? 59,
+    conditions: w.condition ?? 'Unknown',
+    description: w.description ?? w.condition ?? '',
+    humidity: w.humidity ?? 50,
+    windSpeedKmh: w.windKmh ?? w.windSpeedKmh ?? 5,
+    emoji: w.emoji ?? '🌤️',
+    sunriseUtc: w.sunriseUtc ?? null,
+    sunsetUtc: w.sunsetUtc ?? null,
+    timezoneOffset: w.timezoneOffset ?? null,
+    isDayTime: w.isDayTime ?? null,
+    cloudCover: null,
+    visibility: w.visibility ?? null,
+    pressure: null,
+    rainMm1h: null,
+    snowMm1h: null,
+    windDegrees: w.windDegrees ?? null,
+    windGustKmh: w.windGustKmh ?? null,
+    weatherId: null,
+  };
+}
 
 // ============================================================================
 // PAGE COMPONENT
@@ -56,6 +93,9 @@ export const metadata: Metadata = {
  * useWeather() hook fills it in after hydration (~1-2s later). This means
  * weather tooltips may flash from empty to populated, but the page loads
  * instantly instead of waiting 5+ seconds for the gateway.
+ *
+ * ★ POTM is now generated server-side using the same weatherIndex,
+ * so it appears in the initial HTML with zero client-side fetch latency.
  */
 export default async function HomePage() {
   // Providers + exchanges are synchronous JSON reads — instant
@@ -76,11 +116,33 @@ export default async function HomePage() {
     weatherIndex = new Map();
   }
 
+  // ★ Generate POTM server-side using the SSR weather data.
+  // This eliminates the 2-second client-fetch waterfall entirely.
+  // If weather data is empty (timeout), demo weather is used — the
+  // client hook will refresh with live data on the next 3-minute rotation.
+  let initialShowcaseData: PromptOfTheMoment | null = null;
+  try {
+    const weatherFullMap = new Map<string, ExchangeWeatherFull>();
+    for (const [id, w] of weatherIndex) {
+      weatherFullMap.set(id, toWeatherFull(w));
+    }
+
+    const result = generatePotmData({
+      weatherLookup: (exchangeId) => weatherFullMap.get(exchangeId) ?? null,
+    });
+    initialShowcaseData = result.data;
+  } catch (err) {
+    // If POTM generation fails during SSR, the client hook will fetch
+    // from the API route as before — graceful degradation, not a crash.
+    console.warn('[HomePage] SSR POTM generation failed, client will fetch:', err);
+  }
+
   return (
     <NewHomepageClient
       exchanges={allExchanges}
       weatherIndex={weatherIndex}
       providers={providers}
+      initialShowcaseData={initialShowcaseData}
     />
   );
 }

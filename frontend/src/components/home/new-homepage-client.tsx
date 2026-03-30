@@ -11,6 +11,10 @@
 // Phase 5 (Community Pulse): CommunityPulse replaces right rail placeholder.
 // Hero cleanup: LeaderboardIntro moved here (between Showcase + Table).
 //
+// ★ SSR POTM (v2.0): Accepts initialShowcaseData from server component.
+//   Threads it through to PromptShowcase as initialData prop, eliminating
+//   the 2-second client-fetch waterfall on first paint.
+//
 // Key differences from original homepage-client.tsx:
 // - No exchange rails (replaced by Scene Starters + Community Pulse)
 // - No finance ribbon (showFinanceRibbon = false always)
@@ -39,6 +43,7 @@ import { useWeather, type WeatherData } from '@/hooks/use-weather';
 import type { Exchange } from '@/data/exchanges/types';
 import type { ExchangeWeatherData } from '@/components/exchanges/types';
 import type { Provider } from '@/types/providers';
+import type { PromptOfTheMoment } from '@/types/homepage';
 import { type PlatformTierId, getPlatformTierId } from '@/data/platform-tiers';
 // ============================================================================
 // TYPES
@@ -51,6 +56,8 @@ export interface NewHomepageClientProps {
   weatherIndex: Map<string, ExchangeWeatherData>;
   /** All AI providers */
   providers: Provider[];
+  /** ★ SSR-generated POTM data — renders in initial HTML, no client fetch needed */
+  initialShowcaseData?: PromptOfTheMoment | null;
 }
 
 // ============================================================================
@@ -72,6 +79,7 @@ export default function NewHomepageClient({
   exchanges,
   weatherIndex,
   providers,
+  initialShowcaseData,
 }: NewHomepageClientProps) {
   const { isAuthenticated, userTier, locationInfo, setReferenceFrame } = usePromagenAuth();
 
@@ -223,7 +231,11 @@ export default function NewHomepageClient({
       {/* Prompt of the Moment — desktop only. Mobile homepage is leaderboard-only. */}
       {!isTableExpanded && (
         <div className="hidden md:block">
-          <PromptShowcase selectedProviderId={selectedProvider?.id} onTierChange={setShowcaseTierId} />
+          <PromptShowcase
+            selectedProviderId={selectedProvider?.id}
+            onTierChange={setShowcaseTierId}
+            initialData={initialShowcaseData ?? undefined}
+          />
         </div>
       )}
 

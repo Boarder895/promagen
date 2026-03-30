@@ -1,8 +1,21 @@
 // src/components/ribbon/commodity-prompt-tooltip.tsx
 // ============================================================================
-// COMMODITY PROMPT TOOLTIP v2.2 — Multi-Tier Pro Display + 💾 Save + Blurred Previews
+// COMMODITY PROMPT TOOLTIP v2.3 — Prod Layout Fix + Clickable Tier Selection
 // ============================================================================
 // Tooltip that displays dynamically generated image prompts for commodities.
+//
+// v2.3: PROD LAYOUT FIX — all Tailwind opacity values converted from bare
+//       integers (bg-white/8, ring-white/15) to bracket syntax
+//       (bg-white/[0.08], ring-white/[0.15]) to survive Tailwind v4 prod
+//       scanner inside ternary template literals.
+//       INLINE FLEX FALLBACKS — all flex containers in BlurredTierRow,
+//       ProTierRow, and ProTooltipContent use inline styles as belt-and-braces
+//       so layout never breaks even if a Tailwind class is purged.
+//       CLICKABLE TIER SELECTION — Pro tier rows now have onClick + keyboard
+//       support. Clicking a collapsed tier expands it and collapses the
+//       previous one. Local selectedTier state lives in ProTooltipContent.
+//       Save icon tracks the currently selected tier.
+//       Existing features preserved: Yes
 //
 // v2.2: Coloured TierBadge pill replaces plain text tier indicator.
 //       Free users see blurred preview rows for other 3 tiers with lock icon.
@@ -174,10 +187,10 @@ const ALL_TIERS: (1 | 2 | 3 | 4)[] = [1, 2, 3, 4];
 
 /** Background + ring classes per tier for TierBadge pill */
 const TIER_BADGE_STYLES: Record<number, { bgClass: string; ringClass: string }> = {
-  1: { bgClass: 'bg-blue-500/15', ringClass: 'ring-blue-500/30' },
-  2: { bgClass: 'bg-purple-500/15', ringClass: 'ring-purple-500/30' },
-  3: { bgClass: 'bg-emerald-500/15', ringClass: 'ring-emerald-500/30' },
-  4: { bgClass: 'bg-orange-500/15', ringClass: 'ring-orange-500/30' },
+  1: { bgClass: 'bg-blue-500/[0.15]', ringClass: 'ring-blue-500/[0.30]' },
+  2: { bgClass: 'bg-purple-500/[0.15]', ringClass: 'ring-purple-500/[0.30]' },
+  3: { bgClass: 'bg-emerald-500/[0.15]', ringClass: 'ring-emerald-500/[0.30]' },
+  4: { bgClass: 'bg-orange-500/[0.15]', ringClass: 'ring-orange-500/[0.30]' },
 };
 
 // ============================================================================
@@ -187,7 +200,7 @@ const TIER_BADGE_STYLES: Record<number, { bgClass: string; ringClass: string }> 
 function LockIcon() {
   return (
     <svg
-      className="w-3 h-3 text-slate-400"
+      className="w-3 h-3 text-slate-300"
       fill="none"
       viewBox="0 0 24 24"
       stroke="currentColor"
@@ -213,7 +226,10 @@ function BlurredTierRow({ tierNum, previewText }: BlurredTierRowProps) {
   if (!meta) return null;
 
   return (
-    <div className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 bg-white/[0.03]">
+    <div
+      className="rounded-lg px-2.5 py-1.5 bg-white/[0.03]"
+      style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+    >
       <span className={`w-1.5 h-1.5 rounded-full ${meta.dotClass} shrink-0`} style={{ opacity: 0.5 }} />
       <span
         className={`text-xs font-semibold ${meta.accentClass} shrink-0`}
@@ -222,8 +238,12 @@ function BlurredTierRow({ tierNum, previewText }: BlurredTierRowProps) {
         T{tierNum}
       </span>
       <span
-        className="flex-1 text-xs text-slate-400 truncate select-none"
+        className="text-xs text-slate-300 select-none"
         style={{
+          flex: '1 1 0%',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
           filter: 'blur(4px)',
           WebkitFilter: 'blur(4px)',
           fontSize: 'clamp(0.625rem, 0.8vw, 0.7rem)',
@@ -300,16 +320,7 @@ function CopyIcon({ onClick, copied, size = 'md' }: CopyIconProps) {
         e.stopPropagation();
         onClick();
       }}
-      className={`
-        inline-flex items-center justify-center
-        ${sizeClasses} rounded-md
-        transition-all duration-200
-        ${
-          copied
-            ? 'bg-emerald-500/20 text-emerald-400'
-            : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'
-        }
-      `}
+      className={`inline-flex items-center justify-center ${sizeClasses} rounded-md transition-all duration-200 ${copied ? 'bg-emerald-500/[0.20] text-emerald-400' : 'bg-white/[0.05] text-slate-300 hover:bg-white/[0.10] hover:text-slate-200'}`}
       title={copied ? 'Copied!' : 'Copy prompt'}
       aria-label={copied ? 'Copied to clipboard' : 'Copy prompt to clipboard'}
     >
@@ -351,9 +362,11 @@ interface ProTierRowProps {
   promptText: string;
   isActive: boolean;
   onCopy: (text: string) => void;
+  /** Click row to select this tier as active */
+  onSelect: (tierNum: 1 | 2 | 3 | 4) => void;
 }
 
-function ProTierRow({ tierNum, promptText, isActive, onCopy }: ProTierRowProps) {
+function ProTierRow({ tierNum, promptText, isActive, onCopy, onSelect }: ProTierRowProps) {
   const [copied, setCopied] = useState(false);
   const meta = TIER_META[tierNum] ?? {
     dotClass: 'bg-orange-400',
@@ -374,43 +387,60 @@ function ProTierRow({ tierNum, promptText, isActive, onCopy }: ProTierRowProps) 
       .catch(console.error);
   }, [promptText, onCopy]);
 
+  const handleRowClick = useCallback(() => {
+    if (!isActive) onSelect(tierNum);
+  }, [isActive, tierNum, onSelect]);
+
+  // Inline flex fallback guarantees layout in prod even if Tailwind purges
+  // a dynamic opacity class and disrupts the cascade.
+  const rowStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '0.625rem',
+    cursor: isActive ? 'default' : 'pointer',
+  };
+
   return (
     <div
-      className={`
-        group flex items-start gap-2.5 rounded-lg px-3 py-2.5
-        transition-all duration-200
-        ${isActive ? 'bg-white/8 ring-1 ring-white/15' : 'bg-white/[0.03] hover:bg-white/[0.06]'}
-      `}
+      className={`group rounded-lg px-3 py-2.5 transition-all duration-200 ${isActive ? 'bg-white/[0.08] ring-1 ring-white/[0.15]' : 'bg-white/[0.03] hover:bg-white/[0.06]'}`}
+      style={rowStyle}
+      onClick={handleRowClick}
+      role="button"
+      tabIndex={0}
+      aria-pressed={isActive}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleRowClick(); } }}
     >
       {/* Tier colour dot + label */}
-      <div className="flex items-center gap-2 shrink-0 pt-0.5">
+      <div className="shrink-0 pt-0.5" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
         <span
-          className={`w-2 h-2 rounded-full ${meta.dotClass} ${isActive ? 'opacity-100' : 'opacity-50'}`}
+          className={`w-2 h-2 rounded-full ${meta.dotClass}`}
+          style={{ opacity: isActive ? 1 : 0.5 }}
         />
         <span
-          className={`text-xs font-semibold w-9 ${isActive ? meta.accentClass : 'text-slate-500'}`}
+          className={`text-xs font-semibold ${isActive ? meta.accentClass : 'text-slate-300'}`}
+          style={{ width: '2.25rem' }}
         >
           T{tierNum}
         </span>
       </div>
 
       {/* Prompt preview — expanded for active, truncated for inactive */}
-      <div className="flex-1 min-w-0">
+      <div style={{ flex: '1 1 0%', minWidth: 0 }}>
         {isActive ? (
           <>
-            <p className="text-[11px] text-slate-400 mb-1 font-medium">
+            <p className="text-[11px] text-slate-300 mb-1 font-medium">
               {meta.label}
-              <span className="text-slate-600 ml-1.5 font-normal">{meta.platforms}</span>
+              <span className="text-slate-300 ml-1.5 font-normal" style={{ opacity: 0.7 }}>{meta.platforms}</span>
             </p>
             <p className="text-sm leading-relaxed text-slate-200 whitespace-pre-wrap break-words">
               {promptText}
             </p>
           </>
         ) : (
-          <p className="text-xs text-slate-400 truncate leading-relaxed pt-0.5">
-            <span className={`font-medium ${meta.accentClass} opacity-70`}>{meta.shortLabel}</span>
-            <span className="text-slate-600 mx-1.5">·</span>
-            <span className="text-slate-500">{promptText.slice(0, 90)}…</span>
+          <p className="text-xs text-slate-300 leading-relaxed pt-0.5" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <span className={`font-medium ${meta.accentClass}`} style={{ opacity: 0.7 }}>{meta.shortLabel}</span>
+            <span className="text-slate-300 mx-1.5" style={{ opacity: 0.6 }}>·</span>
+            <span className="text-slate-300" style={{ opacity: 0.7 }}>{promptText.slice(0, 90)}…</span>
           </p>
         )}
       </div>
@@ -496,16 +526,16 @@ function FreeTooltipContent({
       />
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col gap-3">
+      <div className="relative z-10" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         {/* Header — title + save/copy (top-right) */}
-        <div className="flex items-center justify-between gap-2 mb-1">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.25rem' }}>
           <span
             className="text-base font-semibold text-white"
             style={{ textShadow: `0 0 12px ${glowRgba}` }}
           >
             Image Prompt
           </span>
-          <div className="flex items-center gap-1">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
             <SaveIcon
               positivePrompt={prompt}
               platformId={TIER_PLATFORM[tier]?.id ?? 'canva'}
@@ -541,9 +571,9 @@ function FreeTooltipContent({
             4: allPrompts.tier4,
           };
           return otherTiers.length > 0 ? (
-            <div className="flex flex-col gap-1 mt-1 pt-2 border-t border-white/[0.06]">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.25rem', paddingTop: '0.5rem', borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
               <span
-                className="text-xs text-slate-400 font-medium mb-0.5"
+                className="text-xs text-slate-300 font-medium mb-0.5"
                 style={{ fontSize: 'clamp(0.625rem, 0.8vw, 0.7rem)' }}
               >
                 Other formats available
@@ -559,14 +589,8 @@ function FreeTooltipContent({
               {/* Upgrade CTA */}
               <a
                 href="/pro-promagen"
-                className="flex items-center justify-center gap-1.5 mt-1.5 px-3 py-1.5 rounded-lg
-                  bg-gradient-to-r from-amber-600/20 to-orange-600/20
-                  ring-1 ring-amber-500/25
-                  text-amber-400 text-xs font-medium
-                  hover:from-amber-600/30 hover:to-orange-600/30
-                  transition-all duration-200 cursor-pointer
-                  no-underline"
-                style={{ fontSize: 'clamp(0.625rem, 0.85vw, 0.75rem)' }}
+                className="mt-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-600/[0.20] to-orange-600/[0.20] ring-1 ring-amber-500/[0.25] text-amber-400 text-xs font-medium hover:from-amber-600/[0.30] hover:to-orange-600/[0.30] transition-all duration-200 cursor-pointer no-underline"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.375rem', fontSize: 'clamp(0.625rem, 0.85vw, 0.75rem)' }}
                 onClick={(e) => e.stopPropagation()}
               >
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -609,12 +633,19 @@ function ProTooltipContent({
   onMouseLeave,
   blueprintUsed,
 }: ProTooltipContentProps) {
+  // Local state: which tier is currently expanded (starts with the global tier)
+  const [selectedTier, setSelectedTier] = useState<1 | 2 | 3 | 4>(activeTier as 1 | 2 | 3 | 4);
+
   const glowRgba = hexToRgba(glowColor, 0.3);
   const glowBorder = hexToRgba(glowColor, 0.5);
   const glowSoft = hexToRgba(glowColor, 0.15);
 
   const handleTierCopy = useCallback((_text: string) => {
     // Could track analytics here in future
+  }, []);
+
+  const handleTierSelect = useCallback((tierNum: 1 | 2 | 3 | 4) => {
+    setSelectedTier(tierNum);
   }, []);
 
   const tiers: Array<{ num: 1 | 2 | 3 | 4; text: string }> = [
@@ -662,54 +693,55 @@ function ProTooltipContent({
 
       {/* Content */}
       <div
-        className="relative z-10 flex flex-col gap-3 overflow-y-auto"
-        style={{ maxHeight: 'calc(80vh - 32px)' }}
+        className="relative z-10 overflow-y-auto"
+        style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: 'calc(80vh - 32px)' }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between gap-2">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
           <span
             className="text-base font-semibold text-white"
             style={{ textShadow: `0 0 12px ${glowRgba}` }}
           >
             Image Prompt
           </span>
-          <div className="flex items-center gap-1.5">
-            <span className="px-2 py-0.5 text-xs font-semibold rounded bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+            <span className="px-2 py-0.5 text-xs font-semibold rounded bg-amber-500/[0.20] text-amber-400 ring-1 ring-amber-500/[0.30]">
               PRO
             </span>
             <SaveIcon
-              positivePrompt={allPrompts[`tier${activeTier}` as keyof typeof allPrompts] ?? ''}
-              platformId={TIER_PLATFORM[activeTier]?.id ?? 'canva'}
-              platformName={TIER_PLATFORM[activeTier]?.name ?? 'Canva'}
+              positivePrompt={allPrompts[`tier${selectedTier}` as keyof typeof allPrompts] ?? ''}
+              platformId={TIER_PLATFORM[selectedTier]?.id ?? 'canva'}
+              platformName={TIER_PLATFORM[selectedTier]?.name ?? 'Canva'}
               source="tooltip"
-              tier={activeTier}
+              tier={selectedTier}
               size="md"
             />
           </div>
         </div>
 
         {/* Subtitle */}
-        <p className="text-[11px] text-slate-400 -mt-1">
-          4 platform-optimised prompts
-          {blueprintUsed && <span className="text-slate-600 ml-1">· Blueprint</span>}
+        <p className="text-[11px] text-slate-300 -mt-1">
+          4 platform-optimised prompts — click a tier to expand
+          {blueprintUsed && <span className="text-slate-300 ml-1" style={{ opacity: 0.6 }}>· Blueprint</span>}
         </p>
 
-        {/* Tier rows — active tier expanded, others collapsed */}
-        <div className="flex flex-col gap-1.5">
+        {/* Tier rows — selected tier expanded, others collapsed. Click to select. */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
           {tiers.map(({ num, text }) => (
             <ProTierRow
               key={num}
               tierNum={num}
               promptText={text}
-              isActive={num === activeTier}
+              isActive={num === selectedTier}
               onCopy={handleTierCopy}
+              onSelect={handleTierSelect}
             />
           ))}
         </div>
 
         {/* Pro tip footer */}
-        <div className="flex items-center gap-2 pt-2 border-t border-white/[0.06]">
-          <span className="text-[10px] text-slate-600">
+        <div className="pt-2" style={{ borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
+          <span className="text-[10px] text-slate-300">
             Copy any tier for your preferred AI image generator
           </span>
         </div>

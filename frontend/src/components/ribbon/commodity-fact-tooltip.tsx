@@ -116,7 +116,7 @@ export function CommodityFactTooltip({
               <button type="button"
                 onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(text).then(() => setCopied(true)).catch(() => {}); }}
                 className={`inline-flex items-center justify-center w-6 h-6 rounded-md transition-all duration-200 ${
-                  copied ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'
+                copied ? 'bg-emerald-500/[0.20] text-emerald-400' : 'bg-white/[0.05] text-slate-300 hover:bg-white/[0.10] hover:text-slate-200'
                 }`}
                 title={copied ? 'Copied!' : 'Copy'}>
                 {copied ? (

@@ -31,11 +31,11 @@ import { getWeatherIndex } from '@/lib/weather/fetch-weather';
 export const metadata: Metadata = {
   title: 'Prompt Lab — Promagen',
   description:
-    'Prompt Lab — build, compare and switch between all 42 AI image platforms in real time.',
+    'Prompt Lab — build, compare and switch between all 40 AI image platforms in real time.',
   openGraph: {
     title: 'Prompt Lab — Promagen',
     description:
-      'Prompt Lab — build, compare and switch between all 42 AI image platforms in real time.',
+      'Prompt Lab — build, compare and switch between all 40 AI image platforms in real time.',
     type: 'website',
     siteName: 'Promagen',
   },
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Prompt Lab — Promagen',
     description:
-      'Prompt Lab — build, compare and switch between all 42 AI image platforms in real time.',
+      'Prompt Lab — build, compare and switch between all 40 AI image platforms in real time.',
   },
 };
 

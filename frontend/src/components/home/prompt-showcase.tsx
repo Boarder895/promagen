@@ -1,10 +1,15 @@
 // src/components/home/prompt-showcase.tsx
 // ============================================================================
-// PROMPT OF THE MOMENT — Showcase Component (v9.1 — 💾 Save Icon)
+// PROMPT OF THE MOMENT — Showcase Component (v9.2 — SSR Initial Data)
 // ============================================================================
 // Centre-column hero for the new homepage. Displays live weather-driven
 // prompts for the current rotation city via a single hero prompt area
 // with 4 tier tab pills (CLIP · Midjourney · Natural Language · Plain).
+//
+// v9.2.0: ★ SSR POTM — accepts optional `initialData` prop from server
+//         component. When provided, the hook starts with data (no skeleton,
+//         no loading state). Skeleton min-height fixed to match real
+//         component height, eliminating CLS on the fallback path.
 //
 // v9.1.0: Added 💾 save icon next to copy button (saved-page.md §7.1).
 //         One-click save to Library with auto-naming and toast feedback.
@@ -1226,7 +1231,14 @@ function ShowcaseSkeleton() {
   return (
     <div
       className="flex flex-col rounded-3xl bg-slate-950/70 ring-1 ring-white/10"
-      style={{ padding: 'clamp(12px, 1.1vw, 18px)', gap: 'clamp(8px, 0.8vw, 14px)' }}
+      style={{
+        padding: 'clamp(12px, 1.1vw, 18px)',
+        gap: 'clamp(8px, 0.8vw, 14px)',
+        // ★ CLS FIX: match the real component's rendered height so the
+        // skeleton→content swap causes zero layout shift. The real component
+        // renders header + bridge + tier tabs + hero prompt ≈ 280–340px.
+        minHeight: 'clamp(240px, 22vw, 340px)',
+      }}
     >
       {/* Header skeleton */}
       <div className="flex items-center" style={{ gap: 'clamp(8px, 0.7vw, 12px)' }}>
@@ -1372,11 +1384,14 @@ function OnlineUsersBar({ total, countries }: { total: number; countries: Online
 export default function PromptShowcase({
   selectedProviderId,
   onTierChange,
+  initialData,
 }: {
   selectedProviderId?: string;
   onTierChange?: (tierId: number) => void;
+  /** ★ SSR-generated data — renders instantly, no client fetch needed */
+  initialData?: PromptOfTheMoment;
 }) {
-  const { data, previousData, isLoading, isTransitioning, error } = usePromptShowcase();
+  const { data, previousData, isLoading, isTransitioning, error } = usePromptShowcase(initialData);
 
   // ── Online users (Phase 6) ─────────────────────────────────────────────
   const { total: onlineTotal, countries: onlineCountries } = useOnlineUsers();

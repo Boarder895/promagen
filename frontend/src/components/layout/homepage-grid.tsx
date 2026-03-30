@@ -51,7 +51,7 @@ import {
 import CommoditiesMoversGrid from '@/components/ribbon/commodities-movers-grid.container';
 // REMOVED: Crypto ribbon - no longer part of Promagen
 import DemoFinanceRibbon from '@/components/ribbon/demo-finance-ribbon';
-import ProvenanceFooter from '@/components/core/provenance-footer';
+// ProvenanceFooter removed — build label no longer shown on homepage
 import ReferenceFrameToggle from '@/components/reference-frame-toggle';
 import { AuthButton } from '@/components/auth';
 import type { Exchange } from '@/data/exchanges/types';
@@ -290,7 +290,7 @@ export function LeaderboardIntro({
   onToggle?: () => void;
   /** Active tier from showcase — drives accent colour (1-4, default 1) */
   activeTierId?: number;
-  /** Currently active tier filter (null = showing all 42) */
+  /** Currently active tier filter (null = showing all 40) */
   tierFilter?: number | null;
   /** Clear the active filter */
   onClearFilter?: () => void;
@@ -343,7 +343,7 @@ export function LeaderboardIntro({
         style={{ fontSize: 'clamp(0.65rem, 0.9vw, 1.2rem)' }}
       >
         <span className="whitespace-nowrap bg-gradient-to-r from-sky-400 via-emerald-300 to-indigo-400 bg-clip-text text-transparent">
-          42 AI Image Generators — Elo-Ranked by the Community
+          40 AI Image Generators — Elo-Ranked by the Community
         </span>
       </span>
       {/* Tier accent underline — colour follows active showcase tier */}
@@ -375,12 +375,12 @@ export function LeaderboardIntro({
             color: 'rgba(148, 163, 184, 1)',
             transition: 'color 0.2s ease',
           }}
-          aria-label={`Clear ${filterLabel} filter, show all 42 platforms`}
+          aria-label={`Clear ${filterLabel} filter, show all 40 platforms`}
         >
           <span className="whitespace-nowrap">
             <span style={{ color: filterColour }}>{filterLabel}</span>
             <span className="text-slate-500"> · </span>
-            <span>{highlightCount ?? 0} of 42</span>
+            <span>{highlightCount ?? 0} of 40</span>
             <span className="text-slate-500"> · </span>
             <span className="hover:text-white transition-colors">Clear</span>
           </span>
@@ -513,7 +513,7 @@ export default function HomepageGrid({
     : isLibrary
       ? "Every prompt you've saved lives right here. Pick one, load it into the builder, reformat it for any platform. This is your collection — the prompts that caught your eye."
       : isWorldContext
-        ? "Every country flag on this page hides a surprise — hover over one and you'll see a live AI image prompt, crafted from the real weather happening in that city right now. The commodities tell visual stories too. Everything you see is live, and every prompt works across all 42 AI platforms."
+        ? "Every country flag on this page hides a surprise — hover over one and you'll see a live AI image prompt, crafted from the real weather happening in that city right now. The commodities tell visual stories too. Everything you see is live, and every prompt works across all 40 AI platforms."
         : isProPromagenPage
           ? "You've seen what the free view can do. Pro gives you the keys — pick your exchanges, choose your tier, make it yours."
           : "That prompt in the centre rewrites itself every few minutes — a new city, real weather, a completely new scene. You'll never see the same one twice. And those colours aren't random.";
@@ -935,10 +935,6 @@ export default function HomepageGrid({
         </section>
       </main>
 
-      {/* Footer */}
-      <div className={`${isHomepage ? 'hidden md:block' : 'block'} shrink-0 pb-2`}>
-        <ProvenanceFooter />
-      </div>
     </div>
   );
 }
