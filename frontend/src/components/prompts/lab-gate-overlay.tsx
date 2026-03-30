@@ -153,15 +153,15 @@ export function LabGateOverlay({ requiresSignIn = false }: LabGateOverlayProps) 
           className="font-semibold text-white"
           style={{ fontSize: 'clamp(0.9rem, 1.1vw, 1.3rem)' }}
         >
-          Your prompt is ready — but your next idea will have to wait
+          Your daily generation has been used
         </h3>
         <p
           className="text-slate-300"
           style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.9rem)', maxWidth: '420px' }}
         >
-          You described one scene and got prompts tailored for every tier.
-          Different words would have produced completely different results.
-          Pro Promagen lets you explore as many ideas as you want — no daily limit, no waiting.
+          The Prompt Lab reshapes every description into prompts tailored for 40 platforms.
+          One generation per day barely scratches the surface.
+          Go unlimited — no waiting, no limits.
         </p>
       </div>
 
@@ -187,15 +187,6 @@ export function LabGateOverlay({ requiresSignIn = false }: LabGateOverlayProps) 
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
         </svg>
-      </a>
-
-      {/* Secondary: go back to standard builder */}
-      <a
-        href="/"
-        className="no-underline cursor-pointer transition-colors hover:text-white"
-        style={{ fontSize: 'clamp(0.6rem, 0.7vw, 0.8rem)', color: 'rgb(203, 213, 225)' }}
-      >
-        Back to homepage
       </a>
     </div>
   );
