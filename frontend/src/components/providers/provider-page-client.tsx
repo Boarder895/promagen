@@ -6,21 +6,26 @@
 // component handles exchange ordering + layout. Pro users see exchanges
 // anchored to their timezone. Free/anonymous see standard Greenwich ordering.
 //
+// v2.0.0 (30 Mar 2026):
+// - Added useIndicesQuotes + indexByExchange map so exchange cards
+//   display live index data (price, change, tick). Previously missing.
+//
 // Authority: docs/authority/exchange-ordering.md
 // Existing features preserved: Yes — free users see identical layout.
 // ============================================================================
 
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import type { Provider } from '@/types/providers';
 import type { Exchange } from '@/data/exchanges/types';
-import type { ExchangeWeatherData } from '@/components/exchanges/types';
+import type { ExchangeWeatherData, IndexQuoteData } from '@/components/exchanges/types';
 import HomepageGrid from '@/components/layout/homepage-grid';
 import ExchangeList from '@/components/ribbon/exchange-list';
 import ProviderWorkspace from '@/components/providers/provider-workspace';
 import { ProviderPageTracker } from '@/components/providers/provider-page-tracker';
 import { useExchangeOrder } from '@/hooks/use-exchange-order';
+import { useIndicesQuotes } from '@/hooks/use-indices-quotes';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Provider not found fallback (matches server component version)
@@ -78,13 +83,42 @@ export default function ProviderPageClient({
   // Pro-aware exchange ordering — rotates for Pro users, passthrough for free
   const { left, right } = useExchangeOrder(exchanges);
 
+  // ── Index quotes (same pattern as homepage-client + pro page) ──────────
+  const { quotesById, movementById } = useIndicesQuotes({ enabled: true });
+
+  const indexByExchange = useMemo(() => {
+    const map = new Map<string, IndexQuoteData>();
+    for (const [quoteId, quote] of quotesById.entries()) {
+      if (!quote) continue;
+      const indexName = typeof quote.indexName === 'string' ? quote.indexName : null;
+      const price = typeof quote.price === 'number' && Number.isFinite(quote.price) ? quote.price : null;
+      if (!indexName || price === null) continue;
+      const movement = movementById.get(quoteId);
+      const data: IndexQuoteData = {
+        indexName,
+        price,
+        change: typeof quote.change === 'number' && Number.isFinite(quote.change) ? quote.change : 0,
+        percentChange: typeof quote.percentChange === 'number' && Number.isFinite(quote.percentChange) ? quote.percentChange : 0,
+        tick: movement?.tick ?? 'flat',
+      };
+      map.set(quoteId, data);
+      const sepIdx = quoteId.indexOf('::');
+      if (sepIdx !== -1) {
+        const plainId = quoteId.substring(0, sepIdx);
+        if (!map.has(plainId)) map.set(plainId, data);
+      }
+    }
+    return map;
+  }, [quotesById, movementById]);
+
   const providerName = provider?.name ?? providerId;
 
-  // Left rail: exchanges with live weather
+  // Left rail: exchanges with live weather + index data
   const leftContent = (
     <ExchangeList
       exchanges={left}
       weatherByExchange={weatherIndex}
+      indexByExchange={indexByExchange}
       emptyMessage="No eastern exchanges selected yet. Choose markets to populate this rail."
       side="left"
     />
@@ -99,11 +133,12 @@ export default function ProviderPageClient({
     <ProviderNotFound id={providerId} />
   );
 
-  // Right rail: exchanges with live weather
+  // Right rail: exchanges with live weather + index data
   const rightContent = (
     <ExchangeList
       exchanges={right}
       weatherByExchange={weatherIndex}
+      indexByExchange={indexByExchange}
       emptyMessage="No western exchanges selected yet. Choose markets to populate this rail."
       side="right"
     />

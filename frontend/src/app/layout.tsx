@@ -54,6 +54,9 @@ export const metadata: Metadata = {
       'Build prompts for Midjourney, DALL·E & 40 AI image generators. 10,000+ phrase vocabulary, Elo-ranked leaderboard, and live financial market data.',
     images: ['/og.png'],
   },
+  other: {
+    'impact-site-verification': 'd8a78461-61a8-4e5a-a53c-97459178bd78',
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

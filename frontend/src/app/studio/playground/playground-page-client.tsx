@@ -1,9 +1,14 @@
 // src/app/studio/playground/playground-page-client.tsx
 // ============================================================================
-// PROMPT LAB CLIENT WRAPPER (v2.0.0)
+// PROMPT LAB CLIENT WRAPPER (v3.0.0)
 // ============================================================================
 // Client component for /studio/playground (Prompt Lab).
 // Same pattern as homepage-client.tsx and library-client.tsx.
+//
+// v3.0.0 (30 Mar 2026):
+// - Added useIndicesQuotes + indexByExchange map so exchange cards
+//   display live index data (price, change, tick). Previously missing —
+//   only homepage-client and pro-promagen-client had this wiring.
 //
 // v2.0.0 (18 Mar 2026):
 // - Uses useExchangeOrder() for Pro-aware exchange rail ordering.
@@ -19,14 +24,16 @@
 
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import ExchangeList from '@/components/ribbon/exchange-list';
 import HomepageGrid from '@/components/layout/homepage-grid';
 import PlaygroundWorkspace from '@/components/prompts/playground-workspace';
 import type { Exchange } from '@/data/exchanges/types';
 import type { ExchangeWeatherData } from '@/components/exchanges/types';
+import type { IndexQuoteData } from '@/components/exchanges/types';
 import type { Provider } from '@/types/providers';
 import { useExchangeOrder } from '@/hooks/use-exchange-order';
+import { useIndicesQuotes } from '@/hooks/use-indices-quotes';
 
 // ============================================================================
 // SPEECH TEXT — British female voice (same pattern as homepage/library/pro)
@@ -76,6 +83,34 @@ export default function PlaygroundPageClient({
   // Pro-aware exchange ordering — rotates for Pro users, passthrough for free
   const { left, right, ordered } = useExchangeOrder(exchanges);
 
+  // ── Index quotes (same pattern as homepage-client + pro page) ──────────
+  const { quotesById, movementById } = useIndicesQuotes({ enabled: true });
+
+  const indexByExchange = useMemo(() => {
+    const map = new Map<string, IndexQuoteData>();
+    for (const [quoteId, quote] of quotesById.entries()) {
+      if (!quote) continue;
+      const indexName = typeof quote.indexName === 'string' ? quote.indexName : null;
+      const price = typeof quote.price === 'number' && Number.isFinite(quote.price) ? quote.price : null;
+      if (!indexName || price === null) continue;
+      const movement = movementById.get(quoteId);
+      const data: IndexQuoteData = {
+        indexName,
+        price,
+        change: typeof quote.change === 'number' && Number.isFinite(quote.change) ? quote.change : 0,
+        percentChange: typeof quote.percentChange === 'number' && Number.isFinite(quote.percentChange) ? quote.percentChange : 0,
+        tick: movement?.tick ?? 'flat',
+      };
+      map.set(quoteId, data);
+      const sepIdx = quoteId.indexOf('::');
+      if (sepIdx !== -1) {
+        const plainId = quoteId.substring(0, sepIdx);
+        if (!map.has(plainId)) map.set(plainId, data);
+      }
+    }
+    return map;
+  }, [quotesById, movementById]);
+
   // Speech text changes based on provider selection
   const heroText = hasProvider ? HERO_TEXT_WITH_PROVIDER : HERO_TEXT_NO_PROVIDER;
 
@@ -88,6 +123,7 @@ export default function PlaygroundPageClient({
       <ExchangeList
         exchanges={left}
         weatherByExchange={weatherIndex}
+        indexByExchange={indexByExchange}
         emptyMessage="No eastern exchanges selected yet. Choose markets to populate this rail."
         side="left"
       />
@@ -108,6 +144,7 @@ export default function PlaygroundPageClient({
       <ExchangeList
         exchanges={right}
         weatherByExchange={weatherIndex}
+        indexByExchange={indexByExchange}
         emptyMessage="No western exchanges selected yet. Choose markets to populate this rail."
         side="right"
       />
