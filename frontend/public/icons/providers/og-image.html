@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<!-- saved from url=(0046)file:///C:/Users/Proma/Downloads/og-image.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { width: 1200px; height: 630px; overflow: hidden; background: #090b14; font-family: 'Segoe UI', system-ui, sans-serif; }
+
+  .rainbow {
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899, #f97316, #eab308, #22c55e, #06b6d4, #6366f1);
+  }
+
+  .container {
+    position: relative; width: 1200px; height: 630px;
+    display: flex; align-items: center; padding: 0 72px;
+    gap: 60px;
+  }
+
+  /* subtle grid texture */
+  .container::before {
+    content: ''; position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(99,102,241,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(99,102,241,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* glow behind left text */
+  .container::after {
+    content: ''; position: absolute;
+    left: -80px; top: 50%; transform: translateY(-50%);
+    width: 500px; height: 500px;
+    background: radial-gradient(ellipse, rgba(139,92,246,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* LEFT */
+  .left {
+    position: relative; z-index: 1;
+    flex: 0 0 480px; display: flex; flex-direction: column; gap: 20px;
+  }
+
+  .logo-row {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 4px;
+  }
+
+  .logo-icon {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, #1a1040, #2d1b6b);
+    border-radius: 10px;
+    border: 1px solid rgba(139,92,246,0.4);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .logo-text {
+    font-size: 13px; font-weight: 600; letter-spacing: 0.18em;
+    color: rgba(255,255,255,0.5); text-transform: uppercase;
+  }
+
+  .eyebrow {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.22em;
+    color: #a78bfa; text-transform: uppercase; margin-bottom: -4px;
+  }
+
+  .headline {
+    line-height: 1.1;
+  }
+  .headline .line {
+    display: block; font-size: 62px; font-weight: 800; color: #ffffff; letter-spacing: -0.02em;
+  }
+  .headline .line.accent { color: #c084fc; }
+
+  .subtext {
+    font-size: 17px; color: rgba(255,255,255,0.65); line-height: 1.5;
+    max-width: 390px;
+  }
+  .subtext strong { color: rgba(255,255,255,0.9); font-weight: 600; }
+
+  .chips {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px;
+  }
+  .chip {
+    padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    border: 1px solid; letter-spacing: 0.02em;
+  }
+  .chip-mj  { color: #818cf8; border-color: rgba(129,140,248,0.35); background: rgba(129,140,248,0.08); }
+  .chip-de  { color: #34d399; border-color: rgba(52,211,153,0.35); background: rgba(52,211,153,0.08); }
+  .chip-fl  { color: #fb923c; border-color: rgba(251,146,60,0.35);  background: rgba(251,146,60,0.08); }
+  .chip-lw  { color: #facc15; border-color: rgba(250,204,21,0.35);  background: rgba(250,204,21,0.08); }
+  .chip-af  { color: #f472b6; border-color: rgba(244,114,182,0.35); background: rgba(244,114,182,0.08); }
+  .chip-more{ color: rgba(255,255,255,0.45); border-color: rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); }
+
+  .stats {
+    display: flex; gap: 32px; padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,0.07);
+  }
+  .stat-value { font-size: 28px; font-weight: 800; color: #ffffff; letter-spacing: -0.02em; }
+  .stat-label { font-size: 10px; font-weight: 600; letter-spacing: 0.15em; color: rgba(255,255,255,0.35); text-transform: uppercase; margin-top: 2px; }
+
+  /* RIGHT PANEL */
+  .right {
+    position: relative; z-index: 1;
+    flex: 1; height: 490px;
+  }
+
+  .panel {
+    width: 100%; height: 100%;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+
+  .panel-header {
+    padding: 14px 20px; border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .panel-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .d1 { background: rgba(255,255,255,0.15); }
+  .d2 { background: rgba(255,255,255,0.1); }
+  .d3 { background: rgba(255,255,255,0.08); }
+  .panel-title { font-size: 11px; color: rgba(255,255,255,0.35); letter-spacing: 0.12em; text-transform: uppercase; margin-left: 6px; }
+
+  .scene-box {
+    margin: 18px 20px 14px;
+    padding: 12px 16px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 8px;
+  }
+  .scene-label { font-size: 9px; letter-spacing: 0.2em; color: rgba(255,255,255,0.3); text-transform: uppercase; margin-bottom: 6px; }
+  .scene-text { font-size: 13px; color: rgba(255,255,255,0.7); font-style: italic; line-height: 1.4; }
+
+  .arrow-row {
+    display: flex; justify-content: center; margin: 4px 0;
+  }
+  .arrow-down {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: #7c3aed; display: flex; align-items: center; justify-content: center;
+  }
+  .arrow-down svg { width: 12px; height: 12px; }
+
+  .prompt-rows { display: flex; flex-direction: column; gap: 1px; padding: 0 20px; flex: 1; }
+
+  .prompt-row {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 10px 14px; border-radius: 7px;
+    border-left: 2px solid;
+  }
+  .pr-mj { border-color: #818cf8; background: rgba(129,140,248,0.05); }
+  .pr-de { border-color: #34d399; background: rgba(52,211,153,0.05); }
+  .pr-fl { border-color: #fb923c; background: rgba(251,146,60,0.05); }
+  .pr-lw { border-color: #facc15; background: rgba(250,204,21,0.05); }
+
+  .pr-left { flex-shrink: 0; width: 90px; }
+  .pr-name { font-size: 12px; font-weight: 700; }
+  .pr-tier { font-size: 9px; letter-spacing: 0.1em; color: rgba(255,255,255,0.3); text-transform: uppercase; margin-top: 2px; }
+  .pr-text { font-size: 11px; color: rgba(255,255,255,0.55); line-height: 1.5; font-family: 'Courier New', monospace; }
+
+  .nm-mj { color: #818cf8; }
+  .nm-de { color: #34d399; }
+  .nm-fl { color: #fb923c; }
+  .nm-lw { color: #facc15; }
+
+  /* URL badge */
+  .url-badge {
+    position: absolute; bottom: 28px; right: 28px;
+    background: linear-gradient(135deg, #7c3aed, #ec4899);
+    padding: 10px 22px; border-radius: 30px;
+    font-size: 14px; font-weight: 700; color: #fff; letter-spacing: 0.01em;
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+  <div class="rainbow"></div>
+  <div class="container">
+
+    <div class="left">
+      <div class="logo-row">
+        <div class="logo-icon">
+          <svg width="26" height="22" viewBox="0 0 26 22" fill="none">
+            <rect x="0" y="10" width="4" height="12" rx="2" fill="#c084fc"></rect>
+            <rect x="6" y="6" width="4" height="16" rx="2" fill="#a78bfa"></rect>
+            <rect x="12" y="2" width="4" height="20" rx="2" fill="#818cf8"></rect>
+            <rect x="18" y="6" width="4" height="16" rx="2" fill="#c084fc"></rect>
+            <rect x="24" y="10" width="2" height="12" rx="1" fill="#f472b6"></rect>
+          </svg>
+        </div>
+        <span class="logo-text">Promagen</span>
+      </div>
+
+      <div class="eyebrow">Intelligent Prompt Builder</div>
+
+      <div class="headline">
+        <span class="line">One Idea.</span>
+        <span class="line accent">40 Platforms.</span>
+        <span class="line">Perfect Prompts.</span>
+      </div>
+
+      <p class="subtext">Describe your scene once — Promagen translates it into <strong>platform-perfect prompts</strong> for every major AI image generator.</p>
+
+      <div class="chips">
+        <span class="chip chip-mj">Midjourney</span>
+        <span class="chip chip-de">DALL·E 3</span>
+        <span class="chip chip-fl">Flux</span>
+        <span class="chip chip-lw">Leonardo</span>
+        <span class="chip chip-af">Adobe Firefly</span>
+        <span class="chip chip-more">+ 35 more</span>
+      </div>
+
+      <div class="stats">
+        <div><div class="stat-value">40</div><div class="stat-label">Platforms</div></div>
+        <div><div class="stat-value">10K+</div><div class="stat-label">Phrases</div></div>
+        <div><div class="stat-value">4</div><div class="stat-label">Tiers</div></div>
+        <div><div class="stat-value">Live</div><div class="stat-label">World Data</div></div>
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-dot d1"></div>
+          <div class="panel-dot d2"></div>
+          <div class="panel-dot d3"></div>
+          <span class="panel-title">Your Scene → Platform Prompts</span>
+        </div>
+
+        <div class="scene-box">
+          <div class="scene-label">Your Scene</div>
+          <div class="scene-text">"A young woman kneels before a weathered fox shrine deep in a cedar forest under moonlight"</div>
+        </div>
+
+        <div class="arrow-row">
+          <div class="arrow-down">
+            <svg viewBox="0 0 12 12" fill="none">
+              <path d="M6 2v8M2 7l4 4 4-4" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+          </div>
+        </div>
+
+        <div class="prompt-rows">
+          <div class="prompt-row pr-mj">
+            <div class="pr-left">
+              <div class="pr-name nm-mj">Midjourney</div>
+              <div class="pr-tier">Tier 2</div>
+            </div>
+            <div class="pr-text">young woman kneeling before weathered fox shrine, deep cedar forest, moonlight, paper lanterns, --ar 16:9 --style raw --v 6.1</div>
+          </div>
+          <div class="prompt-row pr-de">
+            <div class="pr-left">
+              <div class="pr-name nm-de">DALL·E 3</div>
+              <div class="pr-tier">Tier 3</div>
+            </div>
+            <div class="pr-text">A young woman kneels before a weathered fox shrine deep in a cedar forest under moonlight, paper lanterns casting soft amber glow, cinematic</div>
+          </div>
+          <div class="prompt-row pr-fl">
+            <div class="pr-left">
+              <div class="pr-name nm-fl">Flux</div>
+              <div class="pr-tier">Tier 1</div>
+            </div>
+            <div class="pr-text">woman, kneeling, fox shrine, cedar forest, moonlight, paper lanterns, amber glow, moss, stone, cinematic lighting, night, atmospheric</div>
+          </div>
+          <div class="prompt-row pr-lw">
+            <div class="pr-left">
+              <div class="pr-name nm-lw">Leonardo</div>
+              <div class="pr-tier">Tier 1</div>
+            </div>
+            <div class="pr-text">woman kneeling::2 fox shrine::1.8 cedar forest, moonlight::1.5 paper lanterns, amber, moss, stone path, cinematic, night atmosphere</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="url-badge">Try Free → promagen.com</div>
+    </div>
+
+  </div>
+
+
+</body></html>
