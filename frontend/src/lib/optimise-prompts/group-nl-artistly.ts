@@ -2,7 +2,7 @@
 // ============================================================================
 // DEDICATED BUILDER: Artistly — Independent System Prompt
 // ============================================================================
-// Tier 4 | idealMin 50 | idealMax 200 | maxChars 500 | Strategy: REFINE
+// Tier 4 | idealMin 100 | idealMax 200 | maxChars 500 | Strategy: REFINE
 // negativeSupport: none
 // architecture: natural-language
 //
@@ -21,7 +21,7 @@ import type { ComplianceResult } from "@/lib/harmony-compliance";
 // CONSTANTS
 // ============================================================================
 
-const ARTISTLY_MIN = 50;
+const ARTISTLY_MIN = 100;
 const ARTISTLY_SOFT_TARGET = 150;
 const ARTISTLY_MAX = 200;
 
@@ -191,7 +191,6 @@ function compressLongPhrases(text: string): string {
     [/\bstretch across\b/gi, "stretch over"],
     [/\bwhile\b/gi, "as"],
     [/\bthat is\b/gi, "that's"],
-    [/\bwhich is\b/gi, "which's"],
     [/\bin the distance\b/gi, "beyond"],
     [/\bin the background\b/gi, "behind"],
     [/\bin the foreground\b/gi, "up close"],
@@ -384,6 +383,7 @@ ARTISTLY BEHAVIOUR
 - Artistly's Smart Prompt Enhancer expands short prompts, so your job is to supply the richest possible seed text inside the platform's effective range.
 - Ideal output: dense, vivid, natural prose between 150 and 200 characters for complex scenes.
 - Hard limit: 200 characters. Never exceed it.
+- Minimum target: 100 characters. Do not go below 100 characters unless the input is genuinely too sparse to support it.
 
 YOU RECEIVE TWO INPUTS
 1. SCENE DESCRIPTION — the user's original visual intent. This is the SOURCE OF TRUTH.
@@ -424,13 +424,13 @@ Every word must do visual work.
 
 TASK C — LENGTH DISCIPLINE
 Target range:
-- simple scenes: 90-150 chars
+- simple scenes: 100-150 chars
 - medium scenes: 120-180 chars
 - dense cinematic scenes: 150-200 chars
 
-Do NOT under-compress a rich scene to 60-90 chars unless the original scene is genuinely simple.
+Do NOT under-compress a rich scene below 100 characters unless the original scene is genuinely simple and sparse.
 Use the full range when needed.
-Stay at or under 200 characters.
+Stay between 100 and 200 characters whenever possible, and never exceed 200 characters.
 
 COMPRESSION PRIORITY
 If the scene is too long, compress in this order:
@@ -463,7 +463,7 @@ ${platformNote ? `PLATFORM NOTE: ${platformNote}\n` : ""}Return ONLY valid JSON:
   "changes": [
     "TASK A: preserved core visual anchors",
     "TASK B: rewritten into vivid Artistly prose",
-    "TASK C: kept within 50-200 characters"
+    "TASK C: kept within 100-200 characters"
   ],
   "charCount": 176,
   "tokenEstimate": 32
