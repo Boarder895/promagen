@@ -17,14 +17,11 @@
 
 import type { OptimiseProviderContext, GroupPromptResult } from './types';
 import { getProviderGroup } from './platform-groups';
-// ── Legacy shared builders (kept as dead-letter fallback only) ───────
-import { buildSdClipParentheticalPrompt } from './group-sd-clip-parenthetical';
+// ── Active builders ─────────────────────────────────────────────────
 import { buildSdClipDoubleColonPrompt } from './group-sd-clip-double-colon';
 import { buildMidjourneyPrompt } from './group-midjourney';
-import { buildCleanNaturalLanguagePrompt } from './group-clean-natural-language';
 import { buildDalleApiPrompt } from './group-dalle-api';
 import { buildFluxArchitecturePrompt } from './group-flux-architecture';
-import { buildVideoCinematicPrompt } from './group-video-cinematic';
 import { buildNovelAiPrompt } from './group-novelai';
 import { buildIdeogramPrompt } from './group-ideogram';
 import { buildRecraftPrompt } from './group-recraft';
@@ -187,16 +184,6 @@ export function resolveGroupPrompt(
       return buildLumaAiPrompt(providerId, ctx);
     case 'kling-dedicated':
       return buildKlingPrompt(providerId, ctx);
-
-    // ══════════════════════════════════════════════════════════════════
-    // LEGACY FALLBACKS — no platform should route here anymore
-    // ══════════════════════════════════════════════════════════════════
-    case 'sd-clip-parenthetical':
-      return buildSdClipParentheticalPrompt(providerId, ctx);
-    case 'video-cinematic':
-      return buildVideoCinematicPrompt(providerId, ctx);
-    case 'clean-natural-language':
-      return buildCleanNaturalLanguagePrompt(providerId, ctx);
 
     // ── Generic fallback for unknown providers ───────────────────────
     default:
