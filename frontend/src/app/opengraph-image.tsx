@@ -499,8 +499,9 @@ export default function OpengraphImage() {
                   flexWrap: "wrap",
                 }}
               >
-                "A young woman kneels before a weathered fox shrine deep in a
-                cedar forest under moonlight"
+                {
+                  "\u201CA young woman kneels before a weathered fox shrine deep in a cedar forest under moonlight\u201D"
+                }
               </span>
             </div>
 
