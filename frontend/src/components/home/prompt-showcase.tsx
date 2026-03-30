@@ -74,6 +74,7 @@
 
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import Image from 'next/image';
+import { useAuth } from '@clerk/nextjs';
 import { usePromptShowcase } from '@/hooks/use-prompt-showcase';
 import FeedbackWidget from '@/components/ux/feedback-widget';
 import { useOnlineUsers } from '@/hooks/use-online-users';
@@ -1422,6 +1423,9 @@ export default function PromptShowcase({
 }) {
   const { data, previousData, isLoading, isTransitioning, error } = usePromptShowcase(initialData);
 
+  // ★ Auth state for "Write your own Prompt" button routing
+  const { isSignedIn } = useAuth();
+
   // ★ Hydration gate for deferred sub-components (OnlineUsersBar)
   const [mainHydrated, setMainHydrated] = useState(false);
   useEffect(() => { setMainHydrated(true); }, []);
@@ -1454,7 +1458,7 @@ export default function PromptShowcase({
       style={{ padding: 'clamp(12px, 1.1vw, 18px)' }}
       data-testid="prompt-showcase"
     >
-      {/* Section header */}
+      {/* Section header — 3-column: POTM label (left) | button (dead centre) | countdown (right) */}
       <div
         className="flex items-center"
         style={{
@@ -1462,30 +1466,83 @@ export default function PromptShowcase({
           marginBottom: 'clamp(8px, 0.7vw, 12px)',
         }}
       >
-        <div
-          className="animate-pulse rounded-full"
-          style={{
-            backgroundColor: '#F59E0B',
-            width: 'clamp(6px, 0.35vw, 9px)',
-            height: 'clamp(6px, 0.35vw, 9px)',
-          }}
-          aria-hidden="true"
-        />
-        <span
-          className="font-mono font-bold uppercase tracking-wider text-white"
-          style={{ fontSize: 'clamp(0.7rem, 0.9vw, 1rem)' }}
-        >
-          PROMPT OF THE MOMENT
-        </span>
-        <span
-          className="ml-auto italic text-amber-400/80 truncate"
-          style={{ fontSize: 'clamp(0.1rem, 0.75vw, 1rem)' }}
-        >
-          <CountdownTimer
-            nextCity={data.nextCity ?? 'Loading'}
-            nextCountryCode={data.nextCountryCode ?? 'XX'}
+        {/* Left — POTM label (flex-1 pushes button to centre) */}
+        <div className="flex flex-1 items-center" style={{ gap: 'clamp(5px, 0.5vw, 8px)' }}>
+          <div
+            className="animate-pulse rounded-full shrink-0"
+            style={{
+              backgroundColor: '#F59E0B',
+              width: 'clamp(6px, 0.35vw, 9px)',
+              height: 'clamp(6px, 0.35vw, 9px)',
+            }}
+            aria-hidden="true"
           />
-        </span>
+          <span
+            className="font-mono font-bold uppercase tracking-wider text-white whitespace-nowrap"
+            style={{ fontSize: 'clamp(0.7rem, 0.9vw, 1rem)' }}
+          >
+            PROMPT OF THE MOMENT
+          </span>
+        </div>
+
+        {/* Centre — "Write your own Prompt" button (Engine Bay gradient, no animation) */}
+        <a
+          href={isSignedIn ? '/studio/playground' : '/sign-in?redirect_url=/studio/playground'}
+          className="group relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-xl border border-sky-400/[0.60] bg-gradient-to-r from-sky-400/[0.40] via-emerald-300/[0.40] to-indigo-400/[0.40] font-medium text-white shadow-sm no-underline cursor-pointer transition-all hover:from-sky-400/[0.50] hover:via-emerald-300/[0.50] hover:to-indigo-400/[0.50] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/[0.80]"
+          style={{
+            padding: 'clamp(0.4rem, 0.5vh, 0.7rem) clamp(0.4rem, 0.5vw, 0.7rem)',
+            gap: 'clamp(0.25rem, 0.5vw, 0.5rem)',
+            height: 'clamp(40px, 5vh, 60px)',
+          }}
+          aria-label="Write your own prompt in the Prompt Lab"
+        >
+          <div
+            className="relative z-10 flex flex-col items-center"
+            style={{ gap: 'clamp(0.2rem, 0.3vw, 0.4rem)' }}
+          >
+            <span
+              className="flex items-center font-semibold text-white"
+              style={{
+                gap: 'clamp(0.2rem, 0.4vw, 1rem)',
+                fontSize: 'clamp(0.5rem, 0.6vw, 0.8rem)',
+              }}
+            >
+              <span>✦</span>
+              <span>Write your own</span>
+            </span>
+            <span
+              className="font-semibold text-white"
+              style={{ fontSize: 'clamp(0.5rem, 0.6vw, 0.75rem)' }}
+            >
+              Prompt
+            </span>
+          </div>
+          <svg
+            className="relative z-10 shrink-0 text-white"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            style={{
+              width: 'clamp(14px, 1.2vw, 18px)',
+              height: 'clamp(14px, 1.2vw, 18px)',
+            }}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+          </svg>
+        </a>
+
+        {/* Right — Countdown (flex-1 + justify-end mirrors the left, keeps button centred) */}
+        <div className="flex flex-1 items-center justify-end">
+          <span
+            className="italic text-amber-400/80 truncate"
+            style={{ fontSize: 'clamp(0.1rem, 0.75vw, 1rem)' }}
+          >
+            <CountdownTimer
+              nextCity={data.nextCity ?? 'Loading'}
+              nextCountryCode={data.nextCountryCode ?? 'XX'}
+            />
+          </span>
+        </div>
       </div>
 
       {/* Crossfade container */}

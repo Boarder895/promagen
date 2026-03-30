@@ -1,7 +1,14 @@
 // src/components/prompts/playground-workspace.tsx
 // ============================================================================
-// PLAYGROUND WORKSPACE v5.0.0 — Simplified Coverage + Colour Flow
+// PLAYGROUND WORKSPACE v6.0.0 — Lab Gate + Free Generation Limit
 // ============================================================================
+// v6.0.0 (Mar 2026):
+// - Lab Gate: 1 free generation/day for signed-in free users, unlimited Pro.
+// - Anonymous users see sign-in overlay.
+// - Free users see "1 free generation — make it count" badge.
+// - After exhausting free quota, inline overlay shows upgrade CTA.
+// - Generation handler wrapped with gate check + markUsed() on success.
+//
 // v5.0.0 (Mar 2026):
 // - Stripped v4 decision UI (AssessmentBox, decisions, sideNotes, toggles).
 // - Call 1 returns matched phrases → text colours up → coverage pills show.
@@ -13,7 +20,7 @@
 // - Lifts useTierGeneration, useDriftDetection hooks HERE so state persists
 //   across provider ↔ no-provider component switches.
 //
-// Authority: prompt-lab.md
+// Authority: prompt-lab.md, paid_tier.md §5.13
 // Existing features preserved: Yes (standard builder untouched).
 // ============================================================================
 
@@ -37,6 +44,10 @@ import { useCategoryAssessment } from '@/hooks/use-category-assessment';
 // Platform data for building provider context
 import { getPlatformTierId } from '@/data/platform-tiers';
 import { getPlatformFormat } from '@/lib/prompt-builder';
+
+// ★ Lab Gate — generation limiter + overlay
+import { useLabGate } from '@/hooks/use-lab-gate';
+import { LabGateOverlay, FreeGenerationBadge } from '@/components/prompts/lab-gate-overlay';
 
 // ============================================================================
 // TYPES
@@ -169,6 +180,17 @@ function ProviderSelector({ providers, selectedId, onSelect }: ProviderSelectorP
 // ============================================================================
 
 export default function PlaygroundWorkspace({ providers, onProviderChange }: PlaygroundWorkspaceProps) {
+  // ── Lab Gate: auth + generation limiter ──────────────────────────────
+  const {
+    canGenerate,
+    isExhausted,
+    isPro,
+    isAuthenticated,
+    isLoaded,
+    markUsed,
+    remaining,
+  } = useLabGate();
+
   // ── Provider selection state ──────────────────────────────────────
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
 
@@ -252,6 +274,7 @@ export default function PlaygroundWorkspace({ providers, onProviderChange }: Pla
   // when Call 2 returns (~2-3s). One click, both fire. No extra friction.
   // Human factors: §6 Temporal Compression — progressive reveal.
   //
+  // v6.0.0: Gate check — free users consume 1 daily generation on fire.
   // v6.1.0: Accepts optional childProviderId from EnhancedEducationalPreview
   // so Call 2 uses the correct provider context even when the workspace-level
   // selectedProviderId is null (provider selected inside the child).
@@ -259,6 +282,9 @@ export default function PlaygroundWorkspace({ providers, onProviderChange }: Pla
     (sentence: string, childProviderId?: string | null) => {
       const trimmed = sentence.trim();
       if (!trimmed) return;
+
+      // ★ Lab Gate: block if user has exhausted free quota
+      if (!canGenerate) return;
 
       // Use child's provider if provided, fall back to workspace-level
       const effectiveProviderId = childProviderId ?? selectedProviderId;
@@ -283,8 +309,11 @@ export default function PlaygroundWorkspace({ providers, onProviderChange }: Pla
 
       // Sync drift detection baseline
       markDriftSynced(trimmed);
+
+      // ★ Mark generation as used (free users consume 1 daily quota)
+      markUsed();
     },
-    [assess, clearTiers, clearAssessment, generateTiers, markDriftSynced, selectedProviderId, providers],
+    [assess, canGenerate, clearTiers, clearAssessment, generateTiers, markDriftSynced, markUsed, selectedProviderId, providers],
   );
 
   // ── Derived state ─────────────────────────────────────────────────
@@ -311,51 +340,69 @@ export default function PlaygroundWorkspace({ providers, onProviderChange }: Pla
 
   return (
     <div className="flex h-full min-h-0 flex-col" data-testid="playground-workspace">
-      {builderProvider ? (
-        <PromptBuilder
-          provider={builderProvider}
-          providerSelector={providerSelectorElement}
-          // AI Disguise callbacks (passed through to DescribeYourImage)
-          onDescribeTextChange={handleDescribeTextChange}
-          onDescribeGenerate={handleDescribeGenerate}
-          onDescribeClear={handleDescribeClear}
-          isDrifted={isDrifted}
-          driftChangeCount={driftChangeCount}
-          aiTierPrompts={aiTierPrompts}
-          isTierGenerating={isTierGenerating}
-          generatedForProvider={generatedForProvider}
-          // Coverage data for text colouring + category pills
-          skipInternalParse
-          externalLoading={isChecking}
-          coverageData={assessment}
-        />
+      {/* ★ Lab Gate: auth + quota check ────────────────────────────────── */}
+      {/* Loading: render nothing until Clerk resolves */}
+      {!isLoaded ? null : !isAuthenticated ? (
+        /* Anonymous: must sign in first */
+        <LabGateOverlay requiresSignIn />
+      ) : isExhausted ? (
+        /* Free user exhausted quota: show value reminder + upgrade CTA */
+        <LabGateOverlay />
       ) : (
-        <EnhancedEducationalPreview
-          providers={providers}
-          onProviderChange={onProviderChange}
-          // AI Disguise callbacks + tier data
-          onDescribeTextChange={handleDescribeTextChange}
-          onDescribeGenerate={handleDescribeGenerate}
-          onDescribeClear={handleDescribeClear}
-          isDrifted={isDrifted}
-          driftChangeCount={driftChangeCount}
-          aiTierPrompts={aiTierPrompts}
-          isTierGenerating={isTierGenerating}
-          generatedForProvider={generatedForProvider}
-          // Coverage data for text colouring + category pills
-          skipInternalParse
-          externalLoading={isChecking}
-          coverageData={assessment}
-          // Human text for Call 3 cross-referencing
-          humanText={humanText}
-        />
-      )}
+        /* Authenticated + has quota (or Pro): render workspace */
+        <>
+          {/* Free generation badge — shown to free users with remaining quota */}
+          {!isPro && remaining > 0 && (
+            <div style={{ marginBottom: 'clamp(8px, 0.7vw, 14px)' }}>
+              <FreeGenerationBadge remaining={remaining} />
+            </div>
+          )}
 
-      {/* Assessment error display */}
-      {assessmentError && (
-        <p
-          className="text-red-400"
-          style={{
+          {builderProvider ? (
+            <PromptBuilder
+              provider={builderProvider}
+              providerSelector={providerSelectorElement}
+              // AI Disguise callbacks (passed through to DescribeYourImage)
+              onDescribeTextChange={handleDescribeTextChange}
+              onDescribeGenerate={handleDescribeGenerate}
+              onDescribeClear={handleDescribeClear}
+              isDrifted={isDrifted}
+              driftChangeCount={driftChangeCount}
+              aiTierPrompts={aiTierPrompts}
+              isTierGenerating={isTierGenerating}
+              generatedForProvider={generatedForProvider}
+              // Coverage data for text colouring + category pills
+              skipInternalParse
+              externalLoading={isChecking}
+              coverageData={assessment}
+            />
+          ) : (
+            <EnhancedEducationalPreview
+              providers={providers}
+              onProviderChange={onProviderChange}
+              // AI Disguise callbacks + tier data
+              onDescribeTextChange={handleDescribeTextChange}
+              onDescribeGenerate={handleDescribeGenerate}
+              onDescribeClear={handleDescribeClear}
+              isDrifted={isDrifted}
+              driftChangeCount={driftChangeCount}
+              aiTierPrompts={aiTierPrompts}
+              isTierGenerating={isTierGenerating}
+              generatedForProvider={generatedForProvider}
+              // Coverage data for text colouring + category pills
+              skipInternalParse
+              externalLoading={isChecking}
+              coverageData={assessment}
+              // Human text for Call 3 cross-referencing
+              humanText={humanText}
+            />
+          )}
+
+          {/* Assessment error display */}
+          {assessmentError && (
+            <p
+              className="text-red-400"
+              style={{
             marginTop: 'clamp(6px, 0.5vw, 8px)',
             padding: '0 clamp(12px, 1vw, 16px)',
             fontSize: 'clamp(0.65rem, 0.7vw, 0.78rem)',
@@ -363,6 +410,8 @@ export default function PlaygroundWorkspace({ providers, onProviderChange }: Pla
         >
           {assessmentError.message}
         </p>
+          )}
+        </>
       )}
     </div>
   );
