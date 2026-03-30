@@ -300,12 +300,18 @@ export async function sendPromptTelemetry(input: TelemetryInput): Promise<string
       recordCopyTimestamp();
     }
 
+    // --- Skip if offline ---
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      return null;
+    }
+
     // --- Fire-and-forget POST ---
     const response = await fetch(ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(event),
       // No credentials — fully anonymous
+      keepalive: true,
     });
 
     if (!response.ok) {
@@ -401,6 +407,9 @@ export function sendShowcaseTelemetry(input: ShowcaseTelemetryInput): string {
   // Don't fire if selections are empty (data not loaded yet)
   if (categoryCount < 1) return deterministicId;
 
+  // ★ Skip if browser is offline — avoids failed fetch noise in console
+  if (typeof navigator !== 'undefined' && !navigator.onLine) return deterministicId;
+
   const event = {
     sessionId: getSessionId(),
     attemptNumber: 1,
@@ -421,13 +430,19 @@ export function sendShowcaseTelemetry(input: ShowcaseTelemetryInput): string {
     deterministicId,
   };
 
-  // Fire-and-forget — never blocks the UI
-  void fetch(ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(event),
-  }).catch(() => {
-    // Silent — telemetry must never break the UI
+  // ★ Defer to idle — telemetry must not compete with hydration on main thread
+  const scheduleIdle = typeof requestIdleCallback === 'function' ? requestIdleCallback : (cb: () => void) => setTimeout(cb, 50);
+  scheduleIdle(() => {
+    void fetch(ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(event),
+      // ★ keepalive: browser treats this as a low-priority beacon.
+      // Won't block page unload, won't compete with critical resource fetches.
+      keepalive: true,
+    }).catch(() => {
+      // Silent — telemetry must never break the UI
+    });
   });
 
   return deterministicId;
