@@ -1,20 +1,22 @@
 // src/hooks/use-lab-gate.ts
 // ============================================================================
-// PROMPT LAB GATE — Daily Generation Limiter (v1.0.0)
+// PROMPT LAB GATE — Daily Generation Limiter (v2.0.0)
 // ============================================================================
 // Tracks free-tier Prompt Lab usage: 1 generation per day.
 // Pro users: unlimited. Anonymous: blocked (redirected to sign-in).
 //
-// Storage: localStorage with date-keyed counter.
-//   Key: 'promagen:lab-gen:{YYYY-MM-DD}'
-//   Value: number of generations used today
+// v2.0.0 (30 Mar 2026): Three bug fixes:
+//   1. Key is now USER-SPECIFIC: `promagen:lab-gen:{userId}:{date}`
+//      Previously browser-global — a second account on the same browser
+//      inherited the first account's counter. New account = locked out.
+//   2. Added `isReady` flag — render gates on this to prevent flash
+//      between "auth loaded" and "usage read" states.
+//   3. Removed immediate markUsed from generate handler. Workspace now
+//      calls markUsed via useEffect AFTER successful generation.
 //
-// Why localStorage (not server-side KV):
-//   - Instant feedback — no round-trip to check quota
-//   - The actual GPT cost gate is on the API routes (rate limiting)
-//   - localStorage is per-browser, so a user could clear it — but that's
-//     acceptable for 1 free gen/day (cost: $0.008). The friction of clearing
-//     localStorage is higher than the cost of one extra generation.
+// Storage: localStorage with user+date-keyed counter.
+//   Key: 'promagen:lab-gen:{userId}:{YYYY-MM-DD}'
+//   Value: number of generations used today
 //
 // Authority: paid_tier.md §5.13, human-factors.md §8 (Loss Aversion)
 // Existing features preserved: Yes
@@ -22,7 +24,7 @@
 
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { usePromagenAuth } from '@/hooks/use-promagen-auth';
 
@@ -40,21 +42,21 @@ const STORAGE_PREFIX = 'promagen:lab-gen';
 // HELPERS
 // ============================================================================
 
-/** Get today's date string in user's local timezone (YYYY-MM-DD) */
+/** Get today's date string (YYYY-MM-DD) */
 function todayKey(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-/** Full localStorage key for today */
-function storageKey(): string {
-  return `${STORAGE_PREFIX}:${todayKey()}`;
+/** Full localStorage key for a specific user today */
+function storageKey(userId: string): string {
+  return `${STORAGE_PREFIX}:${userId}:${todayKey()}`;
 }
 
-/** Read today's usage count from localStorage */
-function readUsage(): number {
+/** Read today's usage count from localStorage for a specific user */
+function readUsage(userId: string): number {
   if (typeof window === 'undefined') return 0;
   try {
-    const raw = localStorage.getItem(storageKey());
+    const raw = localStorage.getItem(storageKey(userId));
     if (!raw) return 0;
     const n = parseInt(raw, 10);
     return isNaN(n) ? 0 : n;
@@ -63,11 +65,11 @@ function readUsage(): number {
   }
 }
 
-/** Write today's usage count to localStorage */
-function writeUsage(count: number): void {
+/** Write today's usage count to localStorage for a specific user */
+function writeUsage(userId: string, count: number): void {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(storageKey(), String(count));
+    localStorage.setItem(storageKey(userId), String(count));
   } catch {
     // Storage full or blocked — silent
   }
@@ -88,9 +90,9 @@ export interface UseLabGateResult {
   isPro: boolean;
   /** Whether user is signed in */
   isAuthenticated: boolean;
-  /** Whether Clerk has finished loading */
-  isLoaded: boolean;
-  /** Mark a generation as used — call this AFTER successful generation */
+  /** Whether the gate has fully resolved (auth + usage read) */
+  isReady: boolean;
+  /** Mark a generation as used — call AFTER successful generation */
   markUsed: () => void;
   /** Remaining generations for free users (0 when exhausted, Infinity for Pro) */
   remaining: number;
@@ -106,20 +108,37 @@ export interface UseLabGateResult {
  * - Anonymous: canGenerate = false (must sign in)
  * - Free signed-in: canGenerate = true for first generation, false after
  * - Pro: canGenerate = always true
+ *
+ * The hook is not "ready" until both Clerk auth AND the user-specific
+ * localStorage read have completed. Consumers should render null until
+ * isReady is true — this prevents flash between loading states.
  */
 export function useLabGate(): UseLabGateResult {
-  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded, isSignedIn, userId } = useAuth();
   const { userTier } = usePromagenAuth();
 
   const isPro = userTier === 'paid';
   const isAuthenticated = isLoaded && isSignedIn === true;
 
-  // ★ Initialize directly from localStorage (no useEffect race).
-  // Previous version used useState(0) + useEffect → brief flash where
-  // isExhausted=false, workspace renders, then effect fires and overlay
-  // rips it away mid-interaction. Lazy initializer runs synchronously
-  // on first render, so the correct state is available immediately.
-  const [generationsUsed, setGenerationsUsed] = useState(() => readUsage());
+  const [generationsUsed, setGenerationsUsed] = useState(0);
+  const [usageReady, setUsageReady] = useState(false);
+
+  // ★ Read user-specific usage when userId resolves.
+  // This fires once when Clerk loads, and never again (userId is stable).
+  // The usageReady flag prevents the workspace from rendering before
+  // we've read the correct counter — no flash, no race.
+  useEffect(() => {
+    if (userId) {
+      setGenerationsUsed(readUsage(userId));
+      setUsageReady(true);
+    } else if (isLoaded && !isSignedIn) {
+      // Anonymous user — no usage to read, but mark as ready
+      setUsageReady(true);
+    }
+  }, [userId, isLoaded, isSignedIn]);
+
+  // Gate is ready when auth is loaded AND usage has been read
+  const isReady = isLoaded && usageReady;
 
   const isExhausted = !isPro && generationsUsed >= FREE_DAILY_LIMIT;
   const canGenerate = isAuthenticated && (isPro || !isExhausted);
@@ -127,10 +146,11 @@ export function useLabGate(): UseLabGateResult {
 
   const markUsed = useCallback(() => {
     if (isPro) return; // Pro users don't consume quota
+    if (!userId) return; // Safety — should never happen when authenticated
     const next = generationsUsed + 1;
     setGenerationsUsed(next);
-    writeUsage(next);
-  }, [isPro, generationsUsed]);
+    writeUsage(userId, next);
+  }, [isPro, userId, generationsUsed]);
 
   return {
     canGenerate,
@@ -138,7 +158,7 @@ export function useLabGate(): UseLabGateResult {
     isExhausted,
     isPro,
     isAuthenticated,
-    isLoaded,
+    isReady,
     markUsed,
     remaining,
   };

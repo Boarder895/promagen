@@ -186,7 +186,7 @@ export default function PlaygroundWorkspace({ providers, onProviderChange }: Pla
     isExhausted,
     isPro,
     isAuthenticated,
-    isLoaded,
+    isReady,
     markUsed,
     remaining,
   } = useLabGate();
@@ -310,13 +310,33 @@ export default function PlaygroundWorkspace({ providers, onProviderChange }: Pla
       // Sync drift detection baseline
       markDriftSynced(trimmed);
 
-      // ★ Mark generation as used (free users consume 1 daily quota)
-      markUsed();
+      // ★ markUsed() is NOT called here — it fires via useEffect below
+      // when aiTierPrompts transitions from null to non-null (successful generation).
+      // This prevents losing the free generation on API failure.
     },
-    [assess, canGenerate, clearTiers, clearAssessment, generateTiers, markDriftSynced, markUsed, selectedProviderId, providers],
+    [assess, canGenerate, clearTiers, clearAssessment, generateTiers, markDriftSynced, selectedProviderId, providers],
   );
 
   // ── Derived state ─────────────────────────────────────────────────
+
+  // ★ Fire markUsed() AFTER successful generation — not on click.
+  // Watches aiTierPrompts: null → non-null = success. Ref prevents
+  // double-firing on provider-switch re-generation.
+  const hasMarkedUsedRef = useRef(false);
+  useEffect(() => {
+    if (aiTierPrompts && !hasMarkedUsedRef.current) {
+      hasMarkedUsedRef.current = true;
+      markUsed();
+    }
+  }, [aiTierPrompts, markUsed]);
+
+  // Reset the ref when tiers are cleared (new generation cycle)
+  useEffect(() => {
+    if (!aiTierPrompts) {
+      hasMarkedUsedRef.current = false;
+    }
+  }, [aiTierPrompts]);
+
   const selectedProvider = useMemo(() => {
     if (!selectedProviderId) return null;
     return providers.find((p) => p.id === selectedProviderId) ?? null;
@@ -341,8 +361,8 @@ export default function PlaygroundWorkspace({ providers, onProviderChange }: Pla
   return (
     <div className="flex h-full min-h-0 flex-col" data-testid="playground-workspace">
       {/* ★ Lab Gate: auth + quota check ────────────────────────────────── */}
-      {/* Loading: render nothing until Clerk resolves */}
-      {!isLoaded ? null : !isAuthenticated ? (
+      {/* Not ready: render nothing until Clerk resolves AND usage is read */}
+      {!isReady ? null : !isAuthenticated ? (
         /* Anonymous: must sign in first */
         <LabGateOverlay requiresSignIn />
       ) : isExhausted ? (

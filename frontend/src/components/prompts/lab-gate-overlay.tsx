@@ -89,14 +89,16 @@ export function LabGateOverlay({ requiresSignIn = false }: LabGateOverlayProps) 
 
         <a
           href="/sign-in?redirect_url=/studio/playground"
-          className="inline-flex items-center justify-center rounded-xl border border-sky-400/60 bg-gradient-to-r from-sky-400/40 via-emerald-300/40 to-indigo-400/40 font-medium text-white shadow-sm no-underline cursor-pointer transition-all hover:from-sky-400/50 hover:via-emerald-300/50 hover:to-indigo-400/50"
+          className="inline-flex items-center justify-center rounded-xl border border-sky-400/[0.60] bg-gradient-to-r from-sky-400/[0.40] via-emerald-300/[0.40] to-indigo-400/[0.40] font-medium shadow-sm no-underline cursor-pointer transition-all hover:from-sky-400/[0.50] hover:via-emerald-300/[0.50] hover:to-indigo-400/[0.50]"
           style={{
             padding: 'clamp(0.5rem, 0.6vw, 0.8rem) clamp(1.2rem, 1.5vw, 2rem)',
             fontSize: 'clamp(0.7rem, 0.85vw, 1rem)',
             gap: 'clamp(0.3rem, 0.4vw, 0.6rem)',
           }}
         >
-          <span>Sign in</span>
+          {/* COLOUR FIX (buttons.md §1.1): body { color: #020617 } + a { color: inherit }
+              means <a> children inherit BLACK. Must set text-white on every child. */}
+          <span className="text-white">Sign in</span>
           <svg
             className="text-white"
             fill="none"
@@ -151,27 +153,30 @@ export function LabGateOverlay({ requiresSignIn = false }: LabGateOverlayProps) 
           className="font-semibold text-white"
           style={{ fontSize: 'clamp(0.9rem, 1.1vw, 1.3rem)' }}
         >
-          You generated 4 platform-optimised prompts
+          Your prompt is ready — but your next idea will have to wait
         </h3>
         <p
           className="text-slate-300"
           style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.9rem)', maxWidth: '420px' }}
         >
-          That took 5 seconds. The standard builder takes 5 minutes.
-          Pro Promagen gives you unlimited generations — build as many prompts as you want, every day.
+          You described one scene and got prompts tailored for every tier.
+          Different words would have produced completely different results.
+          Pro Promagen lets you explore as many ideas as you want — no daily limit, no waiting.
         </p>
       </div>
 
       <a
         href="/pro-promagen"
-        className="inline-flex items-center justify-center rounded-xl border border-amber-400/60 bg-gradient-to-r from-amber-500/30 to-orange-500/30 font-semibold text-amber-300 shadow-sm no-underline cursor-pointer transition-all hover:from-amber-500/40 hover:to-orange-500/40"
+        className="inline-flex items-center justify-center rounded-xl border border-amber-400/[0.60] bg-gradient-to-r from-amber-500/[0.30] to-orange-500/[0.30] font-semibold shadow-sm no-underline cursor-pointer transition-all hover:from-amber-500/[0.40] hover:to-orange-500/[0.40]"
         style={{
           padding: 'clamp(0.5rem, 0.6vw, 0.8rem) clamp(1.2rem, 1.5vw, 2rem)',
           fontSize: 'clamp(0.7rem, 0.85vw, 1rem)',
           gap: 'clamp(0.3rem, 0.4vw, 0.6rem)',
         }}
       >
-        <span>See Pro Promagen</span>
+        {/* COLOUR FIX (buttons.md §1.1): body { color: #020617 } + a { color: inherit }
+            means <a> children inherit BLACK. Must set text colour on every child. */}
+        <span className="text-amber-300">Unlock unlimited prompts</span>
         <svg
           className="text-amber-300"
           fill="none"
@@ -187,8 +192,8 @@ export function LabGateOverlay({ requiresSignIn = false }: LabGateOverlayProps) 
       {/* Secondary: go back to standard builder */}
       <a
         href="/"
-        className="text-slate-300 no-underline cursor-pointer transition-colors hover:text-white"
-        style={{ fontSize: 'clamp(0.6rem, 0.7vw, 0.8rem)' }}
+        className="no-underline cursor-pointer transition-colors hover:text-white"
+        style={{ fontSize: 'clamp(0.6rem, 0.7vw, 0.8rem)', color: 'rgb(203, 213, 225)' }}
       >
         Back to homepage
       </a>
