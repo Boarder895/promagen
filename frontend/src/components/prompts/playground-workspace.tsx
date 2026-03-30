@@ -365,16 +365,50 @@ export default function PlaygroundWorkspace({ providers, onProviderChange }: Pla
       {!isReady ? null : !isAuthenticated ? (
         /* Anonymous: must sign in first */
         <LabGateOverlay requiresSignIn />
-      ) : isExhausted ? (
-        /* Free user exhausted quota: show value reminder + upgrade CTA */
+      ) : isExhausted && !aiTierPrompts ? (
+        /* Free user exhausted quota AND no active results showing.
+           This is the "next visit" state — they come back, no results in memory,
+           they see the upgrade overlay. */
         <LabGateOverlay />
       ) : (
-        /* Authenticated + has quota (or Pro): render workspace */
+        /* Authenticated + has quota (or Pro) OR has active results showing.
+           When isExhausted=true but aiTierPrompts exists, the workspace stays
+           visible so the user can see their results, copy, use optimizer.
+           The Generate button is already blocked by canGenerate check. */
         <>
           {/* Free generation badge — shown to free users with remaining quota */}
           {!isPro && remaining > 0 && (
             <div style={{ marginBottom: 'clamp(8px, 0.7vw, 14px)' }}>
               <FreeGenerationBadge remaining={remaining} />
+            </div>
+          )}
+
+          {/* ★ Exhausted banner — shown inline when quota used but results visible.
+              User can still see/copy/optimize their prompt. Generate is blocked. */}
+          {isExhausted && aiTierPrompts && (
+            <div
+              className="flex items-center justify-center rounded-lg"
+              style={{
+                padding: 'clamp(6px, 0.5vw, 10px) clamp(12px, 1vw, 18px)',
+                marginBottom: 'clamp(8px, 0.7vw, 14px)',
+                gap: 'clamp(6px, 0.5vw, 10px)',
+                background: 'rgba(251, 146, 60, 0.08)',
+                border: '1px solid rgba(251, 146, 60, 0.2)',
+              }}
+            >
+              <span
+                className="text-amber-400"
+                style={{ fontSize: 'clamp(0.6rem, 0.7vw, 0.8rem)' }}
+              >
+                Your free generation is used for today.
+              </span>
+              <a
+                href="/pro-promagen"
+                className="no-underline cursor-pointer font-medium transition-colors hover:text-amber-200"
+                style={{ fontSize: 'clamp(0.6rem, 0.7vw, 0.8rem)', color: 'rgb(251, 191, 36)' }}
+              >
+                Unlock unlimited prompts →
+              </a>
             </div>
           )}
 
