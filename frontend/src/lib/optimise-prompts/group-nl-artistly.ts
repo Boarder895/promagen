@@ -436,8 +436,8 @@ ${platformNote ? `\nPLATFORM NOTE: ${platformNote}` : ""}
 
 Return ONLY valid JSON:
 {
-  "optimised": "your rewritten prompt",
-  "changes": ["subject front-loaded", "upgraded N verbs", "compressed to 2 sentences", "added composition cue"],
+  "optimised": "Hero sentence about the subject and action. Environment sentence about atmosphere and background.",
+  "changes": ["subject front-loaded", "upgraded N verbs", "2 sentences with full stops", "added composition cue", "no content invented"],
   "charCount": 250,
   "tokenEstimate": 45
 }`;
