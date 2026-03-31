@@ -52,8 +52,10 @@ export interface OptimisationProviderContext {
   categoryOrder?: string[];
   /** Platform-specific trait for Call 3 system prompt (from platform-formats.json) */
   groupKnowledge?: string;
-  /** Call 3 routing mode — controls whether GPT is called */
+  /** Call 3 routing mode — controls whether GPT is called or a deterministic path is used. */
   call3Mode?: 'reorder_only' | 'format_only' | 'gpt_rewrite' | 'pass_through' | 'mj_deterministic';
+  /** Whether semantic rewriting is allowed on Call 3 for this platform. */
+  semanticRewriteAllowed?: boolean;
 }
 
 /** The result returned by the API after optimisation */

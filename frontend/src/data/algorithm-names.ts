@@ -2,7 +2,7 @@
 // ============================================================================
 // ALGORITHM DISPLAY NAMES — Optimisation Cycling Animation
 // ============================================================================
-// 131 algorithm names + 3 finale names for the Prompt Lab cycling
+// 165 algorithm names + 3 finale names for the Prompt Lab cycling
 // animations. Displayed during Call 2 (tier generation) and Call 3
 // (AI prompt optimisation) to create the impression of deep
 // algorithmic processing — like watching the gears of a Swiss
@@ -23,7 +23,7 @@
 // ============================================================================
 
 // ============================================================================
-// MASTER LIST — 131 cycling names
+// MASTER LIST — 165 cycling names
 // ============================================================================
 // Grouped by category in source for maintainability.
 // Shuffled at runtime so the user never sees them in category order.
@@ -172,6 +172,44 @@ export const ALGORITHM_NAMES: readonly string[] = [
   "Flattening nested modifier dependency",
   "Detecting semantic dead-weight tokens",
   "Rebuilding term adjacency graph",
+
+  // ── Preflight Decision Engine (18) ──────────────────────────────
+  "Running preflight structural audit",
+  "Classifying optimisation pathway",
+  "Evaluating deterministic transform eligibility",
+  "Computing anchor density threshold",
+  "Scanning subject position compliance",
+  "Assessing platform routing priority",
+  "Resolving call mode from config matrix",
+  "Verifying syntax transform confidence",
+  "Profiling input structural integrity",
+  "Testing reorder confidence boundary",
+  "Mapping clause weight topology",
+  "Validating parameter block completeness",
+  "Checking weighted clause hierarchy",
+  "Scoring deterministic vs generative path",
+  "Analysing prompt-to-platform fit",
+  "Computing format conversion eligibility",
+  "Evaluating pass-through conditions",
+  "Resolving tier-specific routing logic",
+
+  // ── Anchor Preservation & Regression Guard (16) ─────────────────
+  "Extracting visual anchor manifest",
+  "Cataloguing named colour tokens",
+  "Mapping light source references",
+  "Indexing environment anchor nouns",
+  "Building action verb fingerprint",
+  "Comparing input-output anchor diff",
+  "Scanning for invented content injection",
+  "Validating verb substitution integrity",
+  "Checking sentence structure preservation",
+  "Detecting style label hallucination",
+  "Verifying framing cue legitimacy",
+  "Running no-worse-than-input gate",
+  "Computing anchor retention score",
+  "Enforcing tier-specific regression threshold",
+  "Validating structural improvement delta",
+  "Confirming output passes regression guard",
 ] as const;
 
 // ============================================================================
@@ -181,8 +219,8 @@ export const ALGORITHM_NAMES: readonly string[] = [
 /** Always shown as the final 3 items before the landing message */
 export const FINALE_NAMES: readonly string[] = [
   "Finalising prompt structure",
-  "Applying quality verification",
-  "Validating output integrity",
+  "Running regression guard validation",
+  "Confirming output integrity",
 ] as const;
 
 // ============================================================================
@@ -208,13 +246,13 @@ export function shuffleAlgorithms(): string[] {
 
 /**
  * Generate the "algorithms applied" count for the landing message.
- * Range: 87–102 (always high, always different, always credible).
+ * Range: 131–165 (always high, always different, always credible).
  *
  * Authority: ai-disguise.md §10
  */
 export function getAlgorithmCount(): number {
-  const BASE = 87;
-  const VARIATION = 16; // 0–15
+  const BASE = 131;
+  const VARIATION = 35; // 0–34
   return BASE + Math.floor(Math.random() * VARIATION);
 }
 
@@ -223,7 +261,7 @@ export function getAlgorithmCount(): number {
 // ============================================================================
 // Each prompt category maps to 15 contextual algorithm names.
 // During tier generation (Call 2), names from active categories are
-// interspersed with the generic 131 names every ~3rd tick.
+// interspersed with the generic 165 names every ~3rd tick.
 // This makes the cycling feel responsive to the user's specific prompt
 // — the gears turning in response to what they actually wrote.
 //
