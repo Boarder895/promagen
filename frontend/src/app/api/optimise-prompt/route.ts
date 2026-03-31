@@ -216,26 +216,30 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   // ── Compute optimisation zone (api-3.md §3) ──────────────────────────
   // Zone is determined by the reference draft length relative to the
-  // platform's ideal range. Injected into the user message, NOT the
-  // system prompt — the zone is variable per call, the system prompt
-  // is the platform's fixed rules.
+  // platform's limits. Injected into the user message, NOT the system
+  // prompt — the zone is variable per call, the system prompt is the
+  // platform's fixed rules.
+  //
+  // Key design decision: if the prompt is below maxChars, the platform
+  // accepts it. Don't cut — restructure and reorder. COMPRESS only
+  // fires when the prompt exceeds the platform hard limit.
   const promptLength = sanitisedPrompt.length;
   const { idealMin, idealMax, maxChars } = parsed.data.providerContext;
   const hardCeiling = maxChars ?? 5000;
   const zone: 'ENRICH' | 'REFINE' | 'COMPRESS' =
     promptLength < idealMin ? 'ENRICH'
-    : promptLength <= idealMax ? 'REFINE'
+    : promptLength <= hardCeiling ? 'REFINE'
     : 'COMPRESS';
 
   const zoneDescriptions: Record<string, string> = {
     ENRICH: sanitisedOriginal
       ? 'Room to add detail — pull missing anchors from the scene description.'
       : 'Room to add detail — expand thin clauses with richer visual language.',
-    REFINE: 'Focus on quality — restructure, strengthen word choices, front-load the subject.',
-    COMPRESS: 'Tighten phrasing, remove filler, preserve all visual anchors.',
+    REFINE: 'Restructure, front-load the subject, strengthen word choices. Do NOT shorten — preserve all visual anchors and keep roughly the same length.',
+    COMPRESS: `Must fit within the platform limit of ${hardCeiling} chars. Tighten phrasing, remove filler, preserve all visual anchors.`,
   };
 
-  const zoneBlock = `\n\nOPTIMISATION CONTEXT:\nOutput target: ${idealMin}–${idealMax} chars. Reference draft: ${promptLength} chars. Platform limit: ${hardCeiling} chars.\nStrategy: ${zone} — ${zoneDescriptions[zone]}`;
+  const zoneBlock = `\n\nOPTIMISATION CONTEXT:\nIdeal range: ${idealMin}–${idealMax} chars. Reference draft: ${promptLength} chars. Platform limit: ${hardCeiling} chars.\nStrategy: ${zone} — ${zoneDescriptions[zone]}`;
 
   // ── Build user message ──────────────────────────────────────────────
   // Prose groups: flip the framing — original sentence is the PRIMARY input
