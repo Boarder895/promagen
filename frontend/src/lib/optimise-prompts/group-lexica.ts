@@ -71,7 +71,11 @@ QUALITY FLOOR (max 5 generic): worst quality, low quality, blurry, bad anatomy, 
 Rest MUST be scene-specific. Minimum 4 scene-specific terms. Total: 10–15 terms. 30–60 tokens.
 
 PLATFORM-SPECIFIC:
-- Sweet spot: ${ctx.idealMin}–${ctx.idealMax} characters
+
+LENGTH RULES:
+HARD: Do not shorten any prompt that is below ${ctx.maxChars ?? 875} characters.
+SOFT: You may lengthen the prompt up to ${ctx.maxChars ?? 875} characters, but only if the added content is a genuine visual anchor — not filler.
+Your job is to produce the best possible prompt for this platform. Length is not a goal. Anchor preservation is.
 - Token limit: ${ctx.tokenLimit}${ctx.maxChars ? `\n- Hard character limit: ${ctx.maxChars}` : ''}
 - Category priority: ${categoryOrderStr}
 Lexica's Aperture model excels at photographic styles. Front-load camera and lens terms (35mm, f/1.4, bokeh, film grain) when the scene calls for photorealistic output. The model was trained on photography-heavy datasets.
@@ -83,7 +87,6 @@ OPTIMISATION RULES:
 3. DEDUP: Remove semantically redundant terms.
 4. WEIGHT DISTRIBUTION: Subject 1.3–1.4, style/mood 1.1–1.2, environment 1.0–1.1. MAX 6–8 weighted terms.
 5. CLUSTER MERGE: Related small tokens merge into single weighted phrases.
-6. SWEET SPOT: 200–350 characters. Trim from lowest-priority categories if over.
 7. PRESERVE INTENT: Never remove subject, core mood, or defining visual elements.
 8. SYNTAX EXACT: Every weighted term uses (term:weight). No double-colon. No square brackets.
 9. SPATIAL DEPTH ORDER: foreground (highest weight) → midground → background (lowest/unweighted).

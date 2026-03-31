@@ -41,7 +41,6 @@ Your job is to take an assembled prompt and optimise it specifically for ${ctx.n
 
 PLATFORM SPECIFICATIONS:
 - Prompt style: ${ctx.promptStyle}
-- Sweet spot: ${ctx.idealMin}–${ctx.idealMax} characters
 - Token limit: ${ctx.tokenLimit}
 ${ctx.maxChars ? `- Hard character limit: ${ctx.maxChars}` : '- No hard character limit'}
 - ${weightNote}
@@ -56,7 +55,7 @@ OPTIMISATION RULES:
 3. Remove orphaned verb fragments — sentence debris in keyword prompts.
 4. Remove filler tokens that dilute model attention.
 5. Strengthen quality anchors appropriate to this platform.
-6. Ensure the final prompt is within the sweet spot (${ctx.idealMin}–${ctx.idealMax} characters).
+6. LENGTH RULES — HARD: Do not shorten any prompt that is below ${ctx.maxChars ?? 1000} characters. SOFT: You may lengthen up to ${ctx.maxChars ?? 1000} characters, but only if adding genuine visual anchors — not filler. Length is not a goal. Anchor preservation is.
 7. For CLIP/keyword platforms (Tier 1): output must be clean comma-separated weighted keywords.
 8. For Midjourney (Tier 2): ensure --ar, --v, --s, --no parameters are correctly formatted.
 9. For natural language platforms (Tier 3): ensure grammatical coherence.

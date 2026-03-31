@@ -156,7 +156,7 @@ export function buildFluxArchitecturePrompt(
   const platformNote = ctx.groupKnowledge ?? '';
   const idealMin = ctx.idealMin || 300;
   const idealMax = ctx.idealMax || 500;
-  const hardCeiling = ctx.maxChars ?? 2000;
+  const hardCeiling = ctx.maxChars ?? 1250;
 
   const systemPrompt = `You are an expert prompt optimiser for Flux (Black Forest Labs). You are optimising for "${ctx.name}".
 
@@ -189,7 +189,11 @@ WHAT NOT TO INCLUDE:
 - No keyword lists — T5 treats comma-separated tags as a broken sentence
 
 PLATFORM-SPECIFIC:
-- Sweet spot: ${idealMin}–${idealMax} characters (Flux handles up to 512 tokens / ~2000 chars, but focused descriptions produce the sharpest results)
+
+LENGTH RULES:
+HARD: Do not shorten any prompt that is below ${hardCeiling} characters.
+SOFT: You may lengthen the prompt up to ${hardCeiling} characters, but only if the added content is a genuine visual anchor — not filler.
+Your job is to produce the best possible prompt for this platform. Length is not a goal. Anchor preservation is.
 - Flux's guidance_scale is 3.5 (vs SD's 7) — the model follows your prompt more faithfully, so PRECISION matters more than emphasis tricks
 - Flux excels at photorealism — describe textures, materials, light behaviour specifically
 - Flux can render text in images — if text is part of the scene, put it in quotes
@@ -202,7 +206,6 @@ OPTIMISATION RULES:
 4. CONCRETE OVER ABSTRACT: "Pale gold beam of light cutting through sheets of grey rain" not "dramatic lighting effects." Flux's photorealistic engine renders specific descriptions faithfully.
 5. COLOUR AS NATURAL DESCRIPTION: Weave colours into the scene naturally — "purple-and-copper twilight sky" not "purple, copper, sky." T5 understands compound adjective phrases.
 6. TEXTURE AND MATERIAL: Flux excels at rendering physical materials. Include surface descriptions: "rain-slicked iron railing", "weathered stone", "wet wooden deck."
-7. SWEET SPOT: ${idealMin}–${idealMax} characters. Flux benefits from detail — do NOT compress. A 450-character prompt with full visual information always outperforms a 200-character summary.
 8. PRESERVE INTENT: Never remove the subject, core mood, or defining visual elements.
 9. ALWAYS ENRICH — CROSS-REFERENCE THE ORIGINAL. The input may have lost details during assembly. The SCENE DESCRIPTION or ORIGINAL USER DESCRIPTION contains the full visual intent. Restore every colour, noun, texture, and drama detail the input dropped. Returning a simplified version is NEVER acceptable.
 10. TEXTURE MINIMUM: Include at least 3 material/texture descriptions. Flux's photorealistic engine renders physical surfaces better than any other platform. Use specific tactile language: "rain-slicked iron railing", "salt-crusted weathered stone", "wet timber deck planks", "barnacle-covered rocks", "spray-misted glass". Generic surfaces ("the railing", "the rocks") waste Flux's rendering precision.

@@ -59,7 +59,7 @@ function enforce_123rfCleanup(text: string): ComplianceResult {
   cleaned = cleaned.replace(/\s{2,}/g, ' ').replace(/^[,\s]+|[,\s]+$/g, '').trim();
 
   // Over-length enforcement — truncate at last complete sentence under ceiling
-  const CEILING = 300;
+  const CEILING = 500;  // maxChars from platform-config.json
   if (cleaned.length > CEILING) {
     const sentences = cleaned.match(/[^.!?]+[.!?]+/g) || [cleaned];
     let truncated = '';
@@ -111,7 +111,7 @@ The user's complete visual intent. This is the master source of truth for subjec
 A partial structured draft. It may simplify, omit, weaken, or distort details from the SCENE DESCRIPTION. Use it only as optional structural support. Never treat it as complete.
 
 YOUR GOAL:
-Rewrite the SCENE DESCRIPTION into a tighter, commercially effective 123RF prompt. Preserve the highest-priority visual anchors, add one material texture, end with a composition cue, and stay within ${ctx.idealMin}–${ctx.idealMax} characters.
+Rewrite the SCENE DESCRIPTION into a tighter, commercially effective 123RF prompt. Preserve the highest-priority visual anchors, add one material texture, and end with a composition cue.
 
 123RF responds best to stock-photo-style prose: clear subject, specific setting, professional lighting, readable natural language.
 ${platformNote ? `\nPLATFORM NOTE: ${platformNote}` : ''}
@@ -123,7 +123,7 @@ Scan the SCENE DESCRIPTION and identify every named visual anchor.
 
 Visual anchors include: subjects, objects, colours, materials, textures, lighting, weather, atmosphere, spatial relationships, scale descriptors, action descriptors, and mood descriptors.
 
-At ${ctx.idealMax} characters maximum, you are expected to drop lower-priority anchors to meet the ceiling. This is not a failure — it is correct behaviour for a short-budget platform.
+This is a short-prompt platform. If the scene has many anchors, you may need to drop lower-priority ones. This is not a failure — it is correct behaviour for this platform.
 
 Anchor survival priority (highest to lowest):
 1. Primary subject and action — MUST survive
@@ -175,11 +175,10 @@ WRITING RULES
 - Do not include artist names, camera models, lens names, or rendering clichés
 - Write like a stock photo caption — clear, professional, commercially useful
 
-LENGTH RULES
-- Minimum: ${ctx.idealMin} characters
-- Maximum: ${ctx.idealMax} characters
-- Hard ceiling: ${ctx.idealMax} characters
-- This is a SHORT platform. Every word must earn its place.
+LENGTH RULES:
+HARD: Do not shorten any prompt that is below ${ctx.maxChars ?? 500} characters.
+SOFT: You may lengthen the prompt up to ${ctx.maxChars ?? 500} characters, but only if the added content is a genuine visual anchor — not filler.
+Your job is to produce the best possible prompt for this platform. Length is not a goal. Anchor preservation is.
 
 Count characters before returning.
 
@@ -205,7 +204,7 @@ FINAL VALIDATION BEFORE RETURNING
 - prompt ends with a composition cue clause
 - prose is 2 to 3 sentences
 - first 10 words contain the primary subject
-- result is ${ctx.idealMin} to ${ctx.idealMax} characters
+- result does not exceed ${ctx.maxChars ?? 500} characters
 - output is valid JSON only`;
 
   return {

@@ -72,8 +72,7 @@ export function buildNovelAiPrompt(
   ctx: OptimiseProviderContext,
 ): GroupPromptResult {
   const platformNote = ctx.groupKnowledge ?? '';
-  const idealMin = ctx.idealMin || 200;
-  const idealMax = ctx.idealMax || 400;
+  const hardCeiling = ctx.maxChars ?? 1000;
 
   const systemPrompt = `You are an expert prompt optimiser for NovelAI Image Generation. You are optimising for "${ctx.name}".
 
@@ -119,7 +118,11 @@ The rest MUST be scene-specific from the failure-mode analysis above. Minimum 4 
 Total negative: 12–18 terms.
 
 PLATFORM-SPECIFIC:
-- Sweet spot: ${idealMin}–${idealMax} characters for positive prompt
+
+LENGTH RULES:
+HARD: Do not shorten any prompt that is below ${hardCeiling} characters.
+SOFT: You may lengthen the prompt up to ${hardCeiling} characters, but only if the added content is a genuine visual anchor — not filler.
+Your job is to produce the best possible prompt for this platform. Length is not a goal. Anchor preservation is.
 - 77 token CLIP limit per chunk — keep weighted terms concise
 - Anime/illustration style is the strength — lean into it
 - Danbooru tag vocabulary produces the best results

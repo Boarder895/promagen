@@ -54,7 +54,7 @@ function enforceGoogleImagenCleanup(text: string): ComplianceResult {
   cleaned = cleaned.replace(/\s{2,}/g, ' ').replace(/^[,\s]+|[,\s]+$/g, '').trim();
 
   // Over-length enforcement — truncate at last complete sentence under ceiling
-  const CEILING = 350;
+  const CEILING = 875;  // maxChars from platform-config.json
   if (cleaned.length > CEILING) {
     const sentences = cleaned.match(/[^.!?]+[.!?]+/g) || [cleaned];
     let truncated = '';
@@ -111,12 +111,16 @@ End with a brief composition cue: camera angle + framing in natural language.
 Keep it to ONE clause, not a full sentence. Example: "...framed as a low-angle wide shot" or "...seen from a high vantage point across the harbour."
 Do NOT write a separate composition paragraph.
 
-LENGTH: 150–350 characters. Going OVER 350 is a HARD FAILURE. Count your characters BEFORE returning JSON.
+
 
 OUTPUT REQUIREMENTS:
 - Flowing natural language prose, 3–4 sentences
 - Front-load the primary subject in the first 10 words
-- 150–350 characters (HARD CEILING: 350)
+
+LENGTH RULES:
+HARD: Do not shorten any prompt that is below ${ctx.maxChars ?? 875} characters.
+SOFT: You may lengthen the prompt up to ${ctx.maxChars ?? 875} characters, but only if the added content is a genuine visual anchor — not filler.
+Your job is to produce the best possible prompt for this platform. Length is not a goal. Anchor preservation is.
 - Affirmative descriptions only (no "without X" phrasing)
 ${platformNote ? `\nPLATFORM NOTE: ${platformNote}` : ''}
 

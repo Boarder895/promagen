@@ -224,7 +224,10 @@ export async function POST(req: NextRequest): Promise<Response> {
   // accepts it. Don't cut — restructure and reorder. COMPRESS only
   // fires when the prompt exceeds the platform hard limit.
   const promptLength = sanitisedPrompt.length;
-  const { idealMin, idealMax, maxChars } = parsed.data.providerContext;
+  // idealMin: used for ENRICH detection only (never shown to GPT)
+  // idealMax: NOT used in route — stays in config for Call 2 / standard builder
+  // maxChars: the only number GPT sees (platform hard limit)
+  const { idealMin, maxChars } = parsed.data.providerContext;
   const hardCeiling = maxChars ?? 5000;
   const zone: 'ENRICH' | 'REFINE' | 'COMPRESS' =
     promptLength < idealMin ? 'ENRICH'
@@ -239,7 +242,8 @@ export async function POST(req: NextRequest): Promise<Response> {
     COMPRESS: `Must fit within the platform limit of ${hardCeiling} chars. Tighten phrasing, remove filler, preserve all visual anchors.`,
   };
 
-  const zoneBlock = `\n\nOPTIMISATION CONTEXT:\nIdeal range: ${idealMin}–${idealMax} chars. Reference draft: ${promptLength} chars. Platform limit: ${hardCeiling} chars.\nStrategy: ${zone} — ${zoneDescriptions[zone]}`;
+  // GPT sees platform limit + zone strategy only. No idealMin/idealMax range.
+  const zoneBlock = `\n\nOPTIMISATION CONTEXT:\nReference draft: ${promptLength} chars. Platform limit: ${hardCeiling} chars.\nStrategy: ${zone} — ${zoneDescriptions[zone]}`;
 
   // ── Build user message ──────────────────────────────────────────────
   // Prose groups: flip the framing — original sentence is the PRIMARY input

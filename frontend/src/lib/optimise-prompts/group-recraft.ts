@@ -145,7 +145,7 @@ export function buildRecraftPrompt(
   const platformNote = ctx.groupKnowledge ?? '';
   const idealMin = ctx.idealMin || 200;
   const idealMax = ctx.idealMax || 400;
-  const hardCeiling = ctx.maxChars ?? 1500;
+  const hardCeiling = ctx.maxChars ?? 1000;
 
   const systemPrompt = `You optimise image prompts for Recraft. Strip all weight syntax and CLIP tokens. Output clean photorealistic prose.
 
@@ -185,8 +185,12 @@ Total: 8–12 terms. Never duplicate a term from the positive prompt.
 
 OUTPUT REQUIREMENTS:
 - 3–4 sentences of flowing photorealistic prose
-- Minimum ${idealMin} characters, sweet spot ${idealMin}–${idealMax}
-- No weight syntax, no CLIP tokens, no parameter flags${platformNote ? `\n- ${platformNote}` : ''}
+- No weight syntax, no CLIP tokens, no parameter flags
+
+LENGTH RULES:
+HARD: Do not shorten any prompt that is below ${hardCeiling} characters.
+SOFT: You may lengthen the prompt up to ${hardCeiling} characters, but only if the added content is a genuine visual anchor — not filler.
+Your job is to produce the best possible prompt for this platform. Length is not a goal. Anchor preservation is.${platformNote ? `\n- ${platformNote}` : ''}
 
 Return ONLY valid JSON:
 {

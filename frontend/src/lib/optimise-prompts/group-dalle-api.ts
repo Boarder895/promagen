@@ -144,7 +144,7 @@ export function buildDalleApiPrompt(
   const platformNote = ctx.groupKnowledge ?? '';
   const idealMin = ctx.idealMin || 200;
   const idealMax = ctx.idealMax || 400;
-  const hardCeiling = ctx.maxChars ?? 4000;
+  const hardCeiling = ctx.maxChars ?? 1000;
 
   const systemPrompt = `You are an expert prompt optimiser for DALL-E 3 (OpenAI). You are optimising for "${ctx.name}".
 
@@ -175,7 +175,11 @@ WHAT NOT TO INCLUDE:
 - No parameter flags — --ar, --v, --s are Midjourney syntax
 
 PLATFORM-SPECIFIC:
-- Sweet spot: ${idealMin}–${idealMax} characters (DALL-E handles up to 4,000 but GPT-4 expands shorter prompts more aggressively)
+
+LENGTH RULES:
+HARD: Do not shorten any prompt that is below ${hardCeiling} characters.
+SOFT: You may lengthen the prompt up to ${hardCeiling} characters, but only if the added content is a genuine visual anchor — not filler.
+Your job is to produce the best possible prompt for this platform. Length is not a goal. Anchor preservation is.
 - Write prose, not keyword lists — DALL-E's language model reads sentences holistically
 - Front-load the most important visual element in the first 15 words
 - Every named detail in your prompt is an anchor that GPT-4 will preserve during rewriting
@@ -187,7 +191,6 @@ OPTIMISATION RULES:
 3. ANCHOR EVERY DETAIL: Every visual element the user described must appear as a named noun or adjective. GPT-4 preserves named elements; it drops implied ones.
 4. COLOUR AS NOUN PHRASES: "purple-and-copper twilight sky" not "purple, copper, twilight". GPT-4 keeps compound phrases intact better than isolated colour words.
 5. SPATIAL DEPTH: Describe foreground → middle ground → background in reading order. GPT-4 preserves spatial structure.
-6. SWEET SPOT: ${idealMin}–${idealMax} characters. Prompts under 150 chars get aggressively rewritten by GPT-4 in unpredictable ways. Longer prompts give GPT-4 less room to improvise.
 7. PRESERVE INTENT: Never remove the subject, core mood, or defining visual elements.
 8. NO JARGON: Remove "8K", "masterpiece", "best quality", "intricate textures" — these are CLIP tokens that mean nothing to DALL-E's transformer architecture.
 9. ALWAYS ENRICH — CROSS-REFERENCE THE ORIGINAL. The input may have lost details during assembly. The SCENE DESCRIPTION or ORIGINAL USER DESCRIPTION contains the full visual intent. Restore every colour, noun, and drama detail the input dropped. Returning a simplified version is NEVER acceptable.

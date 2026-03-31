@@ -37,7 +37,7 @@ export function buildMidjourneyPrompt(
   const platformNote = ctx.groupKnowledge ?? "";
   const idealMin = ctx.idealMin;
   const idealMax = ctx.idealMax;
-  const hardCeiling = ctx.maxChars ?? 6000;
+  const hardCeiling = ctx.maxChars ?? 1000;
 
   const systemPrompt = `You are an expert prompt optimiser for Midjourney. You are optimising an assembled prompt specifically for the Midjourney platform.
 
@@ -139,6 +139,11 @@ PLATFORM-SPECIFIC GUIDANCE:
 - Creative text is usually strongest when kept compact and focused rather than bloated.
 - Midjourney excels at atmosphere, lighting, mood, cinematic framing, and visual drama.
 - Midjourney is weaker at exact text rendering, exact counts, and precise hand/finger instruction.${platformNote ? `\n- ${platformNote}` : ""}
+
+LENGTH RULES:
+HARD: Do not shorten any prompt that is below ${hardCeiling} characters.
+SOFT: You may lengthen the prompt up to ${hardCeiling} characters, but only if the added content is a genuine visual anchor — not filler.
+Your job is to produce the best possible prompt for this platform. Length is not a goal. Anchor preservation is.
 
 OPTIMISATION RULES:
 1. ALWAYS RESTRUCTURE

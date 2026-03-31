@@ -52,7 +52,7 @@ function enforceLumaAiCleanup(text: string): ComplianceResult {
   cleaned = cleaned.replace(/\s{2,}/g, ' ').replace(/^[,\s]+|[,\s]+$/g, '').trim();
 
   // Over-length enforcement
-  const CEILING = 350;
+  const CEILING = 875;  // maxChars from platform-config.json
   if (cleaned.length > CEILING) {
     const sentences = cleaned.match(/[^.!?]+[.!?]+/g) || [cleaned];
     let truncated = '';
@@ -79,8 +79,7 @@ export function buildLumaAiPrompt(
   ctx: OptimiseProviderContext,
 ): GroupPromptResult {
   const platformNote = ctx.groupKnowledge ?? '';
-  const idealMin = ctx.idealMin || 150;
-  const idealMax = ctx.idealMax || 350;
+  const hardCeiling = ctx.maxChars ?? 875;
 
   const systemPrompt = `You are an expert prompt optimiser for text-to-video AI platforms. You are optimising for "${ctx.name}".
 
@@ -121,7 +120,11 @@ OPTIMISATION RULES:
 4. ACTIVE VERBS: Replace static verbs with motion verbs.
 5. TEMPORAL FLOW: At least one temporal cue — "as", "while", "gradually".
 6. ATMOSPHERE IN MOTION: Weather, light moving — "rain drives sideways", "mist rolls in".
-7. SWEET SPOT: ${idealMin}–${idealMax} characters. HARD CEILING: ${idealMax}.
+
+LENGTH RULES:
+HARD: Do not shorten any prompt that is below ${hardCeiling} characters.
+SOFT: You may lengthen the prompt up to ${hardCeiling} characters, but only if the added content is a genuine visual anchor — not filler.
+Your job is to produce the best possible prompt for this platform. Length is not a goal. Anchor preservation is.
 8. PRESERVE INTENT: Keep subject, core mood, defining visual elements.
 9. CROSS-REFERENCE ORIGINAL: Restore every lost colour, noun, drama detail — but as MOTION.
 ${platformNote ? `\nPLATFORM NOTE: ${platformNote}` : ''}

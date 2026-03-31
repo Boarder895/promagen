@@ -74,8 +74,7 @@ export function buildIdeogramPrompt(
   ctx: OptimiseProviderContext,
 ): GroupPromptResult {
   const platformNote = ctx.groupKnowledge ?? '';
-  const idealMin = ctx.idealMin || 200;
-  const idealMax = ctx.idealMax || 400;
+  const hardCeiling = ctx.maxChars ?? 1000;
 
   const systemPrompt = `You are an expert prompt optimiser for Ideogram. You are optimising for "${ctx.name}".
 
@@ -106,7 +105,11 @@ WHAT NOT TO INCLUDE:
 - No SD-style tag lists — Ideogram reads prose, not tags
 
 PLATFORM-SPECIFIC:
-- Sweet spot: ${idealMin}–${idealMax} characters
+
+LENGTH RULES:
+HARD: Do not shorten any prompt that is below ${hardCeiling} characters.
+SOFT: You may lengthen the prompt up to ${hardCeiling} characters, but only if the added content is a genuine visual anchor — not filler.
+Your job is to produce the best possible prompt for this platform. Length is not a goal. Anchor preservation is.
 - ~150–160 word limit — be concise but visually complete
 - Front-load the subject in the first 10 words
 - Ideogram excels at design, typography, and clean compositions
@@ -120,7 +123,6 @@ OPTIMISATION RULES:
 4. COLOUR AS DESCRIPTION: "purple-and-copper twilight sky" not "colourful sky".
 5. SPATIAL DEPTH: Foreground → middle ground → background in reading order.
 6. DESIGN AWARENESS: If the scene suits a specific composition (centered, rule of thirds, symmetrical), mention it. Ideogram's model understands layout.
-7. SWEET SPOT: ${idealMin}–${idealMax} characters. Concise but complete.
 8. PRESERVE INTENT — ZERO ANCHOR LOSS: Every named visual element from the original MUST appear in the optimised output. Losing visual anchors makes the image generic. Count your anchors before and after: if ANY are missing, add them back.
 9. ALWAYS ENRICH: Cross-reference the original scene description. Restore any colours, nouns, adjectives, or spatial details the input lost. The optimised prompt should have MORE visual information than the input, never less.
 10. NEGATIVE PROMPT — DYNAMIC NEGATIVE INTELLIGENCE: Ideogram supports a negative prompt field for paid users. Generate scene-specific negatives using the failure-mode analysis below.

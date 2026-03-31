@@ -54,7 +54,7 @@ function enforcePhotoleapCleanup(text: string): ComplianceResult {
   cleaned = cleaned.replace(/\s{2,}/g, ' ').replace(/^[,\s]+|[,\s]+$/g, '').trim();
 
   // Over-length enforcement — truncate at last complete sentence under ceiling
-  const CEILING = 250;
+  const CEILING = 500;  // maxChars from platform-config.json
   if (cleaned.length > CEILING) {
     const sentences = cleaned.match(/[^.!?]+[.!?]+/g) || [cleaned];
     let truncated = '';
@@ -111,12 +111,16 @@ End with a brief composition cue: camera angle + framing in natural language.
 Keep it to ONE clause, not a full sentence. Example: "...framed as a low-angle wide shot" or "...seen from a high vantage point across the harbour."
 Do NOT write a separate composition paragraph.
 
-LENGTH: 100–250 characters. Going OVER 250 is a HARD FAILURE. Count your characters BEFORE returning JSON.
+
 
 OUTPUT REQUIREMENTS:
 - Flowing natural language prose, 3–4 sentences
 - Front-load the primary subject in the first 10 words
-- 100–250 characters (HARD CEILING: 250)
+
+LENGTH RULES:
+HARD: Do not shorten any prompt that is below ${ctx.maxChars ?? 500} characters.
+SOFT: You may lengthen the prompt up to ${ctx.maxChars ?? 500} characters, but only if the added content is a genuine visual anchor — not filler.
+Your job is to produce the best possible prompt for this platform. Length is not a goal. Anchor preservation is.
 - Affirmative descriptions only (no "without X" phrasing)
 ${platformNote ? `\nPLATFORM NOTE: ${platformNote}` : ''}
 

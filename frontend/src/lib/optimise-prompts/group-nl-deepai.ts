@@ -54,7 +54,7 @@ function enforceDeepaiCleanup(text: string): ComplianceResult {
   cleaned = cleaned.replace(/\s{2,}/g, ' ').replace(/^[,\s]+|[,\s]+$/g, '').trim();
 
   // Over-length enforcement — truncate at last complete sentence under ceiling
-  const CEILING = 200;
+  const CEILING = 500;  // maxChars from platform-config.json
   if (cleaned.length > CEILING) {
     const sentences = cleaned.match(/[^.!?]+[.!?]+/g) || [cleaned];
     let truncated = '';
@@ -108,21 +108,15 @@ Rewrite the scene in clean, vivid prose. Front-load the primary subject in the f
 DO NOT add new content. DO NOT invent textures, materials, or composition language.
 Your job is to RESTRUCTURE the existing content into the most vivid, natural-reading form.
 Combine related details. Remove filler words. Every word must earn its place.
-Target: 50–200 characters. Going OVER 200 is a HARD FAILURE.
 
-TASK C — LENGTH DISCIPLINE
-Your output MUST be between 50 and 200 characters. This is NON-NEGOTIABLE.
-If the scene has too many anchors to fit in 200 chars, prioritise:
-1. Primary subject and action
-2. Setting and time of day
-3. Dominant colours and lighting
-4. Atmosphere and mood
-Drop secondary spatial details last. Count your characters BEFORE returning JSON.
+LENGTH RULES:
+HARD: Do not shorten any prompt that is below ${ctx.maxChars ?? 500} characters.
+SOFT: You may lengthen the prompt up to ${ctx.maxChars ?? 500} characters, but only if the added content is a genuine visual anchor — not filler.
+Your job is to produce the best possible prompt for this platform. Length is not a goal. Anchor preservation is.
 
 OUTPUT REQUIREMENTS:
 - Flowing natural language prose, 2–3 sentences
 - Front-load the primary subject in the first 10 words
-- 50–200 characters (HARD CEILING: 200)
 - Affirmative descriptions only (no "without X" phrasing)
 ${platformNote ? `\nPLATFORM NOTE: ${platformNote}` : ''}
 

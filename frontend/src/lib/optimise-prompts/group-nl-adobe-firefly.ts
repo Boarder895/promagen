@@ -59,7 +59,7 @@ function enforceAdobeFireflyCleanup(text: string): ComplianceResult {
   cleaned = cleaned.replace(/\s{2,}/g, ' ').replace(/^[,\s]+|[,\s]+$/g, '').trim();
 
   // Over-length enforcement — truncate at last complete sentence under ceiling
-  const CEILING = 750;
+  const CEILING = 1000;  // maxChars from platform-config.json
   if (cleaned.length > CEILING) {
     const sentences = cleaned.match(/[^.!?]+[.!?]+/g) || [cleaned];
     let truncated = '';
@@ -207,10 +207,10 @@ WRITING RULES
 - Do not include rendering clichés
 - Do not include platform flags or parameter syntax
 
-LENGTH RULES
-- Minimum: ${ctx.idealMin} characters
-- Maximum: ${ctx.idealMax} characters
-- Hard ceiling: ${ctx.idealMax} characters
+LENGTH RULES:
+HARD: Do not shorten any prompt that is below ${ctx.maxChars ?? 1000} characters.
+SOFT: You may lengthen the prompt up to ${ctx.maxChars ?? 1000} characters, but only if the added content is a genuine visual anchor — not filler.
+Your job is to produce the best possible prompt for this platform. Length is not a goal. Anchor preservation is.
 
 Count characters before returning.
 
@@ -241,7 +241,7 @@ Check all of the following before output:
 - the prompt ends with a composition sentence
 - the prose is 3 to 4 sentences
 - the first 10 words contain the primary subject
-- the result is ${ctx.idealMin} to ${ctx.idealMax} characters
+- the result does not exceed ${ctx.maxChars ?? 1000} characters
 - the output is valid JSON only`;
 
   return {

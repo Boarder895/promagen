@@ -390,7 +390,10 @@ ARTISTLY BEHAVIOUR
 - Plain natural-language prose only.
 - No weight syntax, no parameter flags, no CLIP boilerplate.
 - Artistly auto-expands prompts via a Smart Prompt Enhancer, so your job is to supply an anchor-dense seed prompt, not a generic summary.
-- TARGET OUTPUT RANGE: ${idealMin}–${idealMax} characters. Aim for ${sweetSpot}–${idealMax} on dense cinematic scenes.
+LENGTH RULES:
+HARD: Do not shorten any prompt that is below ${hardCeiling} characters.
+SOFT: You may lengthen the prompt up to ${hardCeiling} characters, but only if the added content is a genuine visual anchor — not filler.
+Your job is to produce the best possible prompt for this platform. Length is not a goal. Anchor preservation is.
 
 YOU RECEIVE TWO INPUTS
 1. SCENE DESCRIPTION — the user's original visual intent. This is the SOURCE OF TRUTH.
@@ -419,12 +422,11 @@ Natural language only. No lists. No keyword stacks.
 Prefer ONE rich sentence.
 Front-load the primary subject in the first 8–10 words.
 
-TASK C — LENGTH DISCIPLINE
+TASK C — QUALITY CHECK
 Before returning JSON:
-1) Count characters in "optimised" exactly.
-2) If > ${idealMax}, compress by removing filler and tightening phrasing. Only then drop the least important clause.
-3) If < ${idealMin}, add missing anchors from the SCENE DESCRIPTION until you are within range.
-Aim for ${sweetSpot}–${idealMax} characters on dense cinematic scenes.
+1) Verify every anchor from the SCENE DESCRIPTION is present or strengthened.
+2) Verify the primary subject appears in the first 8–10 words.
+3) Verify no forbidden syntax leaked in.
 
 STRICTLY FORBIDDEN
 - (term:1.3)
@@ -440,7 +442,7 @@ ${platformNote ? `PLATFORM NOTE: ${platformNote}\n` : ""}Return ONLY valid JSON:
   "changes": [
     "TASK A: preserved key visual anchors from the scene description",
     "TASK B: rewritten into vivid Artistly prose",
-    "TASK C: kept within ${idealMin}-${idealMax} characters"
+    "TASK C: quality verified — all anchors present"
   ],
   "charCount": 176,
   "tokenEstimate": 32

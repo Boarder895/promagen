@@ -595,7 +595,7 @@
         "intricate textures"
       ],
       "qualityNegative": [],
-      "groupKnowledge": "Natural prose, 100–200 chars. Preserve all visual anchors from the scene description. Use the full character range.",
+      "groupKnowledge": "Natural prose, 100\u2013200 chars. Preserve all visual anchors from the scene description. Use the full character range.",
       "tier": 4,
       "supportsWeighting": false,
       "maxChars": 500,
@@ -603,7 +603,7 @@
       "idealMax": 200,
       "idealWords": 30,
       "limitsTokenLimit": null,
-      "platformNote": "Smart Prompt Enhancer auto-expands input. Preserve all anchors. 100–200 chars.",
+      "platformNote": "Smart Prompt Enhancer auto-expands input. Preserve all anchors. 100\u2013200 chars.",
       "optimizationBenefit": "Provides richer seed text for auto-expansion.",
       "qualityImpact": "8-12%",
       "impactCategory": "moderate",
@@ -705,7 +705,7 @@
       "qualityPrefix": [],
       "weightedCategories": {},
       "groupKnowledge": "Discord-based interface. Very limited parameters (--ar, --no only). Short simple descriptions work best. ~200 chars effective.",
-      "maxChars": 6000,
+      "maxChars": 500,
       "idealMin": 50,
       "idealMax": 200,
       "idealWords": 30,
@@ -855,7 +855,7 @@
         "lighting"
       ],
       "groupKnowledge": "9 images per generation. Pipe | syntax for concept combining. Raw mode available.",
-      "maxChars": 500,
+      "maxChars": 375,
       "idealMin": 50,
       "idealMax": 150,
       "idealWords": 20,
@@ -985,7 +985,7 @@
         "intricate textures"
       ],
       "groupKnowledge": "Fine-tuned SD models. Responds well to artistic style terms.",
-      "maxChars": 1000,
+      "maxChars": 875,
       "idealMin": 200,
       "idealMax": 350,
       "idealWords": 45,
@@ -1069,7 +1069,7 @@
         "intricate textures"
       ],
       "groupKnowledge": "Stability API wrapper. SD3/Ultra/Core strip parenthetical weights. SDXL supports full (term:weight).",
-      "maxChars": 2000,
+      "maxChars": 875,
       "idealMin": 200,
       "idealMax": 350,
       "idealWords": 45,
@@ -1136,7 +1136,7 @@
         "environment"
       ],
       "groupKnowledge": "T5-XXL encoder, not CLIP. Reads full sentences \u2014 prose outperforms tags. No weight syntax. No negative prompts on Flux 1. guidance_scale 3.5 \u2014 follows prompt faithfully. Best-in-class photorealism and text rendering.",
-      "maxChars": 2000,
+      "maxChars": 1250,
       "idealMin": 300,
       "idealMax": 500,
       "idealWords": 65,
@@ -1259,7 +1259,7 @@
         "lighting"
       ],
       "groupKnowledge": "Expressive Chips for style. Seed lock toggle. Prompt rewriting enabled by default.",
-      "maxChars": 1024,
+      "maxChars": 875,
       "idealMin": 150,
       "idealMax": 350,
       "idealWords": 45,
@@ -1538,7 +1538,7 @@
       "idealMin": 150,
       "idealMax": 350,
       "idealWords": 70,
-      "maxChars": 2500
+      "maxChars": 875
     },
     "leonardo": {
       "promptStyle": "keywords",
@@ -1689,7 +1689,7 @@
         "intricate textures"
       ],
       "groupKnowledge": "Aperture v4 model. Responds well to photographic terms. Front-load camera and lens references.",
-      "maxChars": 1000,
+      "maxChars": 875,
       "idealMin": 200,
       "idealMax": 350,
       "idealWords": 45,
@@ -1746,7 +1746,7 @@
       "idealMin": 150,
       "idealMax": 350,
       "idealWords": 80,
-      "maxChars": 5000
+      "maxChars": 875
     },
     "microsoft-designer": {
       "promptStyle": "natural",
@@ -1845,7 +1845,7 @@
         "worst quality"
       ],
       "groupKnowledge": "Proprietary encoder. :: multi-prompt weighting, --ar/--v/--s/--no parameter flags. Prose sections, not keywords. ~40 words effective influence. Excels at atmosphere, mood, cinematic compositions.",
-      "maxChars": 6000,
+      "maxChars": 1000,
       "idealMin": 300,
       "idealMax": 400,
       "idealWords": 60,
@@ -1971,7 +1971,7 @@
       ],
       "groupKnowledge": "Anime-optimised SD with CLIP encoder. Uses {{{term}}} triple-brace weighting (NOT parenthetical). Tag-based prompting, not prose. Quality prefix required: {{{masterpiece}}}, {{best quality}}. 77-token CLIP limit per chunk. Danbooru-style tags produce best results.",
       "tier": 1,
-      "maxChars": 2000,
+      "maxChars": 1000,
       "idealMin": 200,
       "idealMax": 400,
       "idealWords": 50,
@@ -2020,7 +2020,7 @@
         "lighting"
       ],
       "groupKnowledge": "DALL-E 3 via GPT-4 rewriting. Quality (standard/hd) and style (vivid/natural) are API params \u2014 do not include in prompt. Prompt is always rewritten by GPT-4 before generation.",
-      "maxChars": 4000,
+      "maxChars": 1000,
       "idealMin": 200,
       "idealMax": 400,
       "idealWords": 55,
@@ -2321,7 +2321,7 @@
       "idealMin": 200,
       "idealMax": 400,
       "idealWords": 80,
-      "maxChars": 1500
+      "maxChars": 1000
     },
     "runway": {
       "promptStyle": "natural",
@@ -2486,7 +2486,7 @@
         "intricate textures"
       ],
       "groupKnowledge": "Canonical CLIP platform. 77-token CLIP limit per chunk. Quality boosters essential. Front-load subject in first chunk.",
-      "maxChars": 2000,
+      "maxChars": 875,
       "idealMin": 200,
       "idealMax": 350,
       "idealWords": 45,

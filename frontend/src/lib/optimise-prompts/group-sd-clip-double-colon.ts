@@ -84,7 +84,11 @@ Total negative: 10–15 terms. Does NOT duplicate positive prompt terms — wast
 Keep to 30–60 tokens.
 
 PLATFORM-SPECIFIC:
-- Sweet spot: ${ctx.idealMin}–${ctx.idealMax} characters
+
+LENGTH RULES:
+HARD: Do not shorten any prompt that is below ${ctx.maxChars ?? 1000} characters.
+SOFT: You may lengthen the prompt up to ${ctx.maxChars ?? 1000} characters, but only if the added content is a genuine visual anchor — not filler.
+Your job is to produce the best possible prompt for this platform. Length is not a goal. Anchor preservation is.
 - Token limit: ${ctx.tokenLimit}${ctx.maxChars ? `\n- Hard character limit: ${ctx.maxChars}` : ''}
 - Category priority: ${categoryOrderStr}${platformNote ? `\n- ${platformNote}` : ''}
 
@@ -94,7 +98,6 @@ OPTIMISATION RULES:
 3. DEDUP: Remove semantically redundant terms.
 4. WEIGHT DISTRIBUTION: Subject highest (1.3–1.4). Style/mood (1.1–1.2). Environment (1.0–1.1). Filler unweighted. MAXIMUM 6–8 weighted terms.
 5. CLUSTER MERGE: Related small tokens MUST merge into single weighted phrases.
-6. SWEET SPOT: Final prompt must be ${ctx.idealMin}–${ctx.idealMax} characters. PRIMARY target.
 7. PRESERVE INTENT: Never remove the subject, core mood, or defining visual elements.
 8. SYNTAX MUST BE EXACT: Every weighted term uses term::weight — double-colon, decimal weight. NO parentheses. NO square brackets.
 9. SPATIAL DEPTH ORDER: Foreground subject first (highest weight) → midground → background (lowest/unweighted).
