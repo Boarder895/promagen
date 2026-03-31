@@ -399,13 +399,18 @@ OPTIMISATION RULES — do ALL of these:
 
 2. UPGRADE VERBS: Replace generic verbs with stronger, more visual ones. "pauses" → "leans". "grips" → "clutches". "gives off" → "casts". Every verb should paint a picture. Do NOT just use synonyms — the replacement must be more visually evocative.
 
-3. TWO SENTENCES MAX: First sentence is the hero shot — subject, action, and key visual element. Second sentence is environment, atmosphere, and background. End with a full stop. Never write a single run-on sentence with chained commas and semicolons.
+3. TWO SENTENCES. FULL STOPS. NON-NEGOTIABLE.
+Sentence 1: the hero shot — subject, action, primary visual. Ends with a full stop.
+Sentence 2: environment, atmosphere, background. Ends with a full stop.
+FAILURE: a single sentence with commas, semicolons, "while", "as", or "and" chaining 3+ clauses. If your output has no full stop before the final full stop, it is REJECTED. Count your full stops before returning.
 
 4. ONE COMPOSITION CUE: Add one natural composition or framing cue woven into the prose. Not "low angle" bolted between commas. Instead: "seen from below" or "looming overhead" or "framed by" — embedded in the description, not tagged on.
 
 5. STRIP FILLER: Remove words that add length but not visual information. "At twilight on a rain-lashed coast" → "on a rain-lashed coast at twilight" (setting after subject). Remove "while", "as", "beneath" chains that pad clause count.
 
-6. KEEP ALL ANCHORS: Every named subject, object, colour, light source, and distinctive detail from the input must survive. Shorten wording, never drop anchors.
+6. KEEP ALL ANCHORS. ADD NOTHING.
+Every named subject, object, colour, light source, and distinctive detail from the input must survive in your output. Shorten wording, never drop anchors.
+DO NOT invent content that is not in the input. No new colours, no new objects, no new atmosphere words, no style labels like "neon-noir" or "painterly cinematic" unless those exact words appear in the input. If a word is not in the input prompt, it does not belong in your output.
 
 FORBIDDEN SYNTAX:
 (term:1.3), term::1.3, {{{term}}}, --flags, "masterpiece", "best quality", "8K", "sharp focus", negative phrasing like "without X" or "no X".
@@ -418,7 +423,7 @@ At twilight on a rain-lashed coast, a weathered lighthouse keeper grips the iron
 AFTER:
 Weathered lighthouse keeper clutches the iron gallery railing as enormous storm waves shatter against jagged rocks below, salt spray rising into a purple-and-copper twilight sky. A pale gold lighthouse beam slices through driving rain toward a distant fishing village glowing with tiny warm orange windows beneath dark cliffs.
 
-WHY: Subject moved to word 1. "grips" → "clutches", "smash" → "shatter", "cuts" → "slices" — stronger verbs. Three sentences compressed to two. "seen from the gallery deck" is an embedded spatial cue. All anchors preserved.
+WHY: Subject moved to word 1. "grips" → "clutches", "smash" → "shatter", "cuts" → "slices" — stronger verbs. Three sentences compressed to two with full stops. "iron gallery railing" places the viewer on the deck. All anchors preserved. Nothing invented.
 
 BEFORE:
 At midnight in a cramped cyberpunk alley, a rain-drenched courier pauses beneath a flickering magenta-and-cyan noodle sign, one gloved hand resting on a dented motorbike. Steam pours from street vents, and neon reflections smear across black puddles.
@@ -426,7 +431,7 @@ At midnight in a cramped cyberpunk alley, a rain-drenched courier pauses beneath
 AFTER:
 Rain-drenched courier leans against a dented motorbike beneath a flickering magenta-and-cyan noodle sign in a cramped midnight alley. Steam spills from street vents as neon reflections streak across black puddles.
 
-WHY: Subject at word 1. "pauses" → "leans" (more visual), "pours" → "spills", "smear" → "streak". Two clean sentences. All anchors kept.
+WHY: Subject at word 1. "pauses" → "leans" (more visual), "pours" → "spills", "smear" → "streak". Two clean sentences with full stops. All anchors kept. Nothing invented.
 ${platformNote ? `\nPLATFORM NOTE: ${platformNote}` : ""}
 
 Return ONLY valid JSON:
