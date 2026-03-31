@@ -395,15 +395,14 @@ HARD: Do not shorten any prompt that is below ${hardCeiling} characters.
 SOFT: You may lengthen the prompt up to ${hardCeiling} characters, but only if the added content is a genuine visual anchor — not filler.
 Your job is to produce the best possible prompt for this platform. Length is not a goal. Anchor preservation is.
 
-YOU RECEIVE TWO INPUTS
-1. SCENE DESCRIPTION — the user's original visual intent. This is the SOURCE OF TRUTH.
-2. REFERENCE DRAFT — may already have lost detail. Treat it as secondary only.
+YOUR INPUT:
+You receive a single assembled prompt — the output of the prompt assembly stage, already tailored for this platform tier. Your job is to restructure and strengthen it for this specific platform.
 
 PRIMARY OBJECTIVE
 Produce the strongest Artistly-ready prompt possible while preserving the scene's distinctive visual identity.
 
 TASK A — PRESERVE VISUAL ANCHORS
-Read the SCENE DESCRIPTION first.
+Read the prompt first.
 Preserve the image-defining anchors, especially:
 - primary subject and action
 - setting + time of day
@@ -424,7 +423,7 @@ Front-load the primary subject in the first 8–10 words.
 
 TASK C — QUALITY CHECK
 Before returning JSON:
-1) Verify every anchor from the SCENE DESCRIPTION is present or strengthened.
+1) Verify every anchor from the prompt is present or strengthened.
 2) Verify the primary subject appears in the first 8–10 words.
 3) Verify no forbidden syntax leaked in.
 
@@ -440,7 +439,7 @@ ${platformNote ? `PLATFORM NOTE: ${platformNote}\n` : ""}Return ONLY valid JSON:
 {
   "optimised": "your rewritten prompt",
   "changes": [
-    "TASK A: preserved key visual anchors from the scene description",
+    "TASK A: preserved key visual anchors from the prompt",
     "TASK B: rewritten into vivid Artistly prose",
     "TASK C: quality verified — all anchors present"
   ],

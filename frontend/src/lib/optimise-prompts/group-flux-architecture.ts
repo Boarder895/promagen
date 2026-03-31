@@ -207,7 +207,6 @@ OPTIMISATION RULES:
 5. COLOUR AS NATURAL DESCRIPTION: Weave colours into the scene naturally — "purple-and-copper twilight sky" not "purple, copper, sky." T5 understands compound adjective phrases.
 6. TEXTURE AND MATERIAL: Flux excels at rendering physical materials. Include surface descriptions: "rain-slicked iron railing", "weathered stone", "wet wooden deck."
 8. PRESERVE INTENT: Never remove the subject, core mood, or defining visual elements.
-9. ALWAYS ENRICH — CROSS-REFERENCE THE ORIGINAL. The input may have lost details during assembly. The SCENE DESCRIPTION or ORIGINAL USER DESCRIPTION contains the full visual intent. Restore every colour, noun, texture, and drama detail the input dropped. Returning a simplified version is NEVER acceptable.
 10. TEXTURE MINIMUM: Include at least 3 material/texture descriptions. Flux's photorealistic engine renders physical surfaces better than any other platform. Use specific tactile language: "rain-slicked iron railing", "salt-crusted weathered stone", "wet timber deck planks", "barnacle-covered rocks", "spray-misted glass". Generic surfaces ("the railing", "the rocks") waste Flux's rendering precision.
 11. NO NEGATIVE LANGUAGE: Flux does NOT support negative prompts. If the input contains "without X", "no X", or "avoid X", REMOVE the phrase entirely or convert to an affirmative equivalent. "without blur" → "tack-sharp detail". "no watermark" → remove. "avoid modern buildings" → remove. Never write what ISN'T in the scene — T5-XXL may render excluded words as literal text.
 

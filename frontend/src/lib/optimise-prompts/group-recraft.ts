@@ -149,12 +149,12 @@ export function buildRecraftPrompt(
 
   const systemPrompt = `You optimise image prompts for Recraft. Strip all weight syntax and CLIP tokens. Output clean photorealistic prose.
 
-You receive a SCENE DESCRIPTION (source of truth) and a REFERENCE DRAFT (starting point that may have lost details).
+You receive a single assembled prompt — already tailored for this platform tier. Your job is to restructure and strengthen it.
 
 Do these 3 tasks. All are mandatory.
 
 TASK A — ZERO ANCHOR LOSS
-Before writing anything, scan the SCENE DESCRIPTION and identify every named visual element: subjects, objects, colours, textures, spatial relationships, lighting qualities, and atmospheric details.
+Before writing anything, scan the prompt and identify every named visual element: subjects, objects, colours, textures, spatial relationships, lighting qualities, and atmospheric details.
 Every one of those elements MUST appear in your output using the EXACT words or a stronger, more specific version. You may NEVER:
 - Replace a specific noun with a vaguer one ("enormous storm waves" → "waves" is a FAILURE)
 - Drop a named colour — every named colour in the scene must appear in your output

@@ -102,16 +102,11 @@ export function build_123rfPrompt(
 It does not require weight syntax, parameter flags, CLIP tokens, artist names, camera metadata, or quality clichés. Remove and ignore any such prompt noise, including:
 (term:1.3), term::1.3, --ar, --v, --no, "masterpiece", "8K", camera bodies, lens names, and similar syntax.
 
-You will receive two inputs:
-
-1. SCENE DESCRIPTION
-The user's complete visual intent. This is the master source of truth for subject, objects, colours, materials, atmosphere, lighting, spatial relationships, scale, action, and mood.
-
-2. REFERENCE DRAFT
-A partial structured draft. It may simplify, omit, weaken, or distort details from the SCENE DESCRIPTION. Use it only as optional structural support. Never treat it as complete.
+YOUR INPUT:
+You receive a single assembled prompt — the output of the prompt assembly stage. Your job is to restructure and strengthen it for this specific platform.
 
 YOUR GOAL:
-Rewrite the SCENE DESCRIPTION into a tighter, commercially effective 123RF prompt. Preserve the highest-priority visual anchors, add one material texture, and end with a composition cue.
+Rewrite the prompt into a tighter, commercially effective 123RF prompt. Preserve the highest-priority visual anchors, add one material texture, and end with a composition cue.
 
 123RF responds best to stock-photo-style prose: clear subject, specific setting, professional lighting, readable natural language.
 ${platformNote ? `\nPLATFORM NOTE: ${platformNote}` : ''}
@@ -119,7 +114,7 @@ ${platformNote ? `\nPLATFORM NOTE: ${platformNote}` : ''}
 NON-NEGOTIABLE TASKS
 
 TASK A — RANKED ANCHOR PRESERVATION
-Scan the SCENE DESCRIPTION and identify every named visual anchor.
+Scan the prompt and identify every named visual anchor.
 
 Visual anchors include: subjects, objects, colours, materials, textures, lighting, weather, atmosphere, spatial relationships, scale descriptors, action descriptors, and mood descriptors.
 
@@ -140,7 +135,7 @@ Examples:
 
 TASK B — ONE TEXTURE ENRICHMENT
 Add exactly 1 new material or surface texture that is:
-- not already present in the SCENE DESCRIPTION
+- not already present in the prompt
 - physically plausible for the scene
 - concrete, specific, and imageable
 
@@ -164,7 +159,7 @@ Weak endings: cinematic wide shot, dramatic composition, high detail
 If the budget is critically tight, the composition cue may be shortened to a minimal clause.
 
 CONTENT SAFETY RULE
-Do not invent new major subjects, objects, actions, weather events, or locations not supported by the SCENE DESCRIPTION. Only add the 1 required texture.
+Do not invent new major subjects, objects, actions, weather events, or locations not supported by the prompt. Only add the 1 required texture.
 
 WRITING RULES
 - Use flowing natural-language prose only

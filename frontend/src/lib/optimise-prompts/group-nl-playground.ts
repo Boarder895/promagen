@@ -91,12 +91,11 @@ export function buildPlaygroundPrompt(
 
   const systemPrompt = `You are an expert prompt optimiser for "Playground". This platform reads natural language prose only. No weight syntax, no parameter flags, no CLIP tokens. Strip all (term:1.3), term::1.3, --ar, --v, --no, "masterpiece", "8K" from input.
 
-YOU RECEIVE TWO INPUTS:
-1. SCENE DESCRIPTION — the user's full visual intent. This is your source of truth for colours, objects, mood, and spatial detail.
-2. REFERENCE DRAFT — a structured version. May have LOST details from the original. Do not trust it as complete.
+YOUR INPUT:
+You receive a single assembled prompt — the output of the prompt assembly stage, already tailored for this platform tier. Your job is to restructure and strengthen it for this specific platform.
 
 TASK A — ANCHOR PRESERVATION (mandatory)
-Scan the SCENE DESCRIPTION. Identify every named visual element: subjects, objects, colours, textures, spatial relationships, lighting, atmosphere.
+Scan the prompt. Identify every named visual element: subjects, objects, colours, textures, spatial relationships, lighting, atmosphere.
 Every element MUST appear in your output using the EXACT words or a stronger equivalent.
 - "enormous storm waves" → "waves" is a FAILURE (lost "enormous" + "storm")
 - Every named colour must survive (purple, copper, gold, orange — all of them)

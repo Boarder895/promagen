@@ -166,10 +166,6 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   // ── Sanitise inputs ─────────────────────────────────────────────────
   const sanitisedPrompt = parsed.data.promptText.replace(/<[^>]*>/g, "").trim();
-  const sanitisedOriginal = parsed.data.originalSentence
-    ? parsed.data.originalSentence.replace(/<[^>]*>/g, "").trim()
-    : undefined;
-
   if (!sanitisedPrompt) {
     return NextResponse.json(
       {
@@ -186,12 +182,10 @@ export async function POST(req: NextRequest): Promise<Response> {
     parsed.data.providerContext,
   );
 
-  // ── Detect prose-based groups for primary-input flipping ─────────────
+  // ── Detect prose-based groups for temperature selection ───────────────
   const providerGroup = getProviderGroup(parsed.data.providerId);
-  // These groups read PROSE, not CLIP tags. The original human sentence
-  // is the better primary input — the assembled T1 prompt has already
-  // lost anchors through compression. Flipping prevents GPT's
-  // "optimise = compress" instinct.
+  // Prose groups get temperature 0.4 (more creative rewriting).
+  // CLIP/keyword groups get temperature 0.2 (tighter syntax control).
   // Legacy group names that are prose-based (kept for safety)
   const legacyProseGroups = new Set([
     "recraft",
@@ -235,9 +229,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     : 'COMPRESS';
 
   const zoneDescriptions: Record<string, string> = {
-    ENRICH: sanitisedOriginal
-      ? 'Room to add detail — pull missing anchors from the scene description.'
-      : 'Room to add detail — expand thin clauses with richer visual language.',
+    ENRICH: 'Room to add detail — expand thin clauses with richer visual language.',
     REFINE: 'Restructure, front-load the subject, strengthen word choices. Do NOT shorten — preserve all visual anchors and keep roughly the same length.',
     COMPRESS: `Must fit within the platform limit of ${hardCeiling} chars. Tighten phrasing, remove filler, preserve all visual anchors.`,
   };
@@ -246,19 +238,12 @@ export async function POST(req: NextRequest): Promise<Response> {
   const zoneBlock = `\n\nOPTIMISATION CONTEXT:\nReference draft: ${promptLength} chars. Platform limit: ${hardCeiling} chars.\nStrategy: ${zone} — ${zoneDescriptions[zone]}`;
 
   // ── Build user message ──────────────────────────────────────────────
-  // Prose groups: flip the framing — original sentence is the PRIMARY input
-  // ("write the best version of this scene"), assembled is reference material.
-  // This prevents GPT from compressing an already-compressed input.
-  // CLIP groups: assembled prompt is primary (it has correct syntax/weights).
-  // Zone block is appended to ALL user messages (prose and CLIP).
-  let userMessage: string;
-  if (isProseGroup && sanitisedOriginal) {
-    userMessage = `SCENE DESCRIPTION TO OPTIMISE FOR ${parsed.data.providerContext.name.toUpperCase()}:\n${sanitisedOriginal}\n\nREFERENCE DRAFT (use as structural starting point, but enrich with ALL details from the scene description above):\n${sanitisedPrompt}${zoneBlock}`;
-  } else if (sanitisedOriginal) {
-    userMessage = `ASSEMBLED PROMPT TO OPTIMISE:\n${sanitisedPrompt}\n\nORIGINAL USER DESCRIPTION (for intent reference):\n${sanitisedOriginal}${zoneBlock}`;
-  } else {
-    userMessage = `ASSEMBLED PROMPT TO OPTIMISE:\n${sanitisedPrompt}${zoneBlock}`;
-  }
+  // Clean separation: Call 2 owns content decisions. Call 3 owns
+  // platform presentation. GPT sees ONLY the assembled prompt + zone.
+  // The original human sentence is never passed to Call 3 — if Call 2
+  // made anchor decisions, Call 3 respects them and restructures for
+  // the platform rather than second-guessing Call 2's output.
+  const userMessage = `ASSEMBLED PROMPT TO OPTIMISE:\n${sanitisedPrompt}${zoneBlock}`;
 
   // ── Call generation engine ──────────────────────────────────────────
   try {

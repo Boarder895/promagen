@@ -193,7 +193,6 @@ OPTIMISATION RULES:
 5. SPATIAL DEPTH: Describe foreground → middle ground → background in reading order. GPT-4 preserves spatial structure.
 7. PRESERVE INTENT: Never remove the subject, core mood, or defining visual elements.
 8. NO JARGON: Remove "8K", "masterpiece", "best quality", "intricate textures" — these are CLIP tokens that mean nothing to DALL-E's transformer architecture.
-9. ALWAYS ENRICH — CROSS-REFERENCE THE ORIGINAL. The input may have lost details during assembly. The SCENE DESCRIPTION or ORIGINAL USER DESCRIPTION contains the full visual intent. Restore every colour, noun, and drama detail the input dropped. Returning a simplified version is NEVER acceptable.
 
 BEFORE → AFTER EXAMPLES:
 

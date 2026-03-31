@@ -100,16 +100,11 @@ export function buildAdobeFireflyPrompt(
 Adobe Firefly responds best to concrete, vivid, natural-language scene prose. It does not require weight syntax, parameter flags, CLIP tokens, artist names, camera metadata, or quality clichés. Remove and ignore any such prompt noise, including:
 (term:1.3), term::1.3, --ar, --v, --no, "masterpiece", "8K", camera bodies, lens names, and similar syntax.
 
-You will receive two inputs:
-
-1. SCENE DESCRIPTION
-The user's complete visual intent. This is the master source of truth for subject, objects, colours, materials, atmosphere, lighting, spatial relationships, scale, action, and mood.
-
-2. REFERENCE DRAFT
-A partial structured draft. It may simplify, omit, weaken, or distort details from the SCENE DESCRIPTION. Use it only as optional structural support. Never treat it as complete.
+YOUR INPUT:
+You receive a single assembled prompt — the output of the prompt assembly stage. Your job is to restructure and strengthen it for this specific platform.
 
 YOUR GOAL:
-Rewrite the SCENE DESCRIPTION into a stronger Adobe Firefly prompt that preserves all visual anchors, improves visual richness, and remains natural, readable, and highly generative.
+Rewrite the prompt into a stronger Adobe Firefly prompt that preserves all visual anchors, improves visual richness, and remains natural, readable, and highly generative.
 
 Adobe Firefly responds best to concrete scene description, visible materials, clear lighting, spatial clarity, and readable natural prose.
 ${platformNote ? `\nPLATFORM NOTE: ${platformNote}` : ''}
@@ -117,7 +112,7 @@ ${platformNote ? `\nPLATFORM NOTE: ${platformNote}` : ''}
 NON-NEGOTIABLE TASKS
 
 TASK A — FULL ANCHOR PRESERVATION
-Scan the SCENE DESCRIPTION and preserve every named visual anchor.
+Scan the prompt and preserve every named visual anchor.
 
 Visual anchors include:
 - subjects
@@ -147,7 +142,7 @@ If any visual anchor is omitted, weakened, generalised, or merged away, the outp
 
 TASK B — TEXTURE INJECTION
 Add exactly 2 new material or surface textures that are:
-- not already present in the SCENE DESCRIPTION
+- not already present in the prompt
 - physically plausible for the scene
 - concrete, specific, and imageable
 
@@ -165,7 +160,7 @@ Weak examples:
 Add exactly 2. Not 1. Not 3 or more.
 
 TASK C — SENSORY UPGRADE
-Upgrade exactly 2 weaker or more generic descriptive phrases from the SCENE DESCRIPTION into richer sensory visual detail.
+Upgrade exactly 2 weaker or more generic descriptive phrases from the prompt into richer sensory visual detail.
 
 The upgrade must:
 - remain faithful to the scene
@@ -192,7 +187,7 @@ Weak endings:
 - high detail scene
 
 CONTENT SAFETY RULE
-Do not invent new major subjects, objects, actions, weather events, or locations that are not supported by the SCENE DESCRIPTION.
+Do not invent new major subjects, objects, actions, weather events, or locations that are not supported by the prompt.
 Only add the 2 required textures and the 2 sensory upgrades.
 
 WRITING RULES
@@ -235,7 +230,7 @@ Return this exact structure:
 
 FINAL VALIDATION BEFORE RETURNING
 Check all of the following before output:
-- every anchor from the SCENE DESCRIPTION is preserved or strengthened
+- every anchor from the prompt is preserved or strengthened
 - exactly 2 new textures were added
 - exactly 2 sensory upgrades were made
 - the prompt ends with a composition sentence
