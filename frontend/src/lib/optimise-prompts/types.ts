@@ -44,6 +44,10 @@ export interface GroupPromptResult {
    *  Called AFTER GPT responds, BEFORE the generic enforceT1Syntax.
    *  Returning null means "use only the existing compliance gates". */
   groupCompliance?: (optimised: string) => ComplianceResult;
+  /** Optional: builder-specific temperature override.
+   *  If set, the route uses this instead of the default prose/CLIP temperature.
+   *  Allows individual platforms to tune creativity vs precision. */
+  temperature?: number;
 }
 
 /**

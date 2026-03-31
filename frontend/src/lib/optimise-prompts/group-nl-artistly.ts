@@ -446,5 +446,8 @@ Return ONLY valid JSON:
     systemPrompt,
     // ★ Gate enforces maxChars (platform limit), NOT idealMax (quality target)
     groupCompliance: createArtistlyCompliance(idealMin, idealMax, sweetSpot, hardCeiling),
+    // ★ 0.5 instead of default 0.4 — testing whether higher temp breaks GPT
+    //   out of clause-chaining habit for sentence structure compliance
+    temperature: 0.5,
   };
 }

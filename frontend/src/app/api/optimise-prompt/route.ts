@@ -177,7 +177,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   }
 
   // ── Build system prompt (group-specific or generic fallback) ────────
-  const { systemPrompt, groupCompliance } = resolveGroupPrompt(
+  const { systemPrompt, groupCompliance, temperature: builderTemperature } = resolveGroupPrompt(
     parsed.data.providerId,
     parsed.data.providerContext,
   );
@@ -257,7 +257,7 @@ export async function POST(req: NextRequest): Promise<Response> {
         },
         body: JSON.stringify({
           model: "gpt-5.4-mini",
-          temperature: isProseGroup ? 0.4 : 0.2,
+          temperature: builderTemperature ?? (isProseGroup ? 0.4 : 0.2),
           max_completion_tokens: 1200,
           response_format: { type: "json_object" },
           messages: [
