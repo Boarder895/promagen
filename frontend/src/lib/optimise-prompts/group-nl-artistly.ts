@@ -391,9 +391,10 @@ ARTISTLY BEHAVIOUR
 - No weight syntax, no parameter flags, no CLIP boilerplate.
 - Artistly auto-expands prompts via a Smart Prompt Enhancer, so your job is to supply an anchor-dense seed prompt, not a generic summary.
 LENGTH RULES:
-HARD: Do not shorten any prompt that is below ${hardCeiling} characters.
-SOFT: You may lengthen the prompt up to ${hardCeiling} characters, but only if the added content is a genuine visual anchor — not filler.
-Your job is to produce the best possible prompt for this platform. Length is not a goal. Anchor preservation is.
+This platform auto-expands prompts internally. Your job is the SHORTEST form that preserves all visual anchors.
+HARD: Do not exceed ${hardCeiling} characters.
+PREFER: The shorter the better — compress phrasing, merge related details, cut filler. Every anchor must survive, but use the fewest words possible to keep it.
+Artistly rewards dense seed prompts, not long descriptions. If you can say it in 150 characters without losing an anchor, that beats 300 characters every time.
 
 YOU RECEIVE TWO INPUTS
 1. SCENE DESCRIPTION — the user's original visual intent. This is the SOURCE OF TRUTH.
