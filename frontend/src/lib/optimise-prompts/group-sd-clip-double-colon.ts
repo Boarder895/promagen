@@ -39,6 +39,9 @@ export function buildSdClipDoubleColonPrompt(
   const qualityPrefixStr = ctx.qualityPrefix?.length
     ? ctx.qualityPrefix.join(', ')
     : 'masterpiece, best quality, highly detailed';
+  const idealMin = ctx.idealMin;
+  const idealMax = ctx.idealMax;
+  const hardCeiling = ctx.maxChars ?? 1000;
 
   const systemPrompt = `You are an expert prompt optimiser for CLIP-based AI image platforms. You are optimising for "${ctx.name}".
 
@@ -120,9 +123,8 @@ Return ONLY valid JSON:
 }`;
   return {
     systemPrompt,
-    // Group compliance chain: keyword cleanup → weight cap → syntax enforcement.
-    // enforceT1Syntax in the route handles parenthetical↔double-colon conversion
-    // as the final safety net, but we clean up first.
+    // Group compliance chain: keyword cleanup → weight cap → maxChars enforcement.
+    // v4 pattern: enforces maxChars (platform limit), NOT idealMax (quality target).
     groupCompliance: (optimised: string): ComplianceResult => {
       const allFixes: string[] = [];
       let text = optimised;
@@ -135,24 +137,41 @@ Return ONLY valid JSON:
       }
 
       // Step 2: Cap weighted terms at 8
-      // For double-colon, enforceWeightCap only catches (term:weight) syntax.
-      // Need to also count term::weight patterns.
       const dcWeightPattern = /\w[\w\s-]+::\d+\.?\d*/g;
       const dcMatches = [...text.matchAll(dcWeightPattern)];
       if (dcMatches.length > 8) {
-        // Sort by weight, strip lowest
         const parsed = dcMatches.map(m => {
           const parts = m[0].split('::');
           return { full: m[0], term: parts[0]!.trim(), weight: parseFloat(parts[1] ?? '1'), index: m.index! };
         }).sort((a, b) => a.weight - b.weight);
 
         const toStrip = parsed.slice(0, parsed.length - 8);
-        // Process in reverse position order to preserve indices
         for (const item of [...toStrip].sort((a, b) => b.index - a.index)) {
           text = text.slice(0, item.index) + item.term + text.slice(item.index + item.full.length);
         }
         const strippedNames = toStrip.map(t => `${t.term} (was ::${t.weight})`);
         allFixes.push(`Capped double-colon weighted terms: ${dcMatches.length} → 8. Unweighted: ${strippedNames.join(', ')}`);
+      }
+
+      // Step 3: Enforce maxChars only (v4 pattern)
+      if (text.length > hardCeiling) {
+        // Simple trim for CLIP — cut at last comma before ceiling
+        const slice = text.slice(0, hardCeiling + 1);
+        const lastComma = slice.lastIndexOf(',');
+        if (lastComma > Math.floor(hardCeiling * 0.6)) {
+          const before = text.length;
+          text = text.slice(0, lastComma).replace(/\s+$/, '');
+          allFixes.push(`Trimmed to platform limit (${before} -> ${text.length}/${hardCeiling})`);
+        }
+      } else if (text.length > idealMax) {
+        allFixes.push(`Above ideal range (${text.length}/${idealMax} chars) — platform limit is ${hardCeiling}`);
+      }
+
+      // Diagnostics
+      if (text.length > 0 && text.length < idealMin) {
+        allFixes.push(`Below ideal minimum (${text.length}/${idealMin} chars)`);
+      } else if (text.length >= idealMin && text.length <= idealMax) {
+        allFixes.push(`Good density for Leonardo (${text.length} chars)`);
       }
 
       return { text, wasFixed: allFixes.length > 0, fixes: allFixes };

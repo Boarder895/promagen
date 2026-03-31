@@ -631,7 +631,7 @@ export default function EnhancedEducationalPreview({
   const call3InputText = useMemo(() => {
     if (!selectedProviderId) return activeTierPromptText;
     const group = getProviderGroup(selectedProviderId);
-    if ((group === 'clean-natural-language' || group?.startsWith('nl-')) && activeTier === 4) {
+    if (group?.startsWith('nl-') && activeTier === 4) {
       const source = aiTierPrompts ?? generatedPrompts;
       const t3Text = source.tier3 ?? '';
       // Only use T3 if it actually has content; fall back to active tier otherwise

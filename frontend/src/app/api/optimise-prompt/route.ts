@@ -194,12 +194,10 @@ export async function POST(req: NextRequest): Promise<Response> {
   // "optimise = compress" instinct.
   // Legacy group names that are prose-based (kept for safety)
   const legacyProseGroups = new Set([
-    "clean-natural-language",
     "recraft",
     "ideogram",
     "dalle-api",
     "flux-architecture",
-    "video-cinematic",
   ]);
   // All nl-* dedicated builders are prose. All *-dedicated video builders are prose.
   // SD CLIP builders (stability-dedicated, etc.) are NOT prose — they use keyword syntax.
@@ -216,18 +214,42 @@ export async function POST(req: NextRequest): Promise<Response> {
     (providerGroup?.endsWith("-dedicated") && !sdClipDedicated.has(providerGroup ?? "")) ||
     false;
 
+  // ── Compute optimisation zone (api-3.md §3) ──────────────────────────
+  // Zone is determined by the reference draft length relative to the
+  // platform's ideal range. Injected into the user message, NOT the
+  // system prompt — the zone is variable per call, the system prompt
+  // is the platform's fixed rules.
+  const promptLength = sanitisedPrompt.length;
+  const { idealMin, idealMax, maxChars } = parsed.data.providerContext;
+  const hardCeiling = maxChars ?? 5000;
+  const zone: 'ENRICH' | 'REFINE' | 'COMPRESS' =
+    promptLength < idealMin ? 'ENRICH'
+    : promptLength <= idealMax ? 'REFINE'
+    : 'COMPRESS';
+
+  const zoneDescriptions: Record<string, string> = {
+    ENRICH: sanitisedOriginal
+      ? 'Room to add detail — pull missing anchors from the scene description.'
+      : 'Room to add detail — expand thin clauses with richer visual language.',
+    REFINE: 'Focus on quality — restructure, strengthen word choices, front-load the subject.',
+    COMPRESS: 'Tighten phrasing, remove filler, preserve all visual anchors.',
+  };
+
+  const zoneBlock = `\n\nOPTIMISATION CONTEXT:\nOutput target: ${idealMin}–${idealMax} chars. Reference draft: ${promptLength} chars. Platform limit: ${hardCeiling} chars.\nStrategy: ${zone} — ${zoneDescriptions[zone]}`;
+
   // ── Build user message ──────────────────────────────────────────────
   // Prose groups: flip the framing — original sentence is the PRIMARY input
   // ("write the best version of this scene"), assembled is reference material.
   // This prevents GPT from compressing an already-compressed input.
   // CLIP groups: assembled prompt is primary (it has correct syntax/weights).
+  // Zone block is appended to ALL user messages (prose and CLIP).
   let userMessage: string;
   if (isProseGroup && sanitisedOriginal) {
-    userMessage = `SCENE DESCRIPTION TO OPTIMISE FOR ${parsed.data.providerContext.name.toUpperCase()}:\n${sanitisedOriginal}\n\nREFERENCE DRAFT (use as structural starting point, but enrich with ALL details from the scene description above):\n${sanitisedPrompt}`;
+    userMessage = `SCENE DESCRIPTION TO OPTIMISE FOR ${parsed.data.providerContext.name.toUpperCase()}:\n${sanitisedOriginal}\n\nREFERENCE DRAFT (use as structural starting point, but enrich with ALL details from the scene description above):\n${sanitisedPrompt}${zoneBlock}`;
   } else if (sanitisedOriginal) {
-    userMessage = `ASSEMBLED PROMPT TO OPTIMISE:\n${sanitisedPrompt}\n\nORIGINAL USER DESCRIPTION (for intent reference):\n${sanitisedOriginal}`;
+    userMessage = `ASSEMBLED PROMPT TO OPTIMISE:\n${sanitisedPrompt}\n\nORIGINAL USER DESCRIPTION (for intent reference):\n${sanitisedOriginal}${zoneBlock}`;
   } else {
-    userMessage = `ASSEMBLED PROMPT TO OPTIMISE:\n${sanitisedPrompt}`;
+    userMessage = `ASSEMBLED PROMPT TO OPTIMISE:\n${sanitisedPrompt}${zoneBlock}`;
   }
 
   // ── Call generation engine ──────────────────────────────────────────

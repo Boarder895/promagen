@@ -24,6 +24,7 @@
 // ============================================================================
 
 import type { OptimiseProviderContext, GroupPromptResult } from "./types";
+import type { ComplianceResult } from "@/lib/harmony-compliance";
 
 // ============================================================================
 // BUILDER
@@ -34,6 +35,9 @@ export function buildMidjourneyPrompt(
   ctx: OptimiseProviderContext,
 ): GroupPromptResult {
   const platformNote = ctx.groupKnowledge ?? "";
+  const idealMin = ctx.idealMin;
+  const idealMax = ctx.idealMax;
+  const hardCeiling = ctx.maxChars ?? 6000;
 
   const systemPrompt = `You are an expert prompt optimiser for Midjourney. You are optimising an assembled prompt specifically for the Midjourney platform.
 
@@ -212,8 +216,42 @@ Return ONLY valid JSON:
 }`;
   return {
     systemPrompt,
-    // No group-specific compliance gate needed here.
-    // Route-level safeguards already dedupe params and --no terms as a safety net.
-    // This builder's job is to steer the model toward a cleaner native Midjourney prompt.
+    // v4 pattern: maxChars safety net + diagnostics.
+    // No syntax stripping — ::weights and --params are valid MJ syntax.
+    // negativeSupport: inline — negatives via --no are valid, no warning needed.
+    groupCompliance: (optimised: string): ComplianceResult => {
+      const fixes: string[] = [];
+      let text = optimised;
+
+      // Enforce maxChars only
+      if (text.length > hardCeiling) {
+        // For MJ, trim before the --params block to preserve parameters
+        const paramStart = text.search(/\s+--(?:ar|v|s|no|stylize)\b/);
+        if (paramStart > 0 && paramStart <= hardCeiling) {
+          // Parameters are within limit — trim the prose section before them
+          const proseSection = text.slice(0, paramStart);
+          const paramSection = text.slice(paramStart);
+          const lastComma = proseSection.lastIndexOf(',');
+          if (lastComma > Math.floor(hardCeiling * 0.5)) {
+            text = proseSection.slice(0, lastComma).trim() + paramSection;
+          }
+        }
+        if (text.length > hardCeiling) {
+          text = text.slice(0, hardCeiling).trim();
+        }
+        fixes.push(`Trimmed to platform limit (${optimised.length} -> ${text.length}/${hardCeiling})`);
+      } else if (text.length > idealMax) {
+        fixes.push(`Above ideal range (${text.length}/${idealMax} chars) — platform limit is ${hardCeiling}`);
+      }
+
+      // Diagnostics
+      if (text.length > 0 && text.length < idealMin) {
+        fixes.push(`Below ideal minimum (${text.length}/${idealMin} chars)`);
+      } else if (text.length >= idealMin && text.length <= idealMax) {
+        fixes.push(`Good density for Midjourney (${text.length} chars)`);
+      }
+
+      return { text, wasFixed: fixes.length > 0, fixes };
+    },
   };
 }

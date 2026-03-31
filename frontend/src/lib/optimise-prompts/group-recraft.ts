@@ -44,41 +44,94 @@ import type { OptimiseProviderContext, GroupPromptResult } from './types';
 import type { ComplianceResult } from '@/lib/harmony-compliance';
 
 // ============================================================================
-// COMPLIANCE: Strip non-Recraft syntax
+// COMPLIANCE: Strip non-Recraft syntax + enforce platform limit (v4 pattern)
 // ============================================================================
 
-function enforceRecraftCleanup(text: string): ComplianceResult {
-  const fixes: string[] = [];
-  let cleaned = text;
+const DANGLING_END_WORDS =
+  /\b(?:and|or|with|without|behind|before|after|over|under|through|into|onto|from|to|of|in|on|at|as|while|amid|beneath)\b$/i;
 
-  // Strip parenthetical weights
-  const parenBefore = cleaned;
-  cleaned = cleaned.replace(/\(([^()]+):\d+\.?\d*\)/g, '$1');
-  if (cleaned !== parenBefore) fixes.push('Stripped parenthetical weight syntax');
+function cleanText(text: string): string {
+  return text.replace(/\s{2,}/g, ' ').replace(/^[,\s]+|[,\s]+$/g, '').trim();
+}
 
-  // Strip double-colon weights
-  const dcBefore = cleaned;
-  cleaned = cleaned.replace(/(\w[\w\s-]*)::\d+\.?\d*/g, '$1');
-  if (cleaned !== dcBefore) fixes.push('Stripped double-colon weight syntax');
-
-  // Strip MJ parameter flags
-  const flagBefore = cleaned;
-  cleaned = cleaned.replace(/\s*--(?:ar|v|s|no|stylize|chaos|weird|tile|repeat|seed|stop|iw|niji|raw)\s*[^\s,]*/gi, '');
-  if (cleaned !== flagBefore) fixes.push('Stripped parameter flags');
-
-  // Strip CLIP quality tokens
-  const clipTokens = ['masterpiece', 'best quality', 'highly detailed', '8K', '4K', 'intricate textures', 'sharp focus'];
-  for (const token of clipTokens) {
-    const re = new RegExp(`\\b${token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b,?\\s*`, 'gi');
-    const before = cleaned;
-    cleaned = cleaned.replace(re, '');
-    if (cleaned !== before) fixes.push(`Stripped CLIP token "${token}"`);
+function pruneDangling(text: string): string {
+  let out = cleanText(text);
+  let guard = 0;
+  while (DANGLING_END_WORDS.test(out) && guard < 3) {
+    out = out.replace(DANGLING_END_WORDS, '').trim();
+    out = cleanText(out);
+    guard += 1;
   }
+  return out;
+}
 
-  // Clean up
-  cleaned = cleaned.replace(/\s{2,}/g, ' ').replace(/^[,\s]+|[,\s]+$/g, '').trim();
+function hardTrimAtComma(text: string, ceiling: number): string {
+  if (text.length <= ceiling) return text;
+  const slice = text.slice(0, ceiling + 1);
+  const lastComma = slice.lastIndexOf(',');
+  const lastSemicolon = slice.lastIndexOf(';');
+  const lastPeriod = slice.lastIndexOf('.');
+  const best = Math.max(lastComma, lastSemicolon, lastPeriod);
+  const floorPos = Math.floor(ceiling * 0.6);
+  if (best > floorPos) return pruneDangling(slice.slice(0, best));
+  const lastSpace = slice.lastIndexOf(' ');
+  if (lastSpace > floorPos) return pruneDangling(slice.slice(0, lastSpace));
+  return pruneDangling(text.slice(0, ceiling));
+}
 
-  return { text: cleaned, wasFixed: fixes.length > 0, fixes };
+function createRecraftCompliance(
+  idealMin: number,
+  idealMax: number,
+  hardCeiling: number,
+): (text: string) => ComplianceResult {
+  return function enforceRecraftCleanup(text: string): ComplianceResult {
+    const fixes: string[] = [];
+    let cleaned = text;
+
+    // Strip parenthetical weights
+    const parenBefore = cleaned;
+    cleaned = cleaned.replace(/\(([^()]+):\d+\.?\d*\)/g, '$1');
+    if (cleaned !== parenBefore) fixes.push('Stripped parenthetical weight syntax');
+
+    // Strip double-colon weights
+    const dcBefore = cleaned;
+    cleaned = cleaned.replace(/(\w[\w\s-]*)::\d+\.?\d*/g, '$1');
+    if (cleaned !== dcBefore) fixes.push('Stripped double-colon weight syntax');
+
+    // Strip MJ parameter flags
+    const flagBefore = cleaned;
+    cleaned = cleaned.replace(/\s*--(?:ar|v|s|no|stylize|chaos|weird|tile|repeat|seed|stop|iw|niji|raw)\s*[^\s,]*/gi, '');
+    if (cleaned !== flagBefore) fixes.push('Stripped parameter flags');
+
+    // Strip CLIP quality tokens
+    const clipTokens = ['masterpiece', 'best quality', 'highly detailed', '8K', '4K', 'intricate textures', 'sharp focus'];
+    for (const token of clipTokens) {
+      const re = new RegExp(`\\b${token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b,?\\s*`, 'gi');
+      const before = cleaned;
+      cleaned = cleaned.replace(re, '');
+      if (cleaned !== before) fixes.push(`Stripped CLIP token "${token}"`);
+    }
+
+    cleaned = cleanText(cleaned);
+
+    // Enforce maxChars only (v4 pattern — gate does NOT trim to idealMax)
+    if (cleaned.length > hardCeiling) {
+      const before = cleaned.length;
+      cleaned = hardTrimAtComma(cleaned, hardCeiling);
+      fixes.push(`Trimmed to platform limit (${before} -> ${cleaned.length}/${hardCeiling})`);
+    } else if (cleaned.length > idealMax) {
+      fixes.push(`Above ideal range (${cleaned.length}/${idealMax} chars) — platform limit is ${hardCeiling}`);
+    }
+
+    // Diagnostics
+    if (cleaned.length > 0 && cleaned.length < idealMin) {
+      fixes.push(`Below ideal minimum (${cleaned.length}/${idealMin} chars)`);
+    } else if (cleaned.length >= idealMin && cleaned.length <= idealMax) {
+      fixes.push(`Good density for Recraft (${cleaned.length} chars)`);
+    }
+
+    return { text: cleaned, wasFixed: fixes.length > 0, fixes };
+  };
 }
 
 // ============================================================================
@@ -92,6 +145,7 @@ export function buildRecraftPrompt(
   const platformNote = ctx.groupKnowledge ?? '';
   const idealMin = ctx.idealMin || 200;
   const idealMax = ctx.idealMax || 400;
+  const hardCeiling = ctx.maxChars ?? 1500;
 
   const systemPrompt = `You optimise image prompts for Recraft. Strip all weight syntax and CLIP tokens. Output clean photorealistic prose.
 
@@ -144,6 +198,6 @@ Return ONLY valid JSON:
 }`;
   return {
     systemPrompt,
-    groupCompliance: enforceRecraftCleanup,
+    groupCompliance: createRecraftCompliance(idealMin, idealMax, hardCeiling),
   };
 }

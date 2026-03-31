@@ -32,61 +32,117 @@ import type { OptimiseProviderContext, GroupPromptResult } from './types';
 import type { ComplianceResult } from '@/lib/harmony-compliance';
 
 // ============================================================================
-// COMPLIANCE: Strip syntax that T5-XXL reads as literal text
+// COMPLIANCE: Strip syntax T5-XXL reads literally + enforce platform limit (v4)
 // ============================================================================
 
+const DANGLING_END_WORDS =
+  /\b(?:and|or|with|without|behind|before|after|over|under|through|into|onto|from|to|of|in|on|at|as|while|amid|beneath)\b$/i;
+
+function cleanText(text: string): string {
+  return text.replace(/\s{2,}/g, ' ').replace(/^[,\s]+|[,\s]+$/g, '').trim();
+}
+
+function pruneDangling(text: string): string {
+  let out = cleanText(text);
+  let guard = 0;
+  while (DANGLING_END_WORDS.test(out) && guard < 3) {
+    out = out.replace(DANGLING_END_WORDS, '').trim();
+    out = cleanText(out);
+    guard += 1;
+  }
+  return out;
+}
+
+function hardTrimAtComma(text: string, ceiling: number): string {
+  if (text.length <= ceiling) return text;
+  const slice = text.slice(0, ceiling + 1);
+  const lastComma = slice.lastIndexOf(',');
+  const lastSemicolon = slice.lastIndexOf(';');
+  const lastPeriod = slice.lastIndexOf('.');
+  const best = Math.max(lastComma, lastSemicolon, lastPeriod);
+  const floorPos = Math.floor(ceiling * 0.6);
+  if (best > floorPos) return pruneDangling(slice.slice(0, best));
+  const lastSpace = slice.lastIndexOf(' ');
+  if (lastSpace > floorPos) return pruneDangling(slice.slice(0, lastSpace));
+  return pruneDangling(text.slice(0, ceiling));
+}
+
 /**
- * Flux compliance gate — strip weight syntax, flags, and CLIP jargon.
- * T5-XXL will read (word:1.3) as the literal characters "(word:1.3)" in
- * the image, and --ar flags will appear as text artifacts.
+ * Flux compliance gate factory (v4 pattern).
+ * T5-XXL reads weight syntax and flags as literal text — must strip.
+ * Negative phrasing: soft warning only (was destructive regex in v3).
+ * Enforces maxChars only — does NOT trim to idealMax.
  */
-function enforceFluxCleanup(text: string): ComplianceResult {
-  const fixes: string[] = [];
-  let cleaned = text;
+function createFluxCompliance(
+  idealMin: number,
+  idealMax: number,
+  hardCeiling: number,
+): (text: string) => ComplianceResult {
+  return function enforceFluxCleanup(text: string): ComplianceResult {
+    const fixes: string[] = [];
+    let cleaned = text;
 
-  // Strip parenthetical weights: (term:1.3) → term
-  const parenBefore = cleaned;
-  cleaned = cleaned.replace(/\(([^()]+):\d+\.?\d*\)/g, '$1');
-  if (cleaned !== parenBefore) fixes.push('Stripped parenthetical weight syntax (T5 reads as literal text)');
+    // Strip parenthetical weights: (term:1.3) → term
+    const parenBefore = cleaned;
+    cleaned = cleaned.replace(/\(([^()]+):\d+\.?\d*\)/g, '$1');
+    if (cleaned !== parenBefore) fixes.push('Stripped parenthetical weight syntax (T5 reads as literal text)');
 
-  // Strip double-colon weights: term::1.3 → term
-  const dcBefore = cleaned;
-  cleaned = cleaned.replace(/(\w[\w\s-]*)::\d+\.?\d*/g, '$1');
-  if (cleaned !== dcBefore) fixes.push('Stripped double-colon weight syntax');
+    // Strip double-colon weights: term::1.3 → term
+    const dcBefore = cleaned;
+    cleaned = cleaned.replace(/(\w[\w\s-]*)::\d+\.?\d*/g, '$1');
+    if (cleaned !== dcBefore) fixes.push('Stripped double-colon weight syntax');
 
-  // Strip MJ parameter flags — T5 would render these as text in the image
-  const flagBefore = cleaned;
-  cleaned = cleaned.replace(/\s*--(?:ar|v|s|no|stylize|chaos|weird|tile|repeat|seed|stop|iw|niji|raw)\s*[^\s,]*/gi, '');
-  if (cleaned !== flagBefore) fixes.push('Stripped parameter flags (would appear as text in image)');
+    // Strip MJ parameter flags — T5 would render these as text in the image
+    const flagBefore = cleaned;
+    cleaned = cleaned.replace(/\s*--(?:ar|v|s|no|stylize|chaos|weird|tile|repeat|seed|stop|iw|niji|raw)\s*[^\s,]*/gi, '');
+    if (cleaned !== flagBefore) fixes.push('Stripped parameter flags (would appear as text in image)');
 
-  // Strip CLIP quality tokens — T5 doesn't benefit from these
-  const clipTokens = ['masterpiece', 'best quality', 'highly detailed', '8K', '4K', 'intricate textures', 'sharp focus'];
-  for (const token of clipTokens) {
-    const re = new RegExp(`\\b${token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b,?\\s*`, 'gi');
-    const before = cleaned;
-    cleaned = cleaned.replace(re, '');
-    if (cleaned !== before) fixes.push(`Stripped CLIP token "${token}" (meaningless to T5 encoder)`);
-  }
+    // Strip CLIP quality tokens — T5 doesn't benefit from these
+    const clipTokens = ['masterpiece', 'best quality', 'highly detailed', '8K', '4K', 'intricate textures', 'sharp focus'];
+    for (const token of clipTokens) {
+      const re = new RegExp(`\\b${token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b,?\\s*`, 'gi');
+      const before = cleaned;
+      cleaned = cleaned.replace(re, '');
+      if (cleaned !== before) fixes.push(`Stripped CLIP token "${token}" (meaningless to T5 encoder)`);
+    }
 
-  // Strip SD-style quality boosters that T5 reads literally
-  const sdTokens = ['worst quality', 'low quality', 'normal quality', 'bad anatomy', 'bad hands'];
-  for (const token of sdTokens) {
-    const re = new RegExp(`\\b${token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b,?\\s*`, 'gi');
-    const before = cleaned;
-    cleaned = cleaned.replace(re, '');
-    if (cleaned !== before) fixes.push(`Stripped SD negative token "${token}"`);
-  }
+    // Strip SD-style quality boosters that T5 reads literally
+    const sdTokens = ['worst quality', 'low quality', 'normal quality', 'bad anatomy', 'bad hands'];
+    for (const token of sdTokens) {
+      const re = new RegExp(`\\b${token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b,?\\s*`, 'gi');
+      const before = cleaned;
+      cleaned = cleaned.replace(re, '');
+      if (cleaned !== before) fixes.push(`Stripped SD negative token "${token}"`);
+    }
 
-  // Strip negative phrases — T5-XXL may render excluded words as literal text
-  // "without blur" → strip, "no watermark" → strip, "avoid modern" → strip
-  const negBefore = cleaned;
-  cleaned = cleaned.replace(/\b(?:without|no|avoid|exclude|not)\s+[\w\s]{2,30}(?:,\s*)?/gi, '');
-  if (cleaned !== negBefore) fixes.push('Stripped negative phrases (T5 may render excluded words as text)');
+    cleaned = cleanText(cleaned);
 
-  // Clean up double spaces and leading/trailing commas
-  cleaned = cleaned.replace(/\s{2,}/g, ' ').replace(/^[,\s]+|[,\s]+$/g, '').trim();
+    // Soft warning: negative phrasing (negativeSupport: none)
+    // v4 change: was destructive regex that mangled prompts.
+    // Now detection + warning only. System prompt already instructs
+    // GPT to use affirmative language.
+    if (/\b(?:without|no|avoid|exclude|not)\s+\w/i.test(cleaned)) {
+      fixes.push('Contains negative phrasing — Flux does not support negatives and T5 may render excluded words as text');
+    }
 
-  return { text: cleaned, wasFixed: fixes.length > 0, fixes };
+    // Enforce maxChars only (v4 pattern)
+    if (cleaned.length > hardCeiling) {
+      const before = cleaned.length;
+      cleaned = hardTrimAtComma(cleaned, hardCeiling);
+      fixes.push(`Trimmed to platform limit (${before} -> ${cleaned.length}/${hardCeiling})`);
+    } else if (cleaned.length > idealMax) {
+      fixes.push(`Above ideal range (${cleaned.length}/${idealMax} chars) — platform limit is ${hardCeiling}`);
+    }
+
+    // Diagnostics
+    if (cleaned.length > 0 && cleaned.length < idealMin) {
+      fixes.push(`Below ideal minimum (${cleaned.length}/${idealMin} chars)`);
+    } else if (cleaned.length >= idealMin && cleaned.length <= idealMax) {
+      fixes.push(`Good density for Flux (${cleaned.length} chars)`);
+    }
+
+    return { text: cleaned, wasFixed: fixes.length > 0, fixes };
+  };
 }
 
 // ============================================================================
@@ -100,6 +156,7 @@ export function buildFluxArchitecturePrompt(
   const platformNote = ctx.groupKnowledge ?? '';
   const idealMin = ctx.idealMin || 300;
   const idealMax = ctx.idealMax || 500;
+  const hardCeiling = ctx.maxChars ?? 2000;
 
   const systemPrompt = `You are an expert prompt optimiser for Flux (Black Forest Labs). You are optimising for "${ctx.name}".
 
@@ -173,7 +230,8 @@ Return ONLY valid JSON:
 }`;
   return {
     systemPrompt,
-    // Group compliance: strip any surviving syntax that T5-XXL would read literally.
-    groupCompliance: enforceFluxCleanup,
+    // v4 pattern: gate enforces maxChars (2000), NOT idealMax (500).
+    // Destructive negative stripping replaced with soft warning.
+    groupCompliance: createFluxCompliance(idealMin, idealMax, hardCeiling),
   };
 }

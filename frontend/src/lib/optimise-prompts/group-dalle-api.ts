@@ -32,45 +32,105 @@ import type { OptimiseProviderContext, GroupPromptResult } from './types';
 import type { ComplianceResult } from '@/lib/harmony-compliance';
 
 // ============================================================================
-// COMPLIANCE: Strip syntax that DALL-E ignores or misinterprets
+// COMPLIANCE: Strip syntax DALL-E ignores + enforce platform limit (v4 pattern)
 // ============================================================================
 
-/**
- * DALL-E compliance gate — strip weight syntax, flags, and CLIP jargon.
- * DALL-E's GPT-4 rewriter will mangle any surviving syntax.
- */
-function enforceDalleCleanup(text: string): ComplianceResult {
-  const fixes: string[] = [];
-  let cleaned = text;
+const DANGLING_END_WORDS =
+  /\b(?:and|or|with|without|behind|before|after|over|under|through|into|onto|from|to|of|in|on|at|as|while|amid|beneath)\b$/i;
 
-  // Strip parenthetical weights: (term:1.3) → term
-  const parenBefore = cleaned;
-  cleaned = cleaned.replace(/\(([^()]+):\d+\.?\d*\)/g, '$1');
-  if (cleaned !== parenBefore) fixes.push('Stripped parenthetical weight syntax');
+function cleanText(text: string): string {
+  return text.replace(/\s{2,}/g, ' ').replace(/^[,\s]+|[,\s]+$/g, '').trim();
+}
 
-  // Strip double-colon weights: term::1.3 → term
-  const dcBefore = cleaned;
-  cleaned = cleaned.replace(/(\w[\w\s-]*)::\d+\.?\d*/g, '$1');
-  if (cleaned !== dcBefore) fixes.push('Stripped double-colon weight syntax');
-
-  // Strip MJ parameter flags
-  const flagBefore = cleaned;
-  cleaned = cleaned.replace(/\s*--(?:ar|v|s|no|stylize|chaos|weird|tile|repeat|seed|stop|iw|niji|raw)\s*[^\s,]*/gi, '');
-  if (cleaned !== flagBefore) fixes.push('Stripped parameter flags');
-
-  // Strip CLIP quality tokens — GPT-4 rewriter ignores these
-  const clipTokens = ['masterpiece', 'best quality', 'highly detailed', '8K', '4K', 'intricate textures', 'sharp focus'];
-  for (const token of clipTokens) {
-    const re = new RegExp(`\\b${token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b,?\\s*`, 'gi');
-    const before = cleaned;
-    cleaned = cleaned.replace(re, '');
-    if (cleaned !== before) fixes.push(`Stripped CLIP token "${token}"`);
+function pruneDangling(text: string): string {
+  let out = cleanText(text);
+  let guard = 0;
+  while (DANGLING_END_WORDS.test(out) && guard < 3) {
+    out = out.replace(DANGLING_END_WORDS, '').trim();
+    out = cleanText(out);
+    guard += 1;
   }
+  return out;
+}
 
-  // Clean up double spaces and leading/trailing commas
-  cleaned = cleaned.replace(/\s{2,}/g, ' ').replace(/^[,\s]+|[,\s]+$/g, '').trim();
+function hardTrimAtComma(text: string, ceiling: number): string {
+  if (text.length <= ceiling) return text;
+  const slice = text.slice(0, ceiling + 1);
+  const lastComma = slice.lastIndexOf(',');
+  const lastSemicolon = slice.lastIndexOf(';');
+  const lastPeriod = slice.lastIndexOf('.');
+  const best = Math.max(lastComma, lastSemicolon, lastPeriod);
+  const floorPos = Math.floor(ceiling * 0.6);
+  if (best > floorPos) return pruneDangling(slice.slice(0, best));
+  const lastSpace = slice.lastIndexOf(' ');
+  if (lastSpace > floorPos) return pruneDangling(slice.slice(0, lastSpace));
+  return pruneDangling(text.slice(0, ceiling));
+}
 
-  return { text: cleaned, wasFixed: fixes.length > 0, fixes };
+/**
+ * DALL-E compliance gate factory (v4 pattern).
+ * Strips syntax GPT-4's rewriter would mangle.
+ * Enforces maxChars only — does NOT trim to idealMax.
+ * negativeSupport: none — soft warning for negative phrasing.
+ */
+function createDalleCompliance(
+  idealMin: number,
+  idealMax: number,
+  hardCeiling: number,
+): (text: string) => ComplianceResult {
+  return function enforceDalleCleanup(text: string): ComplianceResult {
+    const fixes: string[] = [];
+    let cleaned = text;
+
+    // Strip parenthetical weights: (term:1.3) → term
+    const parenBefore = cleaned;
+    cleaned = cleaned.replace(/\(([^()]+):\d+\.?\d*\)/g, '$1');
+    if (cleaned !== parenBefore) fixes.push('Stripped parenthetical weight syntax');
+
+    // Strip double-colon weights: term::1.3 → term
+    const dcBefore = cleaned;
+    cleaned = cleaned.replace(/(\w[\w\s-]*)::\d+\.?\d*/g, '$1');
+    if (cleaned !== dcBefore) fixes.push('Stripped double-colon weight syntax');
+
+    // Strip MJ parameter flags
+    const flagBefore = cleaned;
+    cleaned = cleaned.replace(/\s*--(?:ar|v|s|no|stylize|chaos|weird|tile|repeat|seed|stop|iw|niji|raw)\s*[^\s,]*/gi, '');
+    if (cleaned !== flagBefore) fixes.push('Stripped parameter flags');
+
+    // Strip CLIP quality tokens — GPT-4 rewriter ignores these
+    const clipTokens = ['masterpiece', 'best quality', 'highly detailed', '8K', '4K', 'intricate textures', 'sharp focus'];
+    for (const token of clipTokens) {
+      const re = new RegExp(`\\b${token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b,?\\s*`, 'gi');
+      const before = cleaned;
+      cleaned = cleaned.replace(re, '');
+      if (cleaned !== before) fixes.push(`Stripped CLIP token "${token}"`);
+    }
+
+    cleaned = cleanText(cleaned);
+
+    // Soft warning: negative phrasing (negativeSupport: none)
+    if (/\bwithout\s+\w/i.test(cleaned) || /\bno\s+\w/i.test(cleaned)) {
+      fixes.push('Contains negative phrasing — DALL-E does not reliably support negatives');
+    }
+
+    // Enforce maxChars only (v4 pattern)
+    if (cleaned.length > hardCeiling) {
+      const before = cleaned.length;
+      cleaned = hardTrimAtComma(cleaned, hardCeiling);
+      fixes.push(`Trimmed to platform limit (${before} -> ${cleaned.length}/${hardCeiling})`);
+    } else if (cleaned.length > idealMax) {
+      fixes.push(`Above ideal range (${cleaned.length}/${idealMax} chars) — platform limit is ${hardCeiling}`);
+    }
+
+    // Diagnostics
+    if (cleaned.length > 0 && cleaned.length < idealMin) {
+      fixes.push(`Below ideal minimum (${cleaned.length}/${idealMin} chars)`);
+    } else if (cleaned.length >= idealMin && cleaned.length <= idealMax) {
+      fixes.push(`Good density for DALL-E (${cleaned.length} chars)`);
+    }
+
+    return { text: cleaned, wasFixed: fixes.length > 0, fixes };
+  };
 }
 
 // ============================================================================
@@ -84,6 +144,7 @@ export function buildDalleApiPrompt(
   const platformNote = ctx.groupKnowledge ?? '';
   const idealMin = ctx.idealMin || 200;
   const idealMax = ctx.idealMax || 400;
+  const hardCeiling = ctx.maxChars ?? 4000;
 
   const systemPrompt = `You are an expert prompt optimiser for DALL-E 3 (OpenAI). You are optimising for "${ctx.name}".
 
@@ -153,7 +214,7 @@ Return ONLY valid JSON:
 }`;
   return {
     systemPrompt,
-    // Group compliance: strip any surviving syntax that DALL-E would choke on.
-    groupCompliance: enforceDalleCleanup,
+    // v4 pattern: gate enforces maxChars (4000), NOT idealMax (400)
+    groupCompliance: createDalleCompliance(idealMin, idealMax, hardCeiling),
   };
 }

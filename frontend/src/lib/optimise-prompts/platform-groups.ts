@@ -25,13 +25,10 @@
 /**
  * Group identifiers for prompt optimisation templates.
  *
- * 'sd-clip-parenthetical'  — Stable Diffusion CLIP with (term:weight) syntax
  * 'sd-clip-double-colon'   — SD CLIP with term::weight syntax (Leonardo family)
  * 'midjourney'             — Midjourney dedicated (:: prose + -- parameters)
- * 'clean-natural-language'  — Plain NL, no weights, no negatives (T4 ONLY — T3 moved to dedicated builders)
  * 'dalle-api'              — DALL-E API family (NL + structured API params)
  * 'flux-architecture'      — T5-XXL encoder, prose-only, no weights
- * 'video-cinematic'        — Video-first platforms (Runway, Luma, Kling)
  * 'novelai'                — NovelAI dedicated ({{{term}}} triple-brace syntax)
  * 'ideogram'               — Ideogram dedicated (text-in-image, quote syntax)
  * 'recraft'                — Recraft dedicated (SVG, style taxonomy)
@@ -51,13 +48,10 @@
  * 'nl-playground'          — Playground (PGv3 LLM encoder)
  */
 export type PlatformGroupId =
-  | 'sd-clip-parenthetical'
   | 'sd-clip-double-colon'
   | 'midjourney'
-  | 'clean-natural-language'
   | 'dalle-api'
   | 'flux-architecture'
-  | 'video-cinematic'
   | 'novelai'
   | 'ideogram'
   | 'recraft'
