@@ -350,11 +350,29 @@ export function reorderSubjectFirst(text: string): {
   }
 
   // Pattern A: swap opener to end, subject+rest to front
+  // Smart placement: insert opener after subject+verb+object, BEFORE
+  // participial clauses (", holding...", ", her...", ", with...", ", as...")
+  // rather than dumping it at the very end of the sentence.
   const capitalArticle = article.charAt(0).toUpperCase() + article.slice(1);
   const lowerSetting = settingClause.charAt(0).toLowerCase() + settingClause.slice(1);
   const cleanSubjectAndRest = subjectAndRest.replace(/\.\s*$/, '');
 
-  const reorderedFirst = `${capitalArticle} ${cleanSubjectAndRest} ${lowerSetting}.`;
+  // Find the first clause-break comma: followed by a participial, possessive,
+  // prepositional continuation, or conjunction that starts a new clause.
+  // This is NOT a noun-internal comma ("a weathered, moss-covered shrine").
+  const clauseBreakRe = /,\s+(?:holding|carrying|wearing|gripping|clutching|watching|casting|leaning|resting|pulling|pushing|standing|sitting|kneeling|reaching|her|his|its|their|with|as|while|where|and\s+(?:a|an|the|one)\s)\b/i;
+  const clauseBreak = cleanSubjectAndRest.match(clauseBreakRe);
+
+  let reorderedFirst: string;
+  if (clauseBreak && clauseBreak.index !== undefined && clauseBreak.index > 0) {
+    // Insert opener before the clause break
+    const beforeBreak = cleanSubjectAndRest.slice(0, clauseBreak.index);
+    const afterBreak = cleanSubjectAndRest.slice(clauseBreak.index); // includes ", holding..."
+    reorderedFirst = `${capitalArticle} ${beforeBreak} ${lowerSetting}${afterBreak}.`;
+  } else {
+    // No clause break found — append opener to end (safe fallback)
+    reorderedFirst = `${capitalArticle} ${cleanSubjectAndRest} ${lowerSetting}.`;
+  }
 
   const reordered = restOfText
     ? `${reorderedFirst} ${restOfText}`
