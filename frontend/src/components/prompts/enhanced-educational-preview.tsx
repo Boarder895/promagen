@@ -626,11 +626,23 @@ export default function EnhancedEducationalPreview({
 
   // Call 3 input text: for NL group providers that are T4 (e.g. Canva),
   // send T3 (Natural Language) text instead — it has far more visual detail.
-  // T3 is the richest prose tier, giving GPT the best starting material to
-  // enrich against the original human description.
+  // T3 is the richest prose tier, giving GPT the best starting material.
+  //
+  // EXCEPTION: reorder_only and pass_through modes operate on the DISPLAYED
+  // text (T4), not hidden T3. The user expects the optimised output to be
+  // a rearrangement of what they see, not a different text entirely.
   const call3InputText = useMemo(() => {
     if (!selectedProviderId) return activeTierPromptText;
     const group = getProviderGroup(selectedProviderId);
+    const format = getPlatformFormat(selectedProviderId);
+    const mode = format.call3Mode;
+
+    // Deterministic modes must use the displayed text (T4)
+    if (mode === 'reorder_only' || mode === 'pass_through' || mode === 'format_only') {
+      return activeTierPromptText;
+    }
+
+    // GPT rewrite modes: T4 NL platforms send T3 for richer input
     if (group?.startsWith('nl-') && activeTier === 4) {
       const source = aiTierPrompts ?? generatedPrompts;
       const t3Text = source.tier3 ?? '';
