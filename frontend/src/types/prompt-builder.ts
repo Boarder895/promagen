@@ -154,6 +154,12 @@ export interface PlatformFormat {
   /** Call 3 group knowledge — short platform-specific trait injected into the optimisation system prompt.
    *  Lives here (not in builder code) so all platform traits have one maintenance point. */
   groupKnowledge?: string;
+  /** Call 3 optimisation mode — controls whether GPT is called or deterministic transform is used.
+   *  reorder_only: deterministic subject-front-load, no GPT
+   *  format_only: group gate cleanup only, no GPT
+   *  gpt_rewrite: full GPT path
+   *  pass_through: return assembled prompt unchanged */
+  call3Mode?: 'reorder_only' | 'format_only' | 'gpt_rewrite' | 'pass_through' | 'mj_deterministic';
 }
 
 /** Full platform formats JSON structure */

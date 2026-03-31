@@ -61,6 +61,9 @@ interface RawPlatformEntry {
   impactPriority?: string[];
   groupKnowledge?: string;
 
+  // Call 3 routing (from platform-config)
+  call3Mode?: string;
+
   // Limits (from prompt-limits)
   maxChars?: number | null;
   idealMin?: number;
@@ -115,6 +118,7 @@ function derivePlatformFormat(entry: RawPlatformEntry): PlatformFormat {
     weightedCategories: entry.weightedCategories,
     impactPriority: entry.impactPriority as PlatformFormat['impactPriority'],
     groupKnowledge: entry.groupKnowledge,
+    call3Mode: entry.call3Mode as PlatformFormat['call3Mode'],
   };
 }
 

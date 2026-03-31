@@ -28,6 +28,10 @@ import { enforceT1Syntax, enforceNegativeContradiction } from "@/lib/harmony-com
 import type { ComplianceContext } from "@/lib/harmony-compliance";
 import { resolveGroupPrompt } from "@/lib/optimise-prompts";
 import { getProviderGroup } from "@/lib/optimise-prompts/platform-groups";
+import { extractAnchors, analyseOptimisationNeed, reorderSubjectFirst } from "@/lib/optimise-prompts/preflight";
+import type { Call3Mode } from "@/lib/optimise-prompts/preflight";
+import { runMjDeterministic } from "@/lib/optimise-prompts/midjourney-deterministic";
+import { checkRegression, defaultRegressionOptions, checkMjDeterministicRegression } from "@/lib/optimise-prompts/regression-guard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -66,6 +70,8 @@ const ProviderContextSchema = z.object({
   categoryOrder: z.array(z.string().max(30)).max(15).optional(),
   /** Platform-specific trait for system prompt (from platform-formats.json) */
   groupKnowledge: z.string().max(300).optional(),
+  /** Call 3 routing mode — controls whether GPT is called */
+  call3Mode: z.enum(["reorder_only", "format_only", "gpt_rewrite", "pass_through", "mj_deterministic"]).optional(),
 });
 
 const RequestSchema = z.object({
@@ -208,6 +214,89 @@ export async function POST(req: NextRequest): Promise<Response> {
     (providerGroup?.endsWith("-dedicated") && !sdClipDedicated.has(providerGroup ?? "")) ||
     false;
 
+  // ── Preflight decision engine ──────────────────────────────────────
+  // Runs BEFORE GPT. Decides whether GPT is needed or a deterministic
+  // transform suffices. Most Tier 4 platforms skip GPT entirely.
+  const { maxChars } = parsed.data.providerContext;
+  const hardCeiling = maxChars ?? 5000;
+  const call3Mode = (parsed.data.providerContext.call3Mode ?? 'gpt_rewrite') as Call3Mode;
+  const anchors = extractAnchors(sanitisedPrompt);
+  const decision = analyseOptimisationNeed(sanitisedPrompt, call3Mode, hardCeiling, anchors);
+
+  // ── Deterministic fast path (no GPT) ───────────────────────────────
+  if (decision === 'PASS_THROUGH' || decision === 'REORDER_ONLY' || decision === 'FORMAT_ONLY' || decision === 'MJ_DETERMINISTIC_ONLY') {
+    let optimised = sanitisedPrompt;
+    const changes: string[] = [];
+
+    // MJ_DETERMINISTIC_ONLY: parse, validate, normalise Midjourney structure
+    if (decision === 'MJ_DETERMINISTIC_ONLY') {
+      const mj = runMjDeterministic(sanitisedPrompt);
+      optimised = mj.result.text;
+      changes.push(...mj.result.changes);
+
+      // Surface validation warnings (thin clauses, etc.)
+      if (mj.validation.warnings.length > 0) {
+        changes.push(...mj.validation.warnings);
+      }
+
+      // Lightweight MJ regression check (belt-and-braces)
+      // Checks: clause count, weights, params, --no, no parenthetical leaks
+      const mjRegression = checkMjDeterministicRegression(sanitisedPrompt, optimised);
+      if (!mjRegression.passed) {
+        console.warn("[optimise-prompt] MJ deterministic regression:", mjRegression.regressions.join('; '));
+        optimised = sanitisedPrompt;
+        changes.length = 0;
+        changes.push(`MJ deterministic regression: ${mjRegression.regressions.join('; ')}`);
+        changes.push('Returned assembled prompt unchanged');
+      }
+    }
+    // REORDER_ONLY: deterministic subject-front-load
+    else if (decision === 'REORDER_ONLY') {
+      const reorderResult = reorderSubjectFirst(sanitisedPrompt);
+      if (reorderResult) {
+        optimised = reorderResult.reordered;
+        changes.push(...reorderResult.changes);
+      } else {
+        // Reorder not confident — pass through unchanged
+        changes.push('Subject reorder not applicable — returned unchanged');
+      }
+    } else if (decision === 'PASS_THROUGH') {
+      changes.push('Prompt already optimised for platform — no changes needed');
+    } else {
+      changes.push('Format-only cleanup applied');
+    }
+
+    // Run group compliance gate (syntax cleanup, maxChars enforcement)
+    if (groupCompliance) {
+      const gateResult = groupCompliance(optimised);
+      if (gateResult.wasFixed) {
+        optimised = gateResult.text;
+        changes.push(...gateResult.fixes);
+      }
+    }
+
+    // Negative contradiction guard (same as GPT path)
+    // Not applicable for deterministic path — no negative generated
+
+    return NextResponse.json(
+      {
+        result: {
+          optimised,
+          negative: undefined,
+          changes,
+          charCount: optimised.length,
+          tokenEstimate: Math.round(optimised.length / 4),
+        },
+      },
+      {
+        status: 200,
+        headers: { "Cache-Control": "no-store" },
+      },
+    );
+  }
+
+  // ── GPT path (decision === 'GPT_REWRITE' or 'COMPRESS_ONLY') ──────
+
   // ── Compute optimisation zone (api-3.md §3) ──────────────────────────
   // Zone is determined by the reference draft length relative to the
   // platform's limits. Injected into the user message, NOT the system
@@ -221,8 +310,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   // idealMin: used for ENRICH detection only (never shown to GPT)
   // idealMax: NOT used in route — stays in config for Call 2 / standard builder
   // maxChars: the only number GPT sees (platform hard limit)
-  const { idealMin, maxChars } = parsed.data.providerContext;
-  const hardCeiling = maxChars ?? 5000;
+  const { idealMin } = parsed.data.providerContext;
   const zone: 'ENRICH' | 'REFINE' | 'COMPRESS' =
     promptLength < idealMin ? 'ENRICH'
     : promptLength <= hardCeiling ? 'REFINE'
@@ -378,23 +466,97 @@ export async function POST(req: NextRequest): Promise<Response> {
       }
     }
 
-    // Step 2: Generic syntax enforcement (always runs as safety net)
-    const compCtx: ComplianceContext = {
-      weightingSyntax: parsed.data.providerContext.weightingSyntax,
-      supportsWeighting: parsed.data.providerContext.supportsWeighting ?? false,
-      providerName: parsed.data.providerContext.name,
-      tier: parsed.data.providerContext.tier,
-    };
+    // Step 2: Syntax enforcement — tier-aware
+    //
+    // All 40 known platforms have their own group compliance gate (Step 1)
+    // that handles platform-specific syntax. The generic enforceT1Syntax
+    // only runs as a fallback for unknown platforms (no group gate).
+    //
+    // Previously this ran on ALL platforms and destroyed valid Midjourney
+    // ::weight syntax because platform-config was missing supportsWeighting.
+    if (!groupCompliance) {
+      // Unknown platform — no group gate ran, so generic safety net is needed
+      const compCtx: ComplianceContext = {
+        weightingSyntax: parsed.data.providerContext.weightingSyntax,
+        supportsWeighting: parsed.data.providerContext.supportsWeighting ?? false,
+        providerName: parsed.data.providerContext.name,
+        tier: parsed.data.providerContext.tier,
+      };
 
-    const syntaxResult = enforceT1Syntax(result.optimised, compCtx);
-    if (syntaxResult.wasFixed) {
-      result.optimised = syntaxResult.text;
-      result.charCount = syntaxResult.text.length;
-      result.changes = [...result.changes, ...syntaxResult.fixes];
-      console.debug(
-        "[optimise-prompt] Compliance fix:",
-        syntaxResult.fixes.join("; "),
+      const syntaxResult = enforceT1Syntax(result.optimised, compCtx);
+      if (syntaxResult.wasFixed) {
+        result.optimised = syntaxResult.text;
+        result.charCount = syntaxResult.text.length;
+        result.changes = [...result.changes, ...syntaxResult.fixes];
+        console.debug(
+          "[optimise-prompt] Generic compliance fix:",
+          syntaxResult.fixes.join("; "),
+        );
+      }
+    }
+
+    // Step 2.5: T2 Midjourney weight validator — fail hard, not silently degrade
+    //
+    // If the assembled prompt had ::weight clauses and the optimised output
+    // lost them all, the output is worse than the input. Reject GPT's output
+    // and return the assembled prompt with only the group gate applied.
+    const inputHadWeights = /\w::[\d.]+/.test(sanitisedPrompt);
+    const outputHasWeights = /\w::[\d.]+/.test(result.optimised);
+    if (inputHadWeights && !outputHasWeights) {
+      console.warn(
+        "[optimise-prompt] T2 weight regression detected — input had ::weights, output lost them. Falling back to assembled prompt.",
       );
+      result.optimised = sanitisedPrompt;
+      result.charCount = sanitisedPrompt.length;
+      result.changes = ["Weight regression detected — returned assembled prompt unchanged"];
+    }
+
+    // Step 3: Regression guard — "no worse than input"
+    //
+    // Compares GPT's output against the assembled input on platform-relevant
+    // structural metrics. If the output regressed (dropped anchors, invented
+    // content, verb substitution, sentence collapse, weight loss), reject
+    // GPT's output and return the assembled prompt unchanged.
+    //
+    // This is the final safety net. GPT got every chance — system prompt,
+    // zone block, compliance gates. If it still made things worse, the user
+    // gets back what they had.
+    const regressionOpts = defaultRegressionOptions(
+      parsed.data.providerContext.tier,
+      call3Mode,
+      parsed.data.providerContext.supportsWeighting ?? false,
+    );
+    const regressionCheck = checkRegression(
+      sanitisedPrompt,
+      result.optimised,
+      regressionOpts,
+    );
+
+    if (!regressionCheck.passed) {
+      console.warn(
+        "[optimise-prompt] Regression guard failed:",
+        regressionCheck.regressions.join("; "),
+      );
+
+      // Fall back to assembled prompt — deterministic fixes only
+      let fallback = sanitisedPrompt;
+      const fallbackChanges = [
+        `Regression guard: ${regressionCheck.regressions.join('; ')}`,
+        'Returned assembled prompt — GPT output rejected',
+      ];
+
+      // Still run group compliance on the fallback (syntax cleanup)
+      if (groupCompliance) {
+        const gateResult = groupCompliance(fallback);
+        if (gateResult.wasFixed) {
+          fallback = gateResult.text;
+          fallbackChanges.push(...gateResult.fixes);
+        }
+      }
+
+      result.optimised = fallback;
+      result.charCount = fallback.length;
+      result.changes = fallbackChanges;
     }
 
     // ── Always measure actual charCount — GPT self-reports are unreliable ──

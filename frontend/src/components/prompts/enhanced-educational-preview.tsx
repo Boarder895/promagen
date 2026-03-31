@@ -770,6 +770,7 @@ export default function EnhancedEducationalPreview({
       negativeSupport: format.negativeSupport,
       categoryOrder: format.categoryOrder,
       groupKnowledge: format.groupKnowledge,
+      call3Mode: format.call3Mode,
     };
   }, [selectedProviderId, selectedProvider?.name]);
 

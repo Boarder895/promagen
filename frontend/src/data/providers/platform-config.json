@@ -405,7 +405,9 @@
       "tier": 3,
       "shorthandLevel": "MINIMAL",
       "compressionNotes": "Consumer-focused stock platform",
-      "groupKnowledge": "Stock photography platform with multiple style engines. NL prose. No special syntax."
+      "groupKnowledge": "Stock photography platform with multiple style engines. NL prose. No special syntax.",
+      "call3Mode": "gpt_rewrite",
+      "semanticRewriteAllowed": true
     },
     "adobe-firefly": {
       "promptStyle": "natural",
@@ -454,7 +456,9 @@
       ],
       "tier": 3,
       "shorthandLevel": "LOW",
-      "compressionNotes": "Handles descriptive prompts well"
+      "compressionNotes": "Handles descriptive prompts well",
+      "call3Mode": "gpt_rewrite",
+      "semanticRewriteAllowed": true
     },
     "artbreeder": {
       "promptStyle": "natural",
@@ -501,7 +505,9 @@
       ],
       "shorthandLevel": "MINIMAL",
       "compressionNotes": "Mixing-focused platform",
-      "groupKnowledge": "Hybrid platform: text-to-image uses NL prose, Splicer mode uses sliders. SDXL and Flux backends."
+      "groupKnowledge": "Hybrid platform: text-to-image uses NL prose, Splicer mode uses sliders. SDXL and Flux backends.",
+      "call3Mode": "gpt_rewrite",
+      "semanticRewriteAllowed": true
     },
     "artguru": {
       "promptStyle": "natural",
@@ -558,7 +564,9 @@
         "community-research"
       ],
       "shorthandLevel": "MINIMAL",
-      "compressionNotes": "Anime-focused SD variant"
+      "compressionNotes": "Anime-focused SD variant",
+      "call3Mode": "reorder_only",
+      "semanticRewriteAllowed": false
     },
     "artistly": {
       "promptStyle": "natural",
@@ -612,7 +620,9 @@
         "platform-testing"
       ],
       "shorthandLevel": "MINIMAL",
-      "compressionNotes": "Consumer-focused, uses natural language"
+      "compressionNotes": "Consumer-focused, uses natural language",
+      "call3Mode": "reorder_only",
+      "semanticRewriteAllowed": false
     },
     "bing": {
       "promptStyle": "natural",
@@ -661,7 +671,9 @@
       ],
       "tier": 3,
       "shorthandLevel": "LOW",
-      "compressionNotes": "DALL-E 3 backend"
+      "compressionNotes": "DALL-E 3 backend",
+      "call3Mode": "gpt_rewrite",
+      "semanticRewriteAllowed": true
     },
     "bluewillow": {
       "promptStyle": "natural",
@@ -720,7 +732,9 @@
         "community-research"
       ],
       "shorthandLevel": "MINIMAL",
-      "compressionNotes": "Midjourney-like architecture"
+      "compressionNotes": "Midjourney-like architecture",
+      "call3Mode": "reorder_only",
+      "semanticRewriteAllowed": false
     },
     "canva": {
       "promptStyle": "natural",
@@ -767,7 +781,9 @@
         "magic-media-faq"
       ],
       "shorthandLevel": "MINIMAL",
-      "compressionNotes": "Consumer design tool, simple prompts only"
+      "compressionNotes": "Consumer design tool, simple prompts only",
+      "call3Mode": "gpt_rewrite",
+      "semanticRewriteAllowed": true
     },
     "clipdrop": {
       "promptStyle": "natural",
@@ -824,7 +840,9 @@
         "clipdrop-api"
       ],
       "shorthandLevel": "MINIMAL",
-      "compressionNotes": "Stability AI platform"
+      "compressionNotes": "Stability AI platform",
+      "call3Mode": "reorder_only",
+      "semanticRewriteAllowed": false
     },
     "craiyon": {
       "promptStyle": "natural",
@@ -871,7 +889,9 @@
       ],
       "tier": 4,
       "shorthandLevel": "MINIMAL",
-      "compressionNotes": "DALL-E Mini successor, very short prompts"
+      "compressionNotes": "DALL-E Mini successor, very short prompts",
+      "call3Mode": "reorder_only",
+      "semanticRewriteAllowed": false
     },
     "deepai": {
       "promptStyle": "natural",
@@ -918,7 +938,9 @@
         "platform-testing"
       ],
       "shorthandLevel": "MINIMAL",
-      "compressionNotes": "Basic API-first generator"
+      "compressionNotes": "Basic API-first generator",
+      "call3Mode": "gpt_rewrite",
+      "semanticRewriteAllowed": true
     },
     "dreamlike": {
       "promptStyle": "keywords",
@@ -1001,7 +1023,10 @@
       ],
       "tier": 1,
       "shorthandLevel": "FULL",
-      "compressionNotes": "SD-based platform"
+      "compressionNotes": "SD-based platform",
+      "supportsWeighting": true,
+      "call3Mode": "format_only",
+      "semanticRewriteAllowed": false
     },
     "dreamstudio": {
       "promptStyle": "keywords",
@@ -1085,7 +1110,9 @@
       ],
       "tier": 1,
       "shorthandLevel": "FULL",
-      "compressionNotes": "Stability AI flagship"
+      "compressionNotes": "Stability AI flagship",
+      "call3Mode": "format_only",
+      "semanticRewriteAllowed": false
     },
     "flux": {
       "promptStyle": "keywords",
@@ -1151,7 +1178,9 @@
       ],
       "tier": 3,
       "shorthandLevel": "MEDIUM",
-      "compressionNotes": "T5 encoder, handles longer prompts"
+      "compressionNotes": "T5 encoder, handles longer prompts",
+      "call3Mode": "gpt_rewrite",
+      "semanticRewriteAllowed": true
     },
     "fotor": {
       "promptStyle": "keywords",
@@ -1225,7 +1254,9 @@
         "sharp focus",
         "8K",
         "intricate textures"
-      ]
+      ],
+      "call3Mode": "format_only",
+      "semanticRewriteAllowed": false
     },
     "google-imagen": {
       "promptStyle": "natural",
@@ -1275,7 +1306,9 @@
       ],
       "tier": 3,
       "shorthandLevel": "LOW",
-      "compressionNotes": "Natural language preferred"
+      "compressionNotes": "Natural language preferred",
+      "call3Mode": "gpt_rewrite",
+      "semanticRewriteAllowed": true
     },
     "hotpot": {
       "promptStyle": "natural",
@@ -1324,7 +1357,9 @@
       ],
       "shorthandLevel": "LOW",
       "compressionNotes": "Marketing graphics focus",
-      "groupKnowledge": "180+ style presets do the creative work. SDXL backbone abstracted away. 380-char limit."
+      "groupKnowledge": "180+ style presets do the creative work. SDXL backbone abstracted away. 380-char limit.",
+      "call3Mode": "reorder_only",
+      "semanticRewriteAllowed": false
     },
     "ideogram": {
       "promptStyle": "natural",
@@ -1380,7 +1415,9 @@
         "community-research"
       ],
       "shorthandLevel": "MEDIUM",
-      "compressionNotes": "Excels at text-in-image"
+      "compressionNotes": "Excels at text-in-image",
+      "call3Mode": "gpt_rewrite",
+      "semanticRewriteAllowed": true
     },
     "imagine-meta": {
       "promptStyle": "natural",
@@ -1429,7 +1466,9 @@
       ],
       "tier": 3,
       "shorthandLevel": "MEDIUM",
-      "compressionNotes": "Llama-based natural language"
+      "compressionNotes": "Llama-based natural language",
+      "call3Mode": "gpt_rewrite",
+      "semanticRewriteAllowed": true
     },
     "jasper-art": {
       "promptStyle": "natural",
@@ -1497,7 +1536,9 @@
         "sd-community"
       ],
       "shorthandLevel": "FULL",
-      "compressionNotes": "Marketing-focused SD variant"
+      "compressionNotes": "Marketing-focused SD variant",
+      "call3Mode": "reorder_only",
+      "semanticRewriteAllowed": false
     },
     "kling": {
       "promptStyle": "natural",
@@ -1538,7 +1579,9 @@
       "idealMin": 150,
       "idealMax": 350,
       "idealWords": 70,
-      "maxChars": 875
+      "maxChars": 875,
+      "call3Mode": "gpt_rewrite",
+      "semanticRewriteAllowed": true
     },
     "leonardo": {
       "promptStyle": "keywords",
@@ -1622,7 +1665,9 @@
       ],
       "tier": 1,
       "shorthandLevel": "FULL",
-      "compressionNotes": "SD-based with fine-tuned models"
+      "compressionNotes": "SD-based with fine-tuned models",
+      "call3Mode": "format_only",
+      "semanticRewriteAllowed": false
     },
     "lexica": {
       "promptStyle": "keywords",
@@ -1705,7 +1750,10 @@
       ],
       "tier": 1,
       "shorthandLevel": "FULL",
-      "compressionNotes": "Aperture model (SD-based)"
+      "compressionNotes": "Aperture model (SD-based)",
+      "supportsWeighting": true,
+      "call3Mode": "format_only",
+      "semanticRewriteAllowed": false
     },
     "luma-ai": {
       "promptStyle": "natural",
@@ -1746,7 +1794,9 @@
       "idealMin": 150,
       "idealMax": 350,
       "idealWords": 80,
-      "maxChars": 875
+      "maxChars": 875,
+      "call3Mode": "gpt_rewrite",
+      "semanticRewriteAllowed": true
     },
     "microsoft-designer": {
       "promptStyle": "natural",
@@ -1795,7 +1845,9 @@
         "designer-help"
       ],
       "shorthandLevel": "LOW",
-      "compressionNotes": "Template-first workflow"
+      "compressionNotes": "Template-first workflow",
+      "call3Mode": "reorder_only",
+      "semanticRewriteAllowed": false
     },
     "midjourney": {
       "promptStyle": "keywords",
@@ -1861,7 +1913,11 @@
       ],
       "tier": 2,
       "shorthandLevel": "HIGH",
-      "compressionNotes": "Front tokens weighted more heavily"
+      "compressionNotes": "Front tokens weighted more heavily",
+      "supportsWeighting": true,
+      "weightingSyntax": "{term}::{weight}",
+      "call3Mode": "mj_deterministic",
+      "semanticRewriteAllowed": false
     },
     "myedit": {
       "promptStyle": "natural",
@@ -1908,7 +1964,9 @@
       "tier": 3,
       "shorthandLevel": "MINIMAL",
       "compressionNotes": "CyberLink consumer tool",
-      "groupKnowledge": "Nano Banana Pro (Google) backend. NL prose. No special syntax."
+      "groupKnowledge": "Nano Banana Pro (Google) backend. NL prose. No special syntax.",
+      "call3Mode": "gpt_rewrite",
+      "semanticRewriteAllowed": true
     },
     "novelai": {
       "promptStyle": "keywords",
@@ -1986,7 +2044,9 @@
         "novelai-community"
       ],
       "shorthandLevel": "FULL",
-      "compressionNotes": "Anime-optimized, uses {} for weights, booru tags"
+      "compressionNotes": "Anime-optimized, uses {} for weights, booru tags",
+      "call3Mode": "format_only",
+      "semanticRewriteAllowed": false
     },
     "openai": {
       "promptStyle": "natural",
@@ -2036,7 +2096,9 @@
       ],
       "tier": 3,
       "shorthandLevel": "LOW",
-      "compressionNotes": "DALL-E 3, GPT-4 preprocessing"
+      "compressionNotes": "DALL-E 3, GPT-4 preprocessing",
+      "call3Mode": "gpt_rewrite",
+      "semanticRewriteAllowed": true
     },
     "photoleap": {
       "promptStyle": "natural",
@@ -2083,7 +2145,9 @@
       ],
       "tier": 4,
       "shorthandLevel": "MINIMAL",
-      "compressionNotes": "Mobile-first editing app"
+      "compressionNotes": "Mobile-first editing app",
+      "call3Mode": "reorder_only",
+      "semanticRewriteAllowed": false
     },
     "picsart": {
       "promptStyle": "natural",
@@ -2130,7 +2194,9 @@
       ],
       "tier": 4,
       "shorthandLevel": "MINIMAL",
-      "compressionNotes": "Mobile-first platform"
+      "compressionNotes": "Mobile-first platform",
+      "call3Mode": "reorder_only",
+      "semanticRewriteAllowed": false
     },
     "picwish": {
       "promptStyle": "natural",
@@ -2177,7 +2243,9 @@
       "tier": 4,
       "shorthandLevel": "MINIMAL",
       "compressionNotes": "Enhancement-focused utility",
-      "groupKnowledge": "Editor-first platform with text-to-image. NL prose. No special syntax."
+      "groupKnowledge": "Editor-first platform with text-to-image. NL prose. No special syntax.",
+      "call3Mode": "reorder_only",
+      "semanticRewriteAllowed": false
     },
     "pixlr": {
       "promptStyle": "natural",
@@ -2224,7 +2292,9 @@
       ],
       "shorthandLevel": "MINIMAL",
       "compressionNotes": "Lightweight editor",
-      "groupKnowledge": "Three generation modes (Fast/Pro/Ultra). Negative prompt field available. NL prose."
+      "groupKnowledge": "Three generation modes (Fast/Pro/Ultra). Negative prompt field available. NL prose.",
+      "call3Mode": "format_only",
+      "semanticRewriteAllowed": false
     },
     "playground": {
       "promptStyle": "natural",
@@ -2281,7 +2351,9 @@
         "sd-community"
       ],
       "shorthandLevel": "MINIMAL",
-      "compressionNotes": "SD-based architecture"
+      "compressionNotes": "SD-based architecture",
+      "call3Mode": "gpt_rewrite",
+      "semanticRewriteAllowed": true
     },
     "recraft": {
       "promptStyle": "natural",
@@ -2321,7 +2393,9 @@
       "idealMin": 200,
       "idealMax": 400,
       "idealWords": 80,
-      "maxChars": 1000
+      "maxChars": 1000,
+      "call3Mode": "gpt_rewrite",
+      "semanticRewriteAllowed": true
     },
     "runway": {
       "promptStyle": "natural",
@@ -2371,7 +2445,9 @@
       ],
       "tier": 3,
       "shorthandLevel": "MEDIUM",
-      "compressionNotes": "Multi-modal platform"
+      "compressionNotes": "Multi-modal platform",
+      "call3Mode": "gpt_rewrite",
+      "semanticRewriteAllowed": true
     },
     "simplified": {
       "promptStyle": "natural",
@@ -2418,7 +2494,9 @@
       ],
       "shorthandLevel": "MINIMAL",
       "compressionNotes": "Marketing-focused design tool",
-      "groupKnowledge": "14+ model aggregator. NL prose across all models. Negative prompts on some models."
+      "groupKnowledge": "14+ model aggregator. NL prose across all models. Negative prompts on some models.",
+      "call3Mode": "gpt_rewrite",
+      "semanticRewriteAllowed": true
     },
     "stability": {
       "promptStyle": "keywords",
@@ -2501,7 +2579,9 @@
       ],
       "tier": 1,
       "shorthandLevel": "FULL",
-      "compressionNotes": "CLIP 77-token hard limit"
+      "compressionNotes": "CLIP 77-token hard limit",
+      "call3Mode": "format_only",
+      "semanticRewriteAllowed": false
     },
     "visme": {
       "promptStyle": "natural",
@@ -2548,7 +2628,9 @@
       "tier": 3,
       "shorthandLevel": "MINIMAL",
       "compressionNotes": "Presentation-focused tool",
-      "groupKnowledge": "Dreamscape API (SD variant) backend. NL prose. No special syntax."
+      "groupKnowledge": "Dreamscape API (SD variant) backend. NL prose. No special syntax.",
+      "call3Mode": "gpt_rewrite",
+      "semanticRewriteAllowed": true
     },
     "vistacreate": {
       "promptStyle": "natural",
@@ -2595,7 +2677,9 @@
       "tier": 3,
       "shorthandLevel": "MINIMAL",
       "compressionNotes": "Template-based design tool",
-      "groupKnowledge": "Bria.ai backend. NL prose. ~3000 chars capacity. No special syntax."
+      "groupKnowledge": "Bria.ai backend. NL prose. ~3000 chars capacity. No special syntax.",
+      "call3Mode": "gpt_rewrite",
+      "semanticRewriteAllowed": true
     }
   }
 }
