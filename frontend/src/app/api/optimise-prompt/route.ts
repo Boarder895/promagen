@@ -230,12 +230,12 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   const zoneDescriptions: Record<string, string> = {
     ENRICH: 'Room to add detail — expand thin clauses with richer visual language.',
-    REFINE: 'Restructure, front-load the subject, strengthen word choices. Do NOT shorten — preserve all visual anchors and keep roughly the same length.',
+    REFINE: 'Restructure for this platform. Front-load the subject, upgrade weak verbs, tighten phrasing. Length may go up or down — the goal is a better prompt, not a longer or shorter one.',
     COMPRESS: `Must fit within the platform limit of ${hardCeiling} chars. Tighten phrasing, remove filler, preserve all visual anchors.`,
   };
 
-  // GPT sees platform limit + zone strategy only. No idealMin/idealMax range.
-  const zoneBlock = `\n\nOPTIMISATION CONTEXT:\nReference draft: ${promptLength} chars. Platform limit: ${hardCeiling} chars.\nStrategy: ${zone} — ${zoneDescriptions[zone]}`;
+  // GPT sees platform name + limit + zone strategy. No idealMin/idealMax range.
+  const zoneBlock = `\n\nOPTIMISATION CONTEXT:\nPlatform: ${parsed.data.providerContext.name}. Reference draft: ${promptLength} chars. Platform limit: ${hardCeiling} chars.\nStrategy: ${zone} — ${zoneDescriptions[zone]}`;
 
   // ── Build user message ──────────────────────────────────────────────
   // Clean separation: Call 2 owns content decisions. Call 3 owns
@@ -243,7 +243,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   // The original human sentence is never passed to Call 3 — if Call 2
   // made anchor decisions, Call 3 respects them and restructures for
   // the platform rather than second-guessing Call 2's output.
-  const userMessage = `ASSEMBLED PROMPT TO OPTIMISE:\n${sanitisedPrompt}${zoneBlock}`;
+  const userMessage = `PROMPT TO OPTIMISE FOR ${parsed.data.providerContext.name.toUpperCase()}:\n${sanitisedPrompt}${zoneBlock}`;
 
   // ── Call generation engine ──────────────────────────────────────────
   try {

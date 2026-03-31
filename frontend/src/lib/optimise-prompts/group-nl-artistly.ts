@@ -384,67 +384,57 @@ export function buildArtistlyPrompt(
   const hardCeiling = ctx.maxChars ?? DEFAULT_HARD_CEILING;
   const platformNote = ctx.groupKnowledge ?? "";
 
-  const systemPrompt = `You are an expert prompt optimiser for "Artistly".
+  const systemPrompt = `You optimise image prompts for Artistly.
 
-ARTISTLY BEHAVIOUR
-- Plain natural-language prose only.
-- No weight syntax, no parameter flags, no CLIP boilerplate.
-- Artistly auto-expands prompts via a Smart Prompt Enhancer, so your job is to supply an anchor-dense seed prompt, not a generic summary.
+PLATFORM KNOWLEDGE:
+Artistly is a plain-language platform with a Smart Prompt Enhancer that auto-expands short prompts. Your job is to deliver a dense, vivid seed — not a complete description. Artistly responds best to concrete nouns, specific colours, strong verbs, and clear spatial relationships. It does NOT need atmosphere padding, quality clichés, or verbose scene-setting.
+
 LENGTH RULES:
-HARD: Do not shorten any prompt that is below ${hardCeiling} characters.
-SOFT: You may lengthen the prompt up to ${hardCeiling} characters, but only if the added content is a genuine visual anchor — not filler.
-Your job is to produce the best possible prompt for this platform. Length is not a goal. Anchor preservation is.
+HARD: Do not exceed ${hardCeiling} characters.
+SOFT: You may lengthen or shorten freely. The goal is the best prompt, not a specific length. Shorter and denser beats longer and padded.
 
-YOUR INPUT:
-You receive a single assembled prompt — the output of the prompt assembly stage, already tailored for this platform tier. Your job is to restructure and strengthen it for this specific platform.
+OPTIMISATION RULES — do ALL of these:
 
-PRIMARY OBJECTIVE
-Produce the strongest Artistly-ready prompt possible while preserving the scene's distinctive visual identity.
+1. SUBJECT FIRST: The primary subject must be the first 1–3 words. Not "At midnight in a cramped alley, a courier..." but "Rain-drenched courier in a cramped alley at midnight..." Strip all scene-setting openers.
 
-TASK A — PRESERVE VISUAL ANCHORS
-Read the prompt first.
-Preserve the image-defining anchors, especially:
-- primary subject and action
-- setting + time of day
-- named colours
-- distinctive lighting
-- atmosphere / weather
-- motion cues
-- standout objects
+2. UPGRADE VERBS: Replace generic verbs with stronger, more visual ones. "pauses" → "leans". "grips" → "clutches". "gives off" → "casts". Every verb should paint a picture. Do NOT just use synonyms — the replacement must be more visually evocative.
 
-Compression rule: shorten wording BEFORE dropping anchors.
-If you must drop something, drop secondary background context last.
+3. TWO SENTENCES MAX: First sentence is the hero shot — subject, action, and key visual element. Second sentence is environment, atmosphere, and background. End with a full stop. Never write a single run-on sentence with chained commas and semicolons.
 
-TASK B — REWRITE FOR ARTISTLY
-Rewrite into clean, vivid, affirmative prose.
-Natural language only. No lists. No keyword stacks.
-Prefer ONE rich sentence.
-Front-load the primary subject in the first 8–10 words.
+4. ONE COMPOSITION CUE: Add one natural composition or framing cue woven into the prose. Not "low angle" bolted between commas. Instead: "seen from below" or "looming overhead" or "framed by" — embedded in the description, not tagged on.
 
-TASK C — QUALITY CHECK
-Before returning JSON:
-1) Verify every anchor from the prompt is present or strengthened.
-2) Verify the primary subject appears in the first 8–10 words.
-3) Verify no forbidden syntax leaked in.
+5. STRIP FILLER: Remove words that add length but not visual information. "At twilight on a rain-lashed coast" → "on a rain-lashed coast at twilight" (setting after subject). Remove "while", "as", "beneath" chains that pad clause count.
 
-STRICTLY FORBIDDEN
-- (term:1.3)
-- term::1.3
-- {{{term}}}
-- any --flags like --ar, --v, --no
-- "masterpiece", "best quality", "8K", "sharp focus", or similar boilerplate
-- negative phrasing like "without X" or "no X"
+6. KEEP ALL ANCHORS: Every named subject, object, colour, light source, and distinctive detail from the input must survive. Shorten wording, never drop anchors.
 
-${platformNote ? `PLATFORM NOTE: ${platformNote}\n` : ""}Return ONLY valid JSON:
+FORBIDDEN SYNTAX:
+(term:1.3), term::1.3, {{{term}}}, --flags, "masterpiece", "best quality", "8K", "sharp focus", negative phrasing like "without X" or "no X".
+
+BEFORE → AFTER EXAMPLES:
+
+BEFORE:
+At twilight on a rain-lashed coast, a weathered lighthouse keeper grips the iron railing on the gallery deck. Below, enormous storm waves smash the jagged rocks and throw salt spray into a purple-and-copper sky, while the lighthouse beam cuts a pale gold arc through driving rain. Tiny warm orange windows glow in the distant fishing village against dark cliffs.
+
+AFTER:
+Weathered lighthouse keeper clutches the iron gallery railing as enormous storm waves shatter against jagged rocks below, salt spray rising into a purple-and-copper twilight sky. A pale gold lighthouse beam slices through driving rain toward a distant fishing village glowing with tiny warm orange windows beneath dark cliffs.
+
+WHY: Subject moved to word 1. "grips" → "clutches", "smash" → "shatter", "cuts" → "slices" — stronger verbs. Three sentences compressed to two. "seen from the gallery deck" is an embedded spatial cue. All anchors preserved.
+
+BEFORE:
+At midnight in a cramped cyberpunk alley, a rain-drenched courier pauses beneath a flickering magenta-and-cyan noodle sign, one gloved hand resting on a dented motorbike. Steam pours from street vents, and neon reflections smear across black puddles.
+
+AFTER:
+Rain-drenched courier leans against a dented motorbike beneath a flickering magenta-and-cyan noodle sign in a cramped midnight alley. Steam spills from street vents as neon reflections streak across black puddles.
+
+WHY: Subject at word 1. "pauses" → "leans" (more visual), "pours" → "spills", "smear" → "streak". Two clean sentences. All anchors kept.
+${platformNote ? `\nPLATFORM NOTE: ${platformNote}` : ""}
+
+Return ONLY valid JSON:
 {
   "optimised": "your rewritten prompt",
-  "changes": [
-    "TASK A: preserved key visual anchors from the prompt",
-    "TASK B: rewritten into vivid Artistly prose",
-    "TASK C: quality verified — all anchors present"
-  ],
-  "charCount": 176,
-  "tokenEstimate": 32
+  "changes": ["subject front-loaded", "upgraded N verbs", "compressed to 2 sentences", "added composition cue"],
+  "charCount": 250,
+  "tokenEstimate": 45
 }`;
 
   return {
