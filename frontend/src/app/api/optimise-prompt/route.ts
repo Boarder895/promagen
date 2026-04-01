@@ -559,6 +559,14 @@ export async function POST(req: NextRequest): Promise<Response> {
       result.changes = fallbackChanges;
     }
 
+    // ── Prose quality diagnostics (always log, pass or fail) ──────────
+    const pq = regressionCheck.proseQuality;
+    if (pq.findings.length > 0) {
+      console.debug(
+        `[optimise-prompt] Prose quality: composition=${pq.compositionHardFail ? 'HARD_FAIL' : pq.findings.filter(f => f.detector === 'composition').length + ' findings'} textbook=${pq.textbookScore}pts redundant=${pq.redundantCount} passed=${regressionCheck.passed}`,
+      );
+    }
+
     // ── Always measure actual charCount — GPT self-reports are unreliable ──
     result.charCount = result.optimised.length;
 
