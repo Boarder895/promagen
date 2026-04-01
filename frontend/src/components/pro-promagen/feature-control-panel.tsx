@@ -96,21 +96,35 @@ function FeatureCard({
   const glowBorder = hexToRgba(color, 0.5);
   const glowSoft = hexToRgba(color, 0.15);
 
+  // Mobile tap: toggle the preview panel via onHoverChange.
+  // On desktop, hover handles this. On touch devices, mouseEnter/Leave
+  // don't fire reliably, so we use onClick as fallback.
+  const handleClick = useCallback(() => {
+    if (hasAction) {
+      onAction!();
+      return;
+    }
+    // No action = pure preview card. Toggle hover state for mobile.
+    const next = !isHovered;
+    setIsHovered(next);
+    onHoverChange?.(next);
+  }, [hasAction, onAction, isHovered, onHoverChange]);
+
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (hasAction && (e.key === 'Enter' || e.key === ' ')) {
+      if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        onAction!();
+        handleClick();
       }
     },
-    [hasAction, onAction],
+    [handleClick],
   );
 
   return (
     <div
-      role={hasAction ? 'button' : undefined}
-      tabIndex={hasAction ? 0 : undefined}
-      className={`relative flex flex-col rounded-lg overflow-hidden ${hasAction ? 'cursor-pointer' : ''}`}
+      role="button"
+      tabIndex={0}
+      className="relative flex flex-col rounded-lg overflow-hidden cursor-pointer"
       style={{
         background: 'rgba(255, 255, 255, 0.05)',
         border: `1px solid ${isHovered ? glowBorder : 'rgba(255, 255, 255, 0.1)'}`,
@@ -123,8 +137,8 @@ function FeatureCard({
       }}
       onMouseEnter={() => { setIsHovered(true); onHoverChange?.(true); }}
       onMouseLeave={() => { setIsHovered(false); onHoverChange?.(false); }}
-      onClick={hasAction ? onAction : undefined}
-      onKeyDown={hasAction ? handleKeyDown : undefined}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
     >
       {/* Ethereal glow — top radial */}
       <span
@@ -260,6 +274,15 @@ export function FeatureControlPanel({
         @media (max-height: 820px) {
           .feature-grid > :nth-child(n+7) { display: none; }
           .feature-grid { grid-template-rows: repeat(2, 1fr); }
+        }
+        @media (max-width: 767px) {
+          .feature-grid {
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: auto;
+            height: auto;
+            gap: 8px;
+          }
+          .feature-grid > :nth-child(n+7) { display: flex; }
         }
       ` }} />
 

@@ -851,8 +851,6 @@ a:hover {
     flex-direction: column;
     gap: 0.5rem;
     padding: 0.5rem;
-    overflow-y: auto;
-    max-height: 100%;
   }
 
   .providers-mobile-card {
@@ -880,7 +878,7 @@ a:hover {
   .providers-mobile-rank {
     font-size: 0.875rem;
     font-weight: 500;
-    color: #64748b;
+    color: #38bdf8;
     min-width: 1.5rem;
     font-variant-numeric: tabular-nums;
   }
@@ -921,7 +919,7 @@ a:hover {
     gap: 1rem;
     padding-left: 1.5rem; /* Align with name */
     font-size: 0.8125rem;
-    color: #94a3b8;
+    color: #e2e8f0;
   }
 
   .providers-mobile-location {

@@ -34,6 +34,7 @@ import type { IndexQuoteData } from '@/components/exchanges/types';
 import type { Provider } from '@/types/providers';
 import { useExchangeOrder } from '@/hooks/use-exchange-order';
 import { useIndicesQuotes } from '@/hooks/use-indices-quotes';
+import MobileBuilderGate from '@/components/layout/mobile-builder-gate';
 
 // ============================================================================
 // SPEECH TEXT — British female voice (same pattern as homepage/library/pro)
@@ -131,11 +132,23 @@ export default function PlaygroundPageClient({
   );
 
   // Centre: Playground workspace with provider change callback
+  // Mobile: shows gate preview. Desktop: renders full builder.
   const centreContent = (
-    <PlaygroundWorkspace
-      providers={providers}
-      onProviderChange={handleProviderChange}
-    />
+    <MobileBuilderGate
+      title="Prompt Lab"
+      description="Write once, generate for all 40 platforms. Pick your subject, style, and mood — then switch platforms and watch the same idea reshape itself."
+      features={[
+        '9-category prompt builder with 10,000+ phrases',
+        'Switch platforms instantly — your selections stay, syntax transforms',
+        'Side-by-side tier comparison (T1 → T4)',
+        'Live weather-driven vocabulary injection',
+      ]}
+    >
+      <PlaygroundWorkspace
+        providers={providers}
+        onProviderChange={handleProviderChange}
+      />
+    </MobileBuilderGate>
   );
 
   // Right rail content: exchanges (Pro-reordered)

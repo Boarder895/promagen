@@ -463,6 +463,9 @@ export function ProvidersTable({
   const [sortBy, setSortBy] = useState<SortColumn>('indexRating');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
+  // ── Mobile card expand state (Upgrade 2: Tap-to-Discover) ──────────
+  const [expandedMobileCard, setExpandedMobileCard] = useState<string | null>(null);
+
   // Tier label + colour maps for row highlighting
   const tierColours: Record<number, string> = { 1: '#8B5CF6', 2: '#3B82F6', 3: '#10B981', 4: '#F59E0B' };
 
@@ -660,12 +663,27 @@ export function ProvidersTable({
       </div>
 
       {/* Mobile card view — hidden on desktop, shown on mobile via CSS */}
+      {/* Upgrade 2: Tap-to-Discover — cards expand to reveal platform identity + builder link */}
       <div className="providers-mobile-cards" data-testid="providers-mobile">
-        {sorted.map((p, index) => (
+        {sorted.map((p, index) => {
+          const isExpanded = expandedMobileCard === p.id;
+
+          return (
           <div
             key={p.id}
             data-provider-id={p.id}
             className="providers-mobile-card market-pulse-target"
+            onClick={() => setExpandedMobileCard(isExpanded ? null : p.id)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setExpandedMobileCard(isExpanded ? null : p.id);
+              }
+            }}
+            style={{ cursor: 'pointer' }}
+            aria-expanded={isExpanded}
           >
             {/* Row 1: Rank + Name + Index Rating */}
             <div className="providers-mobile-header">
@@ -675,6 +693,7 @@ export function ProvidersTable({
                 target="_blank"
                 rel="noopener noreferrer"
                 className="providers-mobile-name"
+                onClick={(e) => e.stopPropagation()}
               >
                 {p.name}
               </a>
@@ -710,8 +729,58 @@ export function ProvidersTable({
                 </span>
               )}
             </div>
+
+            {/* Row 3: Expanded — tagline + builder CTA (Upgrade 2) */}
+            <div
+              style={{
+                maxHeight: isExpanded ? '120px' : '0px',
+                opacity: isExpanded ? 1 : 0,
+                overflow: 'hidden',
+                transition: 'max-height 250ms ease-out, opacity 200ms ease-out',
+              }}
+            >
+              <div
+                style={{
+                  paddingTop: 'clamp(8px, 2vw, 12px)',
+                  paddingLeft: '1.5rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 'clamp(6px, 1.5vw, 10px)',
+                }}
+              >
+                {p.tagline && (
+                  <p
+                    className="text-sky-300"
+                    style={{ fontSize: 'clamp(0.75rem, 3vw, 0.85rem)', lineHeight: 1.4 }}
+                  >
+                    {p.tagline}
+                  </p>
+                )}
+                <a
+                  href={`/providers/${encodeURIComponent(p.id)}`}
+                  className="inline-flex items-center gap-1.5 font-semibold text-purple-300 transition-colors hover:text-purple-200 cursor-pointer"
+                  style={{ fontSize: 'clamp(0.73rem, 2.8vw, 0.85rem)' }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <span>Build prompts for {p.name}</span>
+                  <svg
+                    style={{ width: 'clamp(12px, 3vw, 16px)', height: 'clamp(12px, 3vw, 16px)' }}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2.5}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </a>
+              </div>
+            </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

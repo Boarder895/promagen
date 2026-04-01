@@ -4504,7 +4504,7 @@ export default function ProPromagenClient({
     // ========================================================================
     <section
       aria-label="Pro Promagen Configuration"
-      className="flex h-full min-h-0 flex-col rounded-3xl bg-slate-950/70 shadow-sm ring-1 ring-white/10"
+      className="flex flex-col rounded-3xl bg-slate-950/70 shadow-sm ring-1 ring-white/10 md:h-full md:min-h-0"
       style={{ padding: 'clamp(10px, 1vw, 16px)' }}
       data-testid="pro-promagen-panel"
     >
@@ -4539,8 +4539,14 @@ export default function ProPromagenClient({
         </div>
       </header>
 
-      {/* Feature Control Panel — 3×3 grid (1/4 of available height, min 6 cards) */}
-      <div className="overflow-hidden" style={{ flex: '1 1 0%', minHeight: 'clamp(140px, 16vw, 270px)' }}>
+      {/* Feature Control Panel — 3×3 grid on desktop, 2-col on mobile */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media (max-width: 767px) {
+          [data-testid="pro-promagen-panel"] .pro-fcp-wrapper { flex: none !important; overflow: visible !important; min-height: auto !important; }
+          [data-testid="pro-promagen-panel"] .pro-preview-wrapper { flex: none !important; min-height: auto !important; }
+        }
+      ` }} />
+      <div className="overflow-hidden pro-fcp-wrapper" style={{ flex: '1 1 0%', minHeight: 'clamp(140px, 16vw, 270px)' }}>
         <FeatureControlPanel
           isPaidUser={isPaidUser}
           selectedPromptTier={selectedPromptTier}
@@ -4564,7 +4570,7 @@ export default function ProPromagenClient({
       {/* Hover bridge: onMouseEnter cancels linger timeout, onMouseLeave closes */}
       <div
         ref={previewPanelRef}
-        className="min-h-0 flex flex-col rounded-xl overflow-hidden"
+        className="min-h-0 flex flex-col rounded-xl overflow-hidden pro-preview-wrapper"
         style={{
           flex: '3 1 0%',
           marginTop: 'clamp(8px, 0.8vw, 12px)',

@@ -623,8 +623,8 @@ export default function HomepageGrid({
   // ============================================================================
 
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-slate-950">
-      <main className="flex min-h-0 flex-1 flex-col">
+    <div className="flex h-full flex-col overflow-y-auto bg-slate-950 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30 md:overflow-hidden">
+      <main className="flex flex-col md:min-h-0 md:flex-1">
         {/* Visually hidden heading for screen readers */}
         <h1 id="page-main-heading" className="sr-only">
           {mainLabel}
@@ -645,7 +645,7 @@ export default function HomepageGrid({
         <section
           ref={containerRef}
           aria-label="Market overview layout"
-          className="relative mx-auto flex min-h-0 w-full flex-1 flex-col px-4 pb-2 pt-2 md:grid md:grid-cols-[minmax(0,0.9fr)_minmax(0,2.2fr)_minmax(0,0.9fr)] md:items-stretch md:pt-2"
+          className="relative mx-auto flex w-full flex-col px-4 pb-2 pt-2 md:min-h-0 md:flex-1 md:grid md:grid-cols-[minmax(0,0.9fr)_minmax(0,2.2fr)_minmax(0,0.9fr)] md:items-stretch md:pt-2"
           style={{ gap: GRID_GAP }}
         >
           <MarketPulseOverlay
@@ -696,7 +696,7 @@ export default function HomepageGrid({
               CENTRE COLUMN — Hero Window → FX Ribbon → Providers/Table
               ============================================================ */}
           <div
-            className="flex min-h-0 flex-1 flex-col"
+            className="flex flex-col md:min-h-0 md:flex-1"
             style={{ gap: GRID_GAP }}
             data-testid="rail-centre"
           >
@@ -879,7 +879,7 @@ export default function HomepageGrid({
             )}
 
             {/* Providers table / Comparison table / Centre content */}
-            <div ref={providersRef} className="min-h-0 flex-1">
+            <div ref={providersRef} className="md:min-h-0 md:flex-1">
               {centre}
             </div>
           </div>

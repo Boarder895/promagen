@@ -26,6 +26,7 @@ import ProviderWorkspace from '@/components/providers/provider-workspace';
 import { ProviderPageTracker } from '@/components/providers/provider-page-tracker';
 import { useExchangeOrder } from '@/hooks/use-exchange-order';
 import { useIndicesQuotes } from '@/hooks/use-indices-quotes';
+import MobileBuilderGate from '@/components/layout/mobile-builder-gate';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Provider not found fallback (matches server component version)
@@ -125,10 +126,23 @@ export default function ProviderPageClient({
   );
 
   // Centre: Prompt workspace or not-found
+  // Mobile: shows gate preview with provider name. Desktop: full builder.
   const centreContent = provider ? (
-    <ProviderPageTracker providerId={provider.id}>
-      <ProviderWorkspace provider={provider} />
-    </ProviderPageTracker>
+    <MobileBuilderGate
+      title="Prompt Builder"
+      description="Every word chosen for how this platform reads it. The vocabulary grows overnight — new phrases arrive while you sleep."
+      providerName={provider.name}
+      features={[
+        `Platform-specific prompt syntax for ${provider.name}`,
+        '9 categories with intelligent phrase suggestions',
+        'Tier-based output quality (T1 → T4)',
+        'One-click copy with negative prompt support',
+      ]}
+    >
+      <ProviderPageTracker providerId={provider.id}>
+        <ProviderWorkspace provider={provider} />
+      </ProviderPageTracker>
+    </MobileBuilderGate>
   ) : (
     <ProviderNotFound id={providerId} />
   );

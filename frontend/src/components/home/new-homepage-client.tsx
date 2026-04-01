@@ -224,7 +224,7 @@ export default function NewHomepageClient({
   // Centre rail — PromptShowcase (Phase 2) + ProvidersTable
   const centreRail = (
     <div
-      className="flex h-full min-h-0 flex-col"
+      className="flex flex-col md:h-full md:min-h-0"
       style={{ gap: 'clamp(12px, 1.25vw, 24px)' }}
       data-testid="rail-centre-inner"
     >
@@ -312,7 +312,7 @@ export default function NewHomepageClient({
       {/* AI Providers Leaderboard */}
       <section
         aria-label="AI providers leaderboard"
-        className="flex min-h-0 flex-1 flex-col bg-transparent p-0 shadow-none ring-0 md:rounded-3xl md:bg-slate-950/70 md:p-4 md:shadow-sm md:ring-1 md:ring-white/10"
+        className="flex flex-col bg-transparent p-0 shadow-none ring-0 md:min-h-0 md:flex-1 md:rounded-3xl md:bg-slate-950/70 md:p-4 md:shadow-sm md:ring-1 md:ring-white/10"
       >
         <ProvidersTable
           providers={providers}
