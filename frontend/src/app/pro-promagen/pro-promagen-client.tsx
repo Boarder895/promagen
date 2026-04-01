@@ -4141,59 +4141,8 @@ export default function ProPromagenClient({
     activePanelRef.current = activePanel;
   }, [activePanel]);
 
-  // ── Mobile preview lifecycle ────────────────────────────────────────────
-  // When a panel activates on mobile (<768px):
-  //   1. Scroll preview panel into view
-  //   2. Pause 0.2s
-  //   3. Internal auto-scroll animation plays (already exists in panel CSS)
-  //   4. Touch anywhere → close panel, scroll back to feature grid
-  //
-  // On desktop: this entire block is skipped (window.innerWidth >= 768).
-  // ────────────────────────────────────────────────────────────────────────
-
-  // Ref to the feature grid for scroll-back-to-top on reset
+  // Ref to the feature grid container (used by div below)
   const featureGridRef = useRef<HTMLDivElement>(null!);
-
-  useEffect(() => {
-    if (!activePanel) return;
-    if (typeof window === 'undefined' || window.innerWidth >= 768) return;
-
-    // Step 1: Scroll preview into view after brief render delay
-    const scrollTimer = setTimeout(() => {
-      previewPanelRef.current?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      });
-    }, 100);
-
-    // Step 2: Touch-to-reset handler — any touch closes the preview
-    const handleTouchReset = () => {
-      // Close the preview panel
-      setActivePanel(null);
-      inPreviewRef.current = false;
-      clearTimeout(lingerRef.current);
-      clearTimeout(switchDebounceRef.current);
-
-      // Scroll back to the feature grid
-      setTimeout(() => {
-        featureGridRef.current?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start',
-        });
-      }, 50);
-    };
-
-    // Attach after the scroll animation completes (~500ms)
-    const touchTimer = setTimeout(() => {
-      document.addEventListener('touchstart', handleTouchReset, { once: true, passive: true });
-    }, 600);
-
-    return () => {
-      clearTimeout(scrollTimer);
-      clearTimeout(touchTimer);
-      document.removeEventListener('touchstart', handleTouchReset);
-    };
-  }, [activePanel]);
 
   const handleCardHover = useCallback((panel: PreviewPanel, hovering: boolean) => {
     clearTimeout(lingerRef.current);
@@ -4558,7 +4507,7 @@ export default function ProPromagenClient({
     // ========================================================================
     <section
       aria-label="Pro Promagen Configuration"
-      className="flex flex-col rounded-3xl bg-slate-950/70 shadow-sm ring-1 ring-white/10 md:h-full md:min-h-0"
+      className="flex h-full min-h-0 flex-col rounded-3xl bg-slate-950/70 shadow-sm ring-1 ring-white/10"
       style={{ padding: 'clamp(10px, 1vw, 16px)' }}
       data-testid="pro-promagen-panel"
     >
@@ -4594,12 +4543,6 @@ export default function ProPromagenClient({
       </header>
 
       {/* Feature Control Panel — 3×3 grid on desktop, 2-col on mobile */}
-      <style dangerouslySetInnerHTML={{ __html: `
-        @media (max-width: 767px) {
-          [data-testid="pro-promagen-panel"] .pro-fcp-wrapper { flex: none !important; overflow: visible !important; min-height: auto !important; }
-          [data-testid="pro-promagen-panel"] .pro-preview-wrapper { flex: none !important; min-height: auto !important; }
-        }
-      ` }} />
       <div ref={featureGridRef} className="overflow-hidden pro-fcp-wrapper" style={{ flex: '1 1 0%', minHeight: 'clamp(140px, 16vw, 270px)' }}>
         <FeatureControlPanel
           isPaidUser={isPaidUser}

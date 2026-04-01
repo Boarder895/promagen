@@ -503,6 +503,11 @@ export default function HomepageGrid({
   const isWorldContext = pathname === '/world-context';
   const isLibrary = pathname === '/studio/library';
 
+  // Pro page keeps viewport-locked layout on mobile — its preview panel
+  // needs flex constraints to clip at the screen bottom (same as desktop).
+  // All other pages use natural height on mobile for page scrolling.
+  const mobileViewportLocked = isProPromagenPage;
+
   // --------------------------------------------------------------------------
   // SPEECH SYNTHESIS — British female voice (shared utility)
   // --------------------------------------------------------------------------
@@ -623,8 +628,8 @@ export default function HomepageGrid({
   // ============================================================================
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto bg-slate-950 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30 md:overflow-hidden">
-      <main className="flex flex-col md:min-h-0 md:flex-1">
+    <div className={`flex h-full flex-col bg-slate-950 ${mobileViewportLocked ? 'overflow-hidden' : 'overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30 md:overflow-hidden'}`}>
+      <main className={`flex flex-col ${mobileViewportLocked ? 'min-h-0 flex-1' : 'md:min-h-0 md:flex-1'}`}>
         {/* Visually hidden heading for screen readers */}
         <h1 id="page-main-heading" className="sr-only">
           {mainLabel}
@@ -645,7 +650,7 @@ export default function HomepageGrid({
         <section
           ref={containerRef}
           aria-label="Market overview layout"
-          className="relative mx-auto flex w-full flex-col px-4 pb-2 pt-2 md:min-h-0 md:flex-1 md:grid md:grid-cols-[minmax(0,0.9fr)_minmax(0,2.2fr)_minmax(0,0.9fr)] md:items-stretch md:pt-2"
+          className={`relative mx-auto flex w-full flex-col px-4 pb-2 pt-2 ${mobileViewportLocked ? 'min-h-0 flex-1' : 'md:min-h-0 md:flex-1'} md:grid md:grid-cols-[minmax(0,0.9fr)_minmax(0,2.2fr)_minmax(0,0.9fr)] md:items-stretch md:pt-2`}
           style={{ gap: GRID_GAP }}
         >
           <MarketPulseOverlay
@@ -696,7 +701,7 @@ export default function HomepageGrid({
               CENTRE COLUMN — Hero Window → FX Ribbon → Providers/Table
               ============================================================ */}
           <div
-            className="flex flex-col md:min-h-0 md:flex-1"
+            className={`flex flex-col ${mobileViewportLocked ? 'min-h-0 flex-1' : 'md:min-h-0 md:flex-1'}`}
             style={{ gap: GRID_GAP }}
             data-testid="rail-centre"
           >
@@ -878,7 +883,7 @@ export default function HomepageGrid({
             )}
 
             {/* Providers table / Comparison table / Centre content */}
-            <div ref={providersRef} className="md:min-h-0 md:flex-1">
+            <div ref={providersRef} className={mobileViewportLocked ? 'min-h-0 flex-1' : 'md:min-h-0 md:flex-1'}>
               {centre}
             </div>
           </div>

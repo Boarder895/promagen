@@ -152,7 +152,7 @@ export default function MobileBottomNav() {
       <div
         className="mx-auto flex items-stretch justify-around"
         style={{
-          height: 'clamp(28px, 7vw, 36px)',
+          padding: 'clamp(3px, 0.8vw, 5px) 0',
           maxWidth: '480px',
         }}
       >
