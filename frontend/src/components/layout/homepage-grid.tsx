@@ -707,29 +707,28 @@ export default function HomepageGrid({
                 ---------------------------------------------------------- */}
             <div
               className="shrink-0 bg-transparent shadow-none ring-0 md:rounded-3xl md:bg-slate-950/70 md:shadow-sm md:ring-1 md:ring-white/10"
-              style={{ padding: 'clamp(8px, 2.8vw, 16px)' }}
+              style={{ padding: 'clamp(4px, 1.5vw, 8px) clamp(8px, 2vw, 16px)' }}
               data-testid="hero-window"
             >
               <style dangerouslySetInnerHTML={{ __html: MOBILE_HOMEPAGE_STYLES }} />
 
-              {/* ── MOBILE HEADER — All pages, <768px only ─────────────── */}
+              {/* ── MOBILE HEADER — Single row: heading left, sign-in right ── */}
               <div className="md:hidden">
-                <div className="flex items-center justify-between">
-                  <div style={{ width: '1px' }} />
-                  <div className="[&_button]:!text-white [&_a]:!text-white [&_svg]:!text-white [&_span]:!text-white">
-                    <AuthButton />
-                  </div>
-                </div>
-
-                <div className="mt-2 text-center">
+                <div
+                  className="flex items-center justify-between"
+                  style={{ gap: 'clamp(8px, 2vw, 16px)' }}
+                >
                   <h2
-                    className="font-semibold leading-tight"
-                    style={{ fontSize: 'clamp(1.05rem, 4.2vw, 1.4rem)' }}
+                    className="min-w-0 flex-1 font-semibold leading-tight"
+                    style={{ fontSize: 'clamp(0.85rem, 3vw, 1.1rem)' }}
                   >
                     <span className="bg-gradient-to-r from-sky-400 via-emerald-300 to-indigo-400 bg-clip-text text-transparent">
                       {headingText ?? 'Promagen — Intelligent Prompt Builder'}
                     </span>
                   </h2>
+                  <div className="shrink-0 [&_button]:!text-white [&_a]:!text-white [&_svg]:!text-white [&_span]:!text-white">
+                    <AuthButton />
+                  </div>
                 </div>
               </div>
 

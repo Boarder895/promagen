@@ -28,8 +28,8 @@ import { usePathname } from 'next/navigation';
 // ============================================================================
 
 const ICON_STYLE: React.CSSProperties = {
-  width: 'clamp(20px, 5.5vw, 24px)',
-  height: 'clamp(20px, 5.5vw, 24px)',
+  width: 'clamp(14px, 3.5vw, 18px)',
+  height: 'clamp(14px, 3.5vw, 18px)',
 };
 
 function HomeIcon({ active }: { active: boolean }) {
@@ -152,7 +152,7 @@ export default function MobileBottomNav() {
       <div
         className="mx-auto flex items-stretch justify-around"
         style={{
-          height: 'clamp(52px, 14vw, 64px)',
+          height: 'clamp(28px, 7vw, 36px)',
           maxWidth: '480px',
         }}
       >
@@ -164,7 +164,7 @@ export default function MobileBottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className="relative flex flex-1 flex-col items-center justify-center gap-0.5 cursor-pointer transition-colors duration-200"
+              className="relative flex flex-1 flex-row items-center justify-center gap-1 cursor-pointer transition-colors duration-200"
               style={{
                 color: active ? '#38bdf8' : 'rgba(255, 255, 255, 0.65)',
               }}
@@ -175,8 +175,8 @@ export default function MobileBottomNav() {
                 <span
                   className="absolute top-0 rounded-full"
                   style={{
-                    width: 'clamp(20px, 6vw, 28px)',
-                    height: '3px',
+                    width: 'clamp(16px, 4vw, 22px)',
+                    height: '2px',
                     background: 'linear-gradient(90deg, #38bdf8, #6ee7b7, #818cf8)',
                   }}
                   aria-hidden="true"
@@ -189,7 +189,7 @@ export default function MobileBottomNav() {
               {/* Label */}
               <span
                 className="font-medium leading-none"
-                style={{ fontSize: 'clamp(0.6rem, 2.8vw, 0.7rem)' }}
+                style={{ fontSize: 'clamp(0.5rem, 2vw, 0.6rem)' }}
               >
                 {item.label}
               </span>
@@ -199,13 +199,12 @@ export default function MobileBottomNav() {
                 <span
                   className="rounded-full border font-medium leading-none"
                   style={{
-                    fontSize: 'clamp(0.45rem, 2vw, 0.55rem)',
-                    padding: '1px 5px',
+                    fontSize: 'clamp(0.4rem, 1.5vw, 0.45rem)',
+                    padding: '1px 4px',
                     borderColor: active
                       ? 'rgba(56, 189, 248, 0.4)'
                       : 'rgba(255, 255, 255, 0.15)',
                     color: active ? '#38bdf8' : 'rgba(255, 255, 255, 0.5)',
-                    marginTop: '1px',
                   }}
                 >
                   {item.badge}
