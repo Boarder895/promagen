@@ -4722,33 +4722,6 @@ export default function ProPromagenClient({
             height: 65svh !important;
             min-height: 200px !important;
             overflow: hidden !important;
-            position: relative !important;
-          }
-          /* iOS Safari fix: keep ALL panels in render tree (never display:none).
-             display:none → 0 dimensions → WAAPI measures fail.
-             opacity:0 + position:absolute → valid dimensions → WAAPI works. */
-          [data-testid="pro-promagen-panel"] .pro-preview-wrapper > [data-panel] {
-            display: flex !important;
-            flex-direction: column !important;
-            height: 100% !important;
-            position: absolute !important;
-            inset: 0 !important;
-            opacity: 0;
-            pointer-events: none;
-          }
-          [data-testid="pro-promagen-panel"] .pro-preview-wrapper > [data-panel][data-active] {
-            opacity: 1;
-            pointer-events: auto;
-            position: relative !important;
-          }
-          /* Kill ALL CSS keyframe animations on mobile — WAAPI takes over.
-             Without this, CSS proAutoScroll + WAAPI both set transform on
-             the same element = jitter. */
-          [data-testid="pro-promagen-panel"] .pro-auto-scroll,
-          [data-testid="pro-promagen-panel"] .daily-scroll-content,
-          [data-testid="pro-promagen-panel"] .imagegen-reveal,
-          [data-testid="pro-promagen-panel"] .imagegen-progress {
-            animation: none !important;
           }
         }
       ` }} />
@@ -4820,36 +4793,35 @@ export default function ProPromagenClient({
             This avoids the mount-on-hover spike (PromptLabPreviewPanel starts
             5 timers + assemblePrompt + 45 icons on mount). With CSS toggle,
             hover just flips display — zero React work, instant paint.
-            Mobile: CSS overrides display:none → opacity:0 via data-panel +
-            data-active attributes. WAAPI handles auto-scroll animations. */}
-        <div data-panel="daily" data-active={activePanel === 'daily' ? '' : undefined} style={{ display: activePanel === 'daily' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+            Mobile: WAAPI handles auto-scroll animations on <768px. */}
+        <div style={{ display: activePanel === 'daily' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <DailyPromptsPreviewPanel />
         </div>
-        <div data-panel="format" data-active={activePanel === 'format' ? '' : undefined} style={{ display: activePanel === 'format' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+        <div style={{ display: activePanel === 'format' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <TierPreviewPanel activeTier={selectedPromptTier} isPaidUser={isPaidUser} onTierChange={handlePromptTierChange} />
         </div>
-        <div data-panel="scenes" data-active={activePanel === 'scenes' ? '' : undefined} style={{ display: activePanel === 'scenes' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+        <div style={{ display: activePanel === 'scenes' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <ScenesPreviewPanel />
         </div>
-        <div data-panel="saved" data-active={activePanel === 'saved' ? '' : undefined} style={{ display: activePanel === 'saved' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+        <div style={{ display: activePanel === 'saved' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <SavedPreviewPanel />
         </div>
-        <div data-panel="lab" data-active={activePanel === 'lab' ? '' : undefined} style={{ display: activePanel === 'lab' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+        <div style={{ display: activePanel === 'lab' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <PromptLabPreviewPanel providers={providers} />
         </div>
-        <div data-panel="exchanges" data-active={activePanel === 'exchanges' ? '' : undefined} style={{ display: activePanel === 'exchanges' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+        <div style={{ display: activePanel === 'exchanges' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <ExchangesPreviewPanel exchangeCatalog={exchangeCatalog} onOpenPicker={handleOpenExchangePicker} />
         </div>
-        <div data-panel="frame" data-active={activePanel === 'frame' ? '' : undefined} style={{ display: activePanel === 'frame' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+        <div style={{ display: activePanel === 'frame' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <FramePreviewPanel />
         </div>
-        <div data-panel="imagegen" data-active={activePanel === 'imagegen' ? '' : undefined} style={{ display: activePanel === 'imagegen' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+        <div style={{ display: activePanel === 'imagegen' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <ImageGenPreviewPanel />
         </div>
-        <div data-panel="intelligence" data-active={activePanel === 'intelligence' ? '' : undefined} style={{ display: activePanel === 'intelligence' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+        <div style={{ display: activePanel === 'intelligence' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <IntelligencePreviewPanel />
         </div>
-        <div data-panel="cta" data-active={activePanel === null ? '' : undefined} data-upgrade-cta style={{ display: activePanel === null ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+        <div data-upgrade-cta style={{ display: activePanel === null ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <UpgradeCta isPaidUser={isPaidUser} onSave={handleSave} hasChanges={hasChanges} />
         </div>
       </div>
