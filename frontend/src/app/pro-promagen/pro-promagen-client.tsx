@@ -4276,10 +4276,13 @@ export default function ProPromagenClient({
     const animTimer = setTimeout(animateAllElements, 50);
 
     // MutationObserver: re-run when DOM changes (scene rotation, provider swap)
+    let mutDebounce: ReturnType<typeof setTimeout>;
     if (previewPanelRef.current) {
       mutationObs = new MutationObserver(() => {
-        // Debounce — scene rotation triggers multiple mutations
-        setTimeout(animateAllElements, 100);
+        // Proper debounce — clear previous timer before setting new one.
+        // Scene rotation fires many mutations; only the last one triggers reanimate.
+        clearTimeout(mutDebounce);
+        mutDebounce = setTimeout(animateAllElements, 150);
       });
       mutationObs.observe(previewPanelRef.current, {
         childList: true,
@@ -4320,6 +4323,7 @@ export default function ProPromagenClient({
       clearTimeout(scrollTimer);
       clearTimeout(animTimer);
       clearTimeout(touchTimer);
+      clearTimeout(mutDebounce);
       cancelAnimationFrame(raf1);
       cancelAnimationFrame(raf2);
       mutationObs?.disconnect();
@@ -4736,6 +4740,15 @@ export default function ProPromagenClient({
             opacity: 1;
             pointer-events: auto;
             position: relative !important;
+          }
+          /* Kill ALL CSS keyframe animations on mobile — WAAPI takes over.
+             Without this, CSS proAutoScroll + WAAPI both set transform on
+             the same element = jitter. */
+          [data-testid="pro-promagen-panel"] .pro-auto-scroll,
+          [data-testid="pro-promagen-panel"] .daily-scroll-content,
+          [data-testid="pro-promagen-panel"] .imagegen-reveal,
+          [data-testid="pro-promagen-panel"] .imagegen-progress {
+            animation: none !important;
           }
         }
       ` }} />
