@@ -4144,6 +4144,52 @@ export default function ProPromagenClient({
   // Ref to the feature grid container (used by div below)
   const featureGridRef = useRef<HTMLDivElement>(null!);
 
+  // ── Mobile preview lifecycle ────────────────────────────────────────────
+  // Pro page scrolls on mobile. When a panel activates:
+  //   1. Auto-scroll preview into view (200ms delay for render)
+  //   2. Preview has fixed 65svh height with overflow:hidden — clips at bottom
+  //   3. Internal CSS auto-scroll animation plays within the clipped panel
+  //   4. Touch anywhere → close panel, scroll back to feature grid
+  //
+  // Desktop: skipped (window.innerWidth >= 768).
+  useEffect(() => {
+    if (!activePanel) return;
+    if (typeof window === 'undefined' || window.innerWidth >= 768) return;
+
+    // Step 1: Scroll preview into view
+    const scrollTimer = setTimeout(() => {
+      previewPanelRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }, 200);
+
+    // Step 2: Touch-to-reset — attached after scroll completes
+    const handleTouchReset = () => {
+      setActivePanel(null);
+      inPreviewRef.current = false;
+      clearTimeout(lingerRef.current);
+      clearTimeout(switchDebounceRef.current);
+
+      setTimeout(() => {
+        featureGridRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+      }, 50);
+    };
+
+    const touchTimer = setTimeout(() => {
+      document.addEventListener('touchstart', handleTouchReset, { once: true, passive: true });
+    }, 700);
+
+    return () => {
+      clearTimeout(scrollTimer);
+      clearTimeout(touchTimer);
+      document.removeEventListener('touchstart', handleTouchReset);
+    };
+  }, [activePanel]);
+
   const handleCardHover = useCallback((panel: PreviewPanel, hovering: boolean) => {
     clearTimeout(lingerRef.current);
 
@@ -4507,10 +4553,26 @@ export default function ProPromagenClient({
     // ========================================================================
     <section
       aria-label="Pro Promagen Configuration"
-      className="flex h-full min-h-0 flex-col rounded-3xl bg-slate-950/70 shadow-sm ring-1 ring-white/10"
+      className="flex flex-col rounded-3xl bg-slate-950/70 shadow-sm ring-1 ring-white/10 md:h-full md:min-h-0"
       style={{ padding: 'clamp(10px, 1vw, 16px)' }}
       data-testid="pro-promagen-panel"
     >
+      {/* Mobile overrides: FCP flows naturally, preview gets fixed viewport height */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media (max-width: 767px) {
+          [data-testid="pro-promagen-panel"] .pro-fcp-wrapper {
+            flex: none !important;
+            overflow: visible !important;
+            min-height: auto !important;
+          }
+          [data-testid="pro-promagen-panel"] .pro-preview-wrapper {
+            flex: none !important;
+            height: 65svh !important;
+            min-height: 200px !important;
+            overflow: hidden !important;
+          }
+        }
+      ` }} />
       {/* Header — compact */}
       <header className="shrink-0" style={{ marginBottom: 'clamp(6px, 0.7vw, 12px)' }}>
         <div className="flex items-center justify-between">
