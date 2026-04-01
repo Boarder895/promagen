@@ -4,15 +4,17 @@
 // This catch-all route renders Clerk's pre-built SignIn component.
 // Styling matches Promagen's dark theme.
 //
-// v1.1: Mobile fix — uses min-h-full + overflow-y-auto so the Clerk card
-// is scrollable when the mobile nav bar reduces available height.
-// Desktop: still centered with min-h-dvh (nav bar is hidden at md+).
+// v1.2: h-full + overflow-y-auto. The parent (layout's flex-1 min-h-0 div)
+// constrains this to available viewport minus nav bar. h-full fills exactly
+// that space. If the Clerk card is taller, overflow-y-auto scrolls.
+// min-h-full didn't work because it set a MINIMUM (allowing growth beyond
+// the parent), so overflow never triggered.
 
 import { SignIn } from '@clerk/nextjs';
 
 export default function SignInPage() {
   return (
-    <div className="flex min-h-full items-center justify-center overflow-y-auto bg-slate-950 py-8 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30">
+    <div className="flex h-full items-center justify-center overflow-y-auto bg-slate-950 py-4 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30">
       <SignIn
         appearance={{
           elements: {

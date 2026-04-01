@@ -4145,18 +4145,28 @@ export default function ProPromagenClient({
   const featureGridRef = useRef<HTMLDivElement>(null!);
 
   // ── Mobile preview lifecycle ────────────────────────────────────────────
-  // When a panel activates on mobile (<768px):
-  //   1. Scroll preview panel into view
-  //   2. The panel's own useAutoScroll hook + CSS proAutoScroll animation
-  //      handles internal content scrolling (same as desktop — translateY)
-  //   3. Touch anywhere → close panel, scroll back to feature grid
+  // Problem: useAutoScroll hook measures via ResizeObserver + 2s interval,
+  // but the CSS height chain from 65svh → height:100% → flex-1 doesn't
+  // always resolve on mobile browsers (iOS Safari), so scrollDist stays 0
+  // and the CSS animation never fires.
+  //
+  // Fix: bypass React state entirely. After the panel becomes visible,
+  // query .pro-auto-scroll elements in the DOM, measure overflow directly,
+  // and set --scroll-dist + animation on the DOM element. The proAutoScroll
+  // keyframes are already defined globally — we just trigger them.
+  //
+  // Touch sensitivity: 1.5s delay before attaching touch listener.
+  // Previous 700ms was too fast — the finger lifting from the tap was
+  // being caught as a touch event, immediately closing the panel.
   //
   // Desktop: skipped (window.innerWidth >= 768).
   useEffect(() => {
     if (!activePanel) return;
     if (typeof window === 'undefined' || window.innerWidth >= 768) return;
 
-    // Scroll preview into view
+    const styledElements: HTMLElement[] = [];
+
+    // Step 1: Scroll preview into view
     const scrollTimer = setTimeout(() => {
       previewPanelRef.current?.scrollIntoView({
         behavior: 'smooth',
@@ -4164,8 +4174,35 @@ export default function ProPromagenClient({
       });
     }, 200);
 
-    // Touch-to-reset — attached after scroll completes
+    // Step 2: After scroll completes, force-measure and trigger auto-scroll
+    // on all .pro-auto-scroll elements via direct DOM manipulation
+    const measureTimer = setTimeout(() => {
+      const wrapper = previewPanelRef.current;
+      if (!wrapper) return;
+
+      const scrollElements = wrapper.querySelectorAll<HTMLElement>('.pro-auto-scroll');
+      scrollElements.forEach((el) => {
+        const container = el.parentElement;
+        if (!container || container.clientHeight < 10) return;
+
+        const overflow = el.scrollHeight - container.clientHeight;
+        if (overflow > 5) {
+          el.style.setProperty('--scroll-dist', `-${overflow}px`);
+          el.style.animation = 'proAutoScroll 17s ease-in-out infinite';
+          styledElements.push(el);
+        }
+      });
+    }, 800);
+
+    // Step 3: Touch-to-reset — 1.5s delay to avoid catching the initial tap
     const handleTouchReset = () => {
+      // Reset DOM styles we set
+      styledElements.forEach((el) => {
+        el.style.animation = 'none';
+        el.style.removeProperty('--scroll-dist');
+      });
+      styledElements.length = 0;
+
       setActivePanel(null);
       inPreviewRef.current = false;
       clearTimeout(lingerRef.current);
@@ -4181,12 +4218,18 @@ export default function ProPromagenClient({
 
     const touchTimer = setTimeout(() => {
       document.addEventListener('touchstart', handleTouchReset, { once: true, passive: true });
-    }, 700);
+    }, 1500);
 
     return () => {
       clearTimeout(scrollTimer);
+      clearTimeout(measureTimer);
       clearTimeout(touchTimer);
       document.removeEventListener('touchstart', handleTouchReset);
+      // Clean up any DOM styles on unmount
+      styledElements.forEach((el) => {
+        el.style.animation = 'none';
+        el.style.removeProperty('--scroll-dist');
+      });
     };
   }, [activePanel]);
 

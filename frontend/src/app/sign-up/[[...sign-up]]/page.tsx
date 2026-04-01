@@ -3,12 +3,14 @@
 // Clerk hosted sign-up page.
 // This catch-all route renders Clerk's pre-built SignUp component.
 // Styling matches Promagen's dark theme.
+//
+// v1.1: h-full + overflow-y-auto (same fix as sign-in page).
 
 import { SignUp } from '@clerk/nextjs';
 
 export default function SignUpPage() {
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-slate-950">
+    <div className="flex h-full items-center justify-center overflow-y-auto bg-slate-950 py-4 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30">
       <SignUp
         appearance={{
           elements: {
