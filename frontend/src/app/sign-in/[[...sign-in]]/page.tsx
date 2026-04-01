@@ -3,12 +3,16 @@
 // Clerk hosted sign-in page.
 // This catch-all route renders Clerk's pre-built SignIn component.
 // Styling matches Promagen's dark theme.
+//
+// v1.1: Mobile fix — uses min-h-full + overflow-y-auto so the Clerk card
+// is scrollable when the mobile nav bar reduces available height.
+// Desktop: still centered with min-h-dvh (nav bar is hidden at md+).
 
 import { SignIn } from '@clerk/nextjs';
 
 export default function SignInPage() {
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-slate-950">
+    <div className="flex min-h-full items-center justify-center overflow-y-auto bg-slate-950 py-8 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30">
       <SignIn
         appearance={{
           elements: {

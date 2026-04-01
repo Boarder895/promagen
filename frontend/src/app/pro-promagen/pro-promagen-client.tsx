@@ -4141,22 +4141,58 @@ export default function ProPromagenClient({
     activePanelRef.current = activePanel;
   }, [activePanel]);
 
-  // ── Mobile auto-scroll: when a panel activates, scroll it into view ────
-  // On desktop, the preview panel is always visible below the cards.
-  // On mobile (<768px), the preview is below the fold — user has no idea
-  // it appeared. This scrolls it into view with smooth animation.
+  // ── Mobile preview lifecycle ────────────────────────────────────────────
+  // When a panel activates on mobile (<768px):
+  //   1. Scroll preview panel into view
+  //   2. Pause 0.2s
+  //   3. Internal auto-scroll animation plays (already exists in panel CSS)
+  //   4. Touch anywhere → close panel, scroll back to feature grid
+  //
+  // On desktop: this entire block is skipped (window.innerWidth >= 768).
+  // ────────────────────────────────────────────────────────────────────────
+
+  // Ref to the feature grid for scroll-back-to-top on reset
+  const featureGridRef = useRef<HTMLDivElement>(null!);
+
   useEffect(() => {
     if (!activePanel) return;
     if (typeof window === 'undefined' || window.innerWidth >= 768) return;
 
-    // Small delay to let the panel render before scrolling
-    const timer = setTimeout(() => {
+    // Step 1: Scroll preview into view after brief render delay
+    const scrollTimer = setTimeout(() => {
       previewPanelRef.current?.scrollIntoView({
         behavior: 'smooth',
         block: 'start',
       });
     }, 100);
-    return () => clearTimeout(timer);
+
+    // Step 2: Touch-to-reset handler — any touch closes the preview
+    const handleTouchReset = () => {
+      // Close the preview panel
+      setActivePanel(null);
+      inPreviewRef.current = false;
+      clearTimeout(lingerRef.current);
+      clearTimeout(switchDebounceRef.current);
+
+      // Scroll back to the feature grid
+      setTimeout(() => {
+        featureGridRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+      }, 50);
+    };
+
+    // Attach after the scroll animation completes (~500ms)
+    const touchTimer = setTimeout(() => {
+      document.addEventListener('touchstart', handleTouchReset, { once: true, passive: true });
+    }, 600);
+
+    return () => {
+      clearTimeout(scrollTimer);
+      clearTimeout(touchTimer);
+      document.removeEventListener('touchstart', handleTouchReset);
+    };
   }, [activePanel]);
 
   const handleCardHover = useCallback((panel: PreviewPanel, hovering: boolean) => {
@@ -4564,7 +4600,7 @@ export default function ProPromagenClient({
           [data-testid="pro-promagen-panel"] .pro-preview-wrapper { flex: none !important; min-height: auto !important; }
         }
       ` }} />
-      <div className="overflow-hidden pro-fcp-wrapper" style={{ flex: '1 1 0%', minHeight: 'clamp(140px, 16vw, 270px)' }}>
+      <div ref={featureGridRef} className="overflow-hidden pro-fcp-wrapper" style={{ flex: '1 1 0%', minHeight: 'clamp(140px, 16vw, 270px)' }}>
         <FeatureControlPanel
           isPaidUser={isPaidUser}
           selectedPromptTier={selectedPromptTier}

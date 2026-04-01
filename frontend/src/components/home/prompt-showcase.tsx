@@ -1155,13 +1155,13 @@ function LocalClock({ time }: { time: string }) {
 
 /** Shared flag style — matches Community Pulse flag dimensions */
 const COUNTDOWN_FLAG_STYLE: React.CSSProperties = {
-  width: 'clamp(18px, 1.5vw, 24px)',
-  height: 'clamp(14px, 1.1vw, 18px)',
+  width: 'clamp(20px, 1.5vw, 24px)',
+  height: 'clamp(15px, 1.1vw, 18px)',
 };
 
 /** Shared gap between flag and text — 2× normal for visual breathing room */
 const COUNTDOWN_GAP: React.CSSProperties = {
-  gap: 'clamp(8px, 0.6vw, 12px)',
+  gap: 'clamp(6px, 0.6vw, 12px)',
 };
 
 function CountdownTimer({
@@ -1535,7 +1535,7 @@ export default function PromptShowcase({
         <div className="flex flex-1 items-center justify-end">
           <span
             className="italic text-amber-400/80 truncate"
-            style={{ fontSize: 'clamp(0.1rem, 0.75vw, 1rem)' }}
+            style={{ fontSize: 'clamp(0.7rem, 0.9vw, 1rem)' }}
           >
             <CountdownTimer
               nextCity={data.nextCity ?? 'Loading'}
