@@ -4145,16 +4145,20 @@ export default function ProPromagenClient({
   const featureGridRef = useRef<HTMLDivElement>(null!);
 
   // ── Mobile preview lifecycle ────────────────────────────────────────────
-  // Pro page scrolls on mobile. When a panel activates:
-  //   1. Auto-scroll preview into view (200ms delay for render)
-  //   2. Preview has fixed 65svh height with overflow:hidden — clips at bottom
-  //   3. Internal CSS auto-scroll animation plays within the clipped panel
+  // When a panel activates on mobile (<768px):
+  //   1. Scroll preview panel into view (200ms delay for render)
+  //   2. Pause 200ms after scroll completes
+  //   3. Auto-scroll the preview wrapper's scrollTop down and back up
+  //      (matches the desktop proAutoScroll translateY pattern from §6.12)
   //   4. Touch anywhere → close panel, scroll back to feature grid
   //
   // Desktop: skipped (window.innerWidth >= 768).
   useEffect(() => {
     if (!activePanel) return;
     if (typeof window === 'undefined' || window.innerWidth >= 768) return;
+
+    let cancelled = false;
+    let rafId: number;
 
     // Step 1: Scroll preview into view
     const scrollTimer = setTimeout(() => {
@@ -4164,12 +4168,70 @@ export default function ProPromagenClient({
       });
     }, 200);
 
-    // Step 2: Touch-to-reset — attached after scroll completes
+    // Step 2: After view-scroll completes, pause, then auto-scroll content
+    const autoScrollTimer = setTimeout(() => {
+      if (cancelled) return;
+      const el = previewPanelRef.current;
+      if (!el) return;
+
+      // Reset to top
+      el.scrollTop = 0;
+
+      const maxScroll = el.scrollHeight - el.clientHeight;
+      if (maxScroll <= 5) return; // No overflow, nothing to scroll
+
+      // Auto-scroll cycle: down → hold → up → hold → repeat
+      // Matches desktop proAutoScroll: ~17s total cycle
+      const scrollSpeed = maxScroll / 350; // pixels per 16ms frame (~5.6s for full scroll)
+      let direction: 'down' | 'holdBottom' | 'up' | 'holdTop' = 'down';
+      let holdStart = 0;
+
+      const step = () => {
+        if (cancelled) return;
+
+        if (direction === 'down') {
+          el.scrollTop += scrollSpeed;
+          if (el.scrollTop >= maxScroll - 1) {
+            el.scrollTop = maxScroll;
+            direction = 'holdBottom';
+            holdStart = Date.now();
+          }
+        } else if (direction === 'holdBottom') {
+          if (Date.now() - holdStart > 500) {
+            direction = 'up';
+          }
+        } else if (direction === 'up') {
+          el.scrollTop -= scrollSpeed;
+          if (el.scrollTop <= 1) {
+            el.scrollTop = 0;
+            direction = 'holdTop';
+            holdStart = Date.now();
+          }
+        } else if (direction === 'holdTop') {
+          if (Date.now() - holdStart > 500) {
+            direction = 'down';
+          }
+        }
+
+        rafId = requestAnimationFrame(step);
+      };
+
+      rafId = requestAnimationFrame(step);
+    }, 900); // 200ms page scroll + ~500ms scroll duration + 200ms pause
+
+    // Step 3: Touch-to-reset
     const handleTouchReset = () => {
+      cancelled = true;
+      cancelAnimationFrame(rafId);
       setActivePanel(null);
       inPreviewRef.current = false;
       clearTimeout(lingerRef.current);
       clearTimeout(switchDebounceRef.current);
+
+      // Reset scroll position
+      if (previewPanelRef.current) {
+        previewPanelRef.current.scrollTop = 0;
+      }
 
       setTimeout(() => {
         featureGridRef.current?.scrollIntoView({
@@ -4181,10 +4243,13 @@ export default function ProPromagenClient({
 
     const touchTimer = setTimeout(() => {
       document.addEventListener('touchstart', handleTouchReset, { once: true, passive: true });
-    }, 700);
+    }, 800);
 
     return () => {
+      cancelled = true;
+      cancelAnimationFrame(rafId);
       clearTimeout(scrollTimer);
+      clearTimeout(autoScrollTimer);
       clearTimeout(touchTimer);
       document.removeEventListener('touchstart', handleTouchReset);
     };
@@ -4557,7 +4622,9 @@ export default function ProPromagenClient({
       style={{ padding: 'clamp(10px, 1vw, 16px)' }}
       data-testid="pro-promagen-panel"
     >
-      {/* Mobile overrides: FCP flows naturally, preview gets fixed viewport height */}
+      {/* Mobile overrides: FCP flows naturally, preview gets fixed viewport height
+          with hidden scrollbar. Inner panel divs flow at natural height so the
+          wrapper becomes the scroll container for JS auto-scroll. */}
       <style dangerouslySetInnerHTML={{ __html: `
         @media (max-width: 767px) {
           [data-testid="pro-promagen-panel"] .pro-fcp-wrapper {
@@ -4569,7 +4636,15 @@ export default function ProPromagenClient({
             flex: none !important;
             height: 65svh !important;
             min-height: 200px !important;
-            overflow: hidden !important;
+            overflow-y: auto !important;
+            scrollbar-width: none !important;
+            -webkit-overflow-scrolling: touch;
+          }
+          [data-testid="pro-promagen-panel"] .pro-preview-wrapper::-webkit-scrollbar {
+            display: none !important;
+          }
+          [data-testid="pro-promagen-panel"] .pro-preview-wrapper > div {
+            height: auto !important;
           }
         }
       ` }} />
