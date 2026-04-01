@@ -4144,21 +4144,27 @@ export default function ProPromagenClient({
   // Ref to the feature grid container (used by div below)
   const featureGridRef = useRef<HTMLDivElement>(null!);
 
-  // ── Touch reset cooldown — blocks handleCardHover for 500ms after reset ──
-  // Without this, the touchstart event propagates to the feature card
-  // underneath, immediately opening a new panel.
-  const touchResetCooldownRef = useRef(false);
-  const touchResetCooldownTimerRef = useRef<ReturnType<typeof setTimeout>>();
-
-  // ── Mobile preview lifecycle (WAAPI + forced reflow + double-rAF) ──────
-  // Targets ALL scrollable element types:
-  //   .pro-auto-scroll  — TierWindows, SceneWorldWindows, ExchangeRegionWindows, SavedWindows, LabWindows
-  //   .daily-scroll-content — DailyPromptsPreviewPanel (different animation: one-way scroll)
-  //   .imagegen-reveal — ImageGenPreviewPanel blur-to-sharp
-  //   .imagegen-progress — ImageGenPreviewPanel progress bar
+  // ── Mobile preview lifecycle (iOS Safari fix) ───────────────────────────
+  // ROOT CAUSE (from deep research — 3 compounding iOS Safari bugs):
   //
-  // MutationObserver re-runs WAAPI when DOM children change (scene rotation).
+  //   1. After display:none → display:flex, Safari defers layout.
+  //      scrollHeight/clientHeight return 0 even after 800ms timeout.
+  //   2. WebKit Bug #248145: CSS variables in @keyframes don't resolve
+  //      correctly when set at animation start time. var(--scroll-dist)
+  //      resolves to 0 even when the property is set on the element.
+  //   3. WebKit Bug #250900: ResizeObserver doesn't fire initial callback
+  //      for elements transitioning from display:none.
+  //
+  // FIX: Force synchronous reflow (void offsetHeight), then double-rAF
+  // to guarantee paint completion, then use Web Animations API
+  // (element.animate()) with computed pixel values — completely bypasses
+  // CSS variable resolution bugs in @keyframes.
+  //
+  // Touch: 1.5s delay before attaching listener to avoid catching the
+  // finger lift from the initial tap.
+  //
   // Desktop: skipped (window.innerWidth >= 768).
+  // ────────────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!activePanel) return;
     if (typeof window === 'undefined' || window.innerWidth >= 768) return;
@@ -4166,7 +4172,6 @@ export default function ProPromagenClient({
     const runningAnimations: Animation[] = [];
     let raf1: number;
     let raf2: number;
-    let mutationObs: MutationObserver | null = null;
 
     // Step 1: Scroll preview into view
     const scrollTimer = setTimeout(() => {
@@ -4176,30 +4181,40 @@ export default function ProPromagenClient({
       });
     }, 200);
 
-    // ── Animate all scrollable elements inside the preview wrapper ──
-    function animateAllElements() {
-      // Cancel previous animations
-      runningAnimations.forEach((a) => { try { a.cancel(); } catch {} });
-      runningAnimations.length = 0;
-
+    // Step 2: Force reflow → double-rAF → measure → Web Animations API
+    const animTimer = setTimeout(() => {
       const wrapper = previewPanelRef.current;
       if (!wrapper) return;
 
-      // Force synchronous reflow
+      // Force synchronous reflow — critical for iOS Safari.
+      // This makes WebKit build the render subtree and compute layout NOW
+      // instead of deferring it as a battery optimization.
       void wrapper.offsetHeight;
 
+      // Double-rAF: first rAF schedules after current frame, second rAF
+      // guarantees at least one full paint cycle has completed. A single
+      // rAF is insufficient because Safari batches style changes into
+      // the same paint as the rAF callback.
       raf1 = requestAnimationFrame(() => {
         raf2 = requestAnimationFrame(() => {
+          // Now layout is guaranteed complete. Measure and animate.
+          const scrollElements = wrapper.querySelectorAll<HTMLElement>('.pro-auto-scroll');
 
-          // ── 1. pro-auto-scroll elements (Tier, Scenes, Exchanges, Saved, Lab) ──
-          wrapper.querySelectorAll<HTMLElement>('.pro-auto-scroll').forEach((el) => {
+          scrollElements.forEach((el) => {
             const container = el.parentElement;
             if (!container) return;
+
+            // Force reflow on each container too
             void container.offsetHeight;
+
             const overflow = el.scrollHeight - container.clientHeight;
-            if (overflow <= 1) return;
+            if (overflow <= 5) return;
+
+            // Web Animations API with computed pixel values.
+            // Bypasses WebKit Bug #248145 entirely — no CSS variables,
+            // no @keyframes resolution. Pixel values are baked in.
             try {
-              const a = el.animate(
+              const anim = el.animate(
                 [
                   { transform: 'translateY(0)' },
                   { transform: 'translateY(0)', offset: 0.018 },
@@ -4208,99 +4223,26 @@ export default function ProPromagenClient({
                   { transform: 'translateY(0)', offset: 0.976 },
                   { transform: 'translateY(0)' },
                 ],
-                { duration: 17000, iterations: Infinity, easing: 'ease-in-out' }
+                {
+                  duration: 17000, // 17s — matches desktop proAutoScroll
+                  iterations: Infinity,
+                  easing: 'ease-in-out',
+                }
               );
-              runningAnimations.push(a);
-            } catch {}
-          });
-
-          // ── 2. daily-scroll-content (one-way scroll down, then advance) ──
-          wrapper.querySelectorAll<HTMLElement>('.daily-scroll-content').forEach((el) => {
-            const container = el.parentElement;
-            if (!container) return;
-            void container.offsetHeight;
-            const overflow = el.scrollHeight - container.clientHeight;
-            if (overflow <= 1) return;
-            try {
-              const dur = Math.max(2000, Math.min(8000, overflow * 25));
-              const a = el.animate(
-                [
-                  { transform: 'translateY(0)' },
-                  { transform: `translateY(-${overflow}px)` },
-                ],
-                { duration: dur, iterations: Infinity, easing: 'ease-in-out' }
-              );
-              runningAnimations.push(a);
-            } catch {}
-          });
-
-          // ── 3. imagegen-reveal (blur-to-sharp) ──
-          wrapper.querySelectorAll<HTMLElement>('.imagegen-reveal').forEach((el) => {
-            try {
-              const a = el.animate(
-                [
-                  { filter: 'blur(18px) brightness(0.3) saturate(0.1)', offset: 0 },
-                  { filter: 'blur(12px) brightness(0.4) saturate(0.3)', offset: 0.1 },
-                  { filter: 'blur(6px) brightness(0.6) saturate(0.6)', offset: 0.3 },
-                  { filter: 'blur(1px) brightness(0.9) saturate(0.95)', offset: 0.55 },
-                  { filter: 'blur(0) brightness(1) saturate(1)', offset: 0.65 },
-                  { filter: 'blur(0) brightness(1) saturate(1)', offset: 0.85 },
-                  { filter: 'blur(18px) brightness(0.3) saturate(0.1)', offset: 1 },
-                ],
-                { duration: 15000, iterations: Infinity, easing: 'ease-in-out' }
-              );
-              runningAnimations.push(a);
-            } catch {}
-          });
-
-          // ── 4. imagegen-progress (progress bar width) ──
-          wrapper.querySelectorAll<HTMLElement>('.imagegen-progress').forEach((el) => {
-            try {
-              const a = el.animate(
-                [
-                  { width: '0%', offset: 0 },
-                  { width: '100%', offset: 0.65 },
-                  { width: '0%', offset: 0.66 },
-                  { width: '0%', offset: 1 },
-                ],
-                { duration: 15000, iterations: Infinity, easing: 'ease-in-out' }
-              );
-              runningAnimations.push(a);
-            } catch {}
+              runningAnimations.push(anim);
+            } catch {
+              // Web Animations API not supported — silent fail
+            }
           });
         });
       });
-    }
+    }, 600);
 
-    // Run immediately after a brief settle
-    const animTimer = setTimeout(animateAllElements, 50);
-
-    // MutationObserver: re-run when DOM changes (scene rotation, provider swap)
-    let mutDebounce: ReturnType<typeof setTimeout>;
-    if (previewPanelRef.current) {
-      mutationObs = new MutationObserver(() => {
-        // Proper debounce — clear previous timer before setting new one.
-        // Scene rotation fires many mutations; only the last one triggers reanimate.
-        clearTimeout(mutDebounce);
-        mutDebounce = setTimeout(animateAllElements, 150);
-      });
-      mutationObs.observe(previewPanelRef.current, {
-        childList: true,
-        subtree: true,
-      });
-    }
-
-    // Touch-to-reset — 1.5s delay avoids catching initial tap lift
+    // Step 3: Touch-to-reset — 1.5s delay avoids catching initial tap lift
     const handleTouchReset = () => {
+      // Cancel all WAAPI animations
       runningAnimations.forEach((a) => { try { a.cancel(); } catch {} });
       runningAnimations.length = 0;
-
-      // Activate cooldown so handleCardHover ignores the next 500ms
-      touchResetCooldownRef.current = true;
-      clearTimeout(touchResetCooldownTimerRef.current);
-      touchResetCooldownTimerRef.current = setTimeout(() => {
-        touchResetCooldownRef.current = false;
-      }, 500);
 
       setActivePanel(null);
       inPreviewRef.current = false;
@@ -4323,11 +4265,10 @@ export default function ProPromagenClient({
       clearTimeout(scrollTimer);
       clearTimeout(animTimer);
       clearTimeout(touchTimer);
-      clearTimeout(mutDebounce);
       cancelAnimationFrame(raf1);
       cancelAnimationFrame(raf2);
-      mutationObs?.disconnect();
       document.removeEventListener('touchstart', handleTouchReset);
+      // Cancel any running WAAPI animations on cleanup
       runningAnimations.forEach((a) => { try { a.cancel(); } catch {} });
     };
   }, [activePanel]);
@@ -4338,13 +4279,6 @@ export default function ProPromagenClient({
     if (hovering) {
       // During dropdown cooldown, block switching to a different panel
       if (dropdownCooldownRef.current && activePanelRef.current && activePanelRef.current !== panel) {
-        return;
-      }
-
-      // During touch reset cooldown, block ALL panel activations.
-      // Without this, the touchstart from closing a panel propagates to
-      // the feature card underneath and immediately reopens a panel.
-      if (touchResetCooldownRef.current) {
         return;
       }
 
@@ -4792,8 +4726,7 @@ export default function ProPromagenClient({
         {/* All preview panels rendered always — toggled via CSS display.
             This avoids the mount-on-hover spike (PromptLabPreviewPanel starts
             5 timers + assemblePrompt + 45 icons on mount). With CSS toggle,
-            hover just flips display — zero React work, instant paint.
-            Mobile: WAAPI handles auto-scroll animations on <768px. */}
+            hover just flips display — zero React work, instant paint. */}
         <div style={{ display: activePanel === 'daily' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <DailyPromptsPreviewPanel />
         </div>
