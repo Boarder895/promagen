@@ -4144,27 +4144,34 @@ export default function ProPromagenClient({
   // Ref to the feature grid container (used by div below)
   const featureGridRef = useRef<HTMLDivElement>(null!);
 
-  // ── Mobile preview lifecycle ────────────────────────────────────────────
-  // Problem: useAutoScroll hook measures via ResizeObserver + 2s interval,
-  // but the CSS height chain from 65svh → height:100% → flex-1 doesn't
-  // always resolve on mobile browsers (iOS Safari), so scrollDist stays 0
-  // and the CSS animation never fires.
+  // ── Mobile preview lifecycle (iOS Safari fix) ───────────────────────────
+  // ROOT CAUSE (from deep research — 3 compounding iOS Safari bugs):
   //
-  // Fix: bypass React state entirely. After the panel becomes visible,
-  // query .pro-auto-scroll elements in the DOM, measure overflow directly,
-  // and set --scroll-dist + animation on the DOM element. The proAutoScroll
-  // keyframes are already defined globally — we just trigger them.
+  //   1. After display:none → display:flex, Safari defers layout.
+  //      scrollHeight/clientHeight return 0 even after 800ms timeout.
+  //   2. WebKit Bug #248145: CSS variables in @keyframes don't resolve
+  //      correctly when set at animation start time. var(--scroll-dist)
+  //      resolves to 0 even when the property is set on the element.
+  //   3. WebKit Bug #250900: ResizeObserver doesn't fire initial callback
+  //      for elements transitioning from display:none.
   //
-  // Touch sensitivity: 1.5s delay before attaching touch listener.
-  // Previous 700ms was too fast — the finger lifting from the tap was
-  // being caught as a touch event, immediately closing the panel.
+  // FIX: Force synchronous reflow (void offsetHeight), then double-rAF
+  // to guarantee paint completion, then use Web Animations API
+  // (element.animate()) with computed pixel values — completely bypasses
+  // CSS variable resolution bugs in @keyframes.
+  //
+  // Touch: 1.5s delay before attaching listener to avoid catching the
+  // finger lift from the initial tap.
   //
   // Desktop: skipped (window.innerWidth >= 768).
+  // ────────────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!activePanel) return;
     if (typeof window === 'undefined' || window.innerWidth >= 768) return;
 
-    const styledElements: HTMLElement[] = [];
+    const runningAnimations: Animation[] = [];
+    let raf1: number;
+    let raf2: number;
 
     // Step 1: Scroll preview into view
     const scrollTimer = setTimeout(() => {
@@ -4174,34 +4181,68 @@ export default function ProPromagenClient({
       });
     }, 200);
 
-    // Step 2: After scroll completes, force-measure and trigger auto-scroll
-    // on all .pro-auto-scroll elements via direct DOM manipulation
-    const measureTimer = setTimeout(() => {
+    // Step 2: Force reflow → double-rAF → measure → Web Animations API
+    const animTimer = setTimeout(() => {
       const wrapper = previewPanelRef.current;
       if (!wrapper) return;
 
-      const scrollElements = wrapper.querySelectorAll<HTMLElement>('.pro-auto-scroll');
-      scrollElements.forEach((el) => {
-        const container = el.parentElement;
-        if (!container || container.clientHeight < 10) return;
+      // Force synchronous reflow — critical for iOS Safari.
+      // This makes WebKit build the render subtree and compute layout NOW
+      // instead of deferring it as a battery optimization.
+      void wrapper.offsetHeight;
 
-        const overflow = el.scrollHeight - container.clientHeight;
-        if (overflow > 5) {
-          el.style.setProperty('--scroll-dist', `-${overflow}px`);
-          el.style.animation = 'proAutoScroll 17s ease-in-out infinite';
-          styledElements.push(el);
-        }
+      // Double-rAF: first rAF schedules after current frame, second rAF
+      // guarantees at least one full paint cycle has completed. A single
+      // rAF is insufficient because Safari batches style changes into
+      // the same paint as the rAF callback.
+      raf1 = requestAnimationFrame(() => {
+        raf2 = requestAnimationFrame(() => {
+          // Now layout is guaranteed complete. Measure and animate.
+          const scrollElements = wrapper.querySelectorAll<HTMLElement>('.pro-auto-scroll');
+
+          scrollElements.forEach((el) => {
+            const container = el.parentElement;
+            if (!container) return;
+
+            // Force reflow on each container too
+            void container.offsetHeight;
+
+            const overflow = el.scrollHeight - container.clientHeight;
+            if (overflow <= 5) return;
+
+            // Web Animations API with computed pixel values.
+            // Bypasses WebKit Bug #248145 entirely — no CSS variables,
+            // no @keyframes resolution. Pixel values are baked in.
+            try {
+              const anim = el.animate(
+                [
+                  { transform: 'translateY(0)' },
+                  { transform: 'translateY(0)', offset: 0.018 },
+                  { transform: `translateY(-${overflow}px)`, offset: 0.488 },
+                  { transform: `translateY(-${overflow}px)`, offset: 0.506 },
+                  { transform: 'translateY(0)', offset: 0.976 },
+                  { transform: 'translateY(0)' },
+                ],
+                {
+                  duration: 17000, // 17s — matches desktop proAutoScroll
+                  iterations: Infinity,
+                  easing: 'ease-in-out',
+                }
+              );
+              runningAnimations.push(anim);
+            } catch {
+              // Web Animations API not supported — silent fail
+            }
+          });
+        });
       });
-    }, 800);
+    }, 600);
 
-    // Step 3: Touch-to-reset — 1.5s delay to avoid catching the initial tap
+    // Step 3: Touch-to-reset — 1.5s delay avoids catching initial tap lift
     const handleTouchReset = () => {
-      // Reset DOM styles we set
-      styledElements.forEach((el) => {
-        el.style.animation = 'none';
-        el.style.removeProperty('--scroll-dist');
-      });
-      styledElements.length = 0;
+      // Cancel all WAAPI animations
+      runningAnimations.forEach((a) => { try { a.cancel(); } catch {} });
+      runningAnimations.length = 0;
 
       setActivePanel(null);
       inPreviewRef.current = false;
@@ -4222,14 +4263,13 @@ export default function ProPromagenClient({
 
     return () => {
       clearTimeout(scrollTimer);
-      clearTimeout(measureTimer);
+      clearTimeout(animTimer);
       clearTimeout(touchTimer);
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
       document.removeEventListener('touchstart', handleTouchReset);
-      // Clean up any DOM styles on unmount
-      styledElements.forEach((el) => {
-        el.style.animation = 'none';
-        el.style.removeProperty('--scroll-dist');
-      });
+      // Cancel any running WAAPI animations on cleanup
+      runningAnimations.forEach((a) => { try { a.cancel(); } catch {} });
     };
   }, [activePanel]);
 
