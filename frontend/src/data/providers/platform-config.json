@@ -1467,8 +1467,8 @@
       "tier": 3,
       "shorthandLevel": "MEDIUM",
       "compressionNotes": "Llama-based natural language",
-      "call3Mode": "gpt_rewrite",
-      "semanticRewriteAllowed": true
+      "call3Mode": "format_only",
+      "semanticRewriteAllowed": false
     },
     "jasper-art": {
       "promptStyle": "natural",
@@ -1965,8 +1965,8 @@
       "shorthandLevel": "MINIMAL",
       "compressionNotes": "CyberLink consumer tool",
       "groupKnowledge": "Nano Banana Pro (Google) backend. NL prose. No special syntax.",
-      "call3Mode": "gpt_rewrite",
-      "semanticRewriteAllowed": true
+      "call3Mode": "format_only",
+      "semanticRewriteAllowed": false
     },
     "novelai": {
       "promptStyle": "keywords",
@@ -2495,8 +2495,8 @@
       "shorthandLevel": "MINIMAL",
       "compressionNotes": "Marketing-focused design tool",
       "groupKnowledge": "14+ model aggregator. NL prose across all models. Negative prompts on some models.",
-      "call3Mode": "gpt_rewrite",
-      "semanticRewriteAllowed": true
+      "call3Mode": "format_only",
+      "semanticRewriteAllowed": false
     },
     "stability": {
       "promptStyle": "keywords",
@@ -2629,8 +2629,8 @@
       "shorthandLevel": "MINIMAL",
       "compressionNotes": "Presentation-focused tool",
       "groupKnowledge": "Dreamscape API (SD variant) backend. NL prose. No special syntax.",
-      "call3Mode": "gpt_rewrite",
-      "semanticRewriteAllowed": true
+      "call3Mode": "format_only",
+      "semanticRewriteAllowed": false
     },
     "vistacreate": {
       "promptStyle": "natural",
@@ -2678,8 +2678,8 @@
       "shorthandLevel": "MINIMAL",
       "compressionNotes": "Template-based design tool",
       "groupKnowledge": "Bria.ai backend. NL prose. ~3000 chars capacity. No special syntax.",
-      "call3Mode": "gpt_rewrite",
-      "semanticRewriteAllowed": true
+      "call3Mode": "format_only",
+      "semanticRewriteAllowed": false
     }
   }
 }
