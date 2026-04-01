@@ -662,7 +662,7 @@ export default function HomepageGrid({
           {/* ============================================================
               LEFT COLUMN — Engine Bay + Eastern Exchanges
               ============================================================ */}
-          <div className={`${isHomepage ? 'hidden md:flex' : 'flex'} min-h-0 flex-col`} style={{ gap: GRID_GAP }}>
+          <div className="hidden min-h-0 flex-col md:flex" style={{ gap: GRID_GAP }}>
             {/* Engine Bay — xl+ only, inherits exact column width from grid */}
             {showEngineBay && providers.length > 0 && (
               <div className="hidden shrink-0 xl:block">
@@ -706,45 +706,35 @@ export default function HomepageGrid({
                 and Mission Control.
                 ---------------------------------------------------------- */}
             <div
-              className={`shrink-0 ${
-                isHomepage
-                  ? 'bg-transparent shadow-none ring-0 md:rounded-3xl md:bg-slate-950/70 md:shadow-sm md:ring-1 md:ring-white/10'
-                  : 'rounded-3xl bg-slate-950/70 shadow-sm ring-1 ring-white/10'
-              }`}
-              style={{ padding: isHomepage ? 'clamp(8px, 2.8vw, 16px)' : 'clamp(10px, 1vw, 16px)' }}
+              className="shrink-0 bg-transparent shadow-none ring-0 md:rounded-3xl md:bg-slate-950/70 md:shadow-sm md:ring-1 md:ring-white/10"
+              style={{ padding: 'clamp(8px, 2.8vw, 16px)' }}
               data-testid="hero-window"
             >
               <style dangerouslySetInnerHTML={{ __html: MOBILE_HOMEPAGE_STYLES }} />
 
-              {isHomepage && (
-                <div className="md:hidden">
-                  <div className="flex items-center justify-end">
-                    <div className="[&_button]:!text-white [&_a]:!text-white [&_svg]:!text-white [&_span]:!text-white">
-                      <AuthButton />
-                    </div>
-                  </div>
-
-                  <div className="mt-2 text-center">
-                    <h2
-                      className="font-semibold leading-tight"
-                      style={{ fontSize: 'clamp(1.05rem, 4.2vw, 1.4rem)' }}
-                    >
-                      <span className="bg-gradient-to-r from-sky-400 via-emerald-300 to-indigo-400 bg-clip-text text-transparent">
-                        {headingText ?? 'Promagen — Intelligent Prompt Builder'}
-                      </span>
-                    </h2>
-
-                    <p
-                      className="promagen-mobile-home-note mt-2 font-medium text-amber-400/85"
-                      style={{ fontSize: 'clamp(0.82rem, 3.2vw, 0.98rem)' }}
-                    >
-                      The full Promagen experience is available on desktop, laptop &amp; tablet
-                    </p>
+              {/* ── MOBILE HEADER — All pages, <768px only ─────────────── */}
+              <div className="md:hidden">
+                <div className="flex items-center justify-between">
+                  <div style={{ width: '1px' }} />
+                  <div className="[&_button]:!text-white [&_a]:!text-white [&_svg]:!text-white [&_span]:!text-white">
+                    <AuthButton />
                   </div>
                 </div>
-              )}
 
-              <div className={isHomepage ? 'hidden md:block' : 'block'}>
+                <div className="mt-2 text-center">
+                  <h2
+                    className="font-semibold leading-tight"
+                    style={{ fontSize: 'clamp(1.05rem, 4.2vw, 1.4rem)' }}
+                  >
+                    <span className="bg-gradient-to-r from-sky-400 via-emerald-300 to-indigo-400 bg-clip-text text-transparent">
+                      {headingText ?? 'Promagen — Intelligent Prompt Builder'}
+                    </span>
+                  </h2>
+                </div>
+              </div>
+
+              {/* ── DESKTOP HEADER — ≥768px only ──────────────────────── */}
+              <div className="hidden md:block">
               {/* Row 1: Listen (left edge) | Heading (dead centre) | Greenwich Meridian + Sign In (right edge) */}
               <div className="relative flex w-full items-center">
                 {/* Left edge — Listen button (all pages) */}
@@ -897,7 +887,7 @@ export default function HomepageGrid({
           {/* ============================================================
               RIGHT COLUMN — Mission Control + Western Exchanges
               ============================================================ */}
-          <div className={`${isHomepage ? 'hidden md:flex' : 'flex'} min-h-0 flex-col`} style={{ gap: GRID_GAP }}>
+          <div className="hidden min-h-0 flex-col md:flex" style={{ gap: GRID_GAP }}>
             {/* Mission Control — xl+ only, inherits exact column width from grid */}
             {showMissionControl && (
               <div className="hidden shrink-0 xl:block">

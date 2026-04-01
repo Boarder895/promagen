@@ -228,18 +228,73 @@ export default function NewHomepageClient({
       style={{ gap: 'clamp(12px, 1.25vw, 24px)' }}
       data-testid="rail-centre-inner"
     >
-      {/* Prompt of the Moment — desktop only. Mobile homepage is leaderboard-only. */}
+      {/* Prompt of the Moment — NOW visible on all screens (Part 2: Shop Window) */}
       {!isTableExpanded && (
-        <div className="hidden md:block">
-          <PromptShowcase
-            selectedProviderId={selectedProvider?.id}
-            onTierChange={setShowcaseTierId}
-            initialData={initialShowcaseData ?? undefined}
-          />
+        <PromptShowcase
+          selectedProviderId={selectedProvider?.id}
+          onTierChange={setShowcaseTierId}
+          initialData={initialShowcaseData ?? undefined}
+        />
+      )}
+
+      {/* ── Mobile Conversion Bridge — <768px only ────────────────────
+          Sits between the showcase and leaderboard. Two paths:
+          Path A: Pro page (conversion). Path B: Copy link to revisit on desktop.
+          Hidden on tablet+ where the full desktop experience takes over. */}
+      {!isTableExpanded && (
+        <div className="md:hidden" data-testid="mobile-conversion-bridge">
+          <div
+            className="flex flex-col items-center rounded-2xl border border-white/[0.08] bg-slate-950/60"
+            style={{ padding: 'clamp(16px, 4vw, 24px)', gap: 'clamp(12px, 3vw, 16px)' }}
+          >
+            <p
+              className="text-center font-medium text-white"
+              style={{ fontSize: 'clamp(0.85rem, 3.8vw, 1rem)', lineHeight: 1.4 }}
+            >
+              That prompt was built by the Promagen engine.
+              <br />
+              <span className="text-sky-400">40 platforms. 4 quality tiers. Zero guesswork.</span>
+            </p>
+
+            <div className="flex w-full flex-col items-stretch" style={{ gap: 'clamp(8px, 2vw, 12px)' }}>
+              {/* Path A: Pro page */}
+              <a
+                href="/pro-promagen"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-purple-500/70 bg-gradient-to-r from-purple-600/25 to-pink-600/25 font-semibold text-purple-100 shadow-sm transition-all hover:from-purple-600/35 hover:to-pink-600/35 hover:border-purple-400 cursor-pointer"
+                style={{
+                  padding: 'clamp(10px, 2.5vw, 14px) clamp(16px, 4vw, 24px)',
+                  fontSize: 'clamp(0.85rem, 3.5vw, 0.95rem)',
+                }}
+              >
+                <svg
+                  className="shrink-0"
+                  style={{ width: 'clamp(14px, 3.5vw, 18px)', height: 'clamp(14px, 3.5vw, 18px)' }}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                </svg>
+                See what Pro unlocks
+              </a>
+
+              {/* Path B: Desktop reminder — subtle, secondary */}
+              <p
+                className="text-center text-white/50"
+                style={{ fontSize: 'clamp(0.7rem, 2.8vw, 0.8rem)' }}
+              >
+                The full builder is a desktop experience
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Leaderboard intro — desktop only. Mobile homepage is leaderboard-only. */}
+      {/* Leaderboard intro — desktop/tablet only (expand/collapse is a desktop interaction) */}
       {!isTableExpanded && (
         <div className="hidden md:block">
           <LeaderboardIntro
