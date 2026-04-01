@@ -10,6 +10,7 @@ import { GoogleAnalytics } from '@/components/analytics/google-analytics';
 import { QuickSaveToastGlobal } from '@/components/prompts/library/quick-save-toast-global';
 import { env } from '@/lib/env';
 import MobileBottomNav from '@/components/layout/mobile-bottom-nav';
+import PortraitLockOverlay from '@/components/layout/portrait-lock-overlay';
 
 // Vercel Pro: Web Analytics + Speed Insights (no visual impact)
 import { Analytics as VercelAnalytics } from '@vercel/analytics/react';
@@ -71,6 +72,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className="h-dvh overflow-hidden antialiased text-slate-900">
         <ClerkProvider>
           <PauseProvider>
+            {/* Portrait lock — pure CSS, shows rotate prompt on portrait phones */}
+            <PortraitLockOverlay />
             {/* ────────────────────────────────────────────────────────────
                 MOBILE-AWARE FLEX WRAPPER (Part 1 — Mobile Nav)
                 ────────────────────────────────────────────────────────────

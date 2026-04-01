@@ -4141,6 +4141,24 @@ export default function ProPromagenClient({
     activePanelRef.current = activePanel;
   }, [activePanel]);
 
+  // ── Mobile auto-scroll: when a panel activates, scroll it into view ────
+  // On desktop, the preview panel is always visible below the cards.
+  // On mobile (<768px), the preview is below the fold — user has no idea
+  // it appeared. This scrolls it into view with smooth animation.
+  useEffect(() => {
+    if (!activePanel) return;
+    if (typeof window === 'undefined' || window.innerWidth >= 768) return;
+
+    // Small delay to let the panel render before scrolling
+    const timer = setTimeout(() => {
+      previewPanelRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [activePanel]);
+
   const handleCardHover = useCallback((panel: PreviewPanel, hovering: boolean) => {
     clearTimeout(lingerRef.current);
 

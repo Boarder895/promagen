@@ -96,15 +96,26 @@ function FeatureCard({
   const glowBorder = hexToRgba(color, 0.5);
   const glowSoft = hexToRgba(color, 0.15);
 
-  // Mobile tap: toggle the preview panel via onHoverChange.
-  // On desktop, hover handles this. On touch devices, mouseEnter/Leave
-  // don't fire reliably, so we use onClick as fallback.
+  // Mobile tap: ALWAYS toggle preview panel. If the card also has a navigation
+  // action (Scenes→homepage, Exchanges→picker, etc.), fire it on desktop only.
+  // On mobile, the preview IS the interaction — navigation would leave the page
+  // before the user sees what the feature does.
   const handleClick = useCallback(() => {
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+    if (isMobile) {
+      // Mobile: always toggle preview, never navigate
+      const next = !isHovered;
+      setIsHovered(next);
+      onHoverChange?.(next);
+      return;
+    }
+
+    // Desktop: navigate if card has an action, otherwise toggle preview
     if (hasAction) {
       onAction!();
       return;
     }
-    // No action = pure preview card. Toggle hover state for mobile.
     const next = !isHovered;
     setIsHovered(next);
     onHoverChange?.(next);
@@ -252,7 +263,9 @@ export function FeatureControlPanel({
   const { allPrompts } = useSavedPrompts();
 
   const promptCount = dailyUsage?.count ?? anonymousUsage?.count ?? 0;
-  const promptLimit = dailyUsage?.limit ?? anonymousUsage?.limit ?? 3;
+  // Display limit: always show 3 on the Pro page (matches desktop anonymous view).
+  // The actual usage tracking uses real limits — this is display only.
+  const promptLimit = 3;
   const savedCount = allPrompts.length;
 
   const nav = useCallback((path: string) => {
