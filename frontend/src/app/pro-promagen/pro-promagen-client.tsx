@@ -4150,24 +4150,25 @@ export default function ProPromagenClient({
   const touchResetCooldownRef = useRef(false);
   const touchResetCooldownTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
-  // ── Mobile preview lifecycle (simplified) ──────────────────────────────
-  // The CSS overrides above replace display:none with opacity:0 on mobile.
-  // This means ALL panel elements are always in the render tree with valid
-  // dimensions. The existing useAutoScroll hooks + CSS proAutoScroll /
-  // dailyScrollDown / imagegenReveal animations work automatically —
-  // they measure real heights and fire real CSS animations.
+  // ── Mobile preview lifecycle (WAAPI + forced reflow + double-rAF) ──────
+  // Targets ALL scrollable element types:
+  //   .pro-auto-scroll  — TierWindows, SceneWorldWindows, ExchangeRegionWindows, SavedWindows, LabWindows
+  //   .daily-scroll-content — DailyPromptsPreviewPanel (different animation: one-way scroll)
+  //   .imagegen-reveal — ImageGenPreviewPanel blur-to-sharp
+  //   .imagegen-progress — ImageGenPreviewPanel progress bar
   //
-  // This lifecycle only handles:
-  //   1. Scroll preview panel into view when activated
-  //   2. Touch anywhere → close panel, scroll back to feature grid
-  //   3. 500ms cooldown after reset to prevent accidental re-open
-  //
+  // MutationObserver re-runs WAAPI when DOM children change (scene rotation).
   // Desktop: skipped (window.innerWidth >= 768).
   useEffect(() => {
     if (!activePanel) return;
     if (typeof window === 'undefined' || window.innerWidth >= 768) return;
 
-    // Scroll preview into view
+    const runningAnimations: Animation[] = [];
+    let raf1: number;
+    let raf2: number;
+    let mutationObs: MutationObserver | null = null;
+
+    // Step 1: Scroll preview into view
     const scrollTimer = setTimeout(() => {
       previewPanelRef.current?.scrollIntoView({
         behavior: 'smooth',
@@ -4175,8 +4176,122 @@ export default function ProPromagenClient({
       });
     }, 200);
 
+    // ── Animate all scrollable elements inside the preview wrapper ──
+    function animateAllElements() {
+      // Cancel previous animations
+      runningAnimations.forEach((a) => { try { a.cancel(); } catch {} });
+      runningAnimations.length = 0;
+
+      const wrapper = previewPanelRef.current;
+      if (!wrapper) return;
+
+      // Force synchronous reflow
+      void wrapper.offsetHeight;
+
+      raf1 = requestAnimationFrame(() => {
+        raf2 = requestAnimationFrame(() => {
+
+          // ── 1. pro-auto-scroll elements (Tier, Scenes, Exchanges, Saved, Lab) ──
+          wrapper.querySelectorAll<HTMLElement>('.pro-auto-scroll').forEach((el) => {
+            const container = el.parentElement;
+            if (!container) return;
+            void container.offsetHeight;
+            const overflow = el.scrollHeight - container.clientHeight;
+            if (overflow <= 1) return;
+            try {
+              const a = el.animate(
+                [
+                  { transform: 'translateY(0)' },
+                  { transform: 'translateY(0)', offset: 0.018 },
+                  { transform: `translateY(-${overflow}px)`, offset: 0.488 },
+                  { transform: `translateY(-${overflow}px)`, offset: 0.506 },
+                  { transform: 'translateY(0)', offset: 0.976 },
+                  { transform: 'translateY(0)' },
+                ],
+                { duration: 17000, iterations: Infinity, easing: 'ease-in-out' }
+              );
+              runningAnimations.push(a);
+            } catch {}
+          });
+
+          // ── 2. daily-scroll-content (one-way scroll down, then advance) ──
+          wrapper.querySelectorAll<HTMLElement>('.daily-scroll-content').forEach((el) => {
+            const container = el.parentElement;
+            if (!container) return;
+            void container.offsetHeight;
+            const overflow = el.scrollHeight - container.clientHeight;
+            if (overflow <= 1) return;
+            try {
+              const dur = Math.max(2000, Math.min(8000, overflow * 25));
+              const a = el.animate(
+                [
+                  { transform: 'translateY(0)' },
+                  { transform: `translateY(-${overflow}px)` },
+                ],
+                { duration: dur, iterations: Infinity, easing: 'ease-in-out' }
+              );
+              runningAnimations.push(a);
+            } catch {}
+          });
+
+          // ── 3. imagegen-reveal (blur-to-sharp) ──
+          wrapper.querySelectorAll<HTMLElement>('.imagegen-reveal').forEach((el) => {
+            try {
+              const a = el.animate(
+                [
+                  { filter: 'blur(18px) brightness(0.3) saturate(0.1)', offset: 0 },
+                  { filter: 'blur(12px) brightness(0.4) saturate(0.3)', offset: 0.1 },
+                  { filter: 'blur(6px) brightness(0.6) saturate(0.6)', offset: 0.3 },
+                  { filter: 'blur(1px) brightness(0.9) saturate(0.95)', offset: 0.55 },
+                  { filter: 'blur(0) brightness(1) saturate(1)', offset: 0.65 },
+                  { filter: 'blur(0) brightness(1) saturate(1)', offset: 0.85 },
+                  { filter: 'blur(18px) brightness(0.3) saturate(0.1)', offset: 1 },
+                ],
+                { duration: 15000, iterations: Infinity, easing: 'ease-in-out' }
+              );
+              runningAnimations.push(a);
+            } catch {}
+          });
+
+          // ── 4. imagegen-progress (progress bar width) ──
+          wrapper.querySelectorAll<HTMLElement>('.imagegen-progress').forEach((el) => {
+            try {
+              const a = el.animate(
+                [
+                  { width: '0%', offset: 0 },
+                  { width: '100%', offset: 0.65 },
+                  { width: '0%', offset: 0.66 },
+                  { width: '0%', offset: 1 },
+                ],
+                { duration: 15000, iterations: Infinity, easing: 'ease-in-out' }
+              );
+              runningAnimations.push(a);
+            } catch {}
+          });
+        });
+      });
+    }
+
+    // Run immediately after a brief settle
+    const animTimer = setTimeout(animateAllElements, 50);
+
+    // MutationObserver: re-run when DOM changes (scene rotation, provider swap)
+    if (previewPanelRef.current) {
+      mutationObs = new MutationObserver(() => {
+        // Debounce — scene rotation triggers multiple mutations
+        setTimeout(animateAllElements, 100);
+      });
+      mutationObs.observe(previewPanelRef.current, {
+        childList: true,
+        subtree: true,
+      });
+    }
+
     // Touch-to-reset — 1.5s delay avoids catching initial tap lift
     const handleTouchReset = () => {
+      runningAnimations.forEach((a) => { try { a.cancel(); } catch {} });
+      runningAnimations.length = 0;
+
       // Activate cooldown so handleCardHover ignores the next 500ms
       touchResetCooldownRef.current = true;
       clearTimeout(touchResetCooldownTimerRef.current);
@@ -4203,8 +4318,13 @@ export default function ProPromagenClient({
 
     return () => {
       clearTimeout(scrollTimer);
+      clearTimeout(animTimer);
       clearTimeout(touchTimer);
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+      mutationObs?.disconnect();
       document.removeEventListener('touchstart', handleTouchReset);
+      runningAnimations.forEach((a) => { try { a.cancel(); } catch {} });
     };
   }, [activePanel]);
 
@@ -4582,13 +4702,10 @@ export default function ProPromagenClient({
       style={{ padding: 'clamp(10px, 1vw, 16px)' }}
       data-testid="pro-promagen-panel"
     >
-      {/* Mobile visibility fix (research: WebKit Bug #248145, #250900, r289498):
-          ROOT CAUSE: display:none removes elements from render tree → scrollHeight=0,
-          ResizeObserver doesn't fire, CSS variable resolution fails on iOS Safari.
-          FIX: Never use display:none on mobile. All panels are always display:flex.
-          Inactive panels use opacity:0 + position:absolute (invisible, no space).
-          Active panel uses opacity:1 + position:relative (visible, takes space).
-          Elements stay in render tree → valid dimensions → CSS animations work. */}
+      {/* Mobile overrides: FCP flows naturally, preview gets fixed viewport height
+          with overflow:hidden — SAME pattern as desktop. Inner panel divs keep
+          height:100%, so useAutoScroll + CSS proAutoScroll animation works
+          identically to desktop (translateY within fixed-height container). */}
       <style dangerouslySetInnerHTML={{ __html: `
         @media (max-width: 767px) {
           [data-testid="pro-promagen-panel"] .pro-fcp-wrapper {
@@ -4601,23 +4718,6 @@ export default function ProPromagenClient({
             height: 65svh !important;
             min-height: 200px !important;
             overflow: hidden !important;
-            position: relative !important;
-          }
-          /* ALL panel divs stay in render tree — never display:none */
-          [data-testid="pro-promagen-panel"] .pro-preview-wrapper > [data-panel] {
-            display: flex !important;
-            flex-direction: column !important;
-            height: 100% !important;
-            position: absolute !important;
-            inset: 0 !important;
-            opacity: 0;
-            pointer-events: none;
-          }
-          /* Active panel: visible and takes normal flow */
-          [data-testid="pro-promagen-panel"] .pro-preview-wrapper > [data-panel][data-active] {
-            opacity: 1;
-            pointer-events: auto;
-            position: relative !important;
           }
         }
       ` }} />
@@ -4688,37 +4788,35 @@ export default function ProPromagenClient({
         {/* All preview panels rendered always — toggled via CSS display.
             This avoids the mount-on-hover spike (PromptLabPreviewPanel starts
             5 timers + assemblePrompt + 45 icons on mount). With CSS toggle,
-            hover just flips display — zero React work, instant paint.
-            Mobile: CSS overrides display:none → opacity-based visibility
-            via data-panel + data-active attributes (see style block above). */}
-        <div data-panel="daily" data-active={activePanel === 'daily' ? '' : undefined} style={{ display: activePanel === 'daily' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+            hover just flips display — zero React work, instant paint. */}
+        <div style={{ display: activePanel === 'daily' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <DailyPromptsPreviewPanel />
         </div>
-        <div data-panel="format" data-active={activePanel === 'format' ? '' : undefined} style={{ display: activePanel === 'format' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+        <div style={{ display: activePanel === 'format' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <TierPreviewPanel activeTier={selectedPromptTier} isPaidUser={isPaidUser} onTierChange={handlePromptTierChange} />
         </div>
-        <div data-panel="scenes" data-active={activePanel === 'scenes' ? '' : undefined} style={{ display: activePanel === 'scenes' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+        <div style={{ display: activePanel === 'scenes' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <ScenesPreviewPanel />
         </div>
-        <div data-panel="saved" data-active={activePanel === 'saved' ? '' : undefined} style={{ display: activePanel === 'saved' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+        <div style={{ display: activePanel === 'saved' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <SavedPreviewPanel />
         </div>
-        <div data-panel="lab" data-active={activePanel === 'lab' ? '' : undefined} style={{ display: activePanel === 'lab' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+        <div style={{ display: activePanel === 'lab' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <PromptLabPreviewPanel providers={providers} />
         </div>
-        <div data-panel="exchanges" data-active={activePanel === 'exchanges' ? '' : undefined} style={{ display: activePanel === 'exchanges' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+        <div style={{ display: activePanel === 'exchanges' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <ExchangesPreviewPanel exchangeCatalog={exchangeCatalog} onOpenPicker={handleOpenExchangePicker} />
         </div>
-        <div data-panel="frame" data-active={activePanel === 'frame' ? '' : undefined} style={{ display: activePanel === 'frame' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+        <div style={{ display: activePanel === 'frame' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <FramePreviewPanel />
         </div>
-        <div data-panel="imagegen" data-active={activePanel === 'imagegen' ? '' : undefined} style={{ display: activePanel === 'imagegen' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+        <div style={{ display: activePanel === 'imagegen' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <ImageGenPreviewPanel />
         </div>
-        <div data-panel="intelligence" data-active={activePanel === 'intelligence' ? '' : undefined} style={{ display: activePanel === 'intelligence' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+        <div style={{ display: activePanel === 'intelligence' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <IntelligencePreviewPanel />
         </div>
-        <div data-panel="cta" data-active={activePanel === null ? '' : undefined} data-upgrade-cta style={{ display: activePanel === null ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+        <div data-upgrade-cta style={{ display: activePanel === null ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <UpgradeCta isPaidUser={isPaidUser} onSave={handleSave} hasChanges={hasChanges} />
         </div>
       </div>
