@@ -9,6 +9,7 @@ import { ChunkErrorBoundary } from '@/components/chunk-error-boundary';
 import { GoogleAnalytics } from '@/components/analytics/google-analytics';
 import { QuickSaveToastGlobal } from '@/components/prompts/library/quick-save-toast-global';
 import { env } from '@/lib/env';
+import MobileBottomNav from '@/components/layout/mobile-bottom-nav';
 
 // Vercel Pro: Web Analytics + Speed Insights (no visual impact)
 import { Analytics as VercelAnalytics } from '@vercel/analytics/react';
@@ -70,16 +71,37 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className="h-dvh overflow-hidden antialiased text-slate-900">
         <ClerkProvider>
           <PauseProvider>
-            <ErrorBoundary>
-              {/*
-                ChunkErrorBoundary: Catches stale deployment chunk errors.
-                When a user has old JS bundles and navigates after a new deploy,
-                this catches the ChunkLoadError and auto-reloads to get fresh assets.
-                Works alongside Vercel Skew Protection (vercel.json: "skewProtection": "7d").
-                @see docs/authority/best-working-practice.md § Deployment Resilience
-              */}
-              <ChunkErrorBoundary>{children}</ChunkErrorBoundary>
-            </ErrorBoundary>
+            {/* ────────────────────────────────────────────────────────────
+                MOBILE-AWARE FLEX WRAPPER (Part 1 — Mobile Nav)
+                ────────────────────────────────────────────────────────────
+                Flex column layout that gives the mobile bottom nav its
+                space at the bottom while content fills the rest.
+
+                Desktop/Tablet (≥768px): MobileBottomNav is md:hidden
+                (display:none), so the content div gets 100% of the
+                viewport height. Zero visual change.
+
+                Mobile (<768px): MobileBottomNav renders at ~60px,
+                content div gets the remainder. homepage-grid uses
+                h-full (not h-dvh) so it respects this constraint.
+                ──────────────────────────────────────────────────────── */}
+            <div className="flex h-full flex-col">
+              <div className="min-h-0 flex-1">
+                <ErrorBoundary>
+                  {/*
+                    ChunkErrorBoundary: Catches stale deployment chunk errors.
+                    When a user has old JS bundles and navigates after a new deploy,
+                    this catches the ChunkLoadError and auto-reloads to get fresh assets.
+                    Works alongside Vercel Skew Protection (vercel.json: "skewProtection": "7d").
+                    @see docs/authority/best-working-practice.md § Deployment Resilience
+                  */}
+                  <ChunkErrorBoundary>{children}</ChunkErrorBoundary>
+                </ErrorBoundary>
+              </div>
+
+              {/* Mobile bottom nav — md:hidden, zero impact on desktop/tablet */}
+              <MobileBottomNav />
+            </div>
           </PauseProvider>
 
           {/* Quick Save Toast — global mount for 💾 save feedback on all pages */}

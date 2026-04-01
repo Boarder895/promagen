@@ -623,7 +623,7 @@ export default function HomepageGrid({
   // ============================================================================
 
   return (
-    <div className="flex h-dvh flex-col overflow-hidden bg-slate-950">
+    <div className="flex h-full flex-col overflow-hidden bg-slate-950">
       <main className="flex min-h-0 flex-1 flex-col">
         {/* Visually hidden heading for screen readers */}
         <h1 id="page-main-heading" className="sr-only">

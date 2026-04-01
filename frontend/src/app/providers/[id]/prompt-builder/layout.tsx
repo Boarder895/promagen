@@ -15,6 +15,10 @@ type PromptBuilderLayoutProps = {
  * - The centred content container
  * - Height constraint for internal scrolling
  *
+ * Uses h-full (not h-dvh) so it respects the root layout's flex
+ * container, which reserves space for the mobile bottom nav on <768px.
+ * On desktop/tablet the nav is hidden, so h-full === 100dvh.
+ *
  * The page.tsx file only needs to find the provider and render <PromptBuilder />.
  */
 export default function ProviderPromptBuilderLayout({
@@ -24,7 +28,7 @@ export default function ProviderPromptBuilderLayout({
     <main 
       role="main" 
       aria-label="Prompt builder" 
-      className="h-dvh overflow-hidden"
+      className="h-full overflow-hidden"
     >
       <div className="mx-auto h-full max-w-5xl px-4 py-4">
         {children}
