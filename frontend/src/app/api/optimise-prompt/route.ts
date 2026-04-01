@@ -247,7 +247,7 @@ export async function POST(req: NextRequest): Promise<Response> {
         optimised = sanitisedPrompt;
         changes.length = 0;
         changes.push(`MJ deterministic regression: ${mjRegression.regressions.join('; ')}`);
-        changes.push('Returned assembled prompt unchanged');
+        changes.push('The Algorithms declared the assembled prompt to also be the Optimised Prompt');
       }
     }
     // REORDER_ONLY: deterministic subject-front-load
@@ -508,7 +508,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       );
       result.optimised = sanitisedPrompt;
       result.charCount = sanitisedPrompt.length;
-      result.changes = ["Weight regression detected — returned assembled prompt unchanged"];
+      result.changes = ["Weight regression detected — the Algorithms declared the assembled prompt to also be the Optimised Prompt"];
     }
 
     // Step 3: Regression guard — "no worse than input"
@@ -542,7 +542,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       let fallback = sanitisedPrompt;
       const fallbackChanges = [
         `Regression guard: ${regressionCheck.regressions.join('; ')}`,
-        'Returned assembled prompt — GPT output rejected',
+        'Returned assembled prompt — the Algorithms declared the assembled prompt to also be the Optimised Prompt',
       ];
 
       // Still run group compliance on the fallback (syntax cleanup)

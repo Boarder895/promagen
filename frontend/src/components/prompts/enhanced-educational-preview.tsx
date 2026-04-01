@@ -1266,10 +1266,10 @@ export default function EnhancedEducationalPreview({
               {/* Header row: label + provider icon + char count */}
               <div className="flex items-center justify-between" style={{ marginBottom: 'clamp(6px, 0.5vw, 10px)' }}>
                 <span
-                  className={`font-medium flex items-center ${'text-white'}`}
+                  className={`font-medium flex items-center ${isOptimisedButUnchanged ? 'text-emerald-300' : 'text-white'}`}
                   style={{ fontSize: 'clamp(0.68rem, 0.72vw, 0.82rem)', gap: 'clamp(4px, 0.3vw, 6px)' }}
                 >
-                  Assembled prompt
+                  {isOptimisedButUnchanged ? 'Optimised prompt' : 'Assembled prompt'}
                   {selectedProvider && (
                     <>
                       <span className={'text-white/60'}>for</span>
