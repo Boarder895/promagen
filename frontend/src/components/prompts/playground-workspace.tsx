@@ -58,6 +58,10 @@ export interface PlaygroundWorkspaceProps {
   providers: Provider[];
   /** Callback when provider selection changes (null = no provider selected) */
   onProviderChange?: (hasProvider: boolean) => void;
+  /** Callback with the actual provider ID when selection changes */
+  onProviderIdChange?: (providerId: string | null) => void;
+  /** External provider ID — when set, drives the internal selection (controlled from outside, e.g., left rail navigator) */
+  externalProviderId?: string | null;
 }
 
 // ============================================================================
@@ -179,7 +183,7 @@ function ProviderSelector({ providers, selectedId, onSelect }: ProviderSelectorP
 // MAIN COMPONENT
 // ============================================================================
 
-export default function PlaygroundWorkspace({ providers, onProviderChange }: PlaygroundWorkspaceProps) {
+export default function PlaygroundWorkspace({ providers, onProviderChange, onProviderIdChange, externalProviderId }: PlaygroundWorkspaceProps) {
   // ── Lab Gate: auth + generation limiter ──────────────────────────────
   const {
     canGenerate,
@@ -238,9 +242,27 @@ export default function PlaygroundWorkspace({ providers, onProviderChange }: Pla
     (providerId: string) => {
       setSelectedProviderId(providerId);
       onProviderChange?.(true);
+      onProviderIdChange?.(providerId);
     },
-    [onProviderChange],
+    [onProviderChange, onProviderIdChange],
   );
+
+  // ── External provider sync (driven from left rail navigator) ────
+  // When externalProviderId changes and differs from internal state,
+  // update internal selection. This makes the workspace controllable
+  // from outside while still managing its own state for the dropdown.
+  const prevExternalRef = useRef<string | null | undefined>(undefined);
+  useEffect(() => {
+    if (
+      externalProviderId != null &&
+      externalProviderId !== prevExternalRef.current &&
+      externalProviderId !== selectedProviderId
+    ) {
+      setSelectedProviderId(externalProviderId);
+      onProviderChange?.(true);
+    }
+    prevExternalRef.current = externalProviderId;
+  }, [externalProviderId, selectedProviderId, onProviderChange]);
 
   // ── Auto-re-fire Call 2 when provider changes ─────────────────────
   // Provider change does NOT trigger re-assessment (Call 1 assesses

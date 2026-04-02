@@ -1,40 +1,48 @@
 // src/app/studio/playground/playground-page-client.tsx
 // ============================================================================
-// PROMPT LAB CLIENT WRAPPER (v3.0.0)
+// PROMPT LAB CLIENT WRAPPER (v4.0.0)
 // ============================================================================
 // Client component for /studio/playground (Prompt Lab).
 // Same pattern as homepage-client.tsx and library-client.tsx.
 //
+// v4.0.0 (2 Apr 2026):
+// - Exchange rails replaced with intelligence rails:
+//   Left:  PlatformMatchRail — 40-platform tier-grouped navigator
+//   Right: PipelineXRay — Glass Case dormant state (Phase 0)
+// - Provider selection lifted to page level — shared between
+//   left rail navigator and centre PlaygroundWorkspace.
+// - useIndicesQuotes removed (no exchange cards = no index data needed,
+//   saves API calls).
+// - useExchangeOrder kept — `ordered` still flows to HomepageGrid
+//   for Engine Bay / Mission Control / MarketPulseOverlay.
+//
 // v3.0.0 (30 Mar 2026):
-// - Added useIndicesQuotes + indexByExchange map so exchange cards
-//   display live index data (price, change, tick). Previously missing —
-//   only homepage-client and pro-promagen-client had this wiring.
+// - Added useIndicesQuotes + indexByExchange map for exchange cards.
 //
 // v2.0.0 (18 Mar 2026):
 // - Uses useExchangeOrder() for Pro-aware exchange rail ordering.
-//   Pro users see exchanges anchored to their timezone.
-//   Free/anonymous see standard Greenwich east→west.
-// - Simplified props: receives flat `exchanges` array instead of pre-split.
 //
 // v1.0.0: Initial client wrapper with dynamic Listen text.
 //
-// Authority: docs/authority/exchange-ordering.md, docs/authority/prompt-intelligence.md §9
-// Existing features preserved: Yes
+// Authority: docs/authority/lefthand-rail.md v1.2.0, docs/authority/righthand-rail.md v1.2.0
+// Existing features preserved: Yes — Engine Bay, Mission Control, Hero Window,
+//   centre PlaygroundWorkspace, MobileBuilderGate all unchanged.
 // ============================================================================
 
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
-import ExchangeList from '@/components/ribbon/exchange-list';
+import React, { useState, useCallback } from 'react';
 import HomepageGrid from '@/components/layout/homepage-grid';
 import PlaygroundWorkspace from '@/components/prompts/playground-workspace';
 import type { Exchange } from '@/data/exchanges/types';
 import type { ExchangeWeatherData } from '@/components/exchanges/types';
-import type { IndexQuoteData } from '@/components/exchanges/types';
 import type { Provider } from '@/types/providers';
 import { useExchangeOrder } from '@/hooks/use-exchange-order';
-import { useIndicesQuotes } from '@/hooks/use-indices-quotes';
 import MobileBuilderGate from '@/components/layout/mobile-builder-gate';
+
+// ── Intelligence rails (replace exchange rails) ───────────────────────
+import { PlatformMatchRail } from '@/components/prompt-lab/platform-match-rail';
+import { PipelineXRay } from '@/components/prompt-lab/pipeline-xray';
 
 // ============================================================================
 // SPEECH TEXT — British female voice (same pattern as homepage/library/pro)
@@ -51,6 +59,17 @@ const HERO_TEXT_NO_PROVIDER =
 const HERO_TEXT_WITH_PROVIDER =
   "Same selections, different output. Switch platforms freely " +
   "— your choices stay put, the prompt reshapes to match.";
+
+// ============================================================================
+// GLASS CASE — Right rail panel override (righthand-rail.md §11)
+// ============================================================================
+// The standard rail panel is `rounded-3xl bg-slate-950/70 ring-1 ring-white/10`.
+// For the Glass Case, the outer HomepageGrid section is layout-only (transparent).
+// The glass case visual chrome (brass frame, glass reflection, box-shadow) lives
+// on the PipelineXRay component itself — this avoids needing inline styles on the
+// HomepageGrid section, which only accepts className (no style prop).
+const GLASS_CASE_CLASS =
+  'flex min-h-0 flex-1 flex-col p-0 bg-transparent shadow-none ring-0';
 
 // ============================================================================
 // TYPES
@@ -74,43 +93,31 @@ export default function PlaygroundPageClient({
   exchanges,
   weatherIndex,
 }: PlaygroundPageClientProps) {
-  // Track whether a provider is selected (drives Listen text)
+  // ── Provider selection state (lifted — shared between left rail + workspace)
   const [hasProvider, setHasProvider] = useState(false);
+  const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
 
+  // Workspace reports boolean (existing contract)
   const handleProviderChange = useCallback((selected: boolean) => {
     setHasProvider(selected);
   }, []);
 
-  // Pro-aware exchange ordering — rotates for Pro users, passthrough for free
-  const { left, right, ordered } = useExchangeOrder(exchanges);
+  // Workspace reports actual ID (new v4.0.0 contract)
+  const handleProviderIdChange = useCallback((providerId: string | null) => {
+    setSelectedProviderId(providerId);
+    setHasProvider(providerId !== null);
+  }, []);
 
-  // ── Index quotes (same pattern as homepage-client + pro page) ──────────
-  const { quotesById, movementById } = useIndicesQuotes({ enabled: true });
+  // Left rail navigator selects a platform
+  const handleRailSelectProvider = useCallback((providerId: string) => {
+    setSelectedProviderId(providerId);
+    setHasProvider(true);
+  }, []);
 
-  const indexByExchange = useMemo(() => {
-    const map = new Map<string, IndexQuoteData>();
-    for (const [quoteId, quote] of quotesById.entries()) {
-      if (!quote) continue;
-      const indexName = typeof quote.indexName === 'string' ? quote.indexName : null;
-      const price = typeof quote.price === 'number' && Number.isFinite(quote.price) ? quote.price : null;
-      if (!indexName || price === null) continue;
-      const movement = movementById.get(quoteId);
-      const data: IndexQuoteData = {
-        indexName,
-        price,
-        change: typeof quote.change === 'number' && Number.isFinite(quote.change) ? quote.change : 0,
-        percentChange: typeof quote.percentChange === 'number' && Number.isFinite(quote.percentChange) ? quote.percentChange : 0,
-        tick: movement?.tick ?? 'flat',
-      };
-      map.set(quoteId, data);
-      const sepIdx = quoteId.indexOf('::');
-      if (sepIdx !== -1) {
-        const plainId = quoteId.substring(0, sepIdx);
-        if (!map.has(plainId)) map.set(plainId, data);
-      }
-    }
-    return map;
-  }, [quotesById, movementById]);
+  // Pro-aware exchange ordering — `ordered` still needed for HomepageGrid
+  // (Engine Bay, Mission Control, MarketPulseOverlay). Left/right split
+  // no longer used — exchange rails removed from Prompt Lab.
+  const { ordered } = useExchangeOrder(exchanges);
 
   // Speech text changes based on provider selection
   const heroText = hasProvider ? HERO_TEXT_WITH_PROVIDER : HERO_TEXT_NO_PROVIDER;
@@ -118,21 +125,18 @@ export default function PlaygroundPageClient({
   // Provider IDs for market pulse
   const providerIds = providers.map((p) => p.id);
 
-  // Left rail content: exchanges (Pro-reordered)
+  // ── LEFT RAIL: Platform Match Navigator (replaces exchange list) ────
   const leftContent = (
-    <div className="space-y-2">
-      <ExchangeList
-        exchanges={left}
-        weatherByExchange={weatherIndex}
-        indexByExchange={indexByExchange}
-        emptyMessage="No eastern exchanges selected yet. Choose markets to populate this rail."
-        side="left"
-      />
-    </div>
+    <PlatformMatchRail
+      providers={providers}
+      selectedProviderId={selectedProviderId}
+      onSelectProvider={handleRailSelectProvider}
+    />
   );
 
-  // Centre: Playground workspace with provider change callback
-  // Mobile: shows gate preview. Desktop: renders full builder.
+  // ── CENTRE: Playground workspace with bidirectional provider sync ───
+  // externalProviderId: when left rail navigator selects, workspace follows.
+  // onProviderIdChange: when workspace dropdown selects, left rail highlights.
   const centreContent = (
     <MobileBuilderGate
       title="Prompt Lab"
@@ -147,21 +151,15 @@ export default function PlaygroundPageClient({
       <PlaygroundWorkspace
         providers={providers}
         onProviderChange={handleProviderChange}
+        onProviderIdChange={handleProviderIdChange}
+        externalProviderId={selectedProviderId}
       />
     </MobileBuilderGate>
   );
 
-  // Right rail content: exchanges (Pro-reordered)
+  // ── RIGHT RAIL: Pipeline X-Ray Glass Case (replaces exchange list) ──
   const rightContent = (
-    <div className="space-y-2">
-      <ExchangeList
-        exchanges={right}
-        weatherByExchange={weatherIndex}
-        indexByExchange={indexByExchange}
-        emptyMessage="No western exchanges selected yet. Choose markets to populate this rail."
-        side="right"
-      />
-    </div>
+    <PipelineXRay />
   );
 
   return (
@@ -180,6 +178,8 @@ export default function PlaygroundPageClient({
       showMissionControl
       weatherIndex={weatherIndex}
       isStudioSubPage
+      // Glass Case styling for right rail panel (replaces standard ring-white/10)
+      rightRailClassName={GLASS_CASE_CLASS}
     />
   );
 }
