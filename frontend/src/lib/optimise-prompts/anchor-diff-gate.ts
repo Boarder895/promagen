@@ -8,24 +8,13 @@
 //   2. Shrinks by more than P% (default: 15%)
 // → the gate returns REJECT, and the caller should fall back to assembled.
 //
-// This replaces noisy heuristic detectors (redundant-phrase, invented-content)
-// that the trend batches 1-4 documented as "overfiring or misclassifying
-// legitimate repeated anchor phrases."
-//
-// The gate is purely deterministic — no LLM call, no API cost, no false
-// positives from pattern-matching. It catches the exact failure family
-// documented in all 4 trend batches:
-//   - GPT trims "deep in" to "in a" (anchor loss)
-//   - GPT drops compound adjectives (anchor loss)
-//   - GPT adds filler that inflates length but loses anchors
-//   - GPT shortens prompts despite "do not shorten" instructions
-//
-// Usage in regression-guard.ts:
-//   import { anchorDiffGate } from './anchor-diff-gate';
-//   const gate = anchorDiffGate(assembledPrompt, optimisedPrompt);
-//   if (gate.verdict === 'REJECT') {
-//     return { prompt: assembledPrompt, reason: gate.reason };
-//   }
+// v1 (02 Apr 2026): Initial build.
+// v2 (02 Apr 2026): Fixed overfiring bug — n-gram extraction was creating
+//   phantom anchors that spanned clause boundaries (commas, periods, semicolons).
+//   "above cold blue" extracted from "window above. Cold blue shafts" would
+//   never match in raw text because the period breaks includes(). Fix: split
+//   into clauses BEFORE extracting n-grams. Comparison now uses the same
+//   normalised text as extraction.
 //
 // Authority: api-3.md, trend-analysis batches 1-4
 // ============================================================================
@@ -44,51 +33,68 @@ export interface AnchorDiffResult {
 // ============================================================================
 
 /**
- * Extracts meaningful noun phrases from a prompt.
- *
- * Strategy: split into words, extract compound adjective-noun clusters
- * (2-4 words) that represent visual anchors. We don't need NLP —
- * prompt language is highly structured and the failure patterns are
- * specific enough that simple tokenisation catches them.
- *
- * Examples of anchors extracted:
- *   "weathered fox shrine" → ["weathered fox shrine"]
- *   "soft amber pool" → ["soft amber pool"]
- *   "moss-slick stone" → ["moss-slick stone"]
- *   "red prayer ribbons" → ["red prayer ribbons"]
- *   "pale mist" → ["pale mist"]
+ * Normalises text for anchor comparison — strips weight syntax, lowercases,
+ * collapses whitespace. Does NOT strip clause-boundary punctuation (that's
+ * handled by splitting into clauses first).
  */
-function extractAnchors(text: string): string[] {
-  const normalised = text
+function normaliseForComparison(text: string): string {
+  return text
     .toLowerCase()
-    // Strip weight syntax so we compare content only
-    .replace(/\([^()]+:\d+\.?\d*\)/g, match => match.replace(/[():]/g, '').replace(/\d+\.?\d*/g, '').trim())
+    // Strip weight syntax
+    .replace(/\([^()]+:\d+\.?\d*\)/g, match =>
+      match.replace(/[():]/g, '').replace(/\d+\.?\d*/g, '').trim()
+    )
     .replace(/\w[\w\s-]*::\d+\.?\d*/g, match => match.replace(/::\d+\.?\d*/g, ''))
     .replace(/\s*--\w+\s*[^\s,]*/g, '')
-    // Normalise punctuation
-    .replace(/[,.;:!?"'—–]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+}
 
-  const words = normalised.split(' ').filter(w => w.length > 0);
+/**
+ * Splits text into clauses at sentence and phrase boundaries.
+ * N-grams are extracted per-clause so they never span a comma or period.
+ */
+function splitIntoClauses(text: string): string[] {
+  return text
+    .split(/[,.;:!?—–]+/)
+    .map(clause => clause.replace(/["']/g, '').trim())
+    .filter(clause => clause.length > 0);
+}
+
+/**
+ * Extracts meaningful noun phrases from a prompt.
+ *
+ * Strategy: split into clauses at punctuation boundaries, then extract
+ * 2-3 word n-grams within each clause that contain visual keywords.
+ * This ensures anchors like "weathered fox shrine" are real compound
+ * concepts, not accidental fragments like "above cold blue" that span
+ * a period.
+ */
+function extractAnchors(text: string): string[] {
+  const normalised = normaliseForComparison(text);
+  const clauses = splitIntoClauses(normalised);
   const anchors = new Set<string>();
 
-  // Extract 2-word, 3-word, and 4-word phrases
-  for (let len = 4; len >= 2; len--) {
-    for (let i = 0; i <= words.length - len; i++) {
-      const phrase = words.slice(i, i + len).join(' ');
-      // Keep phrases that contain at least one adjective-like word + one noun-like word
-      // Simple heuristic: phrases with a hyphenated word or a colour/texture word
-      if (isVisualPhrase(phrase)) {
-        anchors.add(phrase);
+  for (const clause of clauses) {
+    const words = clause.split(' ').filter(w => w.length > 0);
+
+    // Extract 2-word and 3-word phrases within this clause only
+    for (let len = 3; len >= 2; len--) {
+      for (let i = 0; i <= words.length - len; i++) {
+        const phrase = words.slice(i, i + len).join(' ');
+        if (isVisualPhrase(phrase)) {
+          anchors.add(phrase);
+        }
       }
     }
   }
 
-  // Also extract individual distinctive words (colours, materials)
-  const distinctiveWords = words.filter(w => isDistinctiveWord(w) && w.length > 3);
-  for (const w of distinctiveWords) {
-    anchors.add(w);
+  // Also extract individual distinctive words
+  const allWords = normalised.split(/\s+/).filter(w => w.length > 0);
+  for (const w of allWords) {
+    if (isDistinctiveWord(w)) {
+      anchors.add(w);
+    }
   }
 
   return [...anchors].sort();
@@ -99,8 +105,8 @@ function isVisualPhrase(phrase: string): boolean {
   // Contains a colour
   if (/\b(red|blue|green|gold|amber|silver|copper|purple|orange|black|white|grey|gray|dark|pale|warm|cool|crimson|emerald|violet|indigo|scarlet|teal|ivory|bronze)\b/.test(phrase)) return true;
   // Contains a material/texture
-  if (/\b(stone|wood|iron|glass|silk|moss|mist|rain|ice|snow|sand|dust|smoke|fog|brick|steel|leather|timber|cedar|oak|marble|granite|slate|coral|clay)\b/.test(phrase)) return true;
-  // Contains a hyphenated compound (e.g., moss-slick, storm-darkened)
+  if (/\b(stone|wood|iron|glass|silk|moss|mist|rain|ice|snow|sand|dust|smoke|fog|brick|steel|leather|timber|cedar|oak|marble|granite|slate|coral|clay|silt)\b/.test(phrase)) return true;
+  // Contains a hyphenated compound (e.g., moss-slick, weed-wrapped)
   if (phrase.includes('-')) return true;
   // Contains an atmosphere word
   if (/\b(lantern|candle|flame|torch|moonlight|twilight|dawn|dusk|starlight|firelight|shadow|glow|beam|shimmer)\b/.test(phrase)) return true;
@@ -109,10 +115,8 @@ function isVisualPhrase(phrase: string): boolean {
 
 /** Individual words distinctive enough to be anchors on their own */
 function isDistinctiveWord(word: string): boolean {
-  // Colours
   if (/^(amber|crimson|emerald|violet|indigo|scarlet|teal|ivory|bronze|copper|gold|silver)$/.test(word)) return true;
-  // Specific nouns that are scene-defining
-  if (/^(shrine|lighthouse|lantern|altar|stream|ribbons)$/.test(word)) return true;
+  if (/^(shrine|lighthouse|lantern|altar|stream|ribbons|reliquary|cathedral)$/.test(word)) return true;
   return false;
 }
 
@@ -138,10 +142,11 @@ export function anchorDiffGate(
   const assembledAnchors = extractAnchors(assembled);
   const optimisedAnchors = extractAnchors(optimised);
 
-  // Find anchors present in assembled but missing from optimised
-  const optimisedLower = optimised.toLowerCase();
+  // Compare using the SAME normalisation as extraction — not raw text.
+  // This prevents false misses from punctuation differences.
+  const optimisedNormalised = normaliseForComparison(optimised);
   const missingAnchors = assembledAnchors.filter(
-    anchor => !optimisedLower.includes(anchor)
+    anchor => !optimisedNormalised.includes(anchor)
   );
 
   // Length ratio
