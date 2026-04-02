@@ -6,13 +6,25 @@
 // negativeSupport: separate
 // architecture: natural-language
 //
-// Platform knowledge: PGv3 uses LLM-integrated encoder (Llama3-8B). Supports hex colour codes in promp...
+// Platform knowledge: PGv3 uses LLM-integrated encoder (Llama3-8B). Supports
+//   hex colour codes in prompts. Understands nuanced prose.
 //
 // FULLY INDEPENDENT — no shared imports. Own compliance gate + own system prompt.
 // Pattern: matches group-recraft.ts (dedicated builder per platform).
 //
-// Authority: platform-config.json, Prompt_Engineering_Specs.md
-// Existing features preserved: Yes.
+// v1 (26 Mar 2026): Initial build.
+// v2 (02 Apr 2026): Phase 2 rewrite — preservation-first image-NL template.
+//   Removed TASK B (texture injection x2), TASK C (sensory upgrade x2),
+//   TASK D (composition close with depth layers). Added explicit bans:
+//   no invented content, no composition scaffolding, no synonym churn,
+//   no camera-direction language. Enrichment conditional only when source
+//   is thin. DNI negative section preserved (Playground supports separate negatives).
+//   Evidence: Batch 3 test scored 73/100 (delta -15) due to invented
+//   "lichen-spotted granite" + "rain-darkened wood" (TASK B), modifier
+//   replacements (TASK C), and full composition paragraph (TASK D).
+//
+// Authority: platform-config.json, api-3.md, trend-analysis batches 1-4
+// Existing features preserved: Yes. Compliance function unchanged.
 // ============================================================================
 
 import type { OptimiseProviderContext, GroupPromptResult } from './types';
@@ -44,7 +56,7 @@ function enforcePlaygroundCleanup(text: string): ComplianceResult {
   // Strip CLIP quality tokens
   const clipTokens = ['masterpiece', 'best quality', 'highly detailed', '8K', '4K', 'intricate textures', 'sharp focus'];
   for (const token of clipTokens) {
-    const re = new RegExp(`\\b${token.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')}\\b,?\\s*`, 'gi');
+    const re = new RegExp(`\\b${token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b,?\\s*`, 'gi');
     const before = cleaned;
     cleaned = cleaned.replace(re, '');
     if (cleaned !== before) fixes.push(`Stripped CLIP token "${token}"`);
@@ -89,34 +101,36 @@ export function buildPlaygroundPrompt(
 ): GroupPromptResult {
   const platformNote = ctx.groupKnowledge ?? '';
 
-  const systemPrompt = `You are an expert prompt optimiser for "Playground". This platform reads natural language prose only. No weight syntax, no parameter flags, no CLIP tokens. Strip all (term:1.3), term::1.3, --ar, --v, --no, "masterpiece", "8K" from input.
+  const systemPrompt = `You are an expert prompt optimiser for "Playground". This platform reads natural language prose only. No weight syntax, no parameter flags, no CLIP tokens.
 
 YOUR INPUT:
 You receive a single assembled prompt — the output of the prompt assembly stage, already tailored for this platform tier. Your job is to restructure and strengthen it for this specific platform.
 
-TASK A — ANCHOR PRESERVATION (mandatory)
+TASK A — ANCHOR PRESERVATION (mandatory, highest priority)
 Scan the prompt. Identify every named visual element: subjects, objects, colours, textures, spatial relationships, lighting, atmosphere.
-Every element MUST appear in your output using the EXACT words or a stronger equivalent.
-- "enormous storm waves" → "waves" is a FAILURE (lost "enormous" + "storm")
-- Every named colour must survive (purple, copper, gold, orange — all of them)
-- Every compound adjective must survive ("tiny warm orange windows" loses nothing)
-If your output has fewer named elements than the scene description, it is REJECTED.
+Every element MUST appear in your output using the EXACT original words. Not synonyms, not "stronger equivalents" — the SAME words.
+- "throws" stays "throws" — do NOT change to "casts"
+- "deep in a cedar forest" stays "deep in a cedar forest" — do NOT rearrange to "in a deep cedar forest"
+- Every named colour must survive using its original word
+- Every compound adjective must survive intact
+If your output has fewer named elements than the input, it is REJECTED.
 
-TASK B — TEXTURE INJECTION
-Add exactly 2 material/surface textures NOT in the scene description. Must be physically plausible for this specific scene. Be specific: "salt-crusted iron railing", "lichen-spotted granite", "spray-misted glass". Generic textures are not acceptable.
+TASK B — STRUCTURAL IMPROVEMENT ONLY
+You may ONLY make these structural changes:
+1. Move the primary subject to the first 10 words if it is not already there
+2. Break overlong run-on sentences into clearer shorter sentences
+3. Remove any leftover weight syntax, CLIP tokens, or parameter flags
+You must NOT:
+- Replace any verb with a synonym
+- Rearrange adjective-noun phrases
+- Add any content not present in the original (no textures, no materials, no composition cues, no camera angles, no mood descriptions, no "the scene feels..." sentences)
+- Remove any content from the original
+- Add a composition or framing sentence at the end
 
-TASK C — SENSORY UPGRADE
-Find 2 generic modifiers in the scene description and replace with richer sensory details:
-"dark cliffs" → "basalt cliffs streaked with rain"
-"driving rain" → "horizontal sheets of cold rain"
-The replacement must be MORE visual, not just a synonym.
+TASK C — CONDITIONAL ENRICHMENT (only when source is thin)
+If and ONLY if the assembled prompt has fewer than 3 sentences or fewer than 120 characters, you may add up to 1 specific visual detail that is physically plausible for the scene. Otherwise, do NOT add anything.
 
-TASK D — COMPOSITION CLOSE
-End with a specific composition sentence: camera angle + framing + depth layers.
-"Cinematic" or "wide shot" alone is LAZY. Specify: angle + framing + foreground-to-background depth.
-Example: "Framed as a low-angle wide shot with layered depth from the foreground deck through spray-filled air to the glowing village."
-
-
+PGv3's LLM encoder (Llama3-8B) understands nuanced prose. This means a well-written assembled prompt is already strong — do not rewrite it for the sake of rewriting.
 
 NEGATIVE PROMPT — DYNAMIC NEGATIVE INTELLIGENCE:
 Analyse the positive prompt and generate scene-specific negatives. Do NOT use generic boilerplate as the majority.
@@ -130,23 +144,23 @@ FAILURE-MODE CATEGORIES (apply ALL that match this scene):
 6. SCALE DISTORTION: If grand/epic → "miniature, claustrophobic". If intimate → "aerial view, wide establishing shot".
 7. MEDIUM MISMATCH: If photorealistic → "cartoon, anime, sketch". If artistic → "photographic, stock photo".
 
-NEGATIVE FORMAT: 3 generic quality terms (blurry, watermark, low quality) + minimum 4 scene-specific terms from failure-mode analysis. Total: 8–12 terms. Never duplicate a positive term.\nPGv3 LLM encoder (Llama3-8B) understands nuanced prose. Use this capacity for richer descriptions. Supports hex colour codes.
+NEGATIVE FORMAT: 3 generic quality terms (blurry, watermark, low quality) + minimum 4 scene-specific terms from failure-mode analysis. Total: 8–12 terms. Never duplicate a positive term.
 
 OUTPUT REQUIREMENTS:
-- Flowing natural language prose, 3–4 sentences
+- Flowing natural language prose
 - Front-load the primary subject in the first 10 words
+- Affirmative descriptions only (no "without X" phrasing)
 
 LENGTH RULES:
 HARD: Do not shorten any prompt that is below ${ctx.maxChars ?? 1000} characters.
-SOFT: You may lengthen the prompt up to ${ctx.maxChars ?? 1000} characters, but only if the added content is a genuine visual anchor — not filler.
-Your job is to produce the best possible prompt for this platform. Length is not a goal. Anchor preservation is.
-- Affirmative descriptions only (no "without X" phrasing)
+SOFT: You may lengthen up to ${ctx.maxChars ?? 1000} characters ONLY if adding a genuine visual anchor to a thin prompt.
 ${platformNote ? `\nPLATFORM NOTE: ${platformNote}` : ''}
 
 Return ONLY valid JSON:
 {
-  "optimised": "your rewritten prompt",\n  "negative": "scene-specific negative terms",
-  "changes": ["TASK A: N anchors preserved", "TASK B: added [tex1] and [tex2]", "TASK C: upgraded [x] and [y]", "TASK D: composition close"],
+  "optimised": "your output — same words as input, better structure",
+  "negative": "scene-specific negative terms",
+  "changes": ["moved subject to front", "split run-on sentence"],
   "charCount": 350,
   "tokenEstimate": 70
 }`;

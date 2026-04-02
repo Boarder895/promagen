@@ -2,17 +2,28 @@
 // ============================================================================
 // DEDICATED BUILDER: Google Imagen — Independent System Prompt
 // ============================================================================
-// Tier 3 | idealMin 150 | idealMax 350 | maxChars 1024 | Strategy: BALANCE
+// Tier 3 | idealMin 150 | idealMax 350 | maxChars 875 | Strategy: BALANCE
 // negativeSupport: none
 // architecture: transformer
 //
-// Platform knowledge: Expressive Chips for style. Seed lock toggle. Prompt rewriting enabled by defaul...
+// Platform knowledge: Expressive Chips for style. Seed lock toggle. Prompt
+//   rewriting enabled by default. Google's internal rewriter may alter prompts
+//   before generation — keep language clear and direct.
 //
 // FULLY INDEPENDENT — no shared imports. Own compliance gate + own system prompt.
 // Pattern: matches group-recraft.ts (dedicated builder per platform).
 //
-// Authority: platform-config.json, Prompt_Engineering_Specs.md
-// Existing features preserved: Yes.
+// v1 (26 Mar 2026): Initial build.
+// v2 (02 Apr 2026): Phase 2 rewrite — preservation-first image-NL template.
+//   Removed TASK B (texture enrichment) and TASK C (composition close).
+//   Added explicit bans: no invented content, no composition scaffolding,
+//   no synonym churn, no camera-direction language. Enrichment conditional
+//   only when source prompt is genuinely thin.
+//   Evidence: Batch 4 test scored 77/100 (delta -11) due to duplicated
+//   "rain-slicked stone" (TASK B) and "Framed as a low-angle wide shot" (TASK C).
+//
+// Authority: platform-config.json, api-3.md, trend-analysis batches 1-4
+// Existing features preserved: Yes. Compliance function unchanged.
 // ============================================================================
 
 import type { OptimiseProviderContext, GroupPromptResult } from './types';
@@ -44,7 +55,7 @@ function enforceGoogleImagenCleanup(text: string): ComplianceResult {
   // Strip CLIP quality tokens
   const clipTokens = ['masterpiece', 'best quality', 'highly detailed', '8K', '4K', 'intricate textures', 'sharp focus'];
   for (const token of clipTokens) {
-    const re = new RegExp(`\\b${token.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')}\\b,?\\s*`, 'gi');
+    const re = new RegExp(`\\b${token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b,?\\s*`, 'gi');
     const before = cleaned;
     cleaned = cleaned.replace(re, '');
     if (cleaned !== before) fixes.push(`Stripped CLIP token "${token}"`);
@@ -89,44 +100,51 @@ export function buildGoogleImagenPrompt(
 ): GroupPromptResult {
   const platformNote = ctx.groupKnowledge ?? '';
 
-  const systemPrompt = `You are an expert prompt optimiser for "Google Imagen". This platform reads natural language prose only. No weight syntax, no parameter flags, no CLIP tokens. Strip all (term:1.3), term::1.3, --ar, --v, --no, "masterpiece", "8K" from input.
+  const systemPrompt = `You are an expert prompt optimiser for "Google Imagen". This platform reads natural language prose only. No weight syntax, no parameter flags, no CLIP tokens.
 
 YOUR INPUT:
 You receive a single assembled prompt — the output of the prompt assembly stage, already tailored for this platform tier. Your job is to restructure and strengthen it for this specific platform.
 
-TASK A — ANCHOR PRESERVATION (mandatory)
+TASK A — ANCHOR PRESERVATION (mandatory, highest priority)
 Scan the prompt. Identify every named visual element: subjects, objects, colours, textures, spatial relationships, lighting, atmosphere.
-Every element MUST appear in your output using the EXACT words or a stronger equivalent.
-- "enormous storm waves" → "waves" is a FAILURE (lost "enormous" + "storm")
-- Every named colour must survive (purple, copper, gold, orange — all of them)
-- Every compound adjective must survive ("tiny warm orange windows" loses nothing)
-If your output has fewer named elements than the scene description, it is REJECTED.
+Every element MUST appear in your output using the EXACT original words. Not synonyms, not "stronger equivalents" — the SAME words.
+- "throws" stays "throws" — do NOT change to "casts"
+- "deep in a cedar forest" stays "deep in a cedar forest" — do NOT rearrange to "in a deep cedar forest"
+- Every named colour must survive using its original word
+- Every compound adjective must survive intact
+If your output has fewer named elements than the input, it is REJECTED.
 
-TASK B — ONE TEXTURE ENRICHMENT
-Add exactly 1 material or surface texture that is NOT in the scene description but is physically plausible for this scene. Be specific: "salt-crusted iron", "rain-slicked stone", "sun-bleached timber". Generic textures ("smooth surface") are not acceptable.
+TASK B — STRUCTURAL IMPROVEMENT ONLY
+You may ONLY make these structural changes:
+1. Move the primary subject to the first 10 words if it is not already there
+2. Break overlong run-on sentences into clearer shorter sentences
+3. Remove any leftover weight syntax, CLIP tokens, or parameter flags
+You must NOT:
+- Replace any verb with a synonym
+- Rearrange adjective-noun phrases
+- Add any content not present in the original (no textures, no materials, no composition cues, no camera angles, no mood descriptions)
+- Remove any content from the original
+- Add a composition or framing sentence at the end
 
-TASK C — NATURAL COMPOSITION
-End with a brief composition cue: camera angle + framing in natural language.
-Keep it to ONE clause, not a full sentence. Example: "...framed as a low-angle wide shot" or "...seen from a high vantage point across the harbour."
-Do NOT write a separate composition paragraph.
+TASK C — CONDITIONAL ENRICHMENT (only when source is thin)
+If and ONLY if the assembled prompt has fewer than 3 sentences or fewer than 100 characters, you may add up to 1 specific visual detail that is physically plausible for the scene. Otherwise, do NOT add anything.
 
-
+Google Imagen's internal rewriter may alter prompts before generation. Clear, direct language survives rewriting better than ornate prose.
 
 OUTPUT REQUIREMENTS:
-- Flowing natural language prose, 3–4 sentences
+- Flowing natural language prose
 - Front-load the primary subject in the first 10 words
+- Affirmative descriptions only (no "without X" phrasing)
 
 LENGTH RULES:
 HARD: Do not shorten any prompt that is below ${ctx.maxChars ?? 875} characters.
-SOFT: You may lengthen the prompt up to ${ctx.maxChars ?? 875} characters, but only if the added content is a genuine visual anchor — not filler.
-Your job is to produce the best possible prompt for this platform. Length is not a goal. Anchor preservation is.
-- Affirmative descriptions only (no "without X" phrasing)
+SOFT: You may lengthen up to ${ctx.maxChars ?? 875} characters ONLY if adding a genuine visual anchor to a thin prompt.
 ${platformNote ? `\nPLATFORM NOTE: ${platformNote}` : ''}
 
 Return ONLY valid JSON:
 {
-  "optimised": "your rewritten prompt",
-  "changes": ["TASK A: N anchors preserved", "TASK B: added [texture]", "TASK C: composition cue added"],
+  "optimised": "your output — same words as input, better structure",
+  "changes": ["moved subject to front", "split run-on sentence"],
   "charCount": 250,
   "tokenEstimate": 50
 }`;

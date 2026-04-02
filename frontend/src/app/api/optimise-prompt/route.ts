@@ -32,6 +32,7 @@ import { extractAnchors, analyseOptimisationNeed, reorderSubjectFirst } from "@/
 import type { Call3Mode } from "@/lib/optimise-prompts/preflight";
 import { runMjDeterministic } from "@/lib/optimise-prompts/midjourney-deterministic";
 import { checkRegression, defaultRegressionOptions, checkMjDeterministicRegression } from "@/lib/optimise-prompts/regression-guard";
+import { anchorDiffGate } from "@/lib/optimise-prompts/anchor-diff-gate";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -521,31 +522,23 @@ export async function POST(req: NextRequest): Promise<Response> {
     // This is the final safety net. GPT got every chance — system prompt,
     // zone block, compliance gates. If it still made things worse, the user
     // gets back what they had.
-    const regressionOpts = defaultRegressionOptions(
-      parsed.data.providerContext.tier,
-      call3Mode,
-      parsed.data.providerContext.supportsWeighting ?? false,
-    );
-    const regressionCheck = checkRegression(
-      sanitisedPrompt,
-      result.optimised,
-      regressionOpts,
-    );
 
-    if (!regressionCheck.passed) {
+    // ── Fast anchor-diff gate (deterministic, no API cost) ───────────
+    // Catches the most common failure family: GPT silently drops anchors
+    // or shortens prompts. Runs before the heavier heuristic checks.
+    const anchorGate = anchorDiffGate(sanitisedPrompt, result.optimised);
+    if (anchorGate.verdict === 'REJECT') {
       console.warn(
-        "[optimise-prompt] Regression guard failed:",
-        regressionCheck.regressions.join("; "),
+        "[optimise-prompt] Anchor-diff gate rejected:",
+        anchorGate.reason,
       );
 
-      // Fall back to assembled prompt — deterministic fixes only
       let fallback = sanitisedPrompt;
       const fallbackChanges = [
-        `Regression guard: ${regressionCheck.regressions.join('; ')}`,
+        `Anchor-diff gate: ${anchorGate.reason}`,
         'Returned assembled prompt — the Algorithms declared the assembled prompt to also be the Optimised Prompt',
       ];
 
-      // Still run group compliance on the fallback (syntax cleanup)
       if (groupCompliance) {
         const gateResult = groupCompliance(fallback);
         if (gateResult.wasFixed) {
@@ -559,12 +552,54 @@ export async function POST(req: NextRequest): Promise<Response> {
       result.changes = fallbackChanges;
     }
 
-    // ── Prose quality diagnostics (always log, pass or fail) ──────────
-    const pq = regressionCheck.proseQuality;
-    if (pq.findings.length > 0) {
-      console.debug(
-        `[optimise-prompt] Prose quality: composition=${pq.compositionHardFail ? 'HARD_FAIL' : pq.findings.filter(f => f.detector === 'composition').length + ' findings'} textbook=${pq.textbookScore}pts redundant=${pq.redundantCount} passed=${regressionCheck.passed}`,
+    // ── Full regression guard (heuristic checks) ─────────────────────
+    // Only runs if anchor-diff gate passed (no early rejection above).
+    if (anchorGate.verdict === 'ACCEPT') {
+      const regressionOpts = defaultRegressionOptions(
+        parsed.data.providerContext.tier,
+        call3Mode,
+        parsed.data.providerContext.supportsWeighting ?? false,
       );
+      const regressionCheck = checkRegression(
+        sanitisedPrompt,
+        result.optimised,
+        regressionOpts,
+      );
+
+      if (!regressionCheck.passed) {
+        console.warn(
+          "[optimise-prompt] Regression guard failed:",
+          regressionCheck.regressions.join("; "),
+        );
+
+        // Fall back to assembled prompt — deterministic fixes only
+        let fallback = sanitisedPrompt;
+        const fallbackChanges = [
+          `Regression guard: ${regressionCheck.regressions.join('; ')}`,
+          'Returned assembled prompt — the Algorithms declared the assembled prompt to also be the Optimised Prompt',
+        ];
+
+        // Still run group compliance on the fallback (syntax cleanup)
+        if (groupCompliance) {
+          const gateResult = groupCompliance(fallback);
+          if (gateResult.wasFixed) {
+            fallback = gateResult.text;
+            fallbackChanges.push(...gateResult.fixes);
+          }
+        }
+
+        result.optimised = fallback;
+        result.charCount = fallback.length;
+        result.changes = fallbackChanges;
+      }
+
+      // ── Prose quality diagnostics (always log, pass or fail) ──────────
+      const pq = regressionCheck.proseQuality;
+      if (pq.findings.length > 0) {
+        console.debug(
+          `[optimise-prompt] Prose quality: composition=${pq.compositionHardFail ? 'HARD_FAIL' : pq.findings.filter(f => f.detector === 'composition').length + ' findings'} textbook=${pq.textbookScore}pts redundant=${pq.redundantCount} passed=${regressionCheck.passed}`,
+        );
+      }
     }
 
     // ── Always measure actual charCount — GPT self-reports are unreliable ──

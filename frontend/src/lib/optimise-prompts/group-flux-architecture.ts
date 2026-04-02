@@ -23,9 +23,19 @@
 //     better than colour lists
 //
 // v1 (26 Mar 2026): Initial build.
+// v2 (02 Apr 2026): Phase 2 rewrite — preservation-first image-NL template.
+//   Removed "TEXTURE MINIMUM: Include at least 3 material/texture descriptions"
+//   and all material invention examples. Removed before/after examples that
+//   demonstrated and encouraged adding invented content. Preserved all T5-XXL
+//   architecture knowledge. Added explicit bans: no invented textures, no
+//   composition scaffolding, no synonym churn. Enrichment conditional only
+//   when source prompt is genuinely thin.
+//   Evidence: Batch 2 test scored 76/100 (delta -13) due to "Cinematic
+//   photorealism with rich atmospheric depth and natural textures" filler
+//   and over-enriched editorial prose driven by texture minimum rule.
 //
 // Authority: grouping-45-image-platforms-by-prompt-compatibility.md §Group 5
-// Existing features preserved: Yes (new file).
+// Existing features preserved: Yes. Compliance function unchanged.
 // ============================================================================
 
 import type { OptimiseProviderContext, GroupPromptResult } from './types';
@@ -167,66 +177,61 @@ Flux uses the T5-XXL text encoder. This is fundamentally different from Stable D
 - Parameter flags (--ar, --v) are read as LITERAL TEXT and will corrupt the output
 - Word order determines emphasis: the first noun phrase = the primary subject
 - T5 understands adjective-noun binding: "enormous storm waves" is one concept, not three separate tags
-- Complex spatial descriptions ("a village glows with warm windows beneath dark cliffs") work perfectly
+- Complex spatial descriptions work perfectly
+- guidance_scale is 3.5 (vs SD's 7) — the model follows your prompt more faithfully, so PRECISION matters more than emphasis tricks
 
-PROMPT PHILOSOPHY — DESCRIPTIVE PROSE, NOT TAGS:
-Write as if describing a photograph or painting to someone who will recreate it. Every sentence should contain connected visual information, not isolated keywords. The more naturally the prompt reads as English, the better Flux interprets it.
+YOUR INPUT:
+You receive a single assembled prompt — the output of the prompt assembly stage, already tailored for this platform tier. Your job is to restructure and strengthen it for this specific platform.
 
-PROMPT STRUCTURE — RICH VISUAL PARAGRAPH:
-Write a single flowing paragraph (3–5 sentences) that builds the scene layer by layer:
-- Sentence 1: Subject + primary action + immediate setting (WHO, WHAT, WHERE)
-- Sentence 2: Physical environment + weather/atmosphere + key interaction
-- Sentence 3: Lighting + colour palette woven into the scene description
-- Sentence 4: Background details + depth + secondary points of interest
-- Optional Sentence 5: Photographic/artistic style direction
+TASK A — ANCHOR PRESERVATION (mandatory, highest priority)
+Scan the prompt. Identify every named visual element: subjects, objects, colours, textures, spatial relationships, lighting, atmosphere.
+Every element MUST appear in your output using the EXACT original words. Not synonyms, not "stronger equivalents" — the SAME words.
+- "throws" stays "throws" — do NOT change to "casts"
+- "deep in a cedar forest" stays "deep in a cedar forest" — do NOT rearrange to "in a deep cedar forest"
+- Every named colour must survive using its original word
+- Every compound adjective must survive intact
+If your output has fewer named elements than the input, it is REJECTED.
+
+TASK B — STRUCTURAL IMPROVEMENT ONLY
+You may ONLY make these structural changes:
+1. Move the primary subject to the first 10 words if it is not already there (T5 gives strongest attention to the opening)
+2. Break overlong run-on sentences into clearer shorter sentences that each describe a visual layer (foreground, environment, lighting, background) — T5 preserves this spatial structure
+3. Remove any leftover weight syntax, CLIP tokens, SD tokens, or parameter flags (T5 reads these as literal text)
+4. Convert any negative phrasing ("without X", "no X", "avoid X") to affirmative descriptions or remove entirely — Flux does not support negatives and T5 may render excluded words as literal text in the image
+You must NOT:
+- Replace any verb with a synonym
+- Rearrange adjective-noun phrases
+- Add any content not present in the original (no textures, no materials, no composition cues, no camera angles, no mood filler, no style tags like "cinematic photorealism")
+- Remove any content from the original
+- Add a composition or framing sentence at the end
+
+TASK C — CONDITIONAL ENRICHMENT (only when source is thin)
+If and ONLY if the assembled prompt has fewer than 3 sentences or fewer than 150 characters, you may add up to 2 specific visual details that are physically plausible for the scene. Flux excels at photorealism, so concrete surface descriptions ("weathered stone", "wet wooden deck") are most effective. Otherwise, do NOT add anything — a well-written assembled prompt is already strong for T5-XXL.
 
 WHAT NOT TO INCLUDE:
 - No weight syntax — (word:1.3) appears as literal text in the image
 - No parameter flags — --ar, --v, --s will appear as text artifacts
-- No negative prompts — Flux 1 models don't support them; describe what IS, not what ISN'T
+- No negative prompts — describe what IS, not what ISN'T
 - No CLIP quality tokens — "masterpiece", "best quality", "8K" are meaningless to T5
-- No SD negative tokens — "worst quality", "bad anatomy" are meaningless to T5
 - No keyword lists — T5 treats comma-separated tags as a broken sentence
+- No style-direction sentences like "Cinematic photorealism with rich atmospheric depth"
+- No "Photorealistic coastal photography" or similar trailing style tags
 
-PLATFORM-SPECIFIC:
+OUTPUT REQUIREMENTS:
+- Flowing natural language prose (T5 reads this best)
+- Front-load the primary subject in the first 10 words
+- Affirmative descriptions only
+${platformNote ? `\nPLATFORM NOTE: ${platformNote}` : ''}
 
 LENGTH RULES:
 HARD: Do not shorten any prompt that is below ${hardCeiling} characters.
-SOFT: You may lengthen the prompt up to ${hardCeiling} characters, but only if the added content is a genuine visual anchor — not filler.
-Your job is to produce the best possible prompt for this platform. Length is not a goal. Anchor preservation is.
-- Flux's guidance_scale is 3.5 (vs SD's 7) — the model follows your prompt more faithfully, so PRECISION matters more than emphasis tricks
-- Flux excels at photorealism — describe textures, materials, light behaviour specifically
-- Flux can render text in images — if text is part of the scene, put it in quotes
-- Front-load the primary subject in the first 10 words${platformNote ? `\n- ${platformNote}` : ''}
-
-OPTIMISATION RULES:
-1. STRIP ALL SYNTAX: Remove every (term:weight), term::weight, --ar, --v, --s, --no, and any CLIP/SD tokens. Convert to pure flowing prose.
-2. FRONT-LOAD SUBJECT: Primary subject in the first 10 words. T5 gives strongest attention to the opening.
-3. SENTENCE-LEVEL COMPOSITION: Each sentence should describe a visual layer — foreground, then environment, then lighting, then background. T5 preserves this spatial structure.
-4. CONCRETE OVER ABSTRACT: "Pale gold beam of light cutting through sheets of grey rain" not "dramatic lighting effects." Flux's photorealistic engine renders specific descriptions faithfully.
-5. COLOUR AS NATURAL DESCRIPTION: Weave colours into the scene naturally — "purple-and-copper twilight sky" not "purple, copper, sky." T5 understands compound adjective phrases.
-6. TEXTURE AND MATERIAL: Flux excels at rendering physical materials. Include surface descriptions: "rain-slicked iron railing", "weathered stone", "wet wooden deck."
-8. PRESERVE INTENT: Never remove the subject, core mood, or defining visual elements.
-10. TEXTURE MINIMUM: Include at least 3 material/texture descriptions. Flux's photorealistic engine renders physical surfaces better than any other platform. Use specific tactile language: "rain-slicked iron railing", "salt-crusted weathered stone", "wet timber deck planks", "barnacle-covered rocks", "spray-misted glass". Generic surfaces ("the railing", "the rocks") waste Flux's rendering precision.
-11. NO NEGATIVE LANGUAGE: Flux does NOT support negative prompts. If the input contains "without X", "no X", or "avoid X", REMOVE the phrase entirely or convert to an affirmative equivalent. "without blur" → "tack-sharp detail". "no watermark" → remove. "avoid modern buildings" → remove. Never write what ISN'T in the scene — T5-XXL may render excluded words as literal text.
-
-BEFORE → AFTER EXAMPLES:
-
-Example 1 — CLIP tags converted to Flux prose:
-BEFORE: masterpiece, best quality, (weathered lighthouse keeper:1.4), (storm waves:1.3), jagged rocks, salt spray, (lighthouse beam:1.2), purple copper sky, fishing village, dark cliffs, 8K, sharp focus
-AFTER: A weathered lighthouse keeper grips a rain-slicked iron railing on the gallery deck of a coastal lighthouse at twilight, bracing against wind as enormous storm waves explode against jagged rocks far below. Salt spray catches the fading light as it rises into a sky streaked with purple and copper, while the lighthouse beam sweeps a pale gold arc through dense sheets of driving rain. In the distance beyond the dark cliffs, a small fishing village glows with tiny warm orange windows, the only warmth in the storm-darkened landscape. Photorealistic coastal photography with rich atmospheric depth.
-WHY: Stripped all weight syntax and CLIP tokens. Converted keyword fragments into connected sentences with texture ("rain-slicked iron railing"), spatial depth (foreground keeper → midground rocks → background village), and natural colour descriptions. T5 reads this as a coherent scene, not a tag list.
-
-Example 2 — Abstract prompt made concrete for Flux:
-BEFORE: beautiful fantasy castle at sunset with dramatic lighting and magical atmosphere, trending on artstation
-AFTER: A towering grey stone castle rises from the edge of a forested cliff at golden sunset, its weathered spires and buttresses catching warm amber light against a deepening violet sky. Mist drifts through the valley below the cliff face while warm lantern light spills from dozens of arched windows across the castle's facade. A flock of dark birds wheels above the highest tower, and the forest canopy below glows copper and green in the last light. Detailed fantasy illustration with painterly lighting and atmospheric perspective.
-WHY: "Beautiful" → specific visual details (grey stone, weathered spires). "Dramatic lighting" → amber light, deepening violet sky, warm lantern glow. "Magical atmosphere" → mist, birds, copper-green canopy. Every abstract modifier replaced with a concrete, renderable description that T5 interprets precisely.
+SOFT: You may lengthen up to ${hardCeiling} characters ONLY if adding a genuine visual anchor to a thin prompt.
 
 Return ONLY valid JSON:
 {
-  "optimised": "the optimised Flux prompt — flowing prose, rich texture, no syntax, every visual detail anchored",
+  "optimised": "your output — same words as input, better structure for T5-XXL",
   "negative": "",
-  "changes": ["Stripped CLIP weight syntax", "Converted tags to flowing prose with texture and depth", ...],
+  "changes": ["moved subject to front", "stripped CLIP tokens", "converted tags to prose"],
   "charCount": 420,
   "tokenEstimate": 90
 }`;

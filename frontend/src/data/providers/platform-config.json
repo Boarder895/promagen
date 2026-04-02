@@ -406,7 +406,7 @@
       "shorthandLevel": "MINIMAL",
       "compressionNotes": "Consumer-focused stock platform",
       "groupKnowledge": "Stock photography platform with multiple style engines. NL prose. No special syntax.",
-      "call3Mode": "gpt_rewrite",
+      "call3Mode": "format_only",
       "semanticRewriteAllowed": true
     },
     "adobe-firefly": {
@@ -457,7 +457,7 @@
       "tier": 3,
       "shorthandLevel": "LOW",
       "compressionNotes": "Handles descriptive prompts well",
-      "call3Mode": "gpt_rewrite",
+      "call3Mode": "format_only",
       "semanticRewriteAllowed": true
     },
     "artbreeder": {
@@ -506,7 +506,7 @@
       "shorthandLevel": "MINIMAL",
       "compressionNotes": "Mixing-focused platform",
       "groupKnowledge": "Hybrid platform: text-to-image uses NL prose, Splicer mode uses sliders. SDXL and Flux backends.",
-      "call3Mode": "gpt_rewrite",
+      "call3Mode": "reorder_only",
       "semanticRewriteAllowed": true
     },
     "artguru": {
@@ -782,7 +782,7 @@
       ],
       "shorthandLevel": "MINIMAL",
       "compressionNotes": "Consumer design tool, simple prompts only",
-      "call3Mode": "gpt_rewrite",
+      "call3Mode": "reorder_only",
       "semanticRewriteAllowed": true
     },
     "clipdrop": {
@@ -939,7 +939,7 @@
       ],
       "shorthandLevel": "MINIMAL",
       "compressionNotes": "Basic API-first generator",
-      "call3Mode": "gpt_rewrite",
+      "call3Mode": "reorder_only",
       "semanticRewriteAllowed": true
     },
     "dreamlike": {
@@ -1416,7 +1416,7 @@
       ],
       "shorthandLevel": "MEDIUM",
       "compressionNotes": "Excels at text-in-image",
-      "call3Mode": "gpt_rewrite",
+      "call3Mode": "format_only",
       "semanticRewriteAllowed": true
     },
     "imagine-meta": {
@@ -2394,7 +2394,7 @@
       "idealMax": 400,
       "idealWords": 80,
       "maxChars": 1000,
-      "call3Mode": "gpt_rewrite",
+      "call3Mode": "format_only",
       "semanticRewriteAllowed": true
     },
     "runway": {
