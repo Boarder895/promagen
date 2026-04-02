@@ -39,8 +39,10 @@
 import React from 'react';
 import type { CoverageAssessment } from '@/types/category-assessment';
 import type { GeneratedPrompts } from '@/types/prompt-intelligence';
+import type { AiOptimiseResult } from '@/hooks/use-ai-optimisation';
 import { XRayDecoder } from './xray-decoder';
 import { XRaySwitchboard } from './xray-switchboard';
+import { XRayAlignment } from './xray-alignment';
 
 // ============================================================================
 // COLOUR PALETTE — Brass, Copper, and Amber (righthand-rail.md §12)
@@ -87,11 +89,6 @@ const XRAY_STYLES = `
     animation: xray-tape-pulse 4s ease-in-out infinite;
   }
 
-  /* Section header subtle glow on hover */
-  .xray-section-header {
-    transition: color 0.4s ease;
-  }
-
   /* §18 prefers-reduced-motion: disable all rotation */
   @media (prefers-reduced-motion: reduce) {
     .xray-rotor-idle {
@@ -102,30 +99,6 @@ const XRAY_STYLES = `
     }
   }
 `;
-
-// ============================================================================
-// SECTION HEADER — Stamped brass label
-// ============================================================================
-
-function SectionHeader({ text }: { text: string }) {
-  return (
-    <div
-      className="xray-section-header"
-      style={{
-        fontSize: 'clamp(0.65rem, 0.8vw, 0.875rem)',
-        fontWeight: 700,
-        letterSpacing: '0.12em',
-        textTransform: 'uppercase',
-        color: COLOURS.headerBrass,
-        lineHeight: 1,
-        userSelect: 'none',
-      }}
-      aria-hidden="true"
-    >
-      {text}
-    </div>
-  );
-}
 
 // ============================================================================
 // WIRING — Thin vertical connector between sections
@@ -154,65 +127,6 @@ function SectionWire() {
 
 // ============================================================================
 // ============================================================================
-// THE ALIGNMENT — Platform Optimisation (dormant)
-// ============================================================================
-
-function AlignmentSection() {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(6px, 0.5vw, 10px)' }}>
-      <SectionHeader text="§ The Alignment" />
-
-      {/* Placeholder for platform badge + cogs — shows when Call 3 runs */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 'clamp(4px, 0.3vw, 6px)',
-          minHeight: 'clamp(30px, 2.5vw, 40px)',
-        }}
-      >
-        {/* Dormant ticker tape line */}
-        <div
-          className="xray-tape-dormant"
-          style={{
-            height: '1px',
-            backgroundColor: COLOURS.dimBrass,  // solid visible brass line
-            borderRadius: '1px',
-          }}
-          aria-hidden="true"
-        />
-
-        {/* Phase markers — dim, waiting to activate */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 'clamp(8px, 0.7vw, 12px)',
-            justifyContent: 'center',
-          }}
-        >
-          {['① Analyse', '② Generate', '③ Optimise'].map((label, idx) => (
-            <span
-              key={label}
-              style={{
-                fontSize: 'clamp(10px, 0.65vw, 11px)',
-                fontWeight: 500,
-                // Progressively dimmer but all VISIBLE — solid colours, no opacity
-                color: idx === 0 ? COLOURS.phaseMarker : idx === 1 ? COLOURS.phaseMarkerDim : COLOURS.dimBrass,
-                letterSpacing: '0.04em',
-                userSelect: 'none',
-                lineHeight: 1,
-              }}
-            >
-              {label}
-            </span>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ============================================================================
 // MAIN COMPONENT — The Glass Case
 // ============================================================================
@@ -226,6 +140,16 @@ export interface PipelineXRayProps {
   tierPrompts?: GeneratedPrompts | null;
   /** Whether Call 2 is currently in flight */
   isTierGenerating?: boolean;
+  /** Call 3 optimisation result — null when not yet optimised */
+  optimiseResult?: AiOptimiseResult | null;
+  /** Whether Call 3 is currently in flight */
+  isOptimising?: boolean;
+  /** Selected platform name for Alignment badge */
+  platformName?: string | null;
+  /** Selected platform tier for Alignment badge colour */
+  platformTier?: number | null;
+  /** Platform maxChars for capacity gauge */
+  maxChars?: number | null;
   /** Monotonic generation ID for animation cancellation */
   generationId?: number;
   /** Optional className for outer container */
@@ -237,6 +161,11 @@ export function PipelineXRay({
   isChecking = false,
   tierPrompts = null,
   isTierGenerating = false,
+  optimiseResult = null,
+  isOptimising = false,
+  platformName = null,
+  platformTier = null,
+  maxChars = null,
   generationId = 0,
   className = '',
 }: PipelineXRayProps) {
@@ -290,8 +219,15 @@ export function PipelineXRay({
         {/* Wiring: Switchboard → Alignment */}
         <SectionWire />
 
-        {/* The Alignment — platform optimisation zone */}
-        <AlignmentSection />
+        {/* The Alignment — platform optimisation (live when Call 3 data available) */}
+        <XRayAlignment
+          optimiseResult={optimiseResult}
+          isOptimising={isOptimising}
+          platformName={platformName}
+          platformTier={platformTier}
+          maxChars={maxChars}
+          generationId={generationId}
+        />
       </div>
     </>
   );

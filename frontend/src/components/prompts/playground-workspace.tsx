@@ -68,6 +68,8 @@ export interface PlaygroundWorkspaceProps {
   onAssessmentChange?: (assessment: CoverageAssessment | null, isChecking: boolean) => void;
   /** Callback when Call 2 tier generation state changes — for Pipeline X-Ray Phase 2 */
   onTierGenerationChange?: (tierPrompts: GeneratedPrompts | null, isGenerating: boolean) => void;
+  /** Callback when Call 3 optimisation state changes — for Pipeline X-Ray Phase 3 */
+  onOptimisationChange?: (result: import('@/hooks/use-ai-optimisation').AiOptimiseResult | null, isOptimising: boolean) => void;
 }
 
 // ============================================================================
@@ -189,7 +191,7 @@ function ProviderSelector({ providers, selectedId, onSelect }: ProviderSelectorP
 // MAIN COMPONENT
 // ============================================================================
 
-export default function PlaygroundWorkspace({ providers, onProviderChange, onProviderIdChange, externalProviderId, onAssessmentChange, onTierGenerationChange }: PlaygroundWorkspaceProps) {
+export default function PlaygroundWorkspace({ providers, onProviderChange, onProviderIdChange, externalProviderId, onAssessmentChange, onTierGenerationChange, onOptimisationChange }: PlaygroundWorkspaceProps) {
   // ── Lab Gate: auth + generation limiter ──────────────────────────────
   const {
     canGenerate,
@@ -487,6 +489,8 @@ export default function PlaygroundWorkspace({ providers, onProviderChange, onPro
               coverageData={assessment}
               // Human text for Call 3 cross-referencing
               humanText={humanText}
+              // Pipeline X-Ray Phase 3 callback
+              onOptimisationChange={onOptimisationChange}
             />
           )}
 

@@ -120,6 +120,8 @@ export interface EnhancedEducationalPreviewProps {
   humanText?: string;
   /** Coverage assessment with matched phrases per category */
   coverageData?: import('@/types/category-assessment').CoverageAssessment | null;
+  /** Callback when Call 3 optimisation state changes — for Pipeline X-Ray Phase 3 */
+  onOptimisationChange?: (result: import('@/hooks/use-ai-optimisation').AiOptimiseResult | null, isOptimising: boolean) => void;
 }
 
 // ============================================================================
@@ -349,6 +351,7 @@ export default function EnhancedEducationalPreview({
   externalLoading,
   coverageData,
   humanText,
+  onOptimisationChange,
 }: EnhancedEducationalPreviewProps) {
   // State
   const [selections, setSelections] = useState<PromptSelections>(EMPTY_SELECTIONS);
@@ -759,6 +762,11 @@ export default function EnhancedEducationalPreview({
     optimise: aiOptimise,
     clear: clearAiOptimise,
   } = useAiOptimisation();
+
+  // ── Expose optimisation state to parent (for Pipeline X-Ray Phase 3) ──
+  useEffect(() => {
+    onOptimisationChange?.(aiOptimiseResult, isAiOptimising);
+  }, [aiOptimiseResult, isAiOptimising, onOptimisationChange]);
 
   // Build OptimisationProviderContext from platform data
   const aiOptimiseContext = useMemo((): OptimisationProviderContext | null => {

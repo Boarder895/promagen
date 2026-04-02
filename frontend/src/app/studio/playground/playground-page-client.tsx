@@ -31,7 +31,7 @@
 
 'use client';
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useMemo } from 'react';
 import HomepageGrid from '@/components/layout/homepage-grid';
 import PlaygroundWorkspace from '@/components/prompts/playground-workspace';
 import type { Exchange } from '@/data/exchanges/types';
@@ -39,7 +39,9 @@ import type { ExchangeWeatherData } from '@/components/exchanges/types';
 import type { Provider } from '@/types/providers';
 import type { CoverageAssessment } from '@/types/category-assessment';
 import type { GeneratedPrompts } from '@/types/prompt-intelligence';
+import type { AiOptimiseResult } from '@/hooks/use-ai-optimisation';
 import { useExchangeOrder } from '@/hooks/use-exchange-order';
+import { getRawPlatformConfig } from '@/data/providers/platform-config';
 import MobileBuilderGate from '@/components/layout/mobile-builder-gate';
 
 // ── Intelligence rails (replace exchange rails) ───────────────────────
@@ -107,8 +109,24 @@ export default function PlaygroundPageClient({
   const [xrayTierPrompts, setXrayTierPrompts] = useState<GeneratedPrompts | null>(null);
   const [xrayIsTierGenerating, setXrayIsTierGenerating] = useState(false);
 
+  // ── Pipeline X-Ray state (Call 3 optimisation data for Phase 3 Alignment)
+  const [xrayOptimiseResult, setXrayOptimiseResult] = useState<AiOptimiseResult | null>(null);
+  const [xrayIsOptimising, setXrayIsOptimising] = useState(false);
+
   const generationIdRef = useRef(0);
   const [generationId, setGenerationId] = useState(0);
+
+  // ── Derive platform metadata for X-Ray Alignment badge + gauge ────
+  const selectedPlatformMeta = useMemo(() => {
+    if (!selectedProviderId) return null;
+    const provider = providers.find((p) => p.id === selectedProviderId);
+    const config = getRawPlatformConfig(selectedProviderId);
+    return {
+      name: provider?.name ?? selectedProviderId,
+      tier: config?.tier ?? 3,
+      maxChars: config?.maxChars ?? null,
+    };
+  }, [selectedProviderId, providers]);
 
   // Workspace reports boolean (existing contract)
   const handleProviderChange = useCallback((selected: boolean) => {
@@ -148,6 +166,15 @@ export default function PlaygroundPageClient({
   ) => {
     setXrayTierPrompts(tierPrompts);
     setXrayIsTierGenerating(isGenerating);
+  }, []);
+
+  // Workspace reports optimisation state changes → X-Ray Phase 3
+  const handleOptimisationChange = useCallback((
+    result: AiOptimiseResult | null,
+    isOptimising: boolean,
+  ) => {
+    setXrayOptimiseResult(result);
+    setXrayIsOptimising(isOptimising);
   }, []);
 
   // Pro-aware exchange ordering — `ordered` still needed for HomepageGrid
@@ -191,6 +218,7 @@ export default function PlaygroundPageClient({
         externalProviderId={selectedProviderId}
         onAssessmentChange={handleAssessmentChange}
         onTierGenerationChange={handleTierGenerationChange}
+        onOptimisationChange={handleOptimisationChange}
       />
     </MobileBuilderGate>
   );
@@ -202,6 +230,11 @@ export default function PlaygroundPageClient({
       isChecking={xrayIsChecking}
       tierPrompts={xrayTierPrompts}
       isTierGenerating={xrayIsTierGenerating}
+      optimiseResult={xrayOptimiseResult}
+      isOptimising={xrayIsOptimising}
+      platformName={selectedPlatformMeta?.name ?? null}
+      platformTier={selectedPlatformMeta?.tier ?? null}
+      maxChars={selectedPlatformMeta?.maxChars ?? null}
       generationId={generationId}
     />
   );
