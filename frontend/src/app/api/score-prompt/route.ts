@@ -1,25 +1,25 @@
 // src/app/api/score-prompt/route.ts
 // ============================================================================
-// POST /api/score-prompt — AI Prompt Scoring (Call 4) v1.1.0
+// POST /api/score-prompt — AI Prompt Scoring (Call 4) v1.2.0
 // ============================================================================
 // Scores an optimised prompt against 5 axes and returns 0-3 actionable
 // improvement directives. Does NOT rewrite the prompt — tells the user
 // what to fix. Auto-fires after Call 3 for Pro users.
 //
-// v1.1.0 (2 Apr 2026):
-// - Added 4 calibration examples (one per tier family) to system prompt.
-// - Added explicit score↔directive consistency rules with band-based
-//   directive counts (95-100: 0-1, 85-94: 1-2, 70-84: 2-3, <70: 3).
-// - Added server-side ceiling clamps as deterministic safety net.
-// - Temperature 0.3 → 0.2 for scoring consistency.
-// - Response schema updated: directives 0-3 (was 1-4).
+// v1.2.0 (2 Apr 2026):
+// - Server-side Pro auth enforcement (Clerk publicMetadata.tier === 'paid').
+// - Max-length guards on all string fields (abuse/cost protection).
+// - Content-filter + finish_reason handling on GPT response.
+// - Tighter ceiling clamps: 3→85, 2→89, 1→93, 0→97.
+// - Score is deliberately integer (Math.round) — no decimal precision.
 //
+// v1.1.0 (2 Apr 2026): Calibration examples, consistency rules, clamps.
 // v1.0.0 (1 Apr 2026): Initial implementation.
 //
 // Authority: docs/authority/call4-chatgpt-review-v4.md
-// Pattern: matches /api/optimise-prompt (same rate-limit, env, Zod, error handling)
-// Scope: Prompt Lab (/studio/playground) ONLY — Pro Promagen feature
-// Existing features preserved: Yes (route-only change, no external API changes).
+// Pattern: matches /api/indices auth pattern (auth() + clerkClient).
+// Scope: Prompt Lab (/studio/playground) ONLY — Pro Promagen feature.
+// Existing features preserved: Yes (route-only change).
 // ============================================================================
 
 import 'server-only';
@@ -28,6 +28,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { auth, clerkClient } from '@clerk/nextjs/server';
 import { env } from '@/lib/env';
 import { rateLimit } from '@/lib/rate-limit';
 
@@ -36,28 +37,30 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 15;
 
 // ============================================================================
-// REQUEST SCHEMA — Strict types matching SSOT
+// REQUEST SCHEMA — Strict types + max-length guards
 // ============================================================================
+// Max lengths protect against inflated token cost from oversized payloads.
+// Largest platform maxChars is 1250, so 2000 gives generous headroom.
 
 const ScoreRequestSchema = z.object({
-  // Core prompt data
-  optimisedPrompt: z.string().min(1),
-  humanText: z.string().min(1),
-  assembledPrompt: z.string().min(1),
-  negativePrompt: z.string().optional(),
+  // Core prompt data — bounded to prevent cost inflation
+  optimisedPrompt: z.string().min(1).max(2000),
+  humanText: z.string().min(1).max(1000),
+  assembledPrompt: z.string().min(1).max(2000),
+  negativePrompt: z.string().max(500).optional(),
 
   // Platform context (from platform-config.json SSOT)
-  platformId: z.string().min(1),
-  platformName: z.string().min(1),
+  platformId: z.string().min(1).max(50),
+  platformName: z.string().min(1).max(100),
   tier: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
   promptStyle: z.enum(['keywords', 'natural']),
-  maxChars: z.number().positive(),
-  idealMin: z.number().nonnegative(),
-  idealMax: z.number().positive(),
+  maxChars: z.number().positive().max(10000),
+  idealMin: z.number().nonnegative().max(10000),
+  idealMax: z.number().positive().max(10000),
   negativeSupport: z.enum(['separate', 'inline', 'none']),
 
   // Call 3 output context
-  call3Changes: z.array(z.string()),
+  call3Changes: z.array(z.string().max(200)).max(10),
   call3Mode: z.enum([
     'reorder_only',
     'format_only',
@@ -100,32 +103,32 @@ const ScoreResponseSchema = z.object({
 });
 
 // ============================================================================
-// CEILING CLAMPS — Deterministic safety net (Fix C)
+// CEILING CLAMPS — Deterministic safety net (tightened v1.2.0)
 // ============================================================================
-// If GPT ignores the consistency rules, these clamp the score server-side.
-// Belt and braces — the system prompt should handle this, but code is certain.
+// Tighter than v1.1.0: a prompt with directives is not near-perfect.
+// These are hard ceilings — GPT can score lower, never higher.
 
 function applyDirectiveCeilingClamp(rawScore: number, directiveCount: number): number {
-  // 3 directives = meaningful headroom → ceiling 89
-  if (directiveCount >= 3 && rawScore > 89) return 89;
-  // 2 directives = solid but improvable → ceiling 93
-  if (directiveCount === 2 && rawScore > 93) return 93;
-  // 1 directive = strong, minor polish → ceiling 97
-  if (directiveCount === 1 && rawScore > 97) return 97;
-  // 0 directives = near-perfect → allow 98-100
+  // 3 directives = significant headroom → ceiling 85
+  if (directiveCount >= 3 && rawScore > 85) return 85;
+  // 2 directives = meaningful improvement possible → ceiling 89
+  if (directiveCount === 2 && rawScore > 89) return 89;
+  // 1 directive = strong but not near-perfect → ceiling 93
+  if (directiveCount === 1 && rawScore > 93) return 93;
+  // 0 directives = genuinely near-flawless → ceiling 97
+  if (directiveCount === 0 && rawScore > 97) return 97;
   return rawScore;
 }
 
 // ============================================================================
-// CALIBRATION EXAMPLES — One per tier family (Fix A)
+// CALIBRATION EXAMPLES — One per tier family
 // ============================================================================
-// These are realistic good-but-not-perfect prompts with honest scores.
-// They anchor GPT's understanding of what each score range means.
-// The examples are static — they don't need to match the user's prompt.
+// Real prompts with honest scores. Anchors GPT's understanding of the scale.
+// A polished benchmark prompt with improvements typically lands 75-85.
 
 const CALIBRATION_EXAMPLES = `
-CALIBRATION EXAMPLES — Study these to understand the scoring scale.
-A polished benchmark prompt with 2-3 meaningful improvements typically lands in the low-to-mid 80s, not the high 90s. 95+ requires near-perfection with at most one trivial suggestion.
+CALIBRATION EXAMPLES — Study these carefully. They define the scoring scale.
+A polished benchmark prompt with 2-3 meaningful improvements lands in the 75-85 range, not 90+. Scores above 90 are rare and require near-perfection. Scores above 95 should almost never occur.
 
 EXAMPLE 1 — T1 CLIP platform (Stability AI), negativeSupport: separate
 Human input: "A fox shrine in autumn with red torii gates and falling maple leaves"
@@ -189,7 +192,14 @@ function buildSystemPrompt(req: z.infer<typeof ScoreRequestSchema>): string {
     .map(([k, v]) => `${k}: ${v} terms`)
     .join(', ');
 
-  return `You are a strict, honest prompt quality scorer for AI image generation platforms. You score conservatively — a genuinely good prompt with room to improve lands in the 75-85 range, not 90+.
+  return `You are a strict, conservative prompt quality scorer for AI image generation platforms. You are deliberately harsh. Your default assumption is that every prompt has room to improve — most prompts land in the 70-85 range.
+
+CRITICAL SCORING PHILOSOPHY:
+- A score of 90+ is EXCEPTIONAL and rare. It means the prompt is nearly flawless.
+- A score of 80-89 is STRONG. This is where most well-crafted prompts belong.
+- A score of 70-79 is GOOD. Solid work with clear room for improvement.
+- A score below 70 means significant problems.
+- You should almost never score above 90. If you find yourself doing so, look harder for flaws.
 
 TASK: Score the optimised prompt against 5 axes. Return JSON only.
 
@@ -219,24 +229,24 @@ SCORING RUBRIC (score each axis independently — be harsh, not generous):
 1. ANCHOR PRESERVATION (0-30 points)
 Compare the user's original input → assembled → optimised.
 Are the user's key visual anchors STILL PRESENT in the optimised prompt?
-- 28-30: Every single user anchor preserved with zero loss — rare
+- 28-30: Every single user anchor preserved with zero loss — rare, requires exact match
 - 24-27: All anchors present, minor rephrasing that preserves meaning
 - 18-23: Most anchors present but some rephrased loosely or reordered poorly
 - 10-17: Noticeable anchor loss — user's specific details dropped or generalised
 - 0-9: Most anchors lost or unrecognisable
 Use the category richness to weight importance — if the user invested 3 terms in lighting, losing 2 of them is a bigger penalty.
-Scoring 28+ requires that EVERY specific noun, colour, material, and spatial relationship from the user's input survives intact.
+Scoring 28+ requires that EVERY specific noun, colour, material, and spatial relationship from the user's input survives intact. This is rare.
 
 2. PLATFORM-NATIVE FIT (0-25 points)
 ${req.tier <= 2
     ? `This is T${req.tier} (${req.promptStyle}) — SYNTAX matters.
-- 24-25: Perfect syntax for this platform — every weight, parameter, and separator correct
+- 24-25: Perfect syntax for this platform — every weight, parameter, and separator correct. Rare.
 - 18-23: Correct syntax structure with minor weight value issues
 - 12-17: Mostly correct but with syntax errors that would visibly degrade output
 - 5-11: Significant syntax errors or wrong formatting approach
 - 0-4: Wrong syntax entirely (e.g., natural language on a CLIP platform)`
     : `This is T${req.tier} (${req.promptStyle}) — STYLE and CLARITY matter, not syntax.
-- 24-25: Flawless natural prose — zero syntax tokens, reads like a master art brief
+- 24-25: Flawless natural prose — zero syntax tokens, reads like a master art brief. Rare.
 - 18-23: Natural and clear with minor awkwardness or one stray technical term
 - 12-17: Readable but stilted, overly technical, or contains inappropriate syntax tokens
 - 5-11: Confused style — mixes prose with weight syntax or parameter tokens
@@ -244,26 +254,27 @@ ${req.tier <= 2
 
 3. VISUAL SPECIFICITY (0-20 points)
 Count concrete visual anchors: materials, colours, light directions, spatial relationships, textures, atmospheric effects.
-- 19-20: Exceptional — every element has material, colour, and spatial grounding
+- 19-20: Exceptional — every element has material, colour, and spatial grounding. Rare.
 - 15-18: Rich concrete imagery with 1-2 vague areas
 - 10-14: Decent specificity but multiple elements lack visual concreteness
 - 5-9: Mostly vague or generic descriptions
 - 0-4: Almost no concrete visual detail
-"Beautiful", "stunning", "amazing" score ZERO — they carry no visual information.
+"Beautiful", "stunning", "amazing" score ZERO — they carry no visual information. Any filler = deduction.
 
 4. ECONOMY & CLARITY (0-15 points)
 Judge against idealMin=${req.idealMin}, idealMax=${req.idealMax}, maxChars=${req.maxChars}.
-- 14-15: Every single word earns its place, zero redundancy, within sweet spot
+- 14-15: Every single word earns its place, zero redundancy, within sweet spot. Rare.
 - 11-13: Tight with one or two minor redundancies
 - 7-10: Noticeable waste — duplicated modifiers, filler words, or unnecessary length
 - 3-6: Significant bloat or unclear structure
 - 0-2: Chaotic or incomprehensible
 Filler words that score zero: "very", "really", "extremely", "beautiful", "stunning", "amazing", "gorgeous". If any appear, deduct accordingly.
+Redundant modifiers (same idea said twice) = deduction. Look hard for these.
 
 5. NEGATIVE QUALITY (0-10 points)${negApplicable
     ? `
 Score the quality of exclusions.
-- 9-10: Platform-specific, concrete exclusions (e.g., "chromatic aberration, motion blur, text overlay, watermark")
+- 9-10: Platform-specific, concrete exclusions (e.g., "chromatic aberration, motion blur, text overlay, watermark"). Rare.
 - 6-8: Mostly specific with one or two generic terms
 - 3-5: Mix of specific and generic, or missing important exclusions
 - 1-2: Mostly generic boilerplate ("ugly, bad, deformed")
@@ -272,21 +283,22 @@ Generic negatives like "ugly, bad quality, deformed, blurry" should NEVER score 
     : `
 This platform does not support negatives. Return null for this axis.`}
 
-SCORE ↔ DIRECTIVE CONSISTENCY RULES (CRITICAL — you MUST follow these):
+SCORE ↔ DIRECTIVE CONSISTENCY RULES (MANDATORY — violations will be rejected):
 
-Your score and directive count must be internally consistent. A high score with many directives is a contradiction.
+Your score and directive count MUST be internally consistent. Inconsistency is a scoring failure.
 
-- Score 95-100: Return 0 or 1 directive. Only achievable when the prompt is near-flawless.
-- Score 85-94: Return 1 or 2 directives. Strong prompt with minor improvements.
-- Score 70-84: Return 2 or 3 directives. Good prompt with meaningful room to improve.
-- Score below 70: Return 3 directives. Significant issues to address.
+- Score 92-100: Return 0 or 1 directive ONLY. Near-flawless. Almost never appropriate.
+- Score 80-91: Return 1 or 2 directives. Strong prompt with clear improvements.
+- Score 70-79: Return 2 or 3 directives. Good prompt with meaningful headroom.
+- Score below 70: Return 3 directives. Significant issues.
 
-If you find yourself writing 3 directives, your score CANNOT be above 89.
-If you find yourself writing 2 directives, your score CANNOT be above 93.
-If you find yourself with only 1 small suggestion, the score should be 90+.
-If you cannot find ANY genuine improvement, and only then, may you return 0 directives and score 95+.
+HARD LIMITS:
+- If you return 3 directives, your score MUST be 85 or below.
+- If you return 2 directives, your score MUST be 89 or below.
+- If you return 1 directive, your score MUST be 93 or below.
+- Only 0 directives allows 94+, and only when genuinely near-perfect.
 
-Score first, then write directives that match. Do NOT inflate the score and then add directives that contradict it.
+PROCESS: Score the axes FIRST. Sum them. THEN decide how many directives match that score. Do NOT inflate axis scores and then add directives that contradict the total.
 
 DIRECTIVE RULES:
 - Each directive MUST reference a specific phrase from the prompt (Ctrl+F-able)
@@ -299,7 +311,7 @@ DIRECTIVE RULES:
 
 ${CALIBRATION_EXAMPLES}
 
-RESPONSE FORMAT (JSON only, no markdown, no backticks):
+RESPONSE FORMAT (JSON only, no markdown, no backticks, no commentary):
 {
   "axes": {
     "anchorPreservation": <0-30>,
@@ -308,7 +320,7 @@ RESPONSE FORMAT (JSON only, no markdown, no backticks):
     "economyClarity": <0-15>,
     "negativeQuality": <0-10 or null>
   },
-  "directives": [<0-3 directives based on score band>],
+  "directives": [<0-3 directives matching score band>],
   "summary": "<one sentence overall assessment>"
 }`;
 }
@@ -318,6 +330,35 @@ RESPONSE FORMAT (JSON only, no markdown, no backticks):
 // ============================================================================
 
 export async function POST(req: NextRequest) {
+  // ── Auth: Pro users only ─────────────────────────────────────────
+  // Server-side enforcement — client-side Lab Gate is a UX gate,
+  // this is the real security boundary.
+  let userId: string | null = null;
+  try {
+    const authResult = await auth();
+    userId = authResult.userId;
+  } catch {
+    // Clerk unavailable — reject (fail closed for paid feature)
+    return NextResponse.json({ error: 'Authentication unavailable' }, { status: 503 });
+  }
+
+  if (!userId) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
+
+  // Check Pro tier via Clerk publicMetadata
+  try {
+    const client = await clerkClient();
+    const user = await client.users.getUser(userId);
+    const tier = (user.publicMetadata as Record<string, unknown>)?.tier;
+    if (tier !== 'paid') {
+      return NextResponse.json({ error: 'Pro Promagen required' }, { status: 403 });
+    }
+  } catch {
+    // Clerk user fetch failed — fail closed
+    return NextResponse.json({ error: 'Unable to verify subscription' }, { status: 503 });
+  }
+
   // ── Rate limit (30/hour in prod) ─────────────────────────────────
   const rl = rateLimit(req, {
     keyPrefix: 'score-prompt',
@@ -389,10 +430,37 @@ export async function POST(req: NextRequest) {
     }
 
     const openaiData = await openaiRes.json();
-    const content = openaiData?.choices?.[0]?.message?.content;
 
+    // ── Content-filter / finish-reason handling ──────────────────
+    const choice = openaiData?.choices?.[0];
+    if (!choice) {
+      console.error('[score-prompt] No choices in response:', openaiData);
+      return NextResponse.json({ error: 'Empty scoring response' }, { status: 502 });
+    }
+
+    const finishReason = choice.finish_reason;
+    if (finishReason === 'content_filter') {
+      console.warn('[score-prompt] Content filtered by OpenAI policy');
+      return NextResponse.json(
+        { error: 'Scoring unavailable — content policy filter triggered' },
+        { status: 422 },
+      );
+    }
+    if (finishReason === 'length') {
+      console.warn('[score-prompt] Response truncated (max_tokens reached)');
+      return NextResponse.json(
+        { error: 'Scoring response was truncated — try a shorter prompt' },
+        { status: 502 },
+      );
+    }
+    if (finishReason !== 'stop') {
+      console.warn(`[score-prompt] Unexpected finish_reason: ${finishReason}`);
+      // Continue — may still be usable
+    }
+
+    const content = choice.message?.content;
     if (!content) {
-      console.error('[score-prompt] Empty engine response:', openaiData);
+      console.error('[score-prompt] Empty message content:', openaiData);
       return NextResponse.json({ error: 'Empty scoring response' }, { status: 502 });
     }
 
@@ -411,7 +479,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Scoring response did not match expected schema' }, { status: 502 });
     }
 
-    // ── Compute normalised headline score ────────────────────────
+    // ── Compute normalised headline score (integer, deliberate) ──
     const { axes, directives, summary } = validated.data;
     const rawTotal =
       axes.anchorPreservation +
@@ -424,7 +492,7 @@ export async function POST(req: NextRequest) {
     let score = Math.round((rawTotal / maxPossible) * 100);
     score = Math.min(100, Math.max(0, score));
 
-    // ── Server-side ceiling clamp (Fix C) ────────────────────────
+    // ── Server-side ceiling clamp ────────────────────────────────
     // Deterministic safety net — if GPT ignores consistency rules,
     // the score is clamped based on directive count.
     const clampedScore = applyDirectiveCeilingClamp(score, directives.length);

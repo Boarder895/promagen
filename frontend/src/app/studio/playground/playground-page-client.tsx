@@ -8,8 +8,9 @@
 // v4.1.0 (2 Apr 2026):
 // - Call 4 wiring fix: humanText, assembledPrompt, categoryRichness
 //   now populated from workspace/EEP callbacks instead of empty strings.
-// - Double-fire fix: wasOptimisingRef tracks true→false transition only.
 // - call3Mode read from platform-config.json SSOT instead of hardcoded.
+// - Reverted wasOptimisingRef (React 18 batching prevented true→false
+//   detection) back to prevOptimiseRef reference comparison — reliable.
 //
 // v4.0.0 (2 Apr 2026):
 // - Exchange rails replaced with intelligence rails:
@@ -206,17 +207,14 @@ export default function PlaygroundPageClient({
     score: fireScore,
   } = usePromptScore();
 
-  // Auto-fire Call 4 when Call 3 completes with a result
-  // Double-fire fix: track the true→false transition of xrayIsOptimising
-  const wasOptimisingRef = useRef(false);
+  // Auto-fire Call 4 when Call 3 completes with a new result
+  const prevOptimiseRef = useRef<AiOptimiseResult | null>(null);
   useEffect(() => {
-    const justFinished = wasOptimisingRef.current && !xrayIsOptimising;
-    wasOptimisingRef.current = xrayIsOptimising;
-
-    // Only fire on the true→false transition AND when there's a result
+    // Fire when optimiseResult transitions to a new non-null result
     if (
-      justFinished &&
       xrayOptimiseResult &&
+      !xrayIsOptimising &&
+      xrayOptimiseResult !== prevOptimiseRef.current &&
       selectedPlatformMeta &&
       selectedProviderId
     ) {
@@ -251,6 +249,7 @@ export default function PlaygroundPageClient({
         });
       }
     }
+    prevOptimiseRef.current = xrayOptimiseResult;
   }, [xrayOptimiseResult, xrayIsOptimising, selectedProviderId, selectedPlatformMeta, xrayAssessment, fireScore]);
 
   // Pro-aware exchange ordering — `ordered` still needed for HomepageGrid
