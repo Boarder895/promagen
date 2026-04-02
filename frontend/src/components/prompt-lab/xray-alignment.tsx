@@ -157,7 +157,7 @@ function CogEntry({
       <span
         className={animClass}
         style={{
-          fontSize: 'clamp(0.65rem, 0.8vw, 0.875rem)',
+          fontSize: 'clamp(0.7rem, 0.9vw, 1rem)',
           color: iconColour,
           flexShrink: 0,
           lineHeight: 1.3,
@@ -172,7 +172,7 @@ function CogEntry({
       {/* Change description */}
       <span
         style={{
-          fontSize: 'clamp(10px, 0.65vw, 11px)',
+          fontSize: 'clamp(0.7rem, 0.9vw, 1rem)',
           color: state === 'locked' ? '#FFFFFF' : COLOURS.dormantText,
           lineHeight: 1.4,
           transition: 'color 0.3s ease',
@@ -228,7 +228,7 @@ function CapacityGauge({
         style={{
           display: 'flex',
           justifyContent: 'space-between',
-          fontSize: 'clamp(10px, 0.65vw, 11px)',
+          fontSize: 'clamp(0.65rem, 0.8vw, 0.875rem)',
           fontFamily: "'SF Mono', 'Fira Code', monospace",
         }}
       >
@@ -372,7 +372,7 @@ export function XRayAlignment({
         {/* Section header */}
         <div
           style={{
-            fontSize: 'clamp(0.65rem, 0.8vw, 0.875rem)',
+            fontSize: 'clamp(0.7rem, 0.9vw, 1rem)',
             fontWeight: 700,
             letterSpacing: '0.12em',
             textTransform: 'uppercase' as const,
@@ -413,7 +413,7 @@ export function XRayAlignment({
             />
             {/* Platform name */}
             <span style={{
-              fontSize: 'clamp(0.65rem, 0.8vw, 0.875rem)',
+              fontSize: 'clamp(0.7rem, 0.9vw, 1rem)',
               fontWeight: 600,
               color: '#FFFFFF',
               lineHeight: 1.2,
@@ -422,7 +422,7 @@ export function XRayAlignment({
             </span>
             {/* Tier label */}
             <span style={{
-              fontSize: 'clamp(10px, 0.65vw, 11px)',
+              fontSize: 'clamp(0.65rem, 0.8vw, 0.875rem)',
               color: tierColour,
               lineHeight: 1.2,
               marginLeft: 'auto',
@@ -446,7 +446,7 @@ export function XRayAlignment({
             {/* Overflow summary */}
             {hasExtra && (
               <span style={{
-                fontSize: 'clamp(10px, 0.65vw, 11px)',
+                fontSize: 'clamp(0.65rem, 0.8vw, 0.875rem)',
                 color: COLOURS.warmAmber,
                 paddingLeft: 'clamp(20px, 1.6vw, 26px)',
               }}>
@@ -477,7 +477,7 @@ export function XRayAlignment({
               text={tickerText}
               speed={30}
               color={COLOURS.lockEmerald}
-              fontSize="clamp(10px, 0.65vw, 11px)"
+              fontSize="clamp(0.65rem, 0.8vw, 0.875rem)"
               generationId={generationId}
             />
           </div>
@@ -486,7 +486,7 @@ export function XRayAlignment({
         {/* Dormant state — no platform or no result */}
         {!showBadge && !isOptimising && (
           <div style={{
-            fontSize: 'clamp(10px, 0.65vw, 11px)',
+            fontSize: 'clamp(0.65rem, 0.8vw, 0.875rem)',
             color: COLOURS.dormantText,
             textAlign: 'center',
           }}>

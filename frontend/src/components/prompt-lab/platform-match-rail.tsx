@@ -151,7 +151,7 @@ export function PlatformMatchRail({
             </span>
             <span
               style={{
-                fontSize: 'clamp(10px, 0.65vw, 11px)',
+                fontSize: 'clamp(0.65rem, 0.8vw, 0.875rem)',
                 color: '#94A3B8', // slate-400 — dimmest allowed
                 lineHeight: 1.3,
               }}
@@ -180,7 +180,7 @@ export function PlatformMatchRail({
                     ? `2px solid ${group.color}`
                     : '2px solid transparent',
                   background: isSelected
-                    ? `${group.color}0F` // tier colour at ~6% opacity
+                    ? '#1A1520'  // solid dark highlight — NO hex alpha opacity
                     : 'transparent',
                   width: '100%',
                   textAlign: 'left',
@@ -188,7 +188,7 @@ export function PlatformMatchRail({
                 }}
                 onMouseEnter={(e) => {
                   if (!isSelected) {
-                    e.currentTarget.style.background = `${group.color}0A`; // ~4% opacity
+                    e.currentTarget.style.background = '#12101A'; // solid dark hover
                     e.currentTarget.style.borderLeftColor = `${group.color}4D`; // ~30% opacity
                   }
                 }}
@@ -209,8 +209,8 @@ export function PlatformMatchRail({
                     borderRadius: '50%',
                     backgroundColor: group.color,
                     flexShrink: 0,
-                    opacity: isSelected ? 1 : 0.6,
-                    transition: 'opacity 0.15s ease',
+                    
+                    transition: 'background-color 0.15s ease',
                   }}
                   aria-hidden="true"
                 />

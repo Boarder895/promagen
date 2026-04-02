@@ -128,7 +128,7 @@ function TierBar({
       {/* Tier label */}
       <span
         style={{
-          fontSize: 'clamp(10px, 0.65vw, 11px)',
+          fontSize: 'clamp(0.65rem, 0.8vw, 0.875rem)',
           fontWeight: 700,
           color: isFilled ? tier.color : tier.dimColor,
           width: 'clamp(18px, 1.5vw, 22px)',
@@ -189,12 +189,12 @@ function TierBar({
             suffix=" words"
             duration={600}
             color={tier.color}
-            fontSize="clamp(10px, 0.65vw, 11px)"
+            fontSize="clamp(0.65rem, 0.8vw, 0.875rem)"
           />
         ) : (
           <span
             style={{
-              fontSize: 'clamp(10px, 0.65vw, 11px)',
+              fontSize: 'clamp(0.65rem, 0.8vw, 0.875rem)',
               color: tier.dimColor,
               fontFamily: "'SF Mono', 'Fira Code', monospace",
             }}
@@ -276,7 +276,7 @@ export function XRaySwitchboard({ tierPrompts, isGenerating, generationId }: XRa
         {/* Section header */}
         <div
           style={{
-            fontSize: 'clamp(0.65rem, 0.8vw, 0.875rem)',
+            fontSize: 'clamp(0.7rem, 0.9vw, 1rem)',
             fontWeight: 700,
             letterSpacing: '0.12em',
             textTransform: 'uppercase' as const,
@@ -311,7 +311,7 @@ export function XRaySwitchboard({ tierPrompts, isGenerating, generationId }: XRa
               text="4 tier variants generated"
               speed={25}
               color={COLOURS.lockEmerald}
-              fontSize="clamp(10px, 0.65vw, 11px)"
+              fontSize="clamp(0.65rem, 0.8vw, 0.875rem)"
               generationId={generationId}
             />
           </div>

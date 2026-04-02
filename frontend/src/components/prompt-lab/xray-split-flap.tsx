@@ -186,7 +186,7 @@ export function XRaySplitFlap({
         {suffix && (
           <span
             style={{
-              fontSize: 'clamp(10px, 0.65vw, 11px)',
+              fontSize: 'clamp(0.65rem, 0.8vw, 0.875rem)',
               color: '#7A5C3E', // solid muted brass — NO opacity dimming
               marginLeft: 'clamp(2px, 0.2vw, 4px)',
               fontFamily: 'inherit',

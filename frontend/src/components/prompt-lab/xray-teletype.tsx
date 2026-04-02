@@ -75,7 +75,7 @@ export function XRayTeletype({
   speed = 25,
   delay = 0,
   color = '#FCD34D',
-  fontSize = 'clamp(10px, 0.65vw, 11px)',
+  fontSize = 'clamp(0.65rem, 0.8vw, 0.875rem)',
   onComplete,
   showCursor = true,
   generationId = 0,

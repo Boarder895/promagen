@@ -347,7 +347,7 @@ export function XRayDecoder({ assessment, isChecking, generationId }: XRayDecode
         {/* Section header */}
         <div
           style={{
-            fontSize: 'clamp(0.65rem, 0.8vw, 0.875rem)',
+            fontSize: 'clamp(0.7rem, 0.9vw, 1rem)',
             fontWeight: 700,
             letterSpacing: '0.12em',
             textTransform: 'uppercase' as const,
@@ -388,7 +388,7 @@ export function XRayDecoder({ assessment, isChecking, generationId }: XRayDecode
               text={summaryText}
               speed={25}
               color={summaryColour}
-              fontSize="clamp(10px, 0.65vw, 11px)"
+              fontSize="clamp(0.65rem, 0.8vw, 0.875rem)"
               generationId={generationId}
             />
           </div>
