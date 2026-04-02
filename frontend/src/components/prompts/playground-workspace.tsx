@@ -1,7 +1,13 @@
 // src/components/prompts/playground-workspace.tsx
 // ============================================================================
-// PLAYGROUND WORKSPACE v6.0.0 — Lab Gate + Free Generation Limit
+// PLAYGROUND WORKSPACE v6.1.0 — Call 4 Data Wiring
 // ============================================================================
+// v6.1.0 (2 Apr 2026):
+// - Added onHumanTextChange callback — exposes human text to page client
+//   for Call 4 scoring payload.
+// - Added onAssembledPromptChange callback — passes through to EEP,
+//   exposes Call 3 input text to page client for Call 4 scoring payload.
+//
 // v6.0.0 (Mar 2026):
 // - Lab Gate: 1 free generation/day for signed-in free users, unlimited Pro.
 // - Anonymous users see sign-in overlay.
@@ -70,6 +76,10 @@ export interface PlaygroundWorkspaceProps {
   onTierGenerationChange?: (tierPrompts: GeneratedPrompts | null, isGenerating: boolean) => void;
   /** Callback when Call 3 optimisation state changes — for Pipeline X-Ray Phase 3 */
   onOptimisationChange?: (result: import('@/hooks/use-ai-optimisation').AiOptimiseResult | null, isOptimising: boolean) => void;
+  /** Callback when human text changes — for Call 4 scoring */
+  onHumanTextChange?: (text: string) => void;
+  /** Callback when assembled prompt (Call 3 input) changes — for Call 4 scoring */
+  onAssembledPromptChange?: (text: string) => void;
 }
 
 // ============================================================================
@@ -191,7 +201,7 @@ function ProviderSelector({ providers, selectedId, onSelect }: ProviderSelectorP
 // MAIN COMPONENT
 // ============================================================================
 
-export default function PlaygroundWorkspace({ providers, onProviderChange, onProviderIdChange, externalProviderId, onAssessmentChange, onTierGenerationChange, onOptimisationChange }: PlaygroundWorkspaceProps) {
+export default function PlaygroundWorkspace({ providers, onProviderChange, onProviderIdChange, externalProviderId, onAssessmentChange, onTierGenerationChange, onOptimisationChange, onHumanTextChange, onAssembledPromptChange }: PlaygroundWorkspaceProps) {
   // ── Lab Gate: auth + generation limiter ──────────────────────────────
   const {
     canGenerate,
@@ -243,6 +253,11 @@ export default function PlaygroundWorkspace({ providers, onProviderChange, onPro
   useEffect(() => {
     onTierGenerationChange?.(aiTierPrompts, isTierGenerating);
   }, [aiTierPrompts, isTierGenerating, onTierGenerationChange]);
+
+  // ── Expose human text to parent (for Call 4 scoring) ──
+  useEffect(() => {
+    onHumanTextChange?.(humanText);
+  }, [humanText, onHumanTextChange]);
 
   // Track previous provider for re-fire detection
   const prevProviderIdRef = useRef<string | null>(null);
@@ -480,6 +495,8 @@ export default function PlaygroundWorkspace({ providers, onProviderChange, onPro
               humanText={humanText}
               // Pipeline X-Ray Phase 3 callback
               onOptimisationChange={onOptimisationChange}
+              // Call 4 data: assembled prompt (Call 3 input text)
+              onAssembledPromptChange={onAssembledPromptChange}
               // Rail navigator selection — syncs EEP internal provider
               railSelectedProviderId={externalProviderId}
             />

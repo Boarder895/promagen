@@ -1,9 +1,15 @@
 // src/app/studio/playground/playground-page-client.tsx
 // ============================================================================
-// PROMPT LAB CLIENT WRAPPER (v4.0.0)
+// PROMPT LAB CLIENT WRAPPER (v4.1.0)
 // ============================================================================
 // Client component for /studio/playground (Prompt Lab).
 // Same pattern as homepage-client.tsx and library-client.tsx.
+//
+// v4.1.0 (2 Apr 2026):
+// - Call 4 wiring fix: humanText, assembledPrompt, categoryRichness
+//   now populated from workspace/EEP callbacks instead of empty strings.
+// - Double-fire fix: wasOptimisingRef tracks true→false transition only.
+// - call3Mode read from platform-config.json SSOT instead of hardcoded.
 //
 // v4.0.0 (2 Apr 2026):
 // - Exchange rails replaced with intelligence rails:
@@ -117,6 +123,10 @@ export default function PlaygroundPageClient({
   const generationIdRef = useRef(0);
   const [generationId, setGenerationId] = useState(0);
 
+  // ── Call 4 data: humanText + assembledPrompt (refs — no re-render needed) ──
+  const humanTextRef = useRef('');
+  const assembledPromptRef = useRef('');
+
   // ── Derive platform metadata for X-Ray Alignment badge + gauge ────
   const selectedPlatformMeta = useMemo(() => {
     if (!selectedProviderId) return null;
@@ -178,6 +188,16 @@ export default function PlaygroundPageClient({
     setXrayIsOptimising(isOptimising);
   }, []);
 
+  // Workspace reports human text changes → stored for Call 4
+  const handleHumanTextChange = useCallback((text: string) => {
+    humanTextRef.current = text;
+  }, []);
+
+  // EEP reports assembled prompt changes → stored for Call 4
+  const handleAssembledPromptChange = useCallback((text: string) => {
+    assembledPromptRef.current = text;
+  }, []);
+
   // ── Call 4: Prompt Scoring (auto-fires after Call 3) ──────────────
   const {
     result: scoreResult,
@@ -187,23 +207,37 @@ export default function PlaygroundPageClient({
   } = usePromptScore();
 
   // Auto-fire Call 4 when Call 3 completes with a result
-  const prevOptimiseRef = useRef<AiOptimiseResult | null>(null);
+  // Double-fire fix: track the true→false transition of xrayIsOptimising
+  const wasOptimisingRef = useRef(false);
   useEffect(() => {
-    // Fire when optimiseResult transitions from null/different to new result
+    const justFinished = wasOptimisingRef.current && !xrayIsOptimising;
+    wasOptimisingRef.current = xrayIsOptimising;
+
+    // Only fire on the true→false transition AND when there's a result
     if (
+      justFinished &&
       xrayOptimiseResult &&
-      !xrayIsOptimising &&
-      xrayOptimiseResult !== prevOptimiseRef.current &&
-      selectedPlatformMeta
+      selectedPlatformMeta &&
+      selectedProviderId
     ) {
-      const config = getRawPlatformConfig(selectedProviderId ?? '');
+      const config = getRawPlatformConfig(selectedProviderId);
       if (config) {
+        // Derive categoryRichness from Call 1 assessment (already in page state)
+        const richness: Record<string, number> = {};
+        if (xrayAssessment?.coverage) {
+          for (const [cat, data] of Object.entries(xrayAssessment.coverage)) {
+            if (data.matchedPhrases.length > 0) {
+              richness[cat] = data.matchedPhrases.length;
+            }
+          }
+        }
+
         fireScore({
           optimisedPrompt: xrayOptimiseResult.optimised,
-          humanText: '', // Will be populated from workspace in future wiring
-          assembledPrompt: '', // Will be populated from workspace in future wiring
+          humanText: humanTextRef.current,
+          assembledPrompt: assembledPromptRef.current,
           negativePrompt: xrayOptimiseResult.negative,
-          platformId: selectedProviderId ?? '',
+          platformId: selectedProviderId,
           platformName: selectedPlatformMeta.name,
           tier: selectedPlatformMeta.tier as 1 | 2 | 3 | 4,
           promptStyle: config.promptStyle as 'keywords' | 'natural',
@@ -212,13 +246,12 @@ export default function PlaygroundPageClient({
           idealMax: config.idealMax ?? 200,
           negativeSupport: (config.negativeSupport as 'separate' | 'inline' | 'none') ?? 'none',
           call3Changes: xrayOptimiseResult.changes,
-          call3Mode: 'gpt_rewrite', // Default — will be enriched when Call 3 exposes mode
-          categoryRichness: {}, // Will be populated from Call 1 data in future wiring
+          call3Mode: (config.call3Mode as 'reorder_only' | 'format_only' | 'gpt_rewrite' | 'pass_through' | 'mj_deterministic') ?? 'gpt_rewrite',
+          categoryRichness: richness,
         });
       }
     }
-    prevOptimiseRef.current = xrayOptimiseResult;
-  }, [xrayOptimiseResult, xrayIsOptimising, selectedProviderId, selectedPlatformMeta, fireScore]);
+  }, [xrayOptimiseResult, xrayIsOptimising, selectedProviderId, selectedPlatformMeta, xrayAssessment, fireScore]);
 
   // Pro-aware exchange ordering — `ordered` still needed for HomepageGrid
   // (Engine Bay, Mission Control, MarketPulseOverlay). Left/right split
@@ -262,6 +295,8 @@ export default function PlaygroundPageClient({
         onAssessmentChange={handleAssessmentChange}
         onTierGenerationChange={handleTierGenerationChange}
         onOptimisationChange={handleOptimisationChange}
+        onHumanTextChange={handleHumanTextChange}
+        onAssembledPromptChange={handleAssembledPromptChange}
       />
     </MobileBuilderGate>
   );

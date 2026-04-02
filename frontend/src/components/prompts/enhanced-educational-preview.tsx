@@ -122,6 +122,8 @@ export interface EnhancedEducationalPreviewProps {
   coverageData?: import('@/types/category-assessment').CoverageAssessment | null;
   /** Callback when Call 3 optimisation state changes — for Pipeline X-Ray Phase 3 */
   onOptimisationChange?: (result: import('@/hooks/use-ai-optimisation').AiOptimiseResult | null, isOptimising: boolean) => void;
+  /** Callback when the assembled prompt (Call 3 input) changes — for Call 4 scoring */
+  onAssembledPromptChange?: (text: string) => void;
   /** External provider selection from rail navigator — syncs EEP internal state */
   railSelectedProviderId?: string | null;
 }
@@ -354,6 +356,7 @@ export default function EnhancedEducationalPreview({
   coverageData,
   humanText,
   onOptimisationChange,
+  onAssembledPromptChange,
   railSelectedProviderId,
 }: EnhancedEducationalPreviewProps) {
   // State
@@ -786,6 +789,13 @@ export default function EnhancedEducationalPreview({
   useEffect(() => {
     onOptimisationChange?.(aiOptimiseResult, isAiOptimising);
   }, [aiOptimiseResult, isAiOptimising, onOptimisationChange]);
+
+  // ── Expose assembled prompt (Call 3 input) to parent (for Call 4 scoring) ──
+  useEffect(() => {
+    if (call3InputText) {
+      onAssembledPromptChange?.(call3InputText);
+    }
+  }, [call3InputText, onAssembledPromptChange]);
 
   // Build OptimisationProviderContext from platform data
   const aiOptimiseContext = useMemo((): OptimisationProviderContext | null => {
