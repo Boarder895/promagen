@@ -7,7 +7,7 @@
 //
 // v4.0.0 (2 Apr 2026):
 // - Exchange rails replaced with intelligence rails:
-//   Left:  Empty (Platform navigator moved to right rail Glass Case)
+//   Left:  PlatformMatchRail — 40-platform tier-grouped navigator
 //   Right: PipelineXRay — Glass Case dormant state (Phase 0)
 // - Provider selection lifted to page level — shared between
 //   left rail navigator and centre PlaygroundWorkspace.
@@ -45,7 +45,8 @@ import { usePromptScore } from '@/hooks/use-prompt-score';
 import { getRawPlatformConfig } from '@/data/providers/platform-config';
 import MobileBuilderGate from '@/components/layout/mobile-builder-gate';
 
-// ── Intelligence rail (platform navigator now inside PipelineXRay) ────
+// ── Intelligence rails ────────────────────────────────────────────────
+import { PlatformMatchRail } from '@/components/prompt-lab/platform-match-rail';
 import { PipelineXRay } from '@/components/prompt-lab/pipeline-xray';
 
 // ============================================================================
@@ -230,8 +231,14 @@ export default function PlaygroundPageClient({
   // Provider IDs for market pulse
   const providerIds = providers.map((p) => p.id);
 
-  // ── LEFT RAIL: Empty (Platform navigator moved to right rail Glass Case) ──
-  const leftContent = null;
+  // ── LEFT RAIL: Platform Match Navigator ─────────────────────────────
+  const leftContent = (
+    <PlatformMatchRail
+      providers={providers}
+      selectedProviderId={selectedProviderId}
+      onSelectProvider={handleRailSelectProvider}
+    />
+  );
 
   // ── CENTRE: Playground workspace with bidirectional provider sync ───
   // externalProviderId: when left rail navigator selects, workspace follows.
@@ -271,9 +278,6 @@ export default function PlaygroundPageClient({
       platformName={selectedPlatformMeta?.name ?? null}
       platformTier={selectedPlatformMeta?.tier ?? null}
       maxChars={selectedPlatformMeta?.maxChars ?? null}
-      providers={providers}
-      selectedProviderId={selectedProviderId}
-      onSelectProvider={handleRailSelectProvider}
       scoreResult={scoreResult}
       isScoring={isScoring}
       scoreError={scoreError}

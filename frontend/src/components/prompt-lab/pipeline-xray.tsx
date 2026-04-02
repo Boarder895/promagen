@@ -40,12 +40,10 @@ import React from 'react';
 import type { CoverageAssessment } from '@/types/category-assessment';
 import type { GeneratedPrompts } from '@/types/prompt-intelligence';
 import type { AiOptimiseResult } from '@/hooks/use-ai-optimisation';
-import type { Provider } from '@/types/providers';
 import { XRayDecoder } from './xray-decoder';
 import { XRaySwitchboard } from './xray-switchboard';
 import { XRayAlignment } from './xray-alignment';
 import { XRayScore } from './xray-score';
-import { PlatformMatchRail } from './platform-match-rail';
 
 // ============================================================================
 // CO-LOCATED STYLES (code-standard.md §6.2)
@@ -140,12 +138,6 @@ export interface PipelineXRayProps {
   isScoring?: boolean;
   /** Call 4 error */
   scoreError?: string | null;
-  /** Provider list for platform navigator */
-  providers?: Provider[];
-  /** Currently selected provider ID for navigator highlight */
-  selectedProviderId?: string | null;
-  /** Callback when user selects a platform in the navigator */
-  onSelectProvider?: (providerId: string) => void;
   /** Monotonic generation ID for animation cancellation */
   generationId?: number;
   /** Optional className for outer container */
@@ -165,9 +157,6 @@ export function PipelineXRay({
   scoreResult = null,
   isScoring = false,
   scoreError = null,
-  providers = [],
-  selectedProviderId = null,
-  onSelectProvider,
   generationId = 0,
   className = '',
 }: PipelineXRayProps) {
@@ -239,18 +228,6 @@ export function PipelineXRay({
           isScoring={isScoring}
           scoreError={scoreError}
         />
-
-        {/* Platform Match Navigator — select platform for optimisation */}
-        {providers.length > 0 && onSelectProvider && (
-          <>
-            <SectionWire />
-            <PlatformMatchRail
-              providers={providers}
-              selectedProviderId={selectedProviderId}
-              onSelectProvider={onSelectProvider}
-            />
-          </>
-        )}
       </div>
     </>
   );
