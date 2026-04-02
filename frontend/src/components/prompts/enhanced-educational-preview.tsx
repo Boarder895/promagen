@@ -122,6 +122,8 @@ export interface EnhancedEducationalPreviewProps {
   coverageData?: import('@/types/category-assessment').CoverageAssessment | null;
   /** Callback when Call 3 optimisation state changes — for Pipeline X-Ray Phase 3 */
   onOptimisationChange?: (result: import('@/hooks/use-ai-optimisation').AiOptimiseResult | null, isOptimising: boolean) => void;
+  /** External provider selection from rail navigator — syncs EEP internal state */
+  railSelectedProviderId?: string | null;
 }
 
 // ============================================================================
@@ -352,6 +354,7 @@ export default function EnhancedEducationalPreview({
   coverageData,
   humanText,
   onOptimisationChange,
+  railSelectedProviderId,
 }: EnhancedEducationalPreviewProps) {
   // State
   const [selections, setSelections] = useState<PromptSelections>(EMPTY_SELECTIONS);
@@ -363,6 +366,22 @@ export default function EnhancedEducationalPreview({
   const [copiedAssembled, setCopiedAssembled] = useState(false);
   const [copiedNegative, setCopiedNegative] = useState(false);
   const [showNegativeToast, setShowNegativeToast] = useState(false);
+
+  // ── Sync from rail navigator selection ─────────────────────────
+  // When the platform navigator (right rail) selects a provider,
+  // sync it to the EEP's internal state. This does NOT trigger
+  // the workspace's builderProvider view switch.
+  const prevRailRef = useRef<string | null | undefined>(undefined);
+  useEffect(() => {
+    if (
+      railSelectedProviderId != null &&
+      railSelectedProviderId !== prevRailRef.current &&
+      railSelectedProviderId !== selectedProviderId
+    ) {
+      setSelectedProviderId(railSelectedProviderId);
+    }
+    prevRailRef.current = railSelectedProviderId;
+  }, [railSelectedProviderId, selectedProviderId]);
 
   // ── Generation ID: increments on every new API response ────────────
   // MUST be synchronous (ref, not useState+useEffect) so it's already

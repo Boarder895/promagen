@@ -7,7 +7,7 @@
 //
 // v4.0.0 (2 Apr 2026):
 // - Exchange rails replaced with intelligence rails:
-//   Left:  PlatformMatchRail — 40-platform tier-grouped navigator
+//   Left:  Empty (Platform navigator moved to right rail Glass Case)
 //   Right: PipelineXRay — Glass Case dormant state (Phase 0)
 // - Provider selection lifted to page level — shared between
 //   left rail navigator and centre PlaygroundWorkspace.
@@ -31,7 +31,7 @@
 
 'use client';
 
-import React, { useState, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import HomepageGrid from '@/components/layout/homepage-grid';
 import PlaygroundWorkspace from '@/components/prompts/playground-workspace';
 import type { Exchange } from '@/data/exchanges/types';
@@ -41,11 +41,11 @@ import type { CoverageAssessment } from '@/types/category-assessment';
 import type { GeneratedPrompts } from '@/types/prompt-intelligence';
 import type { AiOptimiseResult } from '@/hooks/use-ai-optimisation';
 import { useExchangeOrder } from '@/hooks/use-exchange-order';
+import { usePromptScore } from '@/hooks/use-prompt-score';
 import { getRawPlatformConfig } from '@/data/providers/platform-config';
 import MobileBuilderGate from '@/components/layout/mobile-builder-gate';
 
-// ── Intelligence rails (replace exchange rails) ───────────────────────
-import { PlatformMatchRail } from '@/components/prompt-lab/platform-match-rail';
+// ── Intelligence rail (platform navigator now inside PipelineXRay) ────
 import { PipelineXRay } from '@/components/prompt-lab/pipeline-xray';
 
 // ============================================================================
@@ -177,6 +177,48 @@ export default function PlaygroundPageClient({
     setXrayIsOptimising(isOptimising);
   }, []);
 
+  // ── Call 4: Prompt Scoring (auto-fires after Call 3) ──────────────
+  const {
+    result: scoreResult,
+    isScoring,
+    error: scoreError,
+    score: fireScore,
+  } = usePromptScore();
+
+  // Auto-fire Call 4 when Call 3 completes with a result
+  const prevOptimiseRef = useRef<AiOptimiseResult | null>(null);
+  useEffect(() => {
+    // Fire when optimiseResult transitions from null/different to new result
+    if (
+      xrayOptimiseResult &&
+      !xrayIsOptimising &&
+      xrayOptimiseResult !== prevOptimiseRef.current &&
+      selectedPlatformMeta
+    ) {
+      const config = getRawPlatformConfig(selectedProviderId ?? '');
+      if (config) {
+        fireScore({
+          optimisedPrompt: xrayOptimiseResult.optimised,
+          humanText: '', // Will be populated from workspace in future wiring
+          assembledPrompt: '', // Will be populated from workspace in future wiring
+          negativePrompt: xrayOptimiseResult.negative,
+          platformId: selectedProviderId ?? '',
+          platformName: selectedPlatformMeta.name,
+          tier: selectedPlatformMeta.tier as 1 | 2 | 3 | 4,
+          promptStyle: config.promptStyle as 'keywords' | 'natural',
+          maxChars: config.maxChars ?? 500,
+          idealMin: config.idealMin ?? 50,
+          idealMax: config.idealMax ?? 200,
+          negativeSupport: (config.negativeSupport as 'separate' | 'inline' | 'none') ?? 'none',
+          call3Changes: xrayOptimiseResult.changes,
+          call3Mode: 'gpt_rewrite', // Default — will be enriched when Call 3 exposes mode
+          categoryRichness: {}, // Will be populated from Call 1 data in future wiring
+        });
+      }
+    }
+    prevOptimiseRef.current = xrayOptimiseResult;
+  }, [xrayOptimiseResult, xrayIsOptimising, selectedProviderId, selectedPlatformMeta, fireScore]);
+
   // Pro-aware exchange ordering — `ordered` still needed for HomepageGrid
   // (Engine Bay, Mission Control, MarketPulseOverlay). Left/right split
   // no longer used — exchange rails removed from Prompt Lab.
@@ -188,14 +230,8 @@ export default function PlaygroundPageClient({
   // Provider IDs for market pulse
   const providerIds = providers.map((p) => p.id);
 
-  // ── LEFT RAIL: Platform Match Navigator (replaces exchange list) ────
-  const leftContent = (
-    <PlatformMatchRail
-      providers={providers}
-      selectedProviderId={selectedProviderId}
-      onSelectProvider={handleRailSelectProvider}
-    />
-  );
+  // ── LEFT RAIL: Empty (Platform navigator moved to right rail Glass Case) ──
+  const leftContent = null;
 
   // ── CENTRE: Playground workspace with bidirectional provider sync ───
   // externalProviderId: when left rail navigator selects, workspace follows.
@@ -235,6 +271,12 @@ export default function PlaygroundPageClient({
       platformName={selectedPlatformMeta?.name ?? null}
       platformTier={selectedPlatformMeta?.tier ?? null}
       maxChars={selectedPlatformMeta?.maxChars ?? null}
+      providers={providers}
+      selectedProviderId={selectedProviderId}
+      onSelectProvider={handleRailSelectProvider}
+      scoreResult={scoreResult}
+      isScoring={isScoring}
+      scoreError={scoreError}
       generationId={generationId}
     />
   );

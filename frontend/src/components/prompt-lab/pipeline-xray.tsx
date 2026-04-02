@@ -40,28 +40,12 @@ import React from 'react';
 import type { CoverageAssessment } from '@/types/category-assessment';
 import type { GeneratedPrompts } from '@/types/prompt-intelligence';
 import type { AiOptimiseResult } from '@/hooks/use-ai-optimisation';
+import type { Provider } from '@/types/providers';
 import { XRayDecoder } from './xray-decoder';
 import { XRaySwitchboard } from './xray-switchboard';
 import { XRayAlignment } from './xray-alignment';
-
-// ============================================================================
-// COLOUR PALETTE — Brass, Copper, and Amber (righthand-rail.md §12)
-// ============================================================================
-
-const COLOURS = {
-  // ── Solid colours only — NO rgba opacity dimming (§6.0.3) ──────────
-  brass: '#B87333',          // Full brass — headers, active borders
-  copper: '#CD7F32',         // Copper accent — smaller details
-  activeAmber: '#FBBF24',    // Active/processing state
-  warmAmber: '#FCD34D',      // Teletype text, counter digits
-  lockEmerald: '#34D399',    // Completion/locked state
-  dimBrass: '#5C4328',       // Dormant rotor rings — dark but VISIBLE on slate-950
-  dormantText: '#9B7B55',    // Dormant text — muted gold, matches slate-400 luminance
-  headerBrass: '#B87333',    // Section headers — full brass, always readable
-  wireBrass: '#3D2A1A',      // Wiring between sections — dark brass line, visible
-  phaseMarker: '#7A5C3E',    // Phase markers ①②③ — medium brass, readable
-  phaseMarkerDim: '#5C4328', // Dimmer phase markers — still visible
-} as const;
+import { XRayScore } from './xray-score';
+import { PlatformMatchRail } from './platform-match-rail';
 
 // ============================================================================
 // CO-LOCATED STYLES (code-standard.md §6.2)
@@ -118,7 +102,7 @@ function SectionWire() {
         style={{
           width: '1px',
           height: 'clamp(10px, 1vw, 16px)',
-          backgroundColor: COLOURS.wireBrass,
+          backgroundColor: '#5C4328', // visible brass wire
         }}
       />
     </div>
@@ -150,6 +134,18 @@ export interface PipelineXRayProps {
   platformTier?: number | null;
   /** Platform maxChars for capacity gauge */
   maxChars?: number | null;
+  /** Call 4 score result */
+  scoreResult?: import('@/hooks/use-prompt-score').PromptScoreResult | null;
+  /** Whether Call 4 is in flight */
+  isScoring?: boolean;
+  /** Call 4 error */
+  scoreError?: string | null;
+  /** Provider list for platform navigator */
+  providers?: Provider[];
+  /** Currently selected provider ID for navigator highlight */
+  selectedProviderId?: string | null;
+  /** Callback when user selects a platform in the navigator */
+  onSelectProvider?: (providerId: string) => void;
   /** Monotonic generation ID for animation cancellation */
   generationId?: number;
   /** Optional className for outer container */
@@ -166,6 +162,12 @@ export function PipelineXRay({
   platformName = null,
   platformTier = null,
   maxChars = null,
+  scoreResult = null,
+  isScoring = false,
+  scoreError = null,
+  providers = [],
+  selectedProviderId = null,
+  onSelectProvider,
   generationId = 0,
   className = '',
 }: PipelineXRayProps) {
@@ -186,8 +188,9 @@ export function PipelineXRay({
           boxShadow: [
             'inset 0 1px 0 0 rgba(255, 255, 255, 0.06)',   // top glass reflection edge
             'inset 0 -1px 0 0 rgba(0, 0, 0, 0.4)',          // bottom shadow
-            `0 0 0 1px ${COLOURS.dimBrass}`,                 // brass frame ring — VISIBLE
-            `0 0 12px ${COLOURS.wireBrass}`,                 // warm ambient glow
+            '0 0 0 1px #7A5C3E',                              // brass frame ring — visible
+            '0 0 0 2px #2A1F15',                              // outer dark trim
+            '0 0 16px #1A1208',                               // warm ambient glow
           ].join(', '),
           padding: 'clamp(10px, 0.9vw, 16px)',
           // Internal "back panel" warm tint
@@ -228,6 +231,26 @@ export function PipelineXRay({
           maxChars={maxChars}
           generationId={generationId}
         />
+
+        {/* The Score — Call 4 scoring display (Pro only) */}
+        <SectionWire />
+        <XRayScore
+          scoreResult={scoreResult}
+          isScoring={isScoring}
+          scoreError={scoreError}
+        />
+
+        {/* Platform Match Navigator — select platform for optimisation */}
+        {providers.length > 0 && onSelectProvider && (
+          <>
+            <SectionWire />
+            <PlatformMatchRail
+              providers={providers}
+              selectedProviderId={selectedProviderId}
+              onSelectProvider={onSelectProvider}
+            />
+          </>
+        )}
       </div>
     </>
   );

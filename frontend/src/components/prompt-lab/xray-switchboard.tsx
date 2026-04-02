@@ -34,11 +34,26 @@ import { XRaySplitFlap } from './xray-split-flap';
 // ============================================================================
 
 const TIER_BARS = [
-  { key: 'tier1' as const, label: 'T1', name: 'CLIP-Based', color: '#60a5fa', dimColor: '#4B7BB5', trackColor: '#1A2840' },
-  { key: 'tier2' as const, label: 'T2', name: 'Midjourney', color: '#c084fc', dimColor: '#8A60B5', trackColor: '#2A1A40' },
-  { key: 'tier3' as const, label: 'T3', name: 'Natural Language', color: '#34d399', dimColor: '#2A9B70', trackColor: '#0F2A1F' },
-  { key: 'tier4' as const, label: 'T4', name: 'Plain Language', color: '#fb923c', dimColor: '#B5682A', trackColor: '#2A1A0F' },
+  { key: 'tier1' as const, label: 'T1', name: 'CLIP-Based', color: '#60a5fa', dimColor: '#4B7BB5' },
+  { key: 'tier2' as const, label: 'T2', name: 'Midjourney', color: '#c084fc', dimColor: '#8A60B5' },
+  { key: 'tier3' as const, label: 'T3', name: 'Natural Language', color: '#34d399', dimColor: '#2A9B70' },
+  { key: 'tier4' as const, label: 'T4', name: 'Plain Language', color: '#fb923c', dimColor: '#B5682A' },
 ] as const;
+
+/**
+ * Darken a hex colour by mixing with dark background.
+ * strength 0.0 = pure background, 1.0 = full colour.
+ */
+function muteColour(hex: string, strength: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const br = 10, bg = 13, bb = 20;
+  const mr = Math.round(br + (r - br) * strength);
+  const mg = Math.round(bg + (g - bg) * strength);
+  const mb = Math.round(bb + (b - bb) * strength);
+  return `#${mr.toString(16).padStart(2, '0')}${mg.toString(16).padStart(2, '0')}${mb.toString(16).padStart(2, '0')}`;
+}
 
 const COLOURS = {
   headerBrass: '#B87333',
@@ -148,7 +163,7 @@ function TierBar({
           flex: 1,
           height: 'clamp(6px, 0.5vw, 8px)',
           borderRadius: 'clamp(3px, 0.2vw, 4px)',
-          backgroundColor: tier.trackColor,
+          backgroundColor: muteColour(tier.color, 0.15),
           overflow: 'hidden',
           position: 'relative',
         }}

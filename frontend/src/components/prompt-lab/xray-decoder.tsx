@@ -67,6 +67,23 @@ const CATEGORY_ABBR: Record<string, string> = {
 /** Stagger delay between rotor locks (ms) */
 const LOCK_STAGGER_MS = 120;
 
+/**
+ * Darken a hex colour by mixing with dark background.
+ * strength 0.0 = pure background, 1.0 = full colour.
+ * Returns a solid hex — no opacity, no rgba.
+ */
+function muteColour(hex: string, strength: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  // Mix with dark bg (#0A0D14)
+  const br = 10, bg = 13, bb = 20;
+  const mr = Math.round(br + (r - br) * strength);
+  const mg = Math.round(bg + (g - bg) * strength);
+  const mb = Math.round(bb + (b - bb) * strength);
+  return `#${mr.toString(16).padStart(2, '0')}${mg.toString(16).padStart(2, '0')}${mb.toString(16).padStart(2, '0')}`;
+}
+
 /** Minimum display time for Phase 1 before Phase 2 can begin (ms) */
 const MIN_PHASE_DISPLAY_MS = 800;
 
@@ -149,19 +166,19 @@ function Rotor({
   const isSpinning = state === 'spinning';
   const isIdle = state === 'idle';
 
-  // Ring colour: dim brass → active amber (spinning) → category colour (locked)
+  // Ring colour: muted category → active amber (spinning) → full category (locked)
   const ringColour = isLocked
     ? catColour
     : isSpinning
       ? COLOURS.activeAmber
-      : COLOURS.dimBrass;
+      : muteColour(catColour, 0.35);  // each rotor hints at its own colour
 
-  // Text colour: muted gold → amber (spinning) → category colour (locked)
+  // Text colour: muted category → amber (spinning) → full category (locked)
   const textColour = isLocked
     ? catColour
     : isSpinning
       ? COLOURS.activeAmber
-      : COLOURS.dormantText;
+      : muteColour(catColour, 0.45);  // slightly brighter than ring for readability
 
   // Animation class
   const animClass = isSpinning

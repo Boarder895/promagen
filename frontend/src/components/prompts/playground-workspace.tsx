@@ -265,22 +265,11 @@ export default function PlaygroundWorkspace({ providers, onProviderChange, onPro
     [onProviderChange, onProviderIdChange],
   );
 
-  // ── External provider sync (driven from left rail navigator) ────
-  // When externalProviderId changes and differs from internal state,
-  // update internal selection. This makes the workspace controllable
-  // from outside while still managing its own state for the dropdown.
-  const prevExternalRef = useRef<string | null | undefined>(undefined);
-  useEffect(() => {
-    if (
-      externalProviderId != null &&
-      externalProviderId !== prevExternalRef.current &&
-      externalProviderId !== selectedProviderId
-    ) {
-      setSelectedProviderId(externalProviderId);
-      onProviderChange?.(true);
-    }
-    prevExternalRef.current = externalProviderId;
-  }, [externalProviderId, selectedProviderId, onProviderChange]);
+  // ── External provider sync REMOVED from workspace level ────────
+  // Previously, externalProviderId set the workspace's selectedProviderId,
+  // which resolved builderProvider, which switched from EEP to standard
+  // builder. Now we pass it directly to EEP as railSelectedProviderId
+  // so the EEP syncs its own internal state without triggering the view switch.
 
   // ── Auto-re-fire Call 2 when provider changes ─────────────────────
   // Provider change does NOT trigger re-assessment (Call 1 assesses
@@ -491,6 +480,8 @@ export default function PlaygroundWorkspace({ providers, onProviderChange, onPro
               humanText={humanText}
               // Pipeline X-Ray Phase 3 callback
               onOptimisationChange={onOptimisationChange}
+              // Rail navigator selection — syncs EEP internal provider
+              railSelectedProviderId={externalProviderId}
             />
           )}
 

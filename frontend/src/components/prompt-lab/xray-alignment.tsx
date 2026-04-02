@@ -483,14 +483,33 @@ export function XRayAlignment({
           </div>
         )}
 
-        {/* Dormant state — no platform or no result */}
+        {/* Dormant state — show pipeline phases with colour hints */}
         {!showBadge && !isOptimising && (
           <div style={{
-            fontSize: 'clamp(0.65rem, 0.8vw, 0.875rem)',
-            color: COLOURS.dormantText,
-            textAlign: 'center',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'clamp(8px, 0.7vw, 12px)',
+            justifyContent: 'center',
           }}>
-            ③ Optimise
+            {[
+              { label: '① Analyse', color: '#FBBF24' },
+              { label: '② Generate', color: '#c084fc' },
+              { label: '③ Optimise', color: '#34D399' },
+            ].map((phase) => (
+              <span
+                key={phase.label}
+                style={{
+                  fontSize: 'clamp(0.65rem, 0.8vw, 0.875rem)',
+                  fontWeight: 500,
+                  color: phase.color,
+                  letterSpacing: '0.04em',
+                  userSelect: 'none',
+                  lineHeight: 1,
+                }}
+              >
+                {phase.label}
+              </span>
+            ))}
           </div>
         )}
       </div>
