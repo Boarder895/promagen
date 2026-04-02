@@ -31,12 +31,13 @@
 
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import HomepageGrid from '@/components/layout/homepage-grid';
 import PlaygroundWorkspace from '@/components/prompts/playground-workspace';
 import type { Exchange } from '@/data/exchanges/types';
 import type { ExchangeWeatherData } from '@/components/exchanges/types';
 import type { Provider } from '@/types/providers';
+import type { CoverageAssessment } from '@/types/category-assessment';
 import { useExchangeOrder } from '@/hooks/use-exchange-order';
 import MobileBuilderGate from '@/components/layout/mobile-builder-gate';
 
@@ -97,6 +98,12 @@ export default function PlaygroundPageClient({
   const [hasProvider, setHasProvider] = useState(false);
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
 
+  // ── Pipeline X-Ray state (Call 1 assessment data for Phase 1 Decoder)
+  const [xrayAssessment, setXrayAssessment] = useState<CoverageAssessment | null>(null);
+  const [xrayIsChecking, setXrayIsChecking] = useState(false);
+  const generationIdRef = useRef(0);
+  const [generationId, setGenerationId] = useState(0);
+
   // Workspace reports boolean (existing contract)
   const handleProviderChange = useCallback((selected: boolean) => {
     setHasProvider(selected);
@@ -112,6 +119,20 @@ export default function PlaygroundPageClient({
   const handleRailSelectProvider = useCallback((providerId: string) => {
     setSelectedProviderId(providerId);
     setHasProvider(true);
+  }, []);
+
+  // Workspace reports assessment state changes → X-Ray Phase 1
+  const handleAssessmentChange = useCallback((
+    assessment: CoverageAssessment | null,
+    isChecking: boolean,
+  ) => {
+    // Increment generation ID when a new check starts (cancellation model)
+    if (isChecking) {
+      generationIdRef.current += 1;
+      setGenerationId(generationIdRef.current);
+    }
+    setXrayAssessment(assessment);
+    setXrayIsChecking(isChecking);
   }, []);
 
   // Pro-aware exchange ordering — `ordered` still needed for HomepageGrid
@@ -153,13 +174,18 @@ export default function PlaygroundPageClient({
         onProviderChange={handleProviderChange}
         onProviderIdChange={handleProviderIdChange}
         externalProviderId={selectedProviderId}
+        onAssessmentChange={handleAssessmentChange}
       />
     </MobileBuilderGate>
   );
 
   // ── RIGHT RAIL: Pipeline X-Ray Glass Case (replaces exchange list) ──
   const rightContent = (
-    <PipelineXRay />
+    <PipelineXRay
+      assessment={xrayAssessment}
+      isChecking={xrayIsChecking}
+      generationId={generationId}
+    />
   );
 
   return (
