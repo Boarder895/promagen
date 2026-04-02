@@ -205,7 +205,7 @@ function Rotor({
       >
         <span
           style={{
-            fontSize: 'clamp(0.35rem, 0.38vw, 0.45rem)',
+            fontSize: 'clamp(10px, 0.65vw, 11px)',
             fontWeight: 600,
             color: textColour,
             lineHeight: 1,
@@ -347,7 +347,7 @@ export function XRayDecoder({ assessment, isChecking, generationId }: XRayDecode
         {/* Section header */}
         <div
           style={{
-            fontSize: 'clamp(0.5rem, 0.55vw, 0.6rem)',
+            fontSize: 'clamp(0.65rem, 0.8vw, 0.875rem)',
             fontWeight: 700,
             letterSpacing: '0.12em',
             textTransform: 'uppercase' as const,
@@ -388,7 +388,7 @@ export function XRayDecoder({ assessment, isChecking, generationId }: XRayDecode
               text={summaryText}
               speed={25}
               color={summaryColour}
-              fontSize="clamp(0.42rem, 0.46vw, 0.55rem)"
+              fontSize="clamp(10px, 0.65vw, 11px)"
               generationId={generationId}
             />
           </div>

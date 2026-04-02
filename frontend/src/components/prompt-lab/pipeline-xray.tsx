@@ -38,7 +38,9 @@
 
 import React from 'react';
 import type { CoverageAssessment } from '@/types/category-assessment';
+import type { GeneratedPrompts } from '@/types/prompt-intelligence';
 import { XRayDecoder } from './xray-decoder';
+import { XRaySwitchboard } from './xray-switchboard';
 
 // ============================================================================
 // COLOUR PALETTE — Brass, Copper, and Amber (righthand-rail.md §12)
@@ -55,21 +57,9 @@ const COLOURS = {
   dormantText: '#9B7B55',    // Dormant text — muted gold, matches slate-400 luminance
   headerBrass: '#B87333',    // Section headers — full brass, always readable
   wireBrass: '#3D2A1A',      // Wiring between sections — dark brass line, visible
-  barTrack: '#2A1F15',       // Dormant bar background — dark warm, not invisible
   phaseMarker: '#7A5C3E',    // Phase markers ①②③ — medium brass, readable
   phaseMarkerDim: '#5C4328', // Dimmer phase markers — still visible
 } as const;
-
-// ============================================================================
-// TIER BAR LABELS
-// ============================================================================
-
-const TIER_BARS = [
-  { tier: 1, label: 'T1', color: '#60a5fa', dimColor: '#4B7BB5' },
-  { tier: 2, label: 'T2', color: '#c084fc', dimColor: '#8A60B5' },
-  { tier: 3, label: 'T3', color: '#34d399', dimColor: '#2A9B70' },
-  { tier: 4, label: 'T4', color: '#fb923c', dimColor: '#B5682A' },
-] as const;
 
 // ============================================================================
 // CO-LOCATED STYLES (code-standard.md §6.2)
@@ -122,7 +112,7 @@ function SectionHeader({ text }: { text: string }) {
     <div
       className="xray-section-header"
       style={{
-        fontSize: 'clamp(0.5rem, 0.55vw, 0.6rem)',
+        fontSize: 'clamp(0.65rem, 0.8vw, 0.875rem)',
         fontWeight: 700,
         letterSpacing: '0.12em',
         textTransform: 'uppercase',
@@ -163,57 +153,6 @@ function SectionWire() {
 }
 
 // ============================================================================
-// THE SWITCHBOARD — 4 Tier Drum Bars (dormant)
-// ============================================================================
-
-function SwitchboardSection() {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(6px, 0.5vw, 10px)' }}>
-      <SectionHeader text="§ The Switchboard" />
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(3px, 0.25vw, 5px)' }}>
-        {TIER_BARS.map((bar) => (
-          <div
-            key={bar.tier}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 'clamp(6px, 0.5vw, 8px)',
-            }}
-          >
-            {/* Tier label */}
-            <span
-              style={{
-                fontSize: 'clamp(0.45rem, 0.48vw, 0.55rem)',
-                fontWeight: 700,
-                color: bar.dimColor, // solid muted tier colour — NO opacity
-                width: 'clamp(14px, 1.2vw, 18px)',
-                textAlign: 'right',
-                flexShrink: 0,
-                userSelect: 'none',
-                lineHeight: 1,
-              }}
-            >
-              {bar.label}
-            </span>
-
-            {/* Dormant bar track */}
-            <div
-              style={{
-                flex: 1,
-                height: 'clamp(4px, 0.35vw, 6px)',
-                borderRadius: 'clamp(2px, 0.15vw, 3px)',
-                backgroundColor: COLOURS.barTrack, // solid dark warm — visible
-              }}
-              aria-label={`Tier ${bar.tier} output: waiting`}
-            />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 // ============================================================================
 // THE ALIGNMENT — Platform Optimisation (dormant)
 // ============================================================================
@@ -256,7 +195,7 @@ function AlignmentSection() {
             <span
               key={label}
               style={{
-                fontSize: 'clamp(0.4rem, 0.42vw, 0.5rem)',
+                fontSize: 'clamp(10px, 0.65vw, 11px)',
                 fontWeight: 500,
                 // Progressively dimmer but all VISIBLE — solid colours, no opacity
                 color: idx === 0 ? COLOURS.phaseMarker : idx === 1 ? COLOURS.phaseMarkerDim : COLOURS.dimBrass,
@@ -283,6 +222,10 @@ export interface PipelineXRayProps {
   assessment?: CoverageAssessment | null;
   /** Whether Call 1 is currently in flight */
   isChecking?: boolean;
+  /** Call 2 tier prompts — null when not yet generated */
+  tierPrompts?: GeneratedPrompts | null;
+  /** Whether Call 2 is currently in flight */
+  isTierGenerating?: boolean;
   /** Monotonic generation ID for animation cancellation */
   generationId?: number;
   /** Optional className for outer container */
@@ -292,6 +235,8 @@ export interface PipelineXRayProps {
 export function PipelineXRay({
   assessment = null,
   isChecking = false,
+  tierPrompts = null,
+  isTierGenerating = false,
   generationId = 0,
   className = '',
 }: PipelineXRayProps) {
@@ -335,8 +280,12 @@ export function PipelineXRay({
         {/* Wiring: Decoder → Switchboard */}
         <SectionWire />
 
-        {/* The Switchboard — 4 tier drum bars */}
-        <SwitchboardSection />
+        {/* The Switchboard — 4 tier drum bars (live when Call 2 data available) */}
+        <XRaySwitchboard
+          tierPrompts={tierPrompts}
+          isGenerating={isTierGenerating}
+          generationId={generationId}
+        />
 
         {/* Wiring: Switchboard → Alignment */}
         <SectionWire />

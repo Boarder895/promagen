@@ -38,6 +38,7 @@ import type { Exchange } from '@/data/exchanges/types';
 import type { ExchangeWeatherData } from '@/components/exchanges/types';
 import type { Provider } from '@/types/providers';
 import type { CoverageAssessment } from '@/types/category-assessment';
+import type { GeneratedPrompts } from '@/types/prompt-intelligence';
 import { useExchangeOrder } from '@/hooks/use-exchange-order';
 import MobileBuilderGate from '@/components/layout/mobile-builder-gate';
 
@@ -101,6 +102,11 @@ export default function PlaygroundPageClient({
   // ── Pipeline X-Ray state (Call 1 assessment data for Phase 1 Decoder)
   const [xrayAssessment, setXrayAssessment] = useState<CoverageAssessment | null>(null);
   const [xrayIsChecking, setXrayIsChecking] = useState(false);
+
+  // ── Pipeline X-Ray state (Call 2 tier data for Phase 2 Switchboard)
+  const [xrayTierPrompts, setXrayTierPrompts] = useState<GeneratedPrompts | null>(null);
+  const [xrayIsTierGenerating, setXrayIsTierGenerating] = useState(false);
+
   const generationIdRef = useRef(0);
   const [generationId, setGenerationId] = useState(0);
 
@@ -133,6 +139,15 @@ export default function PlaygroundPageClient({
     }
     setXrayAssessment(assessment);
     setXrayIsChecking(isChecking);
+  }, []);
+
+  // Workspace reports tier generation state changes → X-Ray Phase 2
+  const handleTierGenerationChange = useCallback((
+    tierPrompts: GeneratedPrompts | null,
+    isGenerating: boolean,
+  ) => {
+    setXrayTierPrompts(tierPrompts);
+    setXrayIsTierGenerating(isGenerating);
   }, []);
 
   // Pro-aware exchange ordering — `ordered` still needed for HomepageGrid
@@ -175,6 +190,7 @@ export default function PlaygroundPageClient({
         onProviderIdChange={handleProviderIdChange}
         externalProviderId={selectedProviderId}
         onAssessmentChange={handleAssessmentChange}
+        onTierGenerationChange={handleTierGenerationChange}
       />
     </MobileBuilderGate>
   );
@@ -184,6 +200,8 @@ export default function PlaygroundPageClient({
     <PipelineXRay
       assessment={xrayAssessment}
       isChecking={xrayIsChecking}
+      tierPrompts={xrayTierPrompts}
+      isTierGenerating={xrayIsTierGenerating}
       generationId={generationId}
     />
   );

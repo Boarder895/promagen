@@ -40,6 +40,7 @@ import { useDriftDetection } from '@/hooks/use-drift-detection';
 
 // Call 1: Category assessment with matched phrases
 import type { CoverageAssessment } from '@/types/category-assessment';
+import type { GeneratedPrompts } from '@/types/prompt-intelligence';
 import { useCategoryAssessment } from '@/hooks/use-category-assessment';
 
 // Platform data for building provider context
@@ -65,6 +66,8 @@ export interface PlaygroundWorkspaceProps {
   externalProviderId?: string | null;
   /** Callback when Call 1 assessment state changes — for Pipeline X-Ray Phase 1 */
   onAssessmentChange?: (assessment: CoverageAssessment | null, isChecking: boolean) => void;
+  /** Callback when Call 2 tier generation state changes — for Pipeline X-Ray Phase 2 */
+  onTierGenerationChange?: (tierPrompts: GeneratedPrompts | null, isGenerating: boolean) => void;
 }
 
 // ============================================================================
@@ -186,7 +189,7 @@ function ProviderSelector({ providers, selectedId, onSelect }: ProviderSelectorP
 // MAIN COMPONENT
 // ============================================================================
 
-export default function PlaygroundWorkspace({ providers, onProviderChange, onProviderIdChange, externalProviderId, onAssessmentChange }: PlaygroundWorkspaceProps) {
+export default function PlaygroundWorkspace({ providers, onProviderChange, onProviderIdChange, externalProviderId, onAssessmentChange, onTierGenerationChange }: PlaygroundWorkspaceProps) {
   // ── Lab Gate: auth + generation limiter ──────────────────────────────
   const {
     canGenerate,
@@ -233,6 +236,11 @@ export default function PlaygroundWorkspace({ providers, onProviderChange, onPro
   useEffect(() => {
     onAssessmentChange?.(assessment, isChecking);
   }, [assessment, isChecking, onAssessmentChange]);
+
+  // ── Expose tier generation state to parent (for Pipeline X-Ray Phase 2) ──
+  useEffect(() => {
+    onTierGenerationChange?.(aiTierPrompts, isTierGenerating);
+  }, [aiTierPrompts, isTierGenerating, onTierGenerationChange]);
 
   // Track previous provider for re-fire detection
   const prevProviderIdRef = useRef<string | null>(null);

@@ -84,7 +84,7 @@ export function XRaySplitFlap({
   duration = 600,
   delay = 0,
   color = '#FCD34D',
-  fontSize = 'clamp(0.5rem, 0.55vw, 0.65rem)',
+  fontSize = 'clamp(0.65rem, 0.8vw, 0.875rem)',
   generationId = 0,
 }: XRaySplitFlapProps) {
   const [displayValue, setDisplayValue] = useState(0);
@@ -186,7 +186,7 @@ export function XRaySplitFlap({
         {suffix && (
           <span
             style={{
-              fontSize: 'clamp(0.4rem, 0.42vw, 0.5rem)',
+              fontSize: 'clamp(10px, 0.65vw, 11px)',
               color: '#7A5C3E', // solid muted brass — NO opacity dimming
               marginLeft: 'clamp(2px, 0.2vw, 4px)',
               fontFamily: 'inherit',

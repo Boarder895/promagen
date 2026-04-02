@@ -141,7 +141,7 @@ export function PlatformMatchRail({
           >
             <span
               style={{
-                fontSize: 'clamp(0.6rem, 0.75vw, 0.85rem)',
+                fontSize: 'clamp(0.65rem, 0.8vw, 0.875rem)',
                 fontWeight: 600,
                 color: '#FFFFFF',
                 lineHeight: 1.3,
@@ -151,7 +151,7 @@ export function PlatformMatchRail({
             </span>
             <span
               style={{
-                fontSize: 'clamp(0.5rem, 0.6vw, 0.7rem)',
+                fontSize: 'clamp(10px, 0.65vw, 11px)',
                 color: '#94A3B8', // slate-400 — dimmest allowed
                 lineHeight: 1.3,
               }}
@@ -218,7 +218,7 @@ export function PlatformMatchRail({
                 {/* Platform name */}
                 <span
                   style={{
-                    fontSize: 'clamp(0.6rem, 0.72vw, 0.8rem)',
+                    fontSize: 'clamp(0.65rem, 0.8vw, 0.875rem)',
                     fontWeight: isSelected ? 600 : 400,
                     color: isSelected ? '#FFFFFF' : '#E2E8F0', // white or slate-200
                     lineHeight: 1.3,
