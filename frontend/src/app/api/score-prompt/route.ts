@@ -457,17 +457,17 @@ export async function POST(req: NextRequest) {
     console.warn("[score-prompt] Clerk auth() failed in dev — continuing without auth");
   }
 
-  if (!userId && env.isProd) {
-    return NextResponse.json(
-      { error: "Authentication required" },
-      { status: 401 },
-    );
-  }
-
   // Check Pro tier via Clerk publicMetadata (prod only).
   // Dev bypasses tier check — matches middleware pattern where dev is permissive.
   // userId is still required (must be logged in even in dev).
   if (env.isProd) {
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 },
+      );
+    }
+
     try {
       const client = await clerkClient();
       const user = await client.users.getUser(userId);
