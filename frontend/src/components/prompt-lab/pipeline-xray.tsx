@@ -30,8 +30,15 @@
 //   - prefers-reduced-motion respected (§18)
 //   - No interactive elements — display only, no focus traps
 //
+// v4.2.0 (3 Apr 2026):
+// - User-facing score killed. XRayScore import removed. Score SectionWire
+//   + XRayScore block removed. scoreResult/isScoring/scoreError removed
+//   from props. Right rail: Decoder → Switchboard → Alignment (3 sections).
+//   Scoring route stays deployed for internal batch runner.
+//   Authority: docs/authority/builder-quality-intelligence.md v2.5.0 §12.1
+//
 // Authority: docs/authority/righthand-rail.md v1.2.0 §7
-// Existing features preserved: Yes (new file, no modifications).
+// Existing features preserved: Yes — Decoder, Switchboard, Alignment untouched.
 // ============================================================================
 
 'use client';
@@ -43,7 +50,6 @@ import type { AiOptimiseResult } from '@/hooks/use-ai-optimisation';
 import { XRayDecoder } from './xray-decoder';
 import { XRaySwitchboard } from './xray-switchboard';
 import { XRayAlignment } from './xray-alignment';
-import { XRayScore } from './xray-score';
 
 // ============================================================================
 // CO-LOCATED STYLES (code-standard.md §6.2)
@@ -132,12 +138,6 @@ export interface PipelineXRayProps {
   platformTier?: number | null;
   /** Platform maxChars for capacity gauge */
   maxChars?: number | null;
-  /** Call 4 score result */
-  scoreResult?: import('@/hooks/use-prompt-score').PromptScoreResult | null;
-  /** Whether Call 4 is in flight */
-  isScoring?: boolean;
-  /** Call 4 error */
-  scoreError?: string | null;
   /** Monotonic generation ID for animation cancellation */
   generationId?: number;
   /** Optional className for outer container */
@@ -154,9 +154,6 @@ export function PipelineXRay({
   platformName = null,
   platformTier = null,
   maxChars = null,
-  scoreResult = null,
-  isScoring = false,
-  scoreError = null,
   generationId = 0,
   className = '',
 }: PipelineXRayProps) {
@@ -219,14 +216,6 @@ export function PipelineXRay({
           platformTier={platformTier}
           maxChars={maxChars}
           generationId={generationId}
-        />
-
-        {/* The Score — Call 4 scoring display (Pro only) */}
-        <SectionWire />
-        <XRayScore
-          scoreResult={scoreResult}
-          isScoring={isScoring}
-          scoreError={scoreError}
         />
       </div>
     </>

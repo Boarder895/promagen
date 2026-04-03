@@ -1,0 +1,148 @@
+[
+  {
+    "id": "scene-01-minimal",
+    "name": "Minimal Input",
+    "humanText": "A red ball.",
+    "expectedAnchors": [
+      { "term": "red", "severity": "critical" },
+      { "term": "ball", "severity": "critical" }
+    ],
+    "stressTarget": "Over-embellishment of sparse input. Does Call 3 pad a 2-word input with invented context?",
+    "categoriesExpected": ["subject"],
+    "holdout": false
+  },
+  {
+    "id": "scene-02-cyberpunk-courier",
+    "name": "Dense Multi-Anchor (Cyberpunk Courier)",
+    "humanText": "A cyberpunk courier on a motorcycle weaving through neon-lit rain",
+    "expectedAnchors": [
+      { "term": "cyberpunk", "severity": "critical" },
+      { "term": "courier", "severity": "critical" },
+      { "term": "motorcycle", "severity": "critical" },
+      { "term": "weaving", "severity": "important" },
+      { "term": "neon", "severity": "important" },
+      { "term": "rain", "severity": "important" }
+    ],
+    "stressTarget": "Anchor preservation under moderate complexity. Standard benchmark.",
+    "categoriesExpected": ["subject", "action", "style", "lighting", "atmosphere", "environment"],
+    "holdout": false
+  },
+  {
+    "id": "scene-03-fox-shrine",
+    "name": "Sacred Architecture (Fox Shrine)",
+    "humanText": "A fox shrine in autumn with red torii gates and falling maple leaves",
+    "expectedAnchors": [
+      { "term": "fox shrine", "severity": "critical" },
+      { "term": "torii gates", "severity": "critical" },
+      { "term": "red", "severity": "important" },
+      { "term": "autumn", "severity": "important" },
+      { "term": "maple leaves", "severity": "important" },
+      { "term": "falling", "severity": "optional" }
+    ],
+    "stressTarget": "Cultural noun preservation. 'Torii gates' must not become 'archway.'",
+    "categoriesExpected": ["subject", "environment", "colour", "materials", "atmosphere"],
+    "holdout": false
+  },
+  {
+    "id": "scene-04-colour-saturation",
+    "name": "Colour Saturation",
+    "humanText": "An explosion of neon colors: a shiny purple sports car parked on a street made of glowing orange bricks, with bright pink palm trees lining the sidewalk, turquoise buildings covered in yellow graffiti, emerald-green streetlights, and a sky swirling with magenta, cyan, and lime clouds all reflecting off a massive rainbow puddle on the ground.",
+    "expectedAnchors": [
+      { "term": "purple", "severity": "critical" },
+      { "term": "orange", "severity": "critical" },
+      { "term": "pink", "severity": "critical" },
+      { "term": "turquoise", "severity": "critical" },
+      { "term": "yellow", "severity": "important" },
+      { "term": "emerald-green", "severity": "important" },
+      { "term": "magenta", "severity": "important" },
+      { "term": "cyan", "severity": "important" },
+      { "term": "lime", "severity": "important" },
+      { "term": "rainbow", "severity": "optional" }
+    ],
+    "stressTarget": "Colour anchor survival. Every named colour must survive.",
+    "categoriesExpected": ["subject", "environment", "colour", "materials", "lighting", "atmosphere", "style"],
+    "holdout": false
+  },
+  {
+    "id": "scene-05-spatial-relationships",
+    "name": "Spatial Relationships",
+    "humanText": "A wooden desk in the center of the room. On the left side of the desk sits a tall blue lamp. Directly in front of the lamp is a small green notebook. Behind the notebook and slightly to the right is a red coffee mug. Above the entire desk hangs a yellow clock whose hands point toward the mug. A black chair is positioned under the desk, and a white window is visible on the wall behind the chair.",
+    "expectedAnchors": [
+      { "term": "center of the room", "severity": "critical" },
+      { "term": "left side", "severity": "critical" },
+      { "term": "in front of", "severity": "critical" },
+      { "term": "behind", "severity": "critical" },
+      { "term": "slightly to the right", "severity": "important" },
+      { "term": "above", "severity": "important" },
+      { "term": "under", "severity": "important" },
+      { "term": "behind the chair", "severity": "important" }
+    ],
+    "stressTarget": "Spatial preposition survival. Relative positions define the composition.",
+    "categoriesExpected": ["subject", "environment", "composition", "colour", "materials", "lighting"],
+    "holdout": false
+  },
+  {
+    "id": "scene-06-negative-trigger",
+    "name": "Negative Trigger",
+    "humanText": "A quiet mountain cabin at dusk with warm lights inside, but no smoke coming from the chimney, no people or animals anywhere, no snow on the roof, no trees near the cabin, and no stars visible in the sky above it.",
+    "expectedAnchors": [
+      { "term": "no smoke", "severity": "critical" },
+      { "term": "no people", "severity": "critical" },
+      { "term": "no animals", "severity": "critical" },
+      { "term": "no snow", "severity": "important" },
+      { "term": "no trees", "severity": "important" },
+      { "term": "no stars", "severity": "important" },
+      { "term": "mountain cabin", "severity": "critical" },
+      { "term": "dusk", "severity": "important" },
+      { "term": "warm lights", "severity": "important" }
+    ],
+    "stressTarget": "Explicit negative handling across all negative support types.",
+    "categoriesExpected": ["subject", "environment", "lighting", "atmosphere", "negative"],
+    "holdout": false
+  },
+  {
+    "id": "scene-07-compression-stress",
+    "name": "Compression Stress Test",
+    "humanText": "A hyper-detailed nocturnal cyberpunk Tokyo alleyway at 2 AM during a relentless neon-drenched downpour, featuring a solitary female cyber-samurai in a form-fitting matte-black tactical trench coat with glowing crimson circuitry patterns and a katana hilt wrapped in weathered leather, standing on rain-slicked cobblestones between towering holographic billboards displaying animated kanji in electric magenta, cyan, and acid-green, flanked by rusted vending machines overflowing with glowing energy drinks and half-eaten ramen bowls, intricate steam rising from grated manholes under flickering orange sodium streetlamps, distant flying delivery drones with pulsing blue underlights weaving between dense overhead power lines tangled with cherry-blossom petals caught in the wind, foreground puddles reflecting the chaotic scene with perfect mirror-like clarity and subtle oil-slick rainbows, background silhouettes of salarymen in transparent umbrellas hurrying past a dimly lit ramen stall with steaming pots and red paper lanterns, volumetric god rays piercing the thick fog from a massive floating digital billboard advertising futuristic implants in vibrant violet and gold, ultra-realistic textures on every surface including water droplets beading on metallic surfaces, fabric folds, and weathered concrete cracks, cinematic composition with rule-of-thirds framing, extreme depth of field keeping the samurai razor-sharp while the alley recedes into soft atmospheric bokeh, moody low-key lighting with high contrast, intricate details like subtle facial tattoos glowing faintly under her hood, scattered discarded holographic newspapers fluttering in the breeze, and a single ancient torii gate partially visible in the mist at the alley's end, rendered in photorealistic 8K resolution with the combined stylistic influences of Blade Runner 2049, Ghost in the Shell, and Syd Mead's concept art, evoking a tense atmosphere of cyber-noir mystery, melancholy, and quiet resilience.",
+    "expectedAnchors": [
+      { "term": "cyber-samurai", "severity": "critical" },
+      { "term": "matte-black tactical trench coat", "severity": "critical" },
+      { "term": "crimson circuitry", "severity": "critical" },
+      { "term": "ancient torii gate", "severity": "critical" },
+      { "term": "Blade Runner 2049", "severity": "important" },
+      { "term": "Ghost in the Shell", "severity": "important" },
+      { "term": "Syd Mead", "severity": "important" },
+      { "term": "acid-green", "severity": "important" },
+      { "term": "oil-slick rainbows", "severity": "important" },
+      { "term": "rule-of-thirds", "severity": "important" },
+      { "term": "bokeh", "severity": "optional" },
+      { "term": "facial tattoos", "severity": "optional" }
+    ],
+    "stressTarget": "Compression under extreme density (~1,800 chars). What does Call 3 sacrifice first?",
+    "categoriesExpected": ["subject", "action", "style", "lighting", "atmosphere", "environment", "colour", "materials", "composition", "camera", "fidelity", "mood"],
+    "holdout": false
+  },
+  {
+    "id": "scene-08-french-new-wave",
+    "name": "Style/Medium Preservation (French New Wave)",
+    "humanText": "A pristine 35mm film still from an unreleased 1974 French New Wave drama, shot on Kodak Vision3 500T stock with a vintage Arriflex 35BL camera, depicting a solitary woman in a faded red wool coat standing motionless on a rain-slicked Parisian bridge at twilight, her reflection perfectly mirrored in the Seine below, distant Eiffel Tower glowing softly through atmospheric haze, wet cobblestones catching the warm amber glow of sodium streetlamps, scattered autumn leaves drifting in the current, subtle film grain, natural light leaks along the left edge, faint sprocket marks, and gentle vignetting characteristic of analog cinema, captured with shallow depth of field and authentic 1970s color grading, every frame detail preserved exactly as if pulled straight from a developed negative in a Parisian darkroom.",
+    "expectedAnchors": [
+      { "term": "35mm film still", "severity": "critical" },
+      { "term": "French New Wave", "severity": "critical" },
+      { "term": "Kodak Vision3 500T", "severity": "critical" },
+      { "term": "Arriflex 35BL", "severity": "critical" },
+      { "term": "faded red wool coat", "severity": "important" },
+      { "term": "Seine", "severity": "important" },
+      { "term": "Eiffel Tower", "severity": "important" },
+      { "term": "film grain", "severity": "important" },
+      { "term": "light leaks", "severity": "important" },
+      { "term": "sprocket marks", "severity": "important" },
+      { "term": "vignetting", "severity": "optional" },
+      { "term": "1970s color grading", "severity": "important" },
+      { "term": "1974", "severity": "optional" }
+    ],
+    "stressTarget": "Analog film terminology, camera model names, and period-specific references that builders love to flatten.",
+    "categoriesExpected": ["subject", "environment", "style", "camera", "lighting", "colour", "atmosphere", "materials", "fidelity"],
+    "holdout": false
+  }
+]

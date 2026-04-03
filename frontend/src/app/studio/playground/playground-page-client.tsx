@@ -1,9 +1,16 @@
 // src/app/studio/playground/playground-page-client.tsx
 // ============================================================================
-// PROMPT LAB CLIENT WRAPPER (v4.1.0)
+// PROMPT LAB CLIENT WRAPPER (v4.2.0)
 // ============================================================================
 // Client component for /studio/playground (Prompt Lab).
 // Same pattern as homepage-client.tsx and library-client.tsx.
+//
+// v4.2.0 (3 Apr 2026):
+// - User-facing score killed. Removed usePromptScore import + hook call,
+//   prevOptimiseRef + auto-fire useEffect, and scoreResult/isScoring/
+//   scoreError props from PipelineXRay. Scoring route stays deployed
+//   for internal batch runner (builder quality intelligence).
+//   Authority: docs/authority/builder-quality-intelligence.md v2.5.0 §12.1
 //
 // v4.1.0 (2 Apr 2026):
 // - Call 4 wiring fix: humanText, assembledPrompt, categoryRichness
@@ -32,13 +39,13 @@
 // v1.0.0: Initial client wrapper with dynamic Listen text.
 //
 // Authority: docs/authority/lefthand-rail.md v1.2.0, docs/authority/righthand-rail.md v1.2.0
-// Existing features preserved: Yes — Engine Bay, Mission Control, Hero Window,
-//   centre PlaygroundWorkspace, MobileBuilderGate all unchanged.
+// Existing features preserved: Yes — Decoder, Switchboard, Alignment, Engine Bay,
+//   Mission Control, Hero Window, centre PlaygroundWorkspace, MobileBuilderGate all unchanged.
 // ============================================================================
 
 'use client';
 
-import React, { useState, useCallback, useRef, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useMemo } from 'react';
 import HomepageGrid from '@/components/layout/homepage-grid';
 import PlaygroundWorkspace from '@/components/prompts/playground-workspace';
 import type { Exchange } from '@/data/exchanges/types';
@@ -48,7 +55,6 @@ import type { CoverageAssessment } from '@/types/category-assessment';
 import type { GeneratedPrompts } from '@/types/prompt-intelligence';
 import type { AiOptimiseResult } from '@/hooks/use-ai-optimisation';
 import { useExchangeOrder } from '@/hooks/use-exchange-order';
-import { usePromptScore } from '@/hooks/use-prompt-score';
 import { getRawPlatformConfig } from '@/data/providers/platform-config';
 import MobileBuilderGate from '@/components/layout/mobile-builder-gate';
 
@@ -124,7 +130,9 @@ export default function PlaygroundPageClient({
   const generationIdRef = useRef(0);
   const [generationId, setGenerationId] = useState(0);
 
-  // ── Call 4 data: humanText + assembledPrompt (refs — no re-render needed) ──
+  // ── Human text + assembled prompt refs (workspace callbacks) ──────
+  // Retained for potential batch runner / diagnostics use. No consumer
+  // after Call 4 auto-fire was removed — harmless data collectors.
   const humanTextRef = useRef('');
   const assembledPromptRef = useRef('');
 
@@ -189,68 +197,15 @@ export default function PlaygroundPageClient({
     setXrayIsOptimising(isOptimising);
   }, []);
 
-  // Workspace reports human text changes → stored for Call 4
+  // Workspace reports human text changes
   const handleHumanTextChange = useCallback((text: string) => {
     humanTextRef.current = text;
   }, []);
 
-  // EEP reports assembled prompt changes → stored for Call 4
+  // EEP reports assembled prompt changes
   const handleAssembledPromptChange = useCallback((text: string) => {
     assembledPromptRef.current = text;
   }, []);
-
-  // ── Call 4: Prompt Scoring (auto-fires after Call 3) ──────────────
-  const {
-    result: scoreResult,
-    isScoring,
-    error: scoreError,
-    score: fireScore,
-  } = usePromptScore();
-
-  // Auto-fire Call 4 when Call 3 completes with a new result
-  const prevOptimiseRef = useRef<AiOptimiseResult | null>(null);
-  useEffect(() => {
-    // Fire when optimiseResult transitions to a new non-null result
-    if (
-      xrayOptimiseResult &&
-      !xrayIsOptimising &&
-      xrayOptimiseResult !== prevOptimiseRef.current &&
-      selectedPlatformMeta &&
-      selectedProviderId
-    ) {
-      const config = getRawPlatformConfig(selectedProviderId);
-      if (config) {
-        // Derive categoryRichness from Call 1 assessment (already in page state)
-        const richness: Record<string, number> = {};
-        if (xrayAssessment?.coverage) {
-          for (const [cat, data] of Object.entries(xrayAssessment.coverage)) {
-            if (data.matchedPhrases.length > 0) {
-              richness[cat] = data.matchedPhrases.length;
-            }
-          }
-        }
-
-        fireScore({
-          optimisedPrompt: xrayOptimiseResult.optimised,
-          humanText: humanTextRef.current,
-          assembledPrompt: assembledPromptRef.current,
-          negativePrompt: xrayOptimiseResult.negative,
-          platformId: selectedProviderId,
-          platformName: selectedPlatformMeta.name,
-          tier: selectedPlatformMeta.tier as 1 | 2 | 3 | 4,
-          promptStyle: config.promptStyle as 'keywords' | 'natural',
-          maxChars: config.maxChars ?? 500,
-          idealMin: config.idealMin ?? 50,
-          idealMax: config.idealMax ?? 200,
-          negativeSupport: (config.negativeSupport as 'separate' | 'inline' | 'none') ?? 'none',
-          call3Changes: xrayOptimiseResult.changes,
-          call3Mode: (config.call3Mode as 'reorder_only' | 'format_only' | 'gpt_rewrite' | 'pass_through' | 'mj_deterministic') ?? 'gpt_rewrite',
-          categoryRichness: richness,
-        });
-      }
-    }
-    prevOptimiseRef.current = xrayOptimiseResult;
-  }, [xrayOptimiseResult, xrayIsOptimising, selectedProviderId, selectedPlatformMeta, xrayAssessment, fireScore]);
 
   // Pro-aware exchange ordering — `ordered` still needed for HomepageGrid
   // (Engine Bay, Mission Control, MarketPulseOverlay). Left/right split
@@ -300,7 +255,7 @@ export default function PlaygroundPageClient({
     </MobileBuilderGate>
   );
 
-  // ── RIGHT RAIL: Pipeline X-Ray Glass Case (replaces exchange list) ──
+  // ── RIGHT RAIL: Pipeline X-Ray Glass Case (Decoder → Switchboard → Alignment) ──
   const rightContent = (
     <PipelineXRay
       assessment={xrayAssessment}
@@ -312,9 +267,6 @@ export default function PlaygroundPageClient({
       platformName={selectedPlatformMeta?.name ?? null}
       platformTier={selectedPlatformMeta?.tier ?? null}
       maxChars={selectedPlatformMeta?.maxChars ?? null}
-      scoreResult={scoreResult}
-      isScoring={isScoring}
-      scoreError={scoreError}
       generationId={generationId}
     />
   );

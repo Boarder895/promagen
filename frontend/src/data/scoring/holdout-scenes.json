@@ -1,0 +1,45 @@
+[
+  {
+    "id": "scene-09-multi-subject-hierarchy",
+    "name": "Multi-Subject Hierarchy & Temporal (HOLDOUT)",
+    "humanText": "In the foreground, the primary subject — a lone samurai in ornate black armor — leaps mid-turn from a crumbling temple roof just before impact with the stone courtyard below, katana raised; secondary subjects include two startled monks in saffron robes frozen in the midground; in the background, a violent storm rages as lightning strikes the distant pagoda, wind-whipped cherry blossoms blurring in motion while dramatic god rays slice through the churning clouds.",
+    "expectedAnchors": [
+      { "term": "lone samurai", "severity": "critical" },
+      { "term": "ornate black armor", "severity": "critical" },
+      { "term": "mid-turn", "severity": "critical" },
+      { "term": "just before impact", "severity": "critical" },
+      { "term": "katana raised", "severity": "important" },
+      { "term": "two startled monks", "severity": "critical" },
+      { "term": "saffron robes", "severity": "important" },
+      { "term": "midground", "severity": "important" },
+      { "term": "lightning strikes", "severity": "important" },
+      { "term": "distant pagoda", "severity": "important" },
+      { "term": "cherry blossoms", "severity": "optional" },
+      { "term": "god rays", "severity": "optional" },
+      { "term": "foreground", "severity": "critical" },
+      { "term": "background", "severity": "critical" }
+    ],
+    "stressTarget": "Two things at once. First: multi-subject hierarchy — primary (samurai), secondary (monks), background (storm/pagoda). Builders must preserve importance order, not just nouns. Second: temporal/motion specificity — 'mid-turn', 'just before impact', 'frozen in the midground'. Builders often collapse timing into static description.",
+    "categoriesExpected": ["subject", "action", "environment", "composition", "lighting", "atmosphere", "materials", "style"],
+    "holdout": true
+  },
+  {
+    "id": "scene-10-typical-real-world",
+    "name": "Typical Real-World User Input (HOLDOUT)",
+    "humanText": "a cute golden retriever puppy running through a sunny park chasing a red ball, some kids laughing in the background, green grass and trees everywhere, blue sky with a few clouds, make it really happy and bright like a nice summer day",
+    "expectedAnchors": [
+      { "term": "golden retriever puppy", "severity": "critical" },
+      { "term": "running", "severity": "important" },
+      { "term": "sunny park", "severity": "critical" },
+      { "term": "red ball", "severity": "critical" },
+      { "term": "kids laughing", "severity": "important" },
+      { "term": "background", "severity": "important" },
+      { "term": "green grass", "severity": "important" },
+      { "term": "blue sky", "severity": "important" },
+      { "term": "summer day", "severity": "optional" }
+    ],
+    "stressTarget": "Normal person input. Not a stress test, not an edge case. Natural, slightly messy, slightly vague. Tests whether builders handle ordinary usage well without over-embellishing or stripping the casual tone. The phrase 'make it really happy and bright' is a mood directive, not a visual anchor — builders should translate it into visual terms without dropping the concrete nouns.",
+    "categoriesExpected": ["subject", "action", "environment", "atmosphere", "colour"],
+    "holdout": true
+  }
+]
