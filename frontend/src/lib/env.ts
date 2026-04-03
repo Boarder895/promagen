@@ -8,6 +8,9 @@
 // - Prefer "safe mode" switches + provider kill-switches via env vars so you can react instantly from Vercel.
 // - Env parsing stays permissive (mostly optional) so local dev never explodes unless a required helper is called.
 //
+// v1.1.0 (3 Apr 2026): Added BUILDER_QUALITY_KEY for internal score-prompt route hardening.
+//   Authority: docs/authority/builder-quality-intelligence.md v2.5.0 §5.1
+//
 // Updated: January 22, 2026 - Added POSTGRES_URL fallback for Neon/Vercel integration
 //
 // Existing features preserved: Yes.
@@ -58,6 +61,9 @@ const EnvSchema = z.object({
   // Provider secrets (server-only)
   TWELVEDATA_API_KEY: z.string().optional(),
   OPENAI_API_KEY: z.string().optional(),
+
+  // Builder Quality Intelligence — internal route protection (§5.1)
+  BUILDER_QUALITY_KEY: z.string().optional(),
 });
 
 type ParsedEnv = z.infer<typeof EnvSchema>;
@@ -119,6 +125,9 @@ export const env = Object.freeze({
     twelveDataApiKey: raw.TWELVEDATA_API_KEY?.trim(),
     openAiApiKey: raw.OPENAI_API_KEY?.trim(),
   },
+
+  // Builder Quality Intelligence — internal route protection
+  builderQualityKey: raw.BUILDER_QUALITY_KEY?.trim(),
 });
 
 export function requireDatabaseUrl(): string {

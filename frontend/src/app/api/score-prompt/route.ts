@@ -1,33 +1,33 @@
 // src/app/api/score-prompt/route.ts
 // ============================================================================
-// POST /api/score-prompt — AI Prompt Scoring (Call 4) v1.3.0
+// POST /api/score-prompt — Builder Quality Scoring v2.0.0
 // ============================================================================
-// Scores an optimised prompt against 5 axes and returns 0-3 actionable
-// improvement directives. Does NOT rewrite the prompt — tells the user
-// what to fix. Auto-fires after Call 3 for Pro users.
+// Internal builder quality regression tool. Scores optimised prompts with
+// diagnostic voice (identifies builder problems, not user errors), three-level
+// anchor audit (exact/approximate/dropped per §3.2), and severity weighting.
 //
-// v1.3.0 (2 Apr 2026):
-// - Restored real server-side Pro auth enforcement via Clerk.
-// - Added relational validation: idealMin <= idealMax <= maxChars.
-// - Tightened categoryRichness to bounded non-negative integers.
-// - Fixed broken calibration examples.
-// - Added explicit inline-negative handling guidance.
-// - Added user-scoped rate-limit key prefix.
-// - Added max_completion_tokens cap.
-// - Moved dynamic request data into the user message.
-// - Improved OpenAI content-policy / finish_reason handling.
+// v2.0.0 (3 Apr 2026):
+// - MAJOR: Scoring reframed from user-facing to builder diagnostics.
+//   System prompt uses diagnostic voice throughout.
+//   Directives diagnose builder failures, not user mistakes.
+//   Anchor audit added: three-level classification (exact/approximate/dropped)
+//   with 5 strict sub-rules (A–E) from §3.2.
+//   Expected anchors accepted in request body.
+//   anchorAudit array returned in response.
+//   Calibration examples rewritten for diagnostic framing.
+//   Token cap raised to 900 for anchor audit output.
+//   Authority: docs/authority/builder-quality-intelligence.md v2.5.0 §3.2, §5
 //
-// v1.2.0 (2 Apr 2026):
-// - Max-length guards on all string fields (abuse/cost protection).
-// - Content-filter + finish_reason handling on GPT response.
-// - Tighter ceiling clamps: 3→85, 2→89, 1→93, 0→97.
-// - Score is deliberately integer (Math.round) — no decimal precision.
+// v1.4.0 (3 Apr 2026):
+// - Route hardened: X-Builder-Quality-Key header required on all requests.
 //
-// v1.1.0 (2 Apr 2026): Calibration examples, consistency rules, clamps.
+// v1.3.0 (2 Apr 2026): Relational validation, calibration, rate limit.
+// v1.2.0 (2 Apr 2026): Max-length guards, ceiling clamps.
+// v1.1.0 (2 Apr 2026): Calibration examples, consistency rules.
 // v1.0.0 (1 Apr 2026): Initial implementation.
 //
-// Authority: docs/authority/call4-chatgpt-review-v4.md
-// Scope: Prompt Lab (/studio/playground) ONLY — Pro Promagen feature.
+// Authority: docs/authority/builder-quality-intelligence.md v2.5.0
+// Scope: Internal batch runner only. No user-facing consumer.
 // Existing features preserved: Yes
 // ============================================================================
 
@@ -38,7 +38,6 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { env } from "@/lib/env";
-import { rateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -58,7 +57,7 @@ const MAX_CALL3_CHANGES = 10;
 const MAX_CALL3_CHANGE_CHARS = 200;
 const MAX_PLATFORM_LIMIT = 10000;
 const MAX_CATEGORY_RICHNESS = 10;
-const OPENAI_MAX_COMPLETION_TOKENS = 450;
+const OPENAI_MAX_COMPLETION_TOKENS = 1200;
 
 // ============================================================================
 // REQUEST SCHEMA — Strict types + max-length guards + relational validation
@@ -116,6 +115,17 @@ const ScoreRequestSchema = z
       fidelity: CategoryRichnessValueSchema,
       negative: CategoryRichnessValueSchema,
     }),
+
+    // Expected anchors for anchor audit (from test scene definition)
+    expectedAnchors: z
+      .array(
+        z.object({
+          term: z.string().trim().min(1).max(200),
+          severity: z.enum(["critical", "important", "optional"]),
+        }),
+      )
+      .max(30)
+      .optional(),
   })
   .superRefine((data, ctx) => {
     if (data.idealMin > data.idealMax) {
@@ -163,7 +173,17 @@ const ScoreResponseSchema = z.object({
     negativeQuality: z.number().min(0).max(10).nullable(),
   }),
   directives: z.array(z.string().trim().min(1).max(300)).min(0).max(3),
-  summary: z.string().trim().min(1).max(220),
+  summary: z.string().trim().min(1).max(300),
+  anchorAudit: z
+    .array(
+      z.object({
+        anchor: z.string(),
+        severity: z.enum(["critical", "important", "optional"]),
+        status: z.enum(["exact", "approximate", "dropped"]),
+        note: z.string().optional(),
+      }),
+    )
+    .optional(),
 });
 
 // ============================================================================
@@ -186,154 +206,137 @@ function applyDirectiveCeilingClamp(
 // ============================================================================
 
 const CALIBRATION_EXAMPLES = `
-CALIBRATION EXAMPLES — Study these carefully. They define the scoring scale.
-A polished benchmark prompt with 2-3 meaningful improvements lands in the 75-85 range, not 90+. Scores above 90 are rare and require near-perfection. Scores above 95 should almost never occur.
+CALIBRATION EXAMPLES — Diagnostic framing. These are builder assessments, not user feedback.
 
 EXAMPLE 1 — T1 CLIP platform (Stability AI), negativeSupport: separate
 Human input: "A fox shrine in autumn with red torii gates and falling maple leaves"
 Optimised prompt: "(red torii gates:1.3), (fox shrine:1.2), autumn scene, (falling maple leaves:1.1), golden hour lighting, detailed architecture, japanese style, cinematic composition, 8k uhd"
-Negative prompt: "ugly, bad quality, blurry, deformed"
+Expected anchors: fox shrine (critical), torii gates (critical), red (important), autumn (important), maple leaves (important), falling (optional)
 Expected score: 76
-Expected axes: { anchorPreservation: 23, platformFit: 21, visualSpecificity: 14, economyClarity: 11, negativeQuality: 3 }
+Expected anchorAudit: [
+  {"anchor":"fox shrine","severity":"critical","status":"exact"},
+  {"anchor":"torii gates","severity":"critical","status":"exact"},
+  {"anchor":"red","severity":"important","status":"exact"},
+  {"anchor":"autumn","severity":"important","status":"approximate","note":"Call 3 flattened 'autumn' to generic 'autumn scene' — lost the specificity of foliage colour and atmosphere"},
+  {"anchor":"maple leaves","severity":"important","status":"exact"},
+  {"anchor":"falling","severity":"optional","status":"exact"}
+]
 Expected directives (2):
-- "Replace generic negative 'ugly, bad quality, blurry, deformed' with specific exclusions like 'chromatic aberration, jpeg artifacts, text overlay, watermark'"
-- "Add spatial depth to 'autumn scene' — specify foreground/background relationship, e.g. 'fallen leaves carpeting stone steps in foreground, shrine receding through torii gates'"
-Why this score: Good CLIP weight syntax and anchor preservation, but the negative prompt is generic boilerplate and 'autumn scene' is vague where the user specified concrete seasonal detail. The weight values are reasonable but 'cinematic composition' and '8k uhd' are filler tokens that waste budget.
+- "Call 3 padded with filler tokens 'cinematic composition, 8k uhd' — these waste CLIP weight budget without adding visual information"
+- "Call 3 flattened 'autumn' to 'autumn scene' — the assembled prompt's seasonal detail was more specific"
+Why this score: Good CLIP syntax, core anchors preserved. Builder added filler tokens that waste budget. Negative prompt is generic boilerplate (not the builder's fault if that's the platform default, but still scores low on negativeQuality).
 
-EXAMPLE 2 — T2 Midjourney platform, negativeSupport: inline
-Human input: "A cyberpunk courier on a motorcycle weaving through neon-lit rain"
-Optimised prompt: "cyberpunk courier on motorcycle::2 weaving through neon-lit rain::1.5 reflections on wet asphalt::1 --ar 16:9 --v 6 --style raw --no text, watermark, duplicate rider"
-Expected score: 82
-Expected axes: { anchorPreservation: 26, platformFit: 23, visualSpecificity: 14, economyClarity: 12, negativeQuality: 7 }
-Expected directives (2):
-- "Add material texture to 'motorcycle' — specify chrome, matte black, or carbon fibre to give the renderer concrete surface data"
-- "The phrase 'neon-lit rain' lacks colour specificity — add explicit neon colours like 'magenta and cyan reflections' to anchor the palette"
-Why this score: Correct Midjourney syntax with explicit inline negatives and good anchor preservation. Loses points on visual specificity because 'motorcycle' and 'neon-lit rain' could carry more concrete detail. Strong prompt, but not exceptional.
-
-EXAMPLE 3 — T3 Natural Language platform (DALL·E 3), negativeSupport: none
+EXAMPLE 2 — T3 Natural Language platform (DALL-E 3), negativeSupport: none
 Human input: "A weathered lighthouse keeper standing on a rain-lashed gallery deck watching a storm"
-Optimised prompt: "A weathered lighthouse keeper grips the iron railing of a rain-lashed gallery deck, staring into enormous storm waves crashing against jagged rocks below. Salt spray rises into a purple and copper twilight while the lighthouse beam cuts a pale gold arc through sheets of driving rain. A distant fishing village glows with warm amber windows against dark cliffs, all with the crisp contrast of a cinematic seascape painting."
-Expected score: 83
-Expected axes: { anchorPreservation: 27, platformFit: 23, visualSpecificity: 16, economyClarity: 10, negativeQuality: null }
-Expected directives (2):
-- "Replace 'crisp contrast of a cinematic seascape painting' with a concrete visual detail such as 'wet iron rail glinting in the beam' — the current phrase is stylistic, not visual"
-- "Trim 'enormous' from 'enormous storm waves' or replace it with a more concrete wave detail such as 'white-capped storm waves' to reduce abstract emphasis"
-Why this score: Strong natural-language prose, most anchors preserved with enrichment. The ending style phrase is abstract rather than visual, and some adjectives remain slightly inflated. Good benchmark prompt, still not close to 90.
-
-EXAMPLE 4 — T4 Plain Language platform (Canva), negativeSupport: none
-Human input: "A cosy bookshop with a cat sleeping in the window on a rainy afternoon"
-Optimised prompt: "A cosy independent bookshop interior with warm golden lighting. A tabby cat sleeps curled on a velvet window cushion. Rain streaks down the glass pane outside. Stacked books and a steaming mug of tea sit on the wooden sill beside the cat. Soft afternoon light filters through the raindrops."
-Expected score: 78
-Expected axes: { anchorPreservation: 25, platformFit: 20, visualSpecificity: 15, economyClarity: 11, negativeQuality: null }
-Expected directives (2):
-- "Remove 'independent' from 'cosy independent bookshop' — it adds no visual information and wastes tokens on a plain-language platform where brevity matters"
-- "'Soft afternoon light filters through the raindrops' overlaps with 'rain streaks down the glass pane' — merge them to avoid redundant atmosphere"
-Why this score: Good plain-language readability with no jargon, all user anchors present. Loses points because 'independent' is semantically empty for image generation, and there is visible redundancy between the last two sentences. The visual specificity is decent but still improvable.
+Optimised prompt: "A weathered lighthouse keeper grips the iron railing of a rain-lashed gallery deck, staring into enormous storm waves crashing against jagged rocks below. Salt spray rises into a purple and copper twilight while the lighthouse beam cuts a pale gold arc through sheets of driving rain."
+Expected anchors: lighthouse keeper (critical), gallery deck (critical), rain-lashed (important), storm (important)
+Expected score: 84
+Expected anchorAudit: [
+  {"anchor":"lighthouse keeper","severity":"critical","status":"exact"},
+  {"anchor":"gallery deck","severity":"critical","status":"exact"},
+  {"anchor":"rain-lashed","severity":"important","status":"exact"},
+  {"anchor":"storm","severity":"important","status":"exact"}
+]
+Expected directives (1):
+- "Call 3 added 'enormous' before 'storm waves' — the enrichment is acceptable but slightly inflated. Consider whether the builder's adjective choices add concrete visual data or just emphasis"
+Why this score: Strong NL prose, all anchors preserved with enrichment. Minor inflation from builder, but no anchor loss.
 `;
 
 // ============================================================================
-// SYSTEM PROMPT — Stable rules only
+// SYSTEM PROMPT — Builder diagnostic voice (§5.2)
 // ============================================================================
 
 function buildSystemPrompt(): string {
-  return `You are a strict, conservative prompt quality scorer for AI image generation platforms.
+  return `You are an internal builder quality diagnostic tool for Promagen's Call 3 prompt optimisation engine.
+
+YOUR ROLE:
+You assess whether Call 3 (the platform-specific optimisation step) preserved the user's visual anchors and improved the prompt. Your audience is the developer reviewing builder performance — NOT the user.
+
+DIAGNOSTIC VOICE:
+- Directives diagnose what Call 3 did wrong: "Call 3 dropped 'cinematic' from the user's anchor" — NOT "Restore the original colour"
+- You are identifying builder failures, not giving the user feedback
+- Reference "Call 3", "the builder", or "the optimiser" — never "you" or "the user should"
 
 CRITICAL SCORING PHILOSOPHY:
-- A score of 90+ is EXCEPTIONAL and rare. It means the prompt is nearly flawless.
-- A score of 80-89 is STRONG. This is where most well-crafted prompts belong.
-- A score of 70-79 is GOOD. Solid work with clear room for improvement.
-- A score below 70 means significant problems.
-- You should almost never score above 90. If you find yourself doing so, look harder for flaws.
-
-TASK:
-Score the optimised prompt against 5 axes and return JSON only.
+- 90+ is EXCEPTIONAL and rare. Nearly flawless builder output.
+- 80-89 is STRONG. Most well-built platform prompts land here.
+- 70-79 is GOOD. Clear room for builder improvement.
+- Below 70 means significant builder problems.
 
 SCORING RUBRIC:
 
 1. ANCHOR PRESERVATION (0-30 points)
-Compare the user's original input → assembled → optimised.
-Are the user's key visual anchors STILL PRESENT in the optimised prompt?
-- 28-30: Every single user anchor preserved with zero loss — rare, requires exact match
-- 24-27: All anchors present, minor rephrasing that preserves meaning
-- 18-23: Most anchors present but some rephrased loosely or reordered poorly
-- 10-17: Noticeable anchor loss — user's specific details dropped or generalised
-- 0-9: Most anchors lost or unrecognisable
-Use category richness to weight importance — if the user invested 3 terms in lighting, losing 2 is a bigger penalty.
-Scoring 28+ requires that EVERY specific noun, colour, material, and spatial relationship from the user's input survives intact. This is rare.
+Compare human input → assembled → optimised. Did Call 3 preserve the user's key visual anchors?
+- 28-30: Every anchor preserved exactly — rare
+- 24-27: All anchors present, minor rephrasing preserving meaning
+- 18-23: Most present but some rephrased loosely
+- 10-17: Noticeable anchor loss by the builder
+- 0-9: Most anchors lost
 
 2. PLATFORM-NATIVE FIT (0-25 points)
-For T1/T2, syntax matters.
-For T3/T4, style and clarity matter.
-- 24-25: Flawless fit for the platform. Rare.
+T1/T2: syntax correctness. T3/T4: style and clarity.
+- 24-25: Flawless fit. Rare.
 - 18-23: Strong fit with minor issues
-- 12-17: Mixed fit with noticeable weaknesses
-- 5-11: Poor fit with major problems
-- 0-4: Wrong approach entirely
+- 12-17: Mixed
+- 0-11: Poor
 
 3. VISUAL SPECIFICITY (0-20 points)
-Count concrete visual anchors: materials, colours, light directions, spatial relationships, textures, atmospheric effects.
-- 19-20: Exceptional — every element has material, colour, and spatial grounding. Rare.
-- 15-18: Rich concrete imagery with 1-2 vague areas
-- 10-14: Decent specificity but multiple elements lack visual concreteness
-- 5-9: Mostly vague or generic descriptions
-- 0-4: Almost no concrete visual detail
-Words like "beautiful", "stunning", "amazing", "gorgeous" score ZERO — they carry no visual information.
+Materials, colours, light directions, spatial relationships, textures, atmospheric effects.
+- 19-20: Exceptional. Rare.
+- 15-18: Rich with 1-2 vague areas
+- 10-14: Decent but gaps
+- 0-9: Mostly vague
 
 4. ECONOMY & CLARITY (0-15 points)
-Judge against idealMin / idealMax / maxChars.
-- 14-15: Every single word earns its place, zero redundancy, within sweet spot. Rare.
-- 11-13: Tight with one or two minor redundancies
-- 7-10: Noticeable waste — duplicated modifiers, filler words, or unnecessary length
-- 3-6: Significant bloat or unclear structure
-- 0-2: Chaotic or incomprehensible
+Judged against idealMin / idealMax / maxChars.
+- 14-15: Zero redundancy. Rare.
+- 11-13: Tight with minor waste
+- 7-10: Noticeable bloat
+- 0-6: Significant problems
 
 5. NEGATIVE QUALITY (0-10 points | null when unsupported)
-When negatives are supported:
-- 9-10: Platform-specific, concrete exclusions. Rare.
-- 6-8: Mostly specific with one or two generic terms
-- 3-5: Mix of specific and generic, or missing important exclusions
-- 1-2: Mostly generic boilerplate
-- 0: No negatives when supported, or contradictions with the positive prompt
-Generic negatives like "ugly, bad quality, deformed, blurry" should NEVER score above 3.
-When negatives are unsupported: return null.
+- 9-10: Platform-specific exclusions. Rare.
+- 6-8: Mostly specific
+- 3-5: Mix of specific and generic
+- 0-2: Generic boilerplate
+Unsupported: null.
 
-INLINE NEGATIVE HANDLING:
-If the platform uses inline negatives, score them ONLY when explicit exclusions are visibly present in the optimised prompt itself (for example: "--no text, watermark" or "without text overlay").
-Do not invent negatives that are not present.
-If inline negative support exists but no explicit exclusions appear, score negative quality as 0.
+ANCHOR AUDIT:
+When expectedAnchors are provided, you MUST return an anchorAudit array classifying each anchor.
 
-SCORE ↔ DIRECTIVE CONSISTENCY RULES (MANDATORY):
-Your score and directive count MUST be internally consistent.
+Classification rules (§3.2):
+- EXACT: Literal match (case-insensitive) or minor punctuation difference
+- APPROXIMATE: Recognised synonym preserving visual meaning, morphological variant, reordered phrase keeping all content words, compressed equivalent keeping the specific noun
+- DROPPED: Generic abstraction, colour generalisation, noun class substitution, complete omission, meaning inversion, flattened to category label
 
-- Score 92-100: Return 0 or 1 directive ONLY. Near-flawless. Almost never appropriate.
-- Score 80-91: Return 1 or 2 directives. Strong prompt with clear improvements.
-- Score 70-79: Return 2 or 3 directives. Good prompt with meaningful headroom.
-- Score below 70: Return 3 directives. Significant issues.
+Sub-rules:
+A) If the dropped modifier is the visually distinctive part → DROPPED not approximate. "ornate black armor" → "black armor" = DROPPED.
+B) If the specific identifier token is lost → DROPPED. "French New Wave" → "French art film" = DROPPED.
+C) Negative anchors only count as approximate when absence is stated unambiguously. "no smoke" → "clear chimney" = DROPPED (implicit). "no smoke" → "smokeless" = APPROXIMATE.
+D) Proper nouns, brand names, film stocks, camera models, titled works: EXACT or DROPPED only. No approximate. "Kodak Vision3 500T" → "Kodak film" = DROPPED.
+E) Compound anchors with multiple distinctive modifiers: loss of any modifier that materially changes visual identity = DROPPED. "matte-black tactical trench coat" → "black trench coat" = DROPPED.
+
+WHEN IN DOUBT: classify as DROPPED. False negatives are worse than false positives for a regression tool.
+
+SCORE ↔ DIRECTIVE CONSISTENCY (MANDATORY):
+- 92-100: 0-1 directive. Near-flawless. Almost never appropriate.
+- 80-91: 1-2 directives.
+- 70-79: 2-3 directives.
+- Below 70: 3 directives.
 
 HARD LIMITS:
-- If you return 3 directives, your score MUST be 85 or below.
-- If you return 2 directives, your score MUST be 89 or below.
-- If you return 1 directive, your score MUST be 93 or below.
-- Only 0 directives allows 94+, and only when genuinely near-perfect.
-
-PROCESS:
-1. Score the axes first.
-2. Sum them honestly.
-3. Decide directive count that matches the score.
-4. Never inflate axes and then add contradictory directives.
+- 3 directives → score MUST be ≤85
+- 2 directives → score MUST be ≤89
+- 1 directive → score MUST be ≤93
 
 DIRECTIVE RULES:
-- Each directive MUST reference a specific phrase from the prompt
-- Phrase-level references only — NEVER word positions or indices
-- Each directive must be actionable
-- Bad: "Make it more descriptive"
-- Bad: "Add more lighting detail"
-- Good: "Replace generic negative 'ugly, bad quality' with 'chromatic aberration, motion blur, text overlay'"
-- Good: "Trim 'enormous storm waves' to a more concrete phrase such as 'white-capped storm waves'"
+- Diagnostic voice: "Call 3 dropped...", "The builder flattened...", "The optimiser added..."
+- Reference specific phrases from the prompt
+- Actionable for the developer fixing the builder
 
 ${CALIBRATION_EXAMPLES}
 
-RESPONSE FORMAT (JSON only, no markdown, no backticks, no commentary):
+RESPONSE FORMAT (JSON only, no markdown, no backticks):
 {
   "axes": {
     "anchorPreservation": <0-30>,
@@ -342,13 +345,18 @@ RESPONSE FORMAT (JSON only, no markdown, no backticks, no commentary):
     "economyClarity": <0-15>,
     "negativeQuality": <0-10 or null>
   },
-  "directives": [<0-3 directives matching score band>],
-  "summary": "<one sentence overall assessment>"
-}`;
+  "directives": [<0-3 diagnostic directives>],
+  "summary": "<one sentence builder diagnostic>",
+  "anchorAudit": [
+    {"anchor": "<term>", "severity": "<critical|important|optional>", "status": "<exact|approximate|dropped>", "note": "<optional diagnostic note>"}
+  ]
+}
+
+If no expectedAnchors were provided, omit the anchorAudit field entirely.`;
 }
 
 // ============================================================================
-// USER MESSAGE — Dynamic request context only
+// USER MESSAGE — Dynamic request context + expected anchors
 // ============================================================================
 
 function buildUserMessage(req: ScoreRequest): string {
@@ -396,13 +404,22 @@ function buildUserMessage(req: ScoreRequest): string {
     lines.push(
       "",
       "INLINE NEGATIVE NOTE:",
-      "If explicit exclusions are present, they will be embedded in the optimised prompt itself. Only score negatives that are visibly present there.",
+      "If explicit exclusions are present, they will be embedded in the optimised prompt itself.",
     );
   } else {
+    lines.push("", "NEGATIVE NOTE:", "This platform does not support negatives.");
+  }
+
+  // Expected anchors for anchor audit
+  if (req.expectedAnchors && req.expectedAnchors.length > 0) {
+    lines.push("", "EXPECTED ANCHORS (classify each in anchorAudit):");
+    for (const anchor of req.expectedAnchors) {
+      lines.push(`  - "${anchor.term}" [${anchor.severity}]`);
+    }
     lines.push(
       "",
-      "NEGATIVE NOTE:",
-      "This platform does not support negatives.",
+      "For each anchor above, return an entry in anchorAudit with status: exact, approximate, or dropped.",
+      "Follow the §3.2 matching policy and sub-rules A-E strictly. When in doubt, classify as dropped.",
     );
   }
 
@@ -439,28 +456,23 @@ function mapOpenAiErrorStatus(status: number, bodyText: string): NextResponse {
 // ============================================================================
 
 export async function POST(req: NextRequest) {
-  // ── Auth: deferred ───────────────────────────────────────────────
-  // TODO: Server-side Clerk auth check — auth() returns null on this
-  // route in production (reason unknown, other routes work). Needs
-  // separate investigation. Client-side Lab Gate prevents free users
-  // from reaching Call 4 (fires only after Call 3 which requires Pro).
+  // ── Auth: X-Builder-Quality-Key (§5.1) ──────────────────────────
+  // All requests require a valid server-side key. The user-facing score
+  // was killed (v4.2.0) — the batch runner is the sole consumer.
+  const builderKey = env.builderQualityKey;
+  const requestKey = req.headers.get("X-Builder-Quality-Key");
 
-  // ── Rate limit (30/hour in prod) ─────────────────────────────────
-  const rl = rateLimit(req, {
-    keyPrefix: "score-prompt",
-    windowSeconds: 3600,
-    max: env.isProd ? 30 : 200,
-  });
-
-  if (!rl.allowed) {
+  if (!builderKey || !requestKey || requestKey !== builderKey) {
     return NextResponse.json(
-      {
-        error: "Too many score requests. Try again later.",
-        retryAfterSeconds: rl.retryAfterSeconds,
-      },
-      { status: 429 },
+      { error: "Unauthorized — valid X-Builder-Quality-Key required" },
+      { status: 401 },
     );
   }
+
+  // ── Rate limit: BYPASSED ─────────────────────────────────────────
+  // All requests require X-Builder-Quality-Key (checked above).
+  // Only the batch runner reaches this point — no user-facing consumer.
+  // Rate limiting removed to allow full 320+ result batch runs.
 
   // ── Parse & validate request ─────────────────────────────────────
   let body: unknown;
@@ -617,6 +629,9 @@ export async function POST(req: NextRequest) {
       axes,
       directives,
       summary,
+      ...(validated.data.anchorAudit && {
+        anchorAudit: validated.data.anchorAudit,
+      }),
     });
   } catch (err) {
     console.error("[score-prompt] Unexpected error:", err);

@@ -123,23 +123,32 @@ export type OptimiseResult = z.infer<typeof ResponseSchema>;
 // ============================================================================
 
 export async function POST(req: NextRequest): Promise<Response> {
-  // ── Rate limit ──────────────────────────────────────────────────────
-  const rl = rateLimit(req, {
-    keyPrefix: "optimise-prompt",
-    windowSeconds: 3600,
-    max: env.isProd ? 30 : 200,
-    keyParts: ["POST", "/api/optimise-prompt"],
-  });
+  // ── Builder quality key bypass ────────────────────────────────────
+  // Batch runner sends X-Builder-Quality-Key to bypass rate limiting.
+  // User-facing requests (no key) still rate-limited as before.
+  const builderKey = env.builderQualityKey;
+  const requestKey = req.headers.get("X-Builder-Quality-Key");
+  const isBatchRunner = Boolean(builderKey && requestKey && requestKey === builderKey);
 
-  if (!rl.allowed) {
-    return NextResponse.json(
-      {
-        error: "RATE_LIMITED",
-        message:
-          "Optimisation limit reached. Please wait before optimising again.",
-      },
-      { status: 429, headers: { "Retry-After": String(rl.retryAfterSeconds) } },
-    );
+  // ── Rate limit (skip for authenticated batch runner) ──────────────
+  if (!isBatchRunner) {
+    const rl = rateLimit(req, {
+      keyPrefix: "optimise-prompt",
+      windowSeconds: 3600,
+      max: env.isProd ? 30 : 200,
+      keyParts: ["POST", "/api/optimise-prompt"],
+    });
+
+    if (!rl.allowed) {
+      return NextResponse.json(
+        {
+          error: "RATE_LIMITED",
+          message:
+            "Optimisation limit reached. Please wait before optimising again.",
+        },
+        { status: 429, headers: { "Retry-After": String(rl.retryAfterSeconds) } },
+      );
+    }
   }
 
   // ── API key check ───────────────────────────────────────────────────
