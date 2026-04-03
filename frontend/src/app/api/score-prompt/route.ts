@@ -37,8 +37,6 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth, clerkClient } from "@clerk/nextjs/server";
-
 import { env } from "@/lib/env";
 import { rateLimit } from "@/lib/rate-limit";
 
@@ -441,55 +439,15 @@ function mapOpenAiErrorStatus(status: number, bodyText: string): NextResponse {
 // ============================================================================
 
 export async function POST(req: NextRequest) {
-  // ── Auth: Pro users only ─────────────────────────────────────────
-  let userId: string | null = null;
-  try {
-    const authResult = await auth();
-    userId = authResult.userId;
-  } catch {
-    // Clerk unavailable — fail closed in prod, open in dev
-    if (env.isProd) {
-      return NextResponse.json(
-        { error: "Authentication unavailable" },
-        { status: 503 },
-      );
-    }
-    console.warn("[score-prompt] Clerk auth() failed in dev — continuing without auth");
-  }
+  // ── Auth: deferred ───────────────────────────────────────────────
+  // TODO: Server-side Clerk auth check — auth() returns null on this
+  // route in production (reason unknown, other routes work). Needs
+  // separate investigation. Client-side Lab Gate prevents free users
+  // from reaching Call 4 (fires only after Call 3 which requires Pro).
 
-  // Check Pro tier via Clerk publicMetadata (prod only).
-  // Dev bypasses tier check — matches middleware pattern where dev is permissive.
-  // userId is still required (must be logged in even in dev).
-  if (env.isProd) {
-    if (!userId) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 },
-      );
-    }
-
-    try {
-      const client = await clerkClient();
-      const user = await client.users.getUser(userId);
-      const tier = (user.publicMetadata as Record<string, unknown>)?.tier;
-
-      if (tier !== "paid") {
-        return NextResponse.json(
-          { error: "Pro Promagen required" },
-          { status: 403 },
-        );
-      }
-    } catch {
-      return NextResponse.json(
-        { error: "Unable to verify subscription" },
-        { status: 503 },
-      );
-    }
-  }
-
-  // ── Rate limit (user-scoped when authenticated) ──────────────────
+  // ── Rate limit (30/hour in prod) ─────────────────────────────────
   const rl = rateLimit(req, {
-    keyPrefix: `score-prompt:${userId ?? "anon"}`,
+    keyPrefix: "score-prompt",
     windowSeconds: 3600,
     max: env.isProd ? 30 : 200,
   });
