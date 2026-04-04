@@ -8,7 +8,7 @@
 // Replaces the old placeholder page with a clean dashboard showing
 // quick-access cards for each admin section.
 //
-// Version: 6.0.0 — Phase 7.11a (add Scoring Health card)
+// Version: 7.0.0 — Part 8a (add Builder Quality card)
 // Created: 2026-02-27
 //
 // Existing features preserved: Yes.
@@ -21,6 +21,13 @@ import { CompressionDashboard } from '@/components/admin/compression-dashboard';
 import { FeedbackPulseDashboard } from '@/components/admin/feedback-pulse-dashboard';
 
 const TOOLS = [
+  {
+    href: '/admin/builder-quality',
+    label: 'Builder Quality',
+    description: 'Platform scores, anchor audits, regression tracking across 40 platforms. Call 3 builder intelligence.',
+    icon: '🔬',
+    colour: 'bg-red-500/15 ring-red-500/30 hover:bg-red-500/25',
+  },
   {
     href: '/admin/scoring-health',
     label: 'Scoring Health',
@@ -100,7 +107,7 @@ export default function AdminDashboard() {
           <Link
             key={href}
             href={href}
-            className={`group rounded-xl ring-1 transition-all ${colour}`}
+            className={`group cursor-pointer rounded-xl ring-1 transition-all ${colour}`}
             style={{ padding: 'clamp(16px, 2vw, 24px)' }}
           >
             <div className="mb-2 flex items-center gap-3">

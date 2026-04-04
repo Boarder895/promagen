@@ -1,10 +1,16 @@
 // src/app/api/score-prompt/route.ts
 // ============================================================================
-// POST /api/score-prompt — Builder Quality Scoring v2.0.0
+// POST /api/score-prompt — Builder Quality Scoring v2.1.0
 // ============================================================================
 // Internal builder quality regression tool. Scores optimised prompts with
 // diagnostic voice (identifies builder problems, not user errors), three-level
 // anchor audit (exact/approximate/dropped per §3.2), and severity weighting.
+//
+// v2.1.0 (4 Apr 2026):
+// - Rubric extracted to shared scoring-prompt.ts (Part 9 SSOT).
+//   buildScoringSystemPrompt() and buildScoringUserMessage() now imported
+//   from src/lib/builder-quality/scoring-prompt.ts.
+//   No changes to GPT scoring logic, validation, or response shape.
 //
 // v2.0.0 (3 Apr 2026):
 // - MAJOR: Scoring reframed from user-facing to builder diagnostics.
@@ -38,6 +44,10 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { env } from "@/lib/env";
+import {
+  buildScoringSystemPrompt,
+  buildScoringUserMessage,
+} from "@/lib/builder-quality/scoring-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -158,8 +168,6 @@ const ScoreRequestSchema = z
     }
   });
 
-type ScoreRequest = z.infer<typeof ScoreRequestSchema>;
-
 // ============================================================================
 // RESPONSE SCHEMA — Directives 0-3 (banded by score)
 // ============================================================================
@@ -202,229 +210,13 @@ function applyDirectiveCeilingClamp(
 }
 
 // ============================================================================
-// CALIBRATION EXAMPLES — Corrected and internally consistent
+// RUBRIC — Imported from shared scoring-prompt.ts (Part 9, SSOT)
 // ============================================================================
-
-const CALIBRATION_EXAMPLES = `
-CALIBRATION EXAMPLES — Diagnostic framing. These are builder assessments, not user feedback.
-
-EXAMPLE 1 — T1 CLIP platform (Stability AI), negativeSupport: separate
-Human input: "A fox shrine in autumn with red torii gates and falling maple leaves"
-Optimised prompt: "(red torii gates:1.3), (fox shrine:1.2), autumn scene, (falling maple leaves:1.1), golden hour lighting, detailed architecture, japanese style, cinematic composition, 8k uhd"
-Expected anchors: fox shrine (critical), torii gates (critical), red (important), autumn (important), maple leaves (important), falling (optional)
-Expected score: 76
-Expected anchorAudit: [
-  {"anchor":"fox shrine","severity":"critical","status":"exact"},
-  {"anchor":"torii gates","severity":"critical","status":"exact"},
-  {"anchor":"red","severity":"important","status":"exact"},
-  {"anchor":"autumn","severity":"important","status":"approximate","note":"Call 3 flattened 'autumn' to generic 'autumn scene' — lost the specificity of foliage colour and atmosphere"},
-  {"anchor":"maple leaves","severity":"important","status":"exact"},
-  {"anchor":"falling","severity":"optional","status":"exact"}
-]
-Expected directives (2):
-- "Call 3 padded with filler tokens 'cinematic composition, 8k uhd' — these waste CLIP weight budget without adding visual information"
-- "Call 3 flattened 'autumn' to 'autumn scene' — the assembled prompt's seasonal detail was more specific"
-Why this score: Good CLIP syntax, core anchors preserved. Builder added filler tokens that waste budget. Negative prompt is generic boilerplate (not the builder's fault if that's the platform default, but still scores low on negativeQuality).
-
-EXAMPLE 2 — T3 Natural Language platform (DALL-E 3), negativeSupport: none
-Human input: "A weathered lighthouse keeper standing on a rain-lashed gallery deck watching a storm"
-Optimised prompt: "A weathered lighthouse keeper grips the iron railing of a rain-lashed gallery deck, staring into enormous storm waves crashing against jagged rocks below. Salt spray rises into a purple and copper twilight while the lighthouse beam cuts a pale gold arc through sheets of driving rain."
-Expected anchors: lighthouse keeper (critical), gallery deck (critical), rain-lashed (important), storm (important)
-Expected score: 84
-Expected anchorAudit: [
-  {"anchor":"lighthouse keeper","severity":"critical","status":"exact"},
-  {"anchor":"gallery deck","severity":"critical","status":"exact"},
-  {"anchor":"rain-lashed","severity":"important","status":"exact"},
-  {"anchor":"storm","severity":"important","status":"exact"}
-]
-Expected directives (1):
-- "Call 3 added 'enormous' before 'storm waves' — the enrichment is acceptable but slightly inflated. Consider whether the builder's adjective choices add concrete visual data or just emphasis"
-Why this score: Strong NL prose, all anchors preserved with enrichment. Minor inflation from builder, but no anchor loss.
-`;
-
+// buildScoringSystemPrompt() and buildScoringUserMessage() are imported
+// from src/lib/builder-quality/scoring-prompt.ts. The rubric text lives
+// there and NOWHERE ELSE. If you need to change the rubric, change it
+// in scoring-prompt.ts — both GPT and Claude scoring use the same source.
 // ============================================================================
-// SYSTEM PROMPT — Builder diagnostic voice (§5.2)
-// ============================================================================
-
-function buildSystemPrompt(): string {
-  return `You are an internal builder quality diagnostic tool for Promagen's Call 3 prompt optimisation engine.
-
-YOUR ROLE:
-You assess whether Call 3 (the platform-specific optimisation step) preserved the user's visual anchors and improved the prompt. Your audience is the developer reviewing builder performance — NOT the user.
-
-DIAGNOSTIC VOICE:
-- Directives diagnose what Call 3 did wrong: "Call 3 dropped 'cinematic' from the user's anchor" — NOT "Restore the original colour"
-- You are identifying builder failures, not giving the user feedback
-- Reference "Call 3", "the builder", or "the optimiser" — never "you" or "the user should"
-
-CRITICAL SCORING PHILOSOPHY:
-- 90+ is EXCEPTIONAL and rare. Nearly flawless builder output.
-- 80-89 is STRONG. Most well-built platform prompts land here.
-- 70-79 is GOOD. Clear room for builder improvement.
-- Below 70 means significant builder problems.
-
-SCORING RUBRIC:
-
-1. ANCHOR PRESERVATION (0-30 points)
-Compare human input → assembled → optimised. Did Call 3 preserve the user's key visual anchors?
-- 28-30: Every anchor preserved exactly — rare
-- 24-27: All anchors present, minor rephrasing preserving meaning
-- 18-23: Most present but some rephrased loosely
-- 10-17: Noticeable anchor loss by the builder
-- 0-9: Most anchors lost
-
-2. PLATFORM-NATIVE FIT (0-25 points)
-T1/T2: syntax correctness. T3/T4: style and clarity.
-- 24-25: Flawless fit. Rare.
-- 18-23: Strong fit with minor issues
-- 12-17: Mixed
-- 0-11: Poor
-
-3. VISUAL SPECIFICITY (0-20 points)
-Materials, colours, light directions, spatial relationships, textures, atmospheric effects.
-- 19-20: Exceptional. Rare.
-- 15-18: Rich with 1-2 vague areas
-- 10-14: Decent but gaps
-- 0-9: Mostly vague
-
-4. ECONOMY & CLARITY (0-15 points)
-Judged against idealMin / idealMax / maxChars.
-- 14-15: Zero redundancy. Rare.
-- 11-13: Tight with minor waste
-- 7-10: Noticeable bloat
-- 0-6: Significant problems
-
-5. NEGATIVE QUALITY (0-10 points | null when unsupported)
-- 9-10: Platform-specific exclusions. Rare.
-- 6-8: Mostly specific
-- 3-5: Mix of specific and generic
-- 0-2: Generic boilerplate
-Unsupported: null.
-
-ANCHOR AUDIT:
-When expectedAnchors are provided, you MUST return an anchorAudit array classifying each anchor.
-
-Classification rules (§3.2):
-- EXACT: Literal match (case-insensitive) or minor punctuation difference
-- APPROXIMATE: Recognised synonym preserving visual meaning, morphological variant, reordered phrase keeping all content words, compressed equivalent keeping the specific noun
-- DROPPED: Generic abstraction, colour generalisation, noun class substitution, complete omission, meaning inversion, flattened to category label
-
-Sub-rules:
-A) If the dropped modifier is the visually distinctive part → DROPPED not approximate. "ornate black armor" → "black armor" = DROPPED.
-B) If the specific identifier token is lost → DROPPED. "French New Wave" → "French art film" = DROPPED.
-C) Negative anchors only count as approximate when absence is stated unambiguously. "no smoke" → "clear chimney" = DROPPED (implicit). "no smoke" → "smokeless" = APPROXIMATE.
-D) Proper nouns, brand names, film stocks, camera models, titled works: EXACT or DROPPED only. No approximate. "Kodak Vision3 500T" → "Kodak film" = DROPPED.
-E) Compound anchors with multiple distinctive modifiers: loss of any modifier that materially changes visual identity = DROPPED. "matte-black tactical trench coat" → "black trench coat" = DROPPED.
-
-WHEN IN DOUBT: classify as DROPPED. False negatives are worse than false positives for a regression tool.
-
-SCORE ↔ DIRECTIVE CONSISTENCY (MANDATORY):
-- 92-100: 0-1 directive. Near-flawless. Almost never appropriate.
-- 80-91: 1-2 directives.
-- 70-79: 2-3 directives.
-- Below 70: 3 directives.
-
-HARD LIMITS:
-- 3 directives → score MUST be ≤85
-- 2 directives → score MUST be ≤89
-- 1 directive → score MUST be ≤93
-
-DIRECTIVE RULES:
-- Diagnostic voice: "Call 3 dropped...", "The builder flattened...", "The optimiser added..."
-- Reference specific phrases from the prompt
-- Actionable for the developer fixing the builder
-
-${CALIBRATION_EXAMPLES}
-
-RESPONSE FORMAT (JSON only, no markdown, no backticks):
-{
-  "axes": {
-    "anchorPreservation": <0-30>,
-    "platformFit": <0-25>,
-    "visualSpecificity": <0-20>,
-    "economyClarity": <0-15>,
-    "negativeQuality": <0-10 or null>
-  },
-  "directives": [<0-3 diagnostic directives>],
-  "summary": "<one sentence builder diagnostic>",
-  "anchorAudit": [
-    {"anchor": "<term>", "severity": "<critical|important|optional>", "status": "<exact|approximate|dropped>", "note": "<optional diagnostic note>"}
-  ]
-}
-
-If no expectedAnchors were provided, omit the anchorAudit field entirely.`;
-}
-
-// ============================================================================
-// USER MESSAGE — Dynamic request context + expected anchors
-// ============================================================================
-
-function buildUserMessage(req: ScoreRequest): string {
-  const tierDesc =
-    req.tier === 1
-      ? "CLIP-weighted"
-      : req.tier === 2
-        ? "Midjourney-native"
-        : req.tier === 3
-          ? "Natural language"
-          : "Plain language";
-
-  const richCategories = Object.entries(req.categoryRichness)
-    .filter(([, value]) => typeof value === "number" && value > 0)
-    .map(([key, value]) => `${key}: ${value} terms`)
-    .join(", ");
-
-  const lines: string[] = [
-    `PLATFORM: ${req.platformName} (${req.platformId})`,
-    `TIER: T${req.tier} — ${tierDesc}`,
-    `PROMPT STYLE: ${req.promptStyle}`,
-    `CHARACTER LIMITS: idealMin=${req.idealMin}, idealMax=${req.idealMax}, maxChars=${req.maxChars}`,
-    `NEGATIVE SUPPORT: ${req.negativeSupport}`,
-    `CALL 3 MODE: ${req.call3Mode}`,
-    `CALL 3 CHANGES: ${req.call3Changes.length > 0 ? req.call3Changes.join("; ") : "none"}`,
-    `CATEGORY RICHNESS: ${richCategories || "none detected"}`,
-    "",
-    "ORIGINAL HUMAN INPUT:",
-    req.humanText,
-    "",
-    "ASSEMBLED PROMPT (pre-optimisation):",
-    req.assembledPrompt,
-    "",
-    "OPTIMISED PROMPT (score this):",
-    req.optimisedPrompt,
-  ];
-
-  if (req.negativeSupport === "separate") {
-    lines.push(
-      "",
-      "SEPARATE NEGATIVE PROMPT:",
-      req.negativePrompt || "(none provided)",
-    );
-  } else if (req.negativeSupport === "inline") {
-    lines.push(
-      "",
-      "INLINE NEGATIVE NOTE:",
-      "If explicit exclusions are present, they will be embedded in the optimised prompt itself.",
-    );
-  } else {
-    lines.push("", "NEGATIVE NOTE:", "This platform does not support negatives.");
-  }
-
-  // Expected anchors for anchor audit
-  if (req.expectedAnchors && req.expectedAnchors.length > 0) {
-    lines.push("", "EXPECTED ANCHORS (classify each in anchorAudit):");
-    for (const anchor of req.expectedAnchors) {
-      lines.push(`  - "${anchor.term}" [${anchor.severity}]`);
-    }
-    lines.push(
-      "",
-      "For each anchor above, return an entry in anchorAudit with status: exact, approximate, or dropped.",
-      "Follow the §3.2 matching policy and sub-rules A-E strictly. When in doubt, classify as dropped.",
-    );
-  }
-
-  return lines.join("\n");
-}
 
 // ============================================================================
 // HELPERS
@@ -501,8 +293,8 @@ export async function POST(req: NextRequest) {
   }
 
   const validatedRequest = parsed.data;
-  const systemPrompt = buildSystemPrompt();
-  const userMessage = buildUserMessage(validatedRequest);
+  const systemPrompt = buildScoringSystemPrompt();
+  const userMessage = buildScoringUserMessage(validatedRequest);
 
   // ── Call GPT (temperature 0.2 for scoring consistency) ──────────
   try {
