@@ -16,14 +16,33 @@
 //   # Include holdouts
 //   npx tsx scripts/builder-quality-run.ts --all --mode builder --holdout
 //
+//   # Rerun failed results from a prior run (creates child run)
+//   npx tsx scripts/builder-quality-run.ts --rerun bqr-<id>
+//
+//   # Resume a crashed/partial run in-place
+//   npx tsx scripts/builder-quality-run.ts --resume bqr-<id> --force
+//
 // Requirements:
 //   - Dev server running on localhost:3000
 //   - DATABASE_URL or POSTGRES_URL in .env.local
 //   - BUILDER_QUALITY_KEY in .env.local
 //   - Frozen snapshots generated (run generate-snapshots.ts first)
 //
+// v1.3.0 (4 Apr 2026): SIGINT handler + resumed_at column.
+//   - Ctrl+C sets run to 'partial' with interruption log before exiting
+//   - resumed_at timestamp set when --resume prepares run for resumption
+// v1.2.0 (4 Apr 2026): Part 10 — Rerun/resume mechanics.
+//   - --rerun <run_id>: re-run only error results, creates child run
+//   - --resume <run_id>: continue crashed run in-place, update-in-place model
+//   - --force: required for resuming stale runs (no progress for 10+ min)
+//   - Heartbeat (last_progress_at) on every result for stale detection
+//   - Tightened final status: complete = zero errors, partial = any errors
+//   - DB unique index on (run_id, platform_id, scene_id, replicate_index)
+//   - parent_run_id column for rerun child→parent linkage
+//   ChatGPT review: 97/100, signed off.
 // v1.0.0 (3 Apr 2026): Initial implementation.
 // Authority: docs/authority/builder-quality-intelligence.md v2.5.0 §7
+// Build plan: part-10-build-plan v1.2.0
 // ============================================================================
 
 import { readFileSync, existsSync } from 'node:fs';
@@ -47,6 +66,64 @@ const BUILDER_QUALITY_KEY = process.env.BUILDER_QUALITY_KEY || '';
 const DATABASE_URL = process.env.DATABASE_URL || process.env.POSTGRES_URL || '';
 const GPT_MODEL = 'gpt-5.4-mini';
 const SCORER_VERSION = '2.0.0';
+
+/** Stale detection: no progress for 10 minutes = stale */
+const STALE_THRESHOLD_MS = 10 * 60 * 1000;
+
+// ============================================================================
+// SIGINT HANDLER STATE
+// ============================================================================
+// Module-level state so the SIGINT handler can access the active run.
+// Set by main/handleRerun/handleResume before the pipeline starts.
+
+let sigintRunId: string | null = null;
+let sigintSql: postgres.Sql | null = null;
+let sigintLastLabel = '';
+let sigintHandled = false;
+
+/**
+ * Register the SIGINT (Ctrl+C) handler.
+ * Sets run status to 'partial', logs the interruption, closes DB, and exits.
+ * Only fires once — second Ctrl+C force-kills as normal.
+ */
+function registerSigintHandler(): void {
+  process.on('SIGINT', async () => {
+    if (sigintHandled) {
+      // Second Ctrl+C — force exit
+      process.exit(130);
+    }
+    sigintHandled = true;
+
+    console.log(''); // newline after ^C
+    log('');
+    log('⚠ INTERRUPTED (Ctrl+C)');
+
+    if (sigintLastLabel) {
+      log(`Last processing: ${sigintLastLabel}`);
+    }
+
+    if (sigintRunId && sigintSql) {
+      try {
+        await sigintSql`
+          UPDATE builder_quality_runs
+          SET status = 'partial',
+              error_detail = COALESCE(error_detail, '') || ' [interrupted by SIGINT]'
+          WHERE run_id = ${sigintRunId} AND status = 'running'
+        `;
+        log(`Run ${sigintRunId} marked as 'partial'`);
+      } catch (e) {
+        logError(`Could not update run status: ${e}`);
+      }
+
+      try {
+        await sigintSql.end();
+      } catch { /* best effort */ }
+    }
+
+    log('Resume with: npx tsx scripts/builder-quality-run.ts --resume <run_id> --force');
+    process.exit(130);
+  });
+}
 
 // ============================================================================
 // TYPES
@@ -97,6 +174,29 @@ interface CliArgs {
   replicates: number;
   holdout: boolean;
   baseline: string | null;
+  rerun: string | null;
+  resume: string | null;
+  force: boolean;
+}
+
+/** Settings loaded from an original run for rerun/resume inheritance */
+interface OriginalRunSettings {
+  mode: 'builder' | 'pipeline';
+  scope: string;
+  scorerMode: string;
+  replicateCount: number;
+  includeHoldout: boolean;
+  status: string;
+  totalExpected: number;
+  lastProgressAt: Date | null;
+  createdAt: Date;
+}
+
+/** A combination key: platform+scene+replicate */
+type ComboKey = string;
+
+function comboKey(platformId: string, sceneId: string, replicateIndex: number): ComboKey {
+  return `${platformId}:${sceneId}:${replicateIndex}`;
 }
 
 // ============================================================================
@@ -132,6 +232,14 @@ function generateRunId(): string {
 function truncate(text: string, maxChars: number): string {
   if (text.length <= maxChars) return text;
   return text.slice(0, maxChars - 3) + '...';
+}
+
+/** Format milliseconds as human-readable duration */
+function formatDuration(ms: number): string {
+  const mins = Math.floor(ms / 60000);
+  const secs = Math.floor((ms % 60000) / 1000);
+  if (mins > 0) return `${mins}m ${secs}s`;
+  return `${secs}s`;
 }
 
 // Route field limits (must match route schemas)
@@ -179,6 +287,9 @@ function parseArgs(): CliArgs {
     replicates: 1,
     holdout: false,
     baseline: null,
+    rerun: null,
+    resume: null,
+    force: false,
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -206,11 +317,46 @@ function parseArgs(): CliArgs {
       case '--baseline':
         result.baseline = args[++i] || null;
         break;
+      case '--rerun':
+        result.rerun = args[++i] || null;
+        break;
+      case '--resume':
+        result.resume = args[++i] || null;
+        break;
+      case '--force':
+        result.force = true;
+        break;
     }
   }
 
-  if (!result.platform && !result.all) {
-    console.error('Usage: npx tsx scripts/builder-quality-run.ts --platform <id> | --all [--mode builder] [--holdout]');
+  // ── Mutual exclusion validation ──────────────────────────────────
+  if (result.rerun && result.resume) {
+    console.error('ERROR: Cannot use --rerun and --resume together.');
+    process.exit(1);
+  }
+
+  const isRecovery = result.rerun || result.resume;
+
+  if (isRecovery && (result.all || result.platform)) {
+    console.error('ERROR: Scope is inherited from original run. Remove --all/--platform.');
+    process.exit(1);
+  }
+
+  // Check for settings flags that shouldn't be used with recovery
+  const rawArgs = process.argv.slice(2);
+  const settingsFlags = ['--mode', '--scorer', '--replicates', '--holdout'];
+  if (isRecovery) {
+    for (const flag of settingsFlags) {
+      if (rawArgs.includes(flag)) {
+        console.error(`ERROR: Settings inherited from original run. Remove ${flag}.`);
+        process.exit(1);
+      }
+    }
+  }
+
+  // Normal mode: require --platform or --all
+  if (!isRecovery && !result.platform && !result.all) {
+    console.error('Usage: npx tsx scripts/builder-quality-run.ts --platform <id> | --all | --rerun <run_id> | --resume <run_id> [--force]');
     process.exit(1);
   }
 
@@ -475,6 +621,25 @@ async function ensureTables(sql: postgres.Sql): Promise<void> {
       flagged_count   SMALLINT DEFAULT 0
     )
   `;
+
+  // v1.2.0: Add parent_run_id for rerun child→parent linkage
+  await sql`
+    ALTER TABLE builder_quality_runs
+    ADD COLUMN IF NOT EXISTS parent_run_id TEXT
+  `;
+
+  // v1.2.0: Add last_progress_at heartbeat for stale detection
+  await sql`
+    ALTER TABLE builder_quality_runs
+    ADD COLUMN IF NOT EXISTS last_progress_at TIMESTAMPTZ
+  `;
+
+  // v1.3.0: Add resumed_at timestamp for dashboard audit trail
+  await sql`
+    ALTER TABLE builder_quality_runs
+    ADD COLUMN IF NOT EXISTS resumed_at TIMESTAMPTZ
+  `;
+
   await sql`
     CREATE TABLE IF NOT EXISTS builder_quality_results (
       id              SERIAL PRIMARY KEY,
@@ -523,6 +688,7 @@ async function ensureTables(sql: postgres.Sql): Promise<void> {
       is_holdout      BOOLEAN NOT NULL DEFAULT FALSE
     )
   `;
+
   // Indexes
   await sql`CREATE INDEX IF NOT EXISTS idx_bqr_platform_created ON builder_quality_results (platform_id, created_at DESC)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_bqr_run ON builder_quality_results (run_id)`;
@@ -530,138 +696,275 @@ async function ensureTables(sql: postgres.Sql): Promise<void> {
   await sql`CREATE INDEX IF NOT EXISTS idx_bqr_scene ON builder_quality_results (scene_id, platform_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_bqr_critical_drops ON builder_quality_results (critical_anchors_dropped) WHERE critical_anchors_dropped > 0`;
   await sql`CREATE INDEX IF NOT EXISTS idx_bqr_holdout ON builder_quality_results (is_holdout) WHERE is_holdout = TRUE`;
+
+  // v1.2.0: Unique index enforcing logical uniqueness invariant at DB layer
+  // Hard rule: exactly one row per (run_id, platform_id, scene_id, replicate_index)
+  try {
+    await sql`
+      CREATE UNIQUE INDEX IF NOT EXISTS bqr_results_unique_logical
+      ON builder_quality_results (run_id, platform_id, scene_id, replicate_index)
+    `;
+  } catch (e) {
+    // If index creation fails due to existing duplicate rows, log warning and continue.
+    // Operator must clean up duplicates manually before the index can be created.
+    logError(`Could not create unique index (possible duplicate rows): ${e}`);
+    log('Run this query to find duplicates:');
+    log('  SELECT run_id, platform_id, scene_id, replicate_index, COUNT(*)');
+    log('  FROM builder_quality_results');
+    log('  GROUP BY run_id, platform_id, scene_id, replicate_index');
+    log('  HAVING COUNT(*) > 1;');
+  }
+
+  // Part 11: User sampling columns on results table
+  await sql`ALTER TABLE builder_quality_results ADD COLUMN IF NOT EXISTS showcase_entry_id TEXT`;
+  await sql`ALTER TABLE builder_quality_results ADD COLUMN IF NOT EXISTS showcase_created_at TIMESTAMPTZ`;
+  await sql`ALTER TABLE builder_quality_results ADD COLUMN IF NOT EXISTS showcase_tier TEXT`;
+  await sql`ALTER TABLE builder_quality_results ADD COLUMN IF NOT EXISTS scorer_version TEXT`;
+
+  // Part 11: Idempotency index — one showcase entry per scorer version for user samples
+  try {
+    await sql`
+      CREATE UNIQUE INDEX IF NOT EXISTS bqr_results_unique_user_sample
+      ON builder_quality_results (showcase_entry_id, scorer_version)
+      WHERE source = 'user_sample' AND showcase_entry_id IS NOT NULL
+    `;
+  } catch (e) {
+    logError(`Could not create user-sample unique index: ${e}`);
+  }
 }
 
 // ============================================================================
-// MAIN
+// RERUN / RESUME HELPERS
 // ============================================================================
 
-async function main(): Promise<void> {
-  const args = parseArgs();
-
-  // ── Preflight checks ─────────────────────────────────────────────
-  if (!BUILDER_QUALITY_KEY) {
-    logError('BUILDER_QUALITY_KEY not set in .env.local');
-    process.exit(1);
-  }
-
-  log('═══ BUILDER QUALITY BATCH RUNNER v1.0.0 ═══');
-  log(`Mode: ${args.mode}`);
-  log(`Scope: ${args.all ? 'all platforms' : args.platform}`);
-  log(`Scorer: ${args.scorer}`);
-  log(`Replicates: ${args.replicates}`);
-  log(`Holdout: ${args.holdout}`);
-  log('');
-
-  // ── Load data ────────────────────────────────────────────────────
-  const scenes = loadScenes(args.holdout);
-  const snapshots = loadSnapshots(args.holdout);
-  const platformConfig = loadPlatformConfig();
-  const platforms = getActivePlatforms(platformConfig, args.platform);
-
-  log(`Scenes: ${scenes.length}`);
-  log(`Snapshots: ${snapshots.size}`);
-  log(`Platforms: ${platforms.length}`);
-
-  const totalExpected = platforms.length * scenes.length * args.replicates;
-  log(`Total expected results: ${totalExpected}`);
-  log('');
-
-  // ── Database setup ───────────────────────────────────────────────
-  const sql = createDb();
-  try {
-    await ensureTables(sql);
-    logSuccess('Database tables verified');
-  } catch (e) {
-    logError(`Database setup failed: ${e}`);
-    await sql.end();
-    process.exit(1);
-  }
-
-  // ── Create run record ────────────────────────────────────────────
-  const runId = generateRunId();
-  const scorerPromptHash = md5(SCORER_VERSION + '-diagnostic-v2');
-
-  await sql`
-    INSERT INTO builder_quality_runs (
-      run_id, mode, scope, scorer_mode, replicate_count,
-      include_holdout, scorer_version, scorer_prompt_hash,
-      gpt_model, status, total_expected, total_completed
-    ) VALUES (
-      ${runId}, ${args.mode}, ${args.all ? 'all' : args.platform!},
-      ${args.scorer}, ${args.replicates}, ${args.holdout},
-      ${SCORER_VERSION}, ${scorerPromptHash}, ${GPT_MODEL},
-      'running', ${totalExpected}, 0
-    )
+/**
+ * Load settings from an original run for rerun/resume inheritance.
+ */
+async function loadOriginalRunSettings(
+  sql: postgres.Sql,
+  runId: string,
+): Promise<OriginalRunSettings | null> {
+  const rows = await sql`
+    SELECT mode, scope, scorer_mode, replicate_count, include_holdout,
+           status, total_expected, last_progress_at, created_at
+    FROM builder_quality_runs WHERE run_id = ${runId}
   `;
-  log(`Run created: ${runId}`);
-  log('');
+  if (rows.length === 0) return null;
+  const r = rows[0] as Record<string, unknown>;
+  return {
+    mode: r.mode as 'builder' | 'pipeline',
+    scope: r.scope as string,
+    scorerMode: r.scorer_mode as string,
+    replicateCount: r.replicate_count as number,
+    includeHoldout: r.include_holdout as boolean,
+    status: r.status as string,
+    totalExpected: (r.total_expected as number) ?? 0,
+    lastProgressAt: r.last_progress_at ? new Date(r.last_progress_at as string) : null,
+    createdAt: new Date(r.created_at as string),
+  };
+}
 
-  // ── Run pipeline ─────────────────────────────────────────────────
-  let completed = 0;
+/**
+ * Update heartbeat + total_completed on the run record.
+ * Piggybacks on the existing counter update — one extra column, zero additional queries.
+ */
+async function updateHeartbeat(sql: postgres.Sql, runId: string, totalCompleted: number): Promise<void> {
+  await sql`
+    UPDATE builder_quality_runs
+    SET total_completed = ${totalCompleted}, last_progress_at = NOW()
+    WHERE run_id = ${runId}
+  `;
+}
+
+/**
+ * Recalculate total_completed from actual row states.
+ * Authoritative: counts rows, not incremental counter.
+ */
+async function recalculateTotalCompleted(sql: postgres.Sql, runId: string): Promise<number> {
+  const rows = await sql`
+    SELECT COUNT(*)::int AS count
+    FROM builder_quality_results
+    WHERE run_id = ${runId} AND status = 'complete'
+  `;
+  return (rows[0] as Record<string, unknown>).count as number;
+}
+
+/**
+ * Count error rows for a run.
+ */
+async function countErrors(sql: postgres.Sql, runId: string): Promise<number> {
+  const rows = await sql`
+    SELECT COUNT(*)::int AS count
+    FROM builder_quality_results
+    WHERE run_id = ${runId} AND status = 'error'
+  `;
+  return (rows[0] as Record<string, unknown>).count as number;
+}
+
+/**
+ * Determine final run status.
+ * complete = zero error rows. partial = any errors.
+ */
+function determineFinalStatus(errorCount: number): 'complete' | 'partial' {
+  return errorCount === 0 ? 'complete' : 'partial';
+}
+
+// ============================================================================
+// PIPELINE CORE — shared by normal, rerun, and resume
+// ============================================================================
+
+interface PipelineContext {
+  sql: postgres.Sql;
+  runId: string;
+  platformConfig: Record<string, PlatformConfig>;
+  snapshots: Map<string, FrozenSnapshot>;
+  scenes: TestScene[];
+  mode: 'builder' | 'pipeline';
+  /** Error row IDs for UPDATE-in-place (resume only). Null = always INSERT. */
+  errorRowIds: Map<ComboKey, number> | null;
+}
+
+interface PipelineResult {
+  completed: number;
+  errors: number;
+  scores: number[];
+  updatedErrorCount: number;
+  insertedNewCount: number;
+}
+
+/**
+ * Run the pipeline for a set of platform+scene+replicate combinations.
+ * Used by normal runs, reruns, and resumes.
+ */
+async function runPipeline(
+  ctx: PipelineContext,
+  combinations: { platformId: string; sceneId: string; replicateIndex: number }[],
+  startingCompleted: number,
+): Promise<PipelineResult> {
+  let completed = startingCompleted;
   let errors = 0;
+  let updatedErrorCount = 0;
+  let insertedNewCount = 0;
   const scores: number[] = [];
 
-  for (const platformId of platforms) {
-    const pConfig = platformConfig[platformId]!;
+  // Group combinations by platform for console output
+  const byPlatform = new Map<string, { sceneId: string; replicateIndex: number }[]>();
+  for (const c of combinations) {
+    const arr = byPlatform.get(c.platformId) || [];
+    arr.push({ sceneId: c.sceneId, replicateIndex: c.replicateIndex });
+    byPlatform.set(c.platformId, arr);
+  }
+
+  for (const [platformId, combos] of byPlatform) {
+    const pConfig = ctx.platformConfig[platformId];
+    if (!pConfig) {
+      logError(`Platform "${platformId}" not in config — skipping`);
+      errors += combos.length;
+      continue;
+    }
+
     const tier = pConfig.tier ?? 3;
-    const builderVersion = getBuilderVersion(platformId, platformConfig);
+    const builderVersion = getBuilderVersion(platformId, ctx.platformConfig);
 
     log(`── ${platformId} (T${tier}) ──`);
 
-    for (const scene of scenes) {
-      for (let rep = 1; rep <= args.replicates; rep++) {
-        const snapshotKey = `${scene.id}:${tier}`;
-        const snapshot = snapshots.get(snapshotKey);
+    for (const { sceneId, replicateIndex } of combos) {
+      const scene = ctx.scenes.find((s) => s.id === sceneId);
+      if (!scene) {
+        logError(`  Scene "${sceneId}" not found — skipping`);
+        errors++;
+        continue;
+      }
 
-        if (!snapshot && args.mode === 'builder') {
-          logError(`  ${scene.id} rep${rep}: no snapshot for T${tier} — skipping`);
-          errors++;
-          continue;
+      const snapshotKey = `${scene.id}:${tier}`;
+      const snapshot = ctx.snapshots.get(snapshotKey);
+
+      if (!snapshot && ctx.mode === 'builder') {
+        logError(`  ${scene.id} rep${replicateIndex}: no snapshot for T${tier} — skipping`);
+        errors++;
+        continue;
+      }
+
+      const assembledPrompt = snapshot?.assembledPrompt ?? scene.humanText;
+      const label = `  ${scene.id}${combos.length > 1 || replicateIndex > 1 ? ` rep${replicateIndex}` : ''}`;
+      const key = comboKey(platformId, sceneId, replicateIndex);
+      const existingErrorRowId = ctx.errorRowIds?.get(key) ?? null;
+
+      // Track for SIGINT handler
+      sigintLastLabel = `${platformId} / ${scene.id} / rep${replicateIndex}`;
+
+      try {
+        // ── Call 3: Optimise ──────────────────────────────────
+        const c3Result = await callOptimise(
+          assembledPrompt,
+          scene.humanText,
+          platformId,
+          pConfig,
+        );
+
+        if (!c3Result.optimised || c3Result.optimised.trim().length === 0) {
+          throw new Error('Empty optimised prompt from Call 3');
         }
 
-        const assembledPrompt = snapshot?.assembledPrompt ?? scene.humanText;
-        const label = `  ${scene.id}${args.replicates > 1 ? ` rep${rep}` : ''}`;
+        // ── Score ─────────────────────────────────────────────
+        const scoreResult = await callScore(
+          c3Result.optimised,
+          scene.humanText,
+          assembledPrompt,
+          c3Result.negative,
+          platformId,
+          pConfig,
+          scene.expectedAnchors,
+        );
 
-        try {
-          // ── Call 3: Optimise ──────────────────────────────────
-          const c3Result = await callOptimise(
-            assembledPrompt,
-            scene.humanText,
-            platformId,
-            pConfig,
-          );
+        // ── Anchor audit summary ──────────────────────────────
+        const audit = scoreResult.anchorAudit || [];
+        const preserved = audit.filter(
+          (a: { status: string }) => a.status === 'exact' || a.status === 'approximate',
+        ).length;
+        const dropped = audit.filter(
+          (a: { status: string }) => a.status === 'dropped',
+        ).length;
+        const critDropped = audit.filter(
+          (a: { status: string; severity: string }) =>
+            a.status === 'dropped' && a.severity === 'critical',
+        ).length;
 
-          if (!c3Result.optimised || c3Result.optimised.trim().length === 0) {
-            throw new Error('Empty optimised prompt from Call 3');
-          }
-
-          // ── Score ─────────────────────────────────────────────
-          const scoreResult = await callScore(
-            c3Result.optimised,
-            scene.humanText,
-            assembledPrompt,
-            c3Result.negative,
-            platformId,
-            pConfig,
-            scene.expectedAnchors,
-          );
-
-          // ── Anchor audit summary ──────────────────────────────
-          const audit = scoreResult.anchorAudit || [];
-          const preserved = audit.filter(
-            (a: { status: string }) => a.status === 'exact' || a.status === 'approximate',
-          ).length;
-          const dropped = audit.filter(
-            (a: { status: string }) => a.status === 'dropped',
-          ).length;
-          const critDropped = audit.filter(
-            (a: { status: string; severity: string }) =>
-              a.status === 'dropped' && a.severity === 'critical',
-          ).length;
-
-          // ── Store result ──────────────────────────────────────
-          await sql`
+        // ── Store result (INSERT or UPDATE) ────────────────────
+        if (existingErrorRowId !== null) {
+          // Resume: UPDATE existing error row in place
+          await ctx.sql`
+            UPDATE builder_quality_results
+            SET
+              created_at = NOW(),
+              call3_mode = ${pConfig.call3Mode ?? 'gpt_rewrite'},
+              builder_version = ${builderVersion},
+              snapshot_hash = ${snapshot?.snapshotHash ?? null},
+              raw_optimised_prompt = ${c3Result.optimised},
+              optimised_prompt = ${c3Result.optimised},
+              negative_prompt = ${c3Result.negative ?? null},
+              output_hash = ${md5(c3Result.optimised)},
+              raw_optimised_char_count = ${c3Result.optimised.length},
+              optimised_char_count = ${c3Result.optimised.length},
+              post_processing_changed = ${false},
+              gpt_score = ${scoreResult.score},
+              gpt_axes = ${JSON.stringify(scoreResult.axes)},
+              gpt_directives = ${JSON.stringify(scoreResult.directives)},
+              gpt_summary = ${scoreResult.summary},
+              median_score = ${scoreResult.score},
+              anchor_audit = ${JSON.stringify(audit)},
+              anchors_expected = ${scene.expectedAnchors.length},
+              anchors_preserved = ${preserved},
+              anchors_dropped = ${dropped},
+              critical_anchors_dropped = ${critDropped},
+              status = 'complete',
+              error_detail = ${null}
+            WHERE id = ${existingErrorRowId}
+          `;
+          updatedErrorCount++;
+        } else {
+          // Normal INSERT
+          await ctx.sql`
             INSERT INTO builder_quality_results (
               run_id, platform_id, platform_name, scene_id, scene_name,
               tier, call3_mode, builder_version, replicate_index, snapshot_hash,
@@ -673,9 +976,9 @@ async function main(): Promise<void> {
               anchors_dropped, critical_anchors_dropped,
               source, status, is_holdout
             ) VALUES (
-              ${runId}, ${platformId}, ${platformId}, ${scene.id}, ${scene.name},
+              ${ctx.runId}, ${platformId}, ${platformId}, ${scene.id}, ${scene.name},
               ${tier}, ${pConfig.call3Mode ?? 'gpt_rewrite'}, ${builderVersion},
-              ${rep}, ${snapshot?.snapshotHash ?? null},
+              ${replicateIndex}, ${snapshot?.snapshotHash ?? null},
               ${scene.humanText}, ${assembledPrompt},
               ${c3Result.optimised}, ${c3Result.optimised},
               ${c3Result.negative ?? null},
@@ -692,28 +995,34 @@ async function main(): Promise<void> {
               'batch', 'complete', ${scene.holdout}
             )
           `;
+          insertedNewCount++;
+        }
 
-          // ── Update run counter ────────────────────────────────
-          completed++;
-          scores.push(scoreResult.score);
-          await sql`
-            UPDATE builder_quality_runs
-            SET total_completed = ${completed}
-            WHERE run_id = ${runId}
-          `;
+        // ── Update heartbeat + counter ────────────────────────
+        completed++;
+        scores.push(scoreResult.score);
+        await updateHeartbeat(ctx.sql, ctx.runId, completed);
 
-          const anchSummary = audit.length > 0
-            ? ` anchors: ${preserved}/${scene.expectedAnchors.length}${critDropped > 0 ? ` (${critDropped} critical dropped!)` : ''}`
-            : '';
-          log(`${label}: score=${scoreResult.score}${anchSummary}`);
+        const anchSummary = audit.length > 0
+          ? ` anchors: ${preserved}/${scene.expectedAnchors.length}${critDropped > 0 ? ` (${critDropped} critical dropped!)` : ''}`
+          : '';
+        const updateTag = existingErrorRowId !== null ? ' [updated]' : '';
+        log(`${label}: score=${scoreResult.score}${anchSummary}${updateTag}`);
 
-        } catch (e) {
-          errors++;
-          logError(`${label}: ${e}`);
+      } catch (e) {
+        errors++;
+        logError(`${label}: ${e}`);
 
-          // Store error result
-          try {
-            await sql`
+        // Store error result (or update existing error row with new error)
+        try {
+          if (existingErrorRowId !== null) {
+            await ctx.sql`
+              UPDATE builder_quality_results
+              SET error_detail = ${String(e).slice(0, 500)}, created_at = NOW()
+              WHERE id = ${existingErrorRowId}
+            `;
+          } else {
+            await ctx.sql`
               INSERT INTO builder_quality_results (
                 run_id, platform_id, platform_name, scene_id, scene_name,
                 tier, call3_mode, builder_version, replicate_index,
@@ -726,8 +1035,8 @@ async function main(): Promise<void> {
                 critical_anchors_dropped,
                 source, status, error_detail, is_holdout
               ) VALUES (
-                ${runId}, ${platformId}, ${platformId}, ${scene.id}, ${scene.name},
-                ${tier}, ${pConfig.call3Mode ?? 'gpt_rewrite'}, ${builderVersion}, ${rep},
+                ${ctx.runId}, ${platformId}, ${platformId}, ${scene.id}, ${scene.name},
+                ${tier}, ${pConfig.call3Mode ?? 'gpt_rewrite'}, ${builderVersion}, ${replicateIndex},
                 ${scene.humanText}, ${assembledPrompt}, '', '',
                 ${md5(assembledPrompt)}, '',
                 ${assembledPrompt.length}, 0, 0,
@@ -737,33 +1046,30 @@ async function main(): Promise<void> {
                 'batch', 'error', ${String(e).slice(0, 500)}, ${scene.holdout}
               )
             `;
-          } catch { /* best effort */ }
-        }
+          }
+        } catch { /* best effort */ }
 
-        // Brief pause between API calls
-        await new Promise((r) => setTimeout(r, 300));
+        // Still update heartbeat on errors
+        await updateHeartbeat(ctx.sql, ctx.runId, completed).catch(() => {});
       }
+
+      // Brief pause between API calls
+      await new Promise((r) => setTimeout(r, 300));
     }
   }
 
-  // ── Finalise run ─────────────────────────────────────────────────
-  const overallMean = scores.length > 0
-    ? Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 100) / 100
-    : null;
+  return { completed, errors, scores, updatedErrorCount, insertedNewCount };
+}
 
-  const runStatus = errors > totalExpected * 0.5 ? 'partial' : 'complete';
+// ============================================================================
+// AGGREGATION + SUMMARY (shared)
+// ============================================================================
 
-  await sql`
-    UPDATE builder_quality_runs
-    SET
-      status = ${runStatus},
-      completed_at = NOW(),
-      total_completed = ${completed},
-      mean_gpt_score = ${overallMean},
-      error_detail = ${errors > 0 ? `${errors} errors` : null}
-    WHERE run_id = ${runId}
-  `;
-
+async function loadAndPrintSummary(
+  sql: postgres.Sql,
+  runId: string,
+  args: { baseline: string | null; mode: string; holdout: boolean; scorer: string; replicates: number },
+): Promise<void> {
   // ── Load results for aggregation ─────────────────────────────────
   const allResults = await sql`
     SELECT platform_id, platform_name, scene_id, scene_name, tier,
@@ -776,7 +1082,6 @@ async function main(): Promise<void> {
   `;
 
   // ── Three-layer aggregation ──────────────────────────────────────
-  // Import aggregation dynamically (relative path — scripts can't use @/ aliases)
   const {
     aggregateByPlatform,
     aggregateByScene,
@@ -807,24 +1112,11 @@ async function main(): Promise<void> {
   const sceneAgg = aggregateByScene(resultRows);
   const _platformSceneAgg = aggregateByPlatformScene(resultRows);
 
-  // ── Summary header ───────────────────────────────────────────────
-  log('');
-  log('═══ BATCH RUN COMPLETE ═══');
-  log(`Run ID: ${runId}`);
-  log(`Status: ${runStatus}`);
-  log(`Completed: ${completed}/${totalExpected}`);
-  log(`Errors: ${errors}`);
-  if (overallMean !== null) {
-    log(`Mean GPT score: ${overallMean}`);
-    log(`Score range: ${Math.min(...scores)}–${Math.max(...scores)}`);
-  }
-
   // ── Baseline comparison ──────────────────────────────────────────
   if (args.baseline) {
     log('');
     log(`── Baseline Comparison: ${args.baseline} ──`);
 
-    // Load baseline run metadata
     const baselineRunRows = await sql`
       SELECT mode, include_holdout, scorer_mode, replicate_count
       FROM builder_quality_runs WHERE run_id = ${args.baseline}
@@ -844,7 +1136,6 @@ async function main(): Promise<void> {
         },
       );
 
-      // Show warnings
       for (const w of compat.warnings) {
         log(`  ⚠ ${w}`);
       }
@@ -856,7 +1147,6 @@ async function main(): Promise<void> {
         const confidence = getComparisonConfidence(args.replicates, baselineRun.replicate_count as number);
         log(`  Comparison confidence: ${confidence}`);
 
-        // Load baseline results
         const baselineResults = await sql`
           SELECT platform_id, platform_name, scene_id, scene_name, tier,
                  replicate_index, gpt_score, anchors_expected, anchors_preserved,
@@ -885,7 +1175,6 @@ async function main(): Promise<void> {
 
         const comparison = compareToBaseline(resultRows, baselineRows, confidence);
 
-        // Platform deltas
         log('');
         const classIcons: Record<string, string> = {
           regression: '⚠ REGRESSION',
@@ -904,7 +1193,6 @@ async function main(): Promise<void> {
           log(`  ${p.platformId.padEnd(22)} ${delta.padStart(6)}  crit_new=${p.criticalNewlyDropped}  ${icon}`);
         }
 
-        // Worst scene regressions
         if (comparison.worstSceneRegressions.length > 0) {
           log('');
           log('── Worst Scene Regressions ──');
@@ -913,7 +1201,6 @@ async function main(): Promise<void> {
           }
         }
 
-        // Decision summary
         log('');
         log('── Decision ──');
         log(`  Regressions flagged: ${regressions.length}${regressions.length > 0 ? ` (${regressions.map((r: { platformId: string }) => r.platformId).join(', ')})` : ''}`);
@@ -923,7 +1210,7 @@ async function main(): Promise<void> {
     }
   }
 
-  // ── Platform summary (always shown) ──────────────────────────────
+  // ── Platform summary ──────────────────────────────────────────────
   if (platformAgg.length > 0) {
     log('');
     log('── Platform Summary (sorted by mean, lowest first) ──');
@@ -933,7 +1220,7 @@ async function main(): Promise<void> {
     }
   }
 
-  // ── Scene summary (always shown) ─────────────────────────────────
+  // ── Scene summary ─────────────────────────────────────────────────
   if (sceneAgg.length > 0) {
     log('');
     log('── Scene Summary (weakest first) ──');
@@ -941,12 +1228,507 @@ async function main(): Promise<void> {
       log(`  ${s.sceneId.padEnd(38)} mean=${s.meanScore}  stddev=${s.stddevScore}  preserved=${s.preservationPct}%`);
     }
   }
+}
+
+// ============================================================================
+// HANDLE RERUN
+// ============================================================================
+
+async function handleRerun(args: CliArgs, sql: postgres.Sql): Promise<void> {
+  const originalRunId = args.rerun!;
+
+  // ── Validate original run ───────────────────────────────────────
+  const original = await loadOriginalRunSettings(sql, originalRunId);
+  if (!original) {
+    logError(`Run "${originalRunId}" not found in database.`);
+    process.exit(1);
+  }
+  if (original.status === 'running') {
+    logError(`Run "${originalRunId}" has status 'running'. Use --resume instead.`);
+    process.exit(1);
+  }
+  if (original.status === 'complete') {
+    log(`Run "${originalRunId}" is complete (zero errors) — nothing to rerun.`);
+    await sql.end();
+    process.exit(0);
+  }
+
+  // ── Query error results ─────────────────────────────────────────
+  const errorRows = await sql`
+    SELECT DISTINCT platform_id, scene_id, replicate_index
+    FROM builder_quality_results
+    WHERE run_id = ${originalRunId} AND status = 'error'
+  `;
+
+  if (errorRows.length === 0) {
+    log(`No errors to rerun from "${originalRunId}".`);
+    await sql.end();
+    process.exit(0);
+  }
+
+  const errorCombos = errorRows.map((r: Record<string, unknown>) => ({
+    platformId: r.platform_id as string,
+    sceneId: r.scene_id as string,
+    replicateIndex: r.replicate_index as number,
+  }));
+
+  const uniquePlatforms = new Set(errorCombos.map((c) => c.platformId));
+
+  // ── Print header ────────────────────────────────────────────────
+  log('═══ BUILDER QUALITY BATCH RUNNER v1.3.0 ═══');
+  log(`Mode: RERUN (parent: ${originalRunId})`);
+  log(`Original run: ${original.createdAt.toISOString()}, scope=${original.scope}, scorer=${original.scorerMode}, replicates=${original.replicateCount}`);
+  log(`Errors found: ${errorCombos.length} of ${original.totalExpected}`);
+  log(`Re-running: ${errorCombos.length} combinations across ${uniquePlatforms.size} platforms`);
+  log('');
+
+  // ── Load data ───────────────────────────────────────────────────
+  const scenes = loadScenes(original.includeHoldout);
+  const snapshots = loadSnapshots(original.includeHoldout);
+  const platformConfig = loadPlatformConfig();
+
+  // ── Create child run ────────────────────────────────────────────
+  const runId = generateRunId();
+  const scorerPromptHash = md5(SCORER_VERSION + '-diagnostic-v2');
+
+  await sql`
+    INSERT INTO builder_quality_runs (
+      run_id, mode, scope, scorer_mode, replicate_count,
+      include_holdout, scorer_version, scorer_prompt_hash,
+      gpt_model, status, total_expected, total_completed,
+      parent_run_id, baseline_run_id, last_progress_at
+    ) VALUES (
+      ${runId}, ${original.mode}, ${'rerun:' + originalRunId},
+      ${original.scorerMode}, ${original.replicateCount}, ${original.includeHoldout},
+      ${SCORER_VERSION}, ${scorerPromptHash}, ${GPT_MODEL},
+      'running', ${errorCombos.length}, 0,
+      ${originalRunId}, ${args.baseline ?? null}, NOW()
+    )
+  `;
+  log(`Rerun created: ${runId} (child of ${originalRunId})`);
+  sigintRunId = runId;
+  log('');
+
+  // ── Run pipeline ────────────────────────────────────────────────
+  const result = await runPipeline(
+    { sql, runId, platformConfig, snapshots, scenes, mode: original.mode, errorRowIds: null },
+    errorCombos,
+    0,
+  );
+
+  // ── Finalise ────────────────────────────────────────────────────
+  const finalCompleted = await recalculateTotalCompleted(sql, runId);
+  const finalErrors = await countErrors(sql, runId);
+  const finalStatus = determineFinalStatus(finalErrors);
+  const overallMean = result.scores.length > 0
+    ? Math.round((result.scores.reduce((a, b) => a + b, 0) / result.scores.length) * 100) / 100
+    : null;
+
+  await sql`
+    UPDATE builder_quality_runs
+    SET
+      status = ${finalStatus},
+      completed_at = NOW(),
+      total_completed = ${finalCompleted},
+      mean_gpt_score = ${overallMean},
+      error_detail = ${finalErrors > 0 ? `${finalErrors} errors` : null}
+    WHERE run_id = ${runId}
+  `;
+
+  // ── Summary ─────────────────────────────────────────────────────
+  log('');
+  log('═══ RERUN COMPLETE ═══');
+  log(`Parent run: ${originalRunId}`);
+  log(`Rerun ID: ${runId}`);
+  log(`Status: ${finalStatus}`);
+  log(`Re-ran: ${errorCombos.length} error results`);
+  log(`Succeeded: ${result.completed}`);
+  log(`Still failing: ${finalErrors}`);
+  if (overallMean !== null) {
+    log(`Mean GPT score: ${overallMean}`);
+  }
+
+  // Print aggregation + baseline if requested
+  await loadAndPrintSummary(sql, runId, {
+    baseline: args.baseline,
+    mode: original.mode,
+    holdout: original.includeHoldout,
+    scorer: original.scorerMode,
+    replicates: original.replicateCount,
+  });
+
+  log('');
+  log('Next steps:');
+  log(`  1. Check Neon: SELECT * FROM builder_quality_results WHERE run_id = '${runId}' ORDER BY gpt_score ASC LIMIT 10`);
+
+  await sql.end();
+}
+
+// ============================================================================
+// HANDLE RESUME
+// ============================================================================
+
+async function handleResume(args: CliArgs, sql: postgres.Sql): Promise<void> {
+  const originalRunId = args.resume!;
+
+  // ── Validate original run ───────────────────────────────────────
+  const original = await loadOriginalRunSettings(sql, originalRunId);
+  if (!original) {
+    logError(`Run "${originalRunId}" not found in database.`);
+    process.exit(1);
+  }
+  if (original.status === 'complete') {
+    log(`Run "${originalRunId}" is already complete — nothing to resume.`);
+    await sql.end();
+    process.exit(0);
+  }
+
+  // ── Stale detection via heartbeat ───────────────────────────────
+  if (original.status === 'running') {
+    const lastProgress = original.lastProgressAt ?? original.createdAt;
+    const ageMs = Date.now() - lastProgress.getTime();
+
+    if (ageMs > STALE_THRESHOLD_MS) {
+      // Stale — require --force
+      if (!args.force) {
+        logError(`Run "${originalRunId}" has status 'running' but last progress was ${formatDuration(ageMs)} ago.`);
+        log('This may indicate the process crashed, or another terminal is still active but stalled.');
+        log('');
+        log('To proceed anyway, add --force:');
+        log(`  npx tsx scripts/builder-quality-run.ts --resume ${originalRunId} --force`);
+        await sql.end();
+        process.exit(1);
+      }
+      log(`WARNING: Resuming stale run ${originalRunId} (last progress ${formatDuration(ageMs)} ago). --force acknowledged.`);
+    } else {
+      // Recently active — likely still running
+      if (!args.force) {
+        logError(`Run "${originalRunId}" appears to be actively running (last progress ${formatDuration(ageMs)} ago).`);
+        log('Wait for it to finish, or if the process has crashed, wait 10 minutes then retry,');
+        log('or use --force to override.');
+        await sql.end();
+        process.exit(1);
+      }
+      log(`WARNING: Overriding active run ${originalRunId} (last progress ${formatDuration(ageMs)} ago). --force acknowledged.`);
+    }
+  }
+
+  // ── Query all existing results ──────────────────────────────────
+  const existingRows = await sql`
+    SELECT id, platform_id, scene_id, replicate_index, status
+    FROM builder_quality_results
+    WHERE run_id = ${originalRunId}
+  `;
+
+  const completedSet = new Set<ComboKey>();
+  const errorMap = new Map<ComboKey, number>();
+
+  for (const r of existingRows) {
+    const row = r as Record<string, unknown>;
+    const key = comboKey(
+      row.platform_id as string,
+      row.scene_id as string,
+      row.replicate_index as number,
+    );
+    if (row.status === 'complete') {
+      completedSet.add(key);
+    } else if (row.status === 'error') {
+      errorMap.set(key, row.id as number);
+    }
+  }
+
+  // ── Reconstruct scope ───────────────────────────────────────────
+  const scenes = loadScenes(original.includeHoldout);
+  const snapshots = loadSnapshots(original.includeHoldout);
+  const platformConfig = loadPlatformConfig();
+
+  let platforms: string[];
+  if (original.scope === 'all') {
+    platforms = getActivePlatforms(platformConfig, null);
+  } else if (original.scope.startsWith('rerun:')) {
+    // Resuming a rerun — scope is the error combos from the parent
+    // Just use whatever platforms appear in existing results + errors
+    const allPlatformIds = new Set<string>();
+    for (const r of existingRows) {
+      allPlatformIds.add((r as Record<string, unknown>).platform_id as string);
+    }
+    platforms = [...allPlatformIds];
+  } else {
+    platforms = [original.scope];
+  }
+
+  // Build full expected combinations
+  const allCombinations: { platformId: string; sceneId: string; replicateIndex: number }[] = [];
+  for (const platformId of platforms) {
+    const tier = platformConfig[platformId]?.tier ?? 3;
+    for (const scene of scenes) {
+      // Check if this scene's snapshot exists for this tier (builder mode only)
+      if (original.mode === 'builder') {
+        const snapshotKey = `${scene.id}:${tier}`;
+        if (!snapshots.has(snapshotKey)) continue;
+      }
+      for (let rep = 1; rep <= original.replicateCount; rep++) {
+        allCombinations.push({ platformId, sceneId: scene.id, replicateIndex: rep });
+      }
+    }
+  }
+
+  // Filter to remaining = not completed
+  const remaining = allCombinations.filter(
+    (c) => !completedSet.has(comboKey(c.platformId, c.sceneId, c.replicateIndex)),
+  );
+
+  const errorRetries = remaining.filter(
+    (c) => errorMap.has(comboKey(c.platformId, c.sceneId, c.replicateIndex)),
+  ).length;
+  const neverAttempted = remaining.length - errorRetries;
+
+  if (remaining.length === 0) {
+    log(`Run "${originalRunId}" already has all combinations complete — nothing to resume.`);
+    // Ensure status is correct
+    await sql`
+      UPDATE builder_quality_runs
+      SET status = 'complete', completed_at = NOW()
+      WHERE run_id = ${originalRunId}
+    `;
+    await sql.end();
+    process.exit(0);
+  }
+
+  // ── Print header ────────────────────────────────────────────────
+  log('═══ BUILDER QUALITY BATCH RUNNER v1.3.0 ═══');
+  log(`Mode: RESUME (run: ${originalRunId})`);
+  log(`Original run: ${original.createdAt.toISOString()}, scope=${original.scope}, scorer=${original.scorerMode}, replicates=${original.replicateCount}`);
+  log(`Already completed: ${completedSet.size} of ${original.totalExpected}`);
+  log(`Previously errored (will retry): ${errorRetries}`);
+  log(`Never attempted: ${neverAttempted}`);
+  log(`Remaining: ${remaining.length} combinations`);
+  log('');
+
+  // ── Prepare run for resumption ──────────────────────────────────
+  await sql`
+    UPDATE builder_quality_runs
+    SET status = 'running', completed_at = ${null}, last_progress_at = NOW(),
+        resumed_at = NOW()
+    WHERE run_id = ${originalRunId}
+  `;
+  sigintRunId = originalRunId;
+
+  // ── Run pipeline ────────────────────────────────────────────────
+  const result = await runPipeline(
+    { sql, runId: originalRunId, platformConfig, snapshots, scenes, mode: original.mode, errorRowIds: errorMap },
+    remaining,
+    completedSet.size,
+  );
+
+  // ── Finalise (recalculate from actual row states) ───────────────
+  const finalCompleted = await recalculateTotalCompleted(sql, originalRunId);
+  const finalErrors = await countErrors(sql, originalRunId);
+  const finalStatus = determineFinalStatus(finalErrors);
+
+  // Calculate mean from all complete results
+  const allScores = await sql`
+    SELECT gpt_score FROM builder_quality_results
+    WHERE run_id = ${originalRunId} AND status = 'complete'
+  `;
+  const allScoreValues = allScores.map((r: Record<string, unknown>) => r.gpt_score as number);
+  const overallMean = allScoreValues.length > 0
+    ? Math.round((allScoreValues.reduce((a: number, b: number) => a + b, 0) / allScoreValues.length) * 100) / 100
+    : null;
+
+  await sql`
+    UPDATE builder_quality_runs
+    SET
+      status = ${finalStatus},
+      completed_at = NOW(),
+      total_completed = ${finalCompleted},
+      mean_gpt_score = ${overallMean},
+      error_detail = ${finalErrors > 0 ? `${finalErrors} errors` : null}
+    WHERE run_id = ${originalRunId}
+  `;
+
+  // ── Summary ─────────────────────────────────────────────────────
+  log('');
+  log('═══ RESUME COMPLETE ═══');
+  log(`Run ID: ${originalRunId}`);
+  log(`Status: ${finalStatus}`);
+  log(`Total: ${finalCompleted + finalErrors} (${completedSet.size} prior + ${remaining.length} resumed)`);
+  if (result.updatedErrorCount > 0) {
+    log(`Previously errored → now complete: ${result.updatedErrorCount}`);
+  }
+  log(`New results: ${result.insertedNewCount}`);
+  log(`Still failing: ${finalErrors}`);
+  if (overallMean !== null) {
+    log(`Mean GPT score: ${overallMean}`);
+  }
+
+  // Print aggregation + baseline if requested
+  await loadAndPrintSummary(sql, originalRunId, {
+    baseline: args.baseline,
+    mode: original.mode,
+    holdout: original.includeHoldout,
+    scorer: original.scorerMode,
+    replicates: original.replicateCount,
+  });
+
+  log('');
+  log('Next steps:');
+  log(`  1. Check Neon: SELECT * FROM builder_quality_results WHERE run_id = '${originalRunId}' ORDER BY gpt_score ASC LIMIT 10`);
+  if (finalErrors > 0) {
+    log(`  2. Rerun remaining errors: npx tsx scripts/builder-quality-run.ts --rerun ${originalRunId}`);
+  }
+
+  await sql.end();
+}
+
+// ============================================================================
+// MAIN
+// ============================================================================
+
+async function main(): Promise<void> {
+  const args = parseArgs();
+
+  // ── Preflight checks ─────────────────────────────────────────────
+  if (!BUILDER_QUALITY_KEY) {
+    logError('BUILDER_QUALITY_KEY not set in .env.local');
+    process.exit(1);
+  }
+
+  // ── Database setup ───────────────────────────────────────────────
+  const sql = createDb();
+  try {
+    await ensureTables(sql);
+    logSuccess('Database tables verified');
+  } catch (e) {
+    logError(`Database setup failed: ${e}`);
+    await sql.end();
+    process.exit(1);
+  }
+
+  // ── Register SIGINT handler ──────────────────────────────────────
+  sigintSql = sql;
+  registerSigintHandler();
+
+  // ── Route to rerun/resume if applicable ──────────────────────────
+  if (args.rerun) {
+    await handleRerun(args, sql);
+    return;
+  }
+  if (args.resume) {
+    await handleResume(args, sql);
+    return;
+  }
+
+  // ── Normal run ───────────────────────────────────────────────────
+  log('═══ BUILDER QUALITY BATCH RUNNER v1.3.0 ═══');
+  log(`Mode: ${args.mode}`);
+  log(`Scope: ${args.all ? 'all platforms' : args.platform}`);
+  log(`Scorer: ${args.scorer}`);
+  log(`Replicates: ${args.replicates}`);
+  log(`Holdout: ${args.holdout}`);
+  log('');
+
+  // ── Load data ────────────────────────────────────────────────────
+  const scenes = loadScenes(args.holdout);
+  const snapshots = loadSnapshots(args.holdout);
+  const platformConfig = loadPlatformConfig();
+  const platforms = getActivePlatforms(platformConfig, args.platform);
+
+  log(`Scenes: ${scenes.length}`);
+  log(`Snapshots: ${snapshots.size}`);
+  log(`Platforms: ${platforms.length}`);
+
+  const totalExpected = platforms.length * scenes.length * args.replicates;
+  log(`Total expected results: ${totalExpected}`);
+  log('');
+
+  // ── Create run record ────────────────────────────────────────────
+  const runId = generateRunId();
+  const scorerPromptHash = md5(SCORER_VERSION + '-diagnostic-v2');
+
+  await sql`
+    INSERT INTO builder_quality_runs (
+      run_id, mode, scope, scorer_mode, replicate_count,
+      include_holdout, scorer_version, scorer_prompt_hash,
+      gpt_model, status, total_expected, total_completed,
+      baseline_run_id, last_progress_at
+    ) VALUES (
+      ${runId}, ${args.mode}, ${args.all ? 'all' : args.platform!},
+      ${args.scorer}, ${args.replicates}, ${args.holdout},
+      ${SCORER_VERSION}, ${scorerPromptHash}, ${GPT_MODEL},
+      'running', ${totalExpected}, 0,
+      ${args.baseline ?? null}, NOW()
+    )
+  `;
+  log(`Run created: ${runId}`);
+  sigintRunId = runId;
+  log('');
+
+  // ── Build combinations list ──────────────────────────────────────
+  const combinations: { platformId: string; sceneId: string; replicateIndex: number }[] = [];
+  for (const platformId of platforms) {
+    for (const scene of scenes) {
+      for (let rep = 1; rep <= args.replicates; rep++) {
+        combinations.push({ platformId, sceneId: scene.id, replicateIndex: rep });
+      }
+    }
+  }
+
+  // ── Run pipeline ─────────────────────────────────────────────────
+  const result = await runPipeline(
+    { sql, runId, platformConfig, snapshots, scenes, mode: args.mode, errorRowIds: null },
+    combinations,
+    0,
+  );
+
+  // ── Finalise run (v1.2.0: recalculate from DB, tightened status) ─
+  const finalCompleted = await recalculateTotalCompleted(sql, runId);
+  const finalErrors = await countErrors(sql, runId);
+  const finalStatus = determineFinalStatus(finalErrors);
+  const overallMean = result.scores.length > 0
+    ? Math.round((result.scores.reduce((a, b) => a + b, 0) / result.scores.length) * 100) / 100
+    : null;
+
+  await sql`
+    UPDATE builder_quality_runs
+    SET
+      status = ${finalStatus},
+      completed_at = NOW(),
+      total_completed = ${finalCompleted},
+      mean_gpt_score = ${overallMean},
+      error_detail = ${finalErrors > 0 ? `${finalErrors} errors` : null}
+    WHERE run_id = ${runId}
+  `;
+
+  // ── Summary header ───────────────────────────────────────────────
+  log('');
+  log('═══ BATCH RUN COMPLETE ═══');
+  log(`Run ID: ${runId}`);
+  log(`Status: ${finalStatus}`);
+  log(`Completed: ${finalCompleted}/${totalExpected}`);
+  log(`Errors: ${finalErrors}`);
+  if (overallMean !== null) {
+    log(`Mean GPT score: ${overallMean}`);
+    log(`Score range: ${Math.min(...result.scores)}–${Math.max(...result.scores)}`);
+  }
+
+  // Print aggregation + baseline
+  await loadAndPrintSummary(sql, runId, {
+    baseline: args.baseline,
+    mode: args.mode,
+    holdout: args.holdout,
+    scorer: args.scorer,
+    replicates: args.replicates,
+  });
 
   log('');
   log('Next steps:');
   log(`  1. Check Neon: SELECT * FROM builder_quality_results WHERE run_id = '${runId}' ORDER BY gpt_score ASC LIMIT 10`);
   if (!args.baseline) {
     log(`  2. Run with baseline: npx tsx scripts/builder-quality-run.ts --all --mode builder --baseline ${runId}`);
+  }
+  if (finalErrors > 0) {
+    log(`  3. Resume or rerun errors: npx tsx scripts/builder-quality-run.ts --resume ${runId} --force`);
   }
 
   await sql.end();

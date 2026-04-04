@@ -6,6 +6,9 @@
 // All queries use parameterised statements (postgres tagged template).
 // Uses the existing db() singleton from src/lib/db.ts.
 //
+// v1.3.0 (4 Apr 2026): Part 11 — showcase_entry_id, showcase_created_at, showcase_tier, scorer_version on results. Idempotency index.
+// v1.2.0 (4 Apr 2026): Added resumedAt, SIGINT support fields.
+// v1.1.0 (4 Apr 2026): Part 10 — Added parentRunId, lastProgressAt, unique index.
 // v1.0.0 (3 Apr 2026): Initial implementation.
 //
 // Authority: docs/authority/builder-quality-intelligence.md v2.5.0 §6
@@ -63,6 +66,24 @@ export async function ensureRunsTable(): Promise<void> {
       mean_claude_score NUMERIC(5,2),
       flagged_count   SMALLINT DEFAULT 0
     )
+  `;
+
+  // v1.2.0: Add parent_run_id for rerun child→parent linkage
+  await db()`
+    ALTER TABLE builder_quality_runs
+    ADD COLUMN IF NOT EXISTS parent_run_id TEXT
+  `;
+
+  // v1.2.0: Add last_progress_at heartbeat for stale detection
+  await db()`
+    ALTER TABLE builder_quality_runs
+    ADD COLUMN IF NOT EXISTS last_progress_at TIMESTAMPTZ
+  `;
+
+  // v1.3.0: Add resumed_at timestamp for dashboard audit trail
+  await db()`
+    ALTER TABLE builder_quality_runs
+    ADD COLUMN IF NOT EXISTS resumed_at TIMESTAMPTZ
   `;
 }
 
@@ -168,6 +189,35 @@ export async function ensureResultsTable(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_bqr_holdout
     ON builder_quality_results (is_holdout) WHERE is_holdout = TRUE
   `;
+
+  // v1.2.0: Unique index enforcing logical uniqueness invariant at DB layer
+  // Hard rule: exactly one row per (run_id, platform_id, scene_id, replicate_index)
+  try {
+    await db()`
+      CREATE UNIQUE INDEX IF NOT EXISTS bqr_results_unique_logical
+      ON builder_quality_results (run_id, platform_id, scene_id, replicate_index)
+    `;
+  } catch (e) {
+    console.error('[builder-quality] Could not create unique index (possible duplicate rows):', e);
+    console.error('Run: SELECT run_id, platform_id, scene_id, replicate_index, COUNT(*) FROM builder_quality_results GROUP BY run_id, platform_id, scene_id, replicate_index HAVING COUNT(*) > 1;');
+  }
+
+  // Part 11: User sampling columns
+  await db()`ALTER TABLE builder_quality_results ADD COLUMN IF NOT EXISTS showcase_entry_id TEXT`;
+  await db()`ALTER TABLE builder_quality_results ADD COLUMN IF NOT EXISTS showcase_created_at TIMESTAMPTZ`;
+  await db()`ALTER TABLE builder_quality_results ADD COLUMN IF NOT EXISTS showcase_tier TEXT`;
+  await db()`ALTER TABLE builder_quality_results ADD COLUMN IF NOT EXISTS scorer_version TEXT`;
+
+  // Part 11: Idempotency — one showcase entry per scorer version for user samples
+  try {
+    await db()`
+      CREATE UNIQUE INDEX IF NOT EXISTS bqr_results_unique_user_sample
+      ON builder_quality_results (showcase_entry_id, scorer_version)
+      WHERE source = 'user_sample' AND showcase_entry_id IS NOT NULL
+    `;
+  } catch (e) {
+    console.error('[builder-quality] Could not create user-sample unique index:', e);
+  }
 }
 
 /**
@@ -258,6 +308,9 @@ type RunRow = {
   claude_model: string | null;
   call2_version: string | null;
   baseline_run_id: string | null;
+  parent_run_id: string | null;
+  last_progress_at: Date | string | null;
+  resumed_at: Date | string | null;
   status: string;
   total_expected: number | null;
   total_completed: number | null;
@@ -283,6 +336,9 @@ export interface BuilderQualityRun {
   claudeModel: string | null;
   call2Version: string | null;
   baselineRunId: string | null;
+  parentRunId: string | null;
+  lastProgressAt: Date | null;
+  resumedAt: Date | null;
   status: string;
   totalExpected: number | null;
   totalCompleted: number;
@@ -308,6 +364,9 @@ function mapRunRow(row: RunRow): BuilderQualityRun {
     claudeModel: row.claude_model,
     call2Version: row.call2_version,
     baselineRunId: row.baseline_run_id,
+    parentRunId: row.parent_run_id ?? null,
+    lastProgressAt: row.last_progress_at ? new Date(row.last_progress_at) : null,
+    resumedAt: row.resumed_at ? new Date(row.resumed_at) : null,
     status: row.status,
     totalExpected: row.total_expected,
     totalCompleted: row.total_completed ?? 0,
@@ -367,6 +426,7 @@ export async function insertRun(run: {
   claudeModel?: string | null;
   call2Version?: string | null;
   baselineRunId?: string | null;
+  parentRunId?: string | null;
   totalExpected: number;
 }): Promise<string> {
   await db()`
@@ -374,13 +434,15 @@ export async function insertRun(run: {
       run_id, mode, scope, scorer_mode, replicate_count,
       include_holdout, scorer_version, scorer_prompt_hash,
       gpt_model, claude_model, call2_version, baseline_run_id,
-      status, total_expected, total_completed
+      parent_run_id, status, total_expected, total_completed,
+      last_progress_at
     ) VALUES (
       ${run.runId}, ${run.mode}, ${run.scope}, ${run.scorerMode},
       ${run.replicateCount}, ${run.includeHoldout}, ${run.scorerVersion},
       ${run.scorerPromptHash}, ${run.gptModel}, ${run.claudeModel ?? null},
       ${run.call2Version ?? null}, ${run.baselineRunId ?? null},
-      'running', ${run.totalExpected}, 0
+      ${run.parentRunId ?? null}, 'running', ${run.totalExpected}, 0,
+      NOW()
     )
   `;
   return run.runId;
@@ -420,11 +482,13 @@ export async function updateRunStatus(
 
 /**
  * Increment total_completed by 1 for a given run.
+ * Also updates last_progress_at heartbeat (v1.2.0).
  */
 export async function incrementRunCompleted(runId: string): Promise<void> {
   await db()`
     UPDATE builder_quality_runs
-    SET total_completed = COALESCE(total_completed, 0) + 1
+    SET total_completed = COALESCE(total_completed, 0) + 1,
+        last_progress_at = NOW()
     WHERE run_id = ${runId}
   `;
 }
@@ -480,6 +544,10 @@ export async function insertResult(result: {
   status?: string;
   errorDetail?: string | null;
   isHoldout?: boolean;
+  showcaseEntryId?: string | null;
+  showcaseCreatedAt?: Date | string | null;
+  showcaseTier?: string | null;
+  scorerVersion?: string | null;
 }): Promise<void> {
   await db()`
     INSERT INTO builder_quality_results (
@@ -494,7 +562,8 @@ export async function insertResult(result: {
       median_score, divergence, flagged,
       anchor_audit, anchors_expected, anchors_preserved,
       anchors_dropped, critical_anchors_dropped,
-      source, status, error_detail, is_holdout
+      source, status, error_detail, is_holdout,
+      showcase_entry_id, showcase_created_at, showcase_tier, scorer_version
     ) VALUES (
       ${result.runId}, ${result.platformId}, ${result.platformName},
       ${result.sceneId}, ${result.sceneName}, ${result.tier},
@@ -519,7 +588,11 @@ export async function insertResult(result: {
       ${result.anchorsExpected ?? 0}, ${result.anchorsPreserved ?? 0},
       ${result.anchorsDropped ?? 0}, ${result.criticalAnchorsDropped ?? 0},
       ${result.source ?? 'batch'}, ${result.status ?? 'complete'},
-      ${result.errorDetail ?? null}, ${result.isHoldout ?? false}
+      ${result.errorDetail ?? null}, ${result.isHoldout ?? false},
+      ${result.showcaseEntryId ?? null},
+      ${result.showcaseCreatedAt ? new Date(String(result.showcaseCreatedAt)) : null},
+      ${result.showcaseTier ?? null},
+      ${result.scorerVersion ?? null}
     )
   `;
 }

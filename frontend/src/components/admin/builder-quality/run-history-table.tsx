@@ -14,8 +14,10 @@
 // Authority: docs/authority/builder-quality-intelligence.md v2.5.0 §9.4
 // Build plan: part-8-build-plan v1.2.0, Sub-Delivery 8a
 //
-// Version: 1.0.0
+// Version: 1.2.0
 // Created: 4 April 2026
+// Updated: 4 April 2026 — Part 10: added parentRunId + rerun child indicator chip.
+// Updated: 4 April 2026 — v1.2.0: added resumedAt indicator chip, heartbeat-based stale detection.
 //
 // Existing features preserved: Yes (new file).
 // ============================================================================
@@ -37,6 +39,9 @@ interface Run {
   totalCompleted: number;
   meanGptScore: number | null;
   flaggedCount: number;
+  parentRunId?: string | null;
+  lastProgressAt?: string | null;
+  resumedAt?: string | null;
 }
 
 interface Props {
@@ -74,9 +79,12 @@ const STATUS_BADGE: Record<string, { label: string; className: string }> = {
 
 function isStale(run: Run): boolean {
   if (run.status !== "running") return false;
-  const created = new Date(run.createdAt).getTime();
-  const oneHourAgo = Date.now() - 60 * 60 * 1000;
-  return created < oneHourAgo;
+  // v1.2.0: Use lastProgressAt heartbeat if available, fall back to createdAt
+  const progressTime = run.lastProgressAt
+    ? new Date(run.lastProgressAt).getTime()
+    : new Date(run.createdAt).getTime();
+  const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
+  return progressTime < tenMinutesAgo;
 }
 
 function formatDate(iso: string): string {
@@ -159,7 +167,7 @@ export function RunHistoryTable({ runs, selectedRunId, onSelectRun }: Props) {
                     : ""
                 }`}
               >
-                {/* Run ID (truncated) */}
+                {/* Run ID (truncated) + rerun indicator */}
                 <td
                   className="font-mono text-slate-200"
                   style={{
@@ -167,7 +175,21 @@ export function RunHistoryTable({ runs, selectedRunId, onSelectRun }: Props) {
                     padding: "clamp(8px, 0.8vw, 12px) clamp(10px, 1vw, 14px)",
                   }}
                 >
-                  {run.runId.slice(0, 16)}
+                  <span className="flex items-center" style={{ gap: "clamp(4px, 0.4vw, 6px)" }}>
+                    {run.runId.slice(0, 16)}
+                    {run.parentRunId && (
+                      <span
+                        className="inline-block rounded-full border bg-purple-500/20 text-purple-300 border-purple-500/40 font-medium"
+                        style={{
+                          fontSize: "clamp(8px, 0.7vw, 10px)",
+                          padding: "clamp(0px, 0.1vh, 2px) clamp(4px, 0.4vw, 6px)",
+                        }}
+                        title={`Rerun child of ${run.parentRunId}`}
+                      >
+                        ↩ rerun
+                      </span>
+                    )}
+                  </span>
                 </td>
 
                 {/* Created */}
@@ -206,9 +228,21 @@ export function RunHistoryTable({ runs, selectedRunId, onSelectRun }: Props) {
                       <span
                         className="text-amber-400"
                         style={{ fontSize: "clamp(10px, 0.8vw, 11px)" }}
-                        title="Running for over 1 hour"
+                        title="No progress for over 10 minutes"
                       >
                         Stale
+                      </span>
+                    )}
+                    {run.resumedAt && (
+                      <span
+                        className="inline-block rounded-full border bg-sky-500/15 text-sky-300 border-sky-500/30 font-medium"
+                        style={{
+                          fontSize: "clamp(8px, 0.7vw, 10px)",
+                          padding: "clamp(0px, 0.1vh, 2px) clamp(4px, 0.4vw, 6px)",
+                        }}
+                        title={`Resumed: ${formatDate(run.resumedAt)}`}
+                      >
+                        ↻ resumed
                       </span>
                     )}
                   </span>
@@ -222,7 +256,19 @@ export function RunHistoryTable({ runs, selectedRunId, onSelectRun }: Props) {
                     padding: "clamp(8px, 0.8vw, 12px) clamp(10px, 1vw, 14px)",
                   }}
                 >
-                  {run.mode}
+                  {run.mode === "user_sample" ? (
+                    <span
+                      className="inline-block rounded-full border bg-teal-500/20 text-teal-300 border-teal-500/40 font-medium"
+                      style={{
+                        fontSize: "clamp(9px, 0.75vw, 11px)",
+                        padding: "clamp(1px, 0.1vh, 3px) clamp(6px, 0.5vw, 8px)",
+                      }}
+                    >
+                      ⚡ sample
+                    </span>
+                  ) : (
+                    run.mode
+                  )}
                 </td>
 
                 {/* Scope */}

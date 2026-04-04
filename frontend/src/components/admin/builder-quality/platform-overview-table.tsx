@@ -68,12 +68,19 @@ function scoreColour(score: number): string {
 // COMPONENT
 // =============================================================================
 
+interface UserSampleStat {
+  platformId: string;
+  meanScore: number;
+  sampleCount: number;
+}
+
 interface Props {
   platforms: PlatformAggregate[];
   runId: string | null;
+  userSampleStats?: UserSampleStat[];
 }
 
-export function PlatformOverviewTable({ platforms, runId }: Props) {
+export function PlatformOverviewTable({ platforms, runId, userSampleStats }: Props) {
   const router = useRouter();
 
   const handleRowClick = (platformId: string) => {
@@ -87,7 +94,7 @@ export function PlatformOverviewTable({ platforms, runId }: Props) {
       <table className="w-full border-collapse">
         <thead>
           <tr className="border-b border-white/10 bg-white/5">
-            {['Platform', 'Tier', 'Mean', 'Stddev', 'Preservation', 'Critical', 'Unstable', 'Status'].map(
+            {['Platform', 'Tier', 'Mean', 'User (7d)', 'Stddev', 'Preservation', 'Critical', 'Unstable', 'Status'].map(
               (header) => (
                 <th
                   key={header}
@@ -150,6 +157,46 @@ export function PlatformOverviewTable({ platforms, runId }: Props) {
                 >
                   {p.meanScore.toFixed(1)}
                 </td>
+
+                {/* User (7d) — rolling 7-day user-sample average */}
+                {(() => {
+                  const stat = userSampleStats?.find((s) => s.platformId === p.platformId);
+                  if (!stat || stat.sampleCount === 0) {
+                    return (
+                      <td
+                        className="font-mono text-white/30"
+                        style={{
+                          fontSize: 'clamp(10px, 0.9vw, 13px)',
+                          padding: 'clamp(8px, 0.8vw, 12px) clamp(10px, 1vw, 14px)',
+                        }}
+                      >
+                        —
+                      </td>
+                    );
+                  }
+                  const confidence = stat.sampleCount >= 5
+                    ? 'text-white'
+                    : stat.sampleCount >= 3
+                      ? 'text-white/70'
+                      : 'text-white/50';
+                  return (
+                    <td
+                      className={`font-mono ${confidence}`}
+                      style={{
+                        fontSize: 'clamp(10px, 0.9vw, 13px)',
+                        padding: 'clamp(8px, 0.8vw, 12px) clamp(10px, 1vw, 14px)',
+                      }}
+                    >
+                      {stat.meanScore.toFixed(1)}{' '}
+                      <span
+                        className="text-white/40"
+                        style={{ fontSize: 'clamp(8px, 0.7vw, 10px)' }}
+                      >
+                        n={stat.sampleCount}
+                      </span>
+                    </td>
+                  );
+                })()}
 
                 {/* Stddev */}
                 <td

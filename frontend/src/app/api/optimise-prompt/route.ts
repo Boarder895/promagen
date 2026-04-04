@@ -87,6 +87,13 @@ const RequestSchema = z.object({
   providerId: z.string().min(1, "Provider ID is required").max(50),
   /** Provider's platform format data */
   providerContext: ProviderContextSchema,
+  /**
+   * Part 12: Admin-only system prompt override for patch testing.
+   * Only honoured when X-Builder-Quality-Key is valid.
+   * Substitutes the builder file's system prompt while preserving
+   * the full routing, compliance, and post-processing path.
+   */
+  systemPromptOverride: z.string().max(10000).optional(),
 });
 
 // ============================================================================
@@ -193,10 +200,19 @@ export async function POST(req: NextRequest): Promise<Response> {
   }
 
   // ── Build system prompt (group-specific or generic fallback) ────────
-  const { systemPrompt, groupCompliance, temperature: builderTemperature } = resolveGroupPrompt(
+  const { systemPrompt: resolvedSystemPrompt, groupCompliance, temperature: builderTemperature } = resolveGroupPrompt(
     parsed.data.providerId,
     parsed.data.providerContext,
   );
+
+  // ── Part 12: Admin-only system prompt override for patch testing ────
+  // Only honoured when X-Builder-Quality-Key is valid (admin/script context).
+  // Substitutes the builder's system prompt while preserving the full
+  // routing, compliance gate, and post-processing pipeline.
+  // Security: ignored without valid admin auth. Never available to normal users.
+  const systemPrompt = (isBatchRunner && parsed.data.systemPromptOverride)
+    ? parsed.data.systemPromptOverride
+    : resolvedSystemPrompt;
 
   // ── Detect prose-based groups for temperature selection ───────────────
   const providerGroup = getProviderGroup(parsed.data.providerId);

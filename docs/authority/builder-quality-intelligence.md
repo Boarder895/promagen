@@ -1,873 +1,639 @@
-# Builder Quality Intelligence System (formerly Call 4 Scoring)
+# Builder Quality Intelligence System
 
-**Version:** 2.5.0 (FINAL)  
+**Version:** 3.0.0  
 **Created:** 1 April 2026  
-**Updated:** 3 April 2026  
+**Updated:** 4 April 2026  
 **Owner:** Promagen  
-**Status:** Architecture finalised. Three ChatGPT reviews incorporated (97/100). Signed off. 10 scenes complete. BUILD APPROVED.  
-**Authority:** This document defines the automated quality regression system for Call 3 platform builders.
+**Status:** Complete. All 12 parts deployed. System operational.  
+**Authority:** This document defines the automated quality regression system for Call 3 platform builders. The codebase (`src.zip`) is the single source of truth for implementation details; this document covers architecture, design decisions, schema, and operational rules.
 
 > **Cross-references:**
 >
 > - `api-3.md` — Call 3 architecture, 43 independent builders
-> - `prompt-optimizer.md` v6.0.0 — Builder inventory, compliance gates
-> - `harmonizing-claude-openai.md` v3.0.0 — Three-assessor scoring methodology
 > - `platform-config.json` + `platform-config.ts` — Platform SSOT (40 platforms)
-> - `human-factors.md` — NOT referenced (this system is internal, no user-facing UI)
+> - `bqi-operations-guide.html` — Interactive operations guide with click-to-copy commands
 
 ---
 
 ## 1. Purpose
 
-Call 3 has 43 independent platform builder files. Each builder has a system prompt that GPT-5.4-mini executes at runtime. When a builder is updated, there is currently no automated way to verify that the update improved quality or introduced a regression. Testing is manual, slow, and relies on Martin running prompts through the Playground.
+Call 3 has 43 independent platform builder files. Each builder has a system prompt that GPT-5.4-mini executes at runtime. This system automates quality regression testing: it runs curated test scenes through the pipeline, scores the results, stores them in Postgres, and surfaces quality trends per platform. It also samples real user prompts, analyses recurring failures, and suggests targeted builder fixes — with a human approval gate before any change ships.
 
-This system automates that. It runs curated test scenes through the full pipeline (Call 2 → Call 3 → Scoring), stores results in Postgres, and surfaces quality trends per platform. Over time, it identifies recurring failure patterns and proposes builder fixes — with a human approval gate before any change ships.
-
-**What this replaces:** The user-facing "§ The Score" section in the right rail Glass Case is **killed**. No score badge, no axis bars, no directives visible to the user. The scoring route (`/api/score-prompt`) is repurposed as an internal quality tool.
-
-**Why the user-facing score was killed:** Call 4 scored Call 3's output, but the only person who could act on the feedback was the user — and their input was already correct. The engine dropped anchors, the score blamed the user. Directives like "restore the original colour" made no sense because the user never changed anything. The calls were fighting each other.
+**What this replaced:** The user-facing "§ The Score" section in the right rail was killed. No score badge, no axis bars, no directives visible to the user. The scoring route (`/api/score-prompt`) was repurposed as an internal quality tool.
 
 ---
 
-## 2. Architecture Overview
+## 2. Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│                   BUILDER QUALITY INTELLIGENCE                    │
-├──────────────────────────────────────────────────────────────────┤
-│                                                                   │
-│  Test Scenes (8 core + 2 holdout)                                 │
-│       │                                                           │
-│       ▼                                                           │
-│  Snapshot Freeze (Call 2 → frozen assembled prompts)              │
-│       │                                                           │
-│       ▼                                                           │
-│  Batch Runner (script or cron)                                    │
-│       │                                                           │
-│       ├── Call 3: optimise per platform (frozen input) ──────┐    │
-│       │                                                      │    │
-│       ├── Score (GPT-5.4-mini) ─────────────────────────────┤    │
-│       │                                                      │    │
-│       ├── Score (Claude — switchable) ──────────────────────┤    │
-│       │                                                      │    │
-│       ▼                                                      ▼    │
-│  Postgres: builder_quality_runs + builder_quality_results         │
-│       │                                                           │
-│       ▼                                                           │
-│  Pattern Detection (human-assisted, Phase 3)                      │
-│       │                                                           │
-│       ├── Per-platform rolling averages                           │
-│       ├── Recurring failure identification                        │
-│       ├── Score divergence flags (GPT vs Claude > 8pts)          │
-│       │                                                           │
-│       ▼                                                           │
-│  Admin Dashboard (/admin/builder-quality)                         │
-│       │                                                           │
-│       ▼                                                           │
-│  Human Review → Approve/Reject → Builder Update                   │
-│                                                                   │
-└──────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                   BUILDER QUALITY INTELLIGENCE                │
+├──────────────────────────────────────────────────────────────┤
+│                                                               │
+│  Test Scenes (8 core + 2 holdout)                             │
+│       │                                                       │
+│       ▼                                                       │
+│  Frozen Snapshots (Call 2 → frozen assembled prompts)         │
+│       │                                                       │
+│       ▼                                                       │
+│  Batch Runner (scripts/builder-quality-run.ts v1.3.0)        │
+│       │                                                       │
+│       ├── Call 3: optimise per platform ─────────────────┐    │
+│       │                                                  │    │
+│       ├── Score (GPT-5.4-mini) ─────────────────────────┤    │
+│       │                                                  │    │
+│       ├── Score (Claude Haiku 4.5 — switchable) ────────┤    │
+│       │                                                  │    │
+│       ▼                                                  ▼    │
+│  Postgres: builder_quality_runs + builder_quality_results     │
+│       │                                                       │
+│       ├── User Sampling (Community Pulse → score)             │
+│       │                                                       │
+│       ├── Failure Analysis (cluster → fix-class nomination)   │
+│       │                                                       │
+│       ├── Patch Suggestion (GPT-constrained, one edit)        │
+│       │                                                       │
+│       ├── Patch Testing (route-faithful, overfitting guard)   │
+│       │                                                       │
+│       ▼                                                       │
+│  Admin Dashboard (/admin/builder-quality)                     │
+│       │                                                       │
+│       ▼                                                       │
+│  Human Review → Approve/Reject → Manual Builder Update        │
+│                                                               │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-### Key architectural decisions:
+### Key architectural decisions
 
 1. **Frozen Call 2 inputs.** When testing Call 3 builders, the assembled prompt input is frozen from a prior Call 2 snapshot. This isolates builder quality from Call 2 variance.
 
-2. **3 replicates for decision-grade runs.** A single run is diagnostic only. For "should I ship this builder change" decisions, 3 replicates per scene are required. Store mean, min, max, and standard deviation.
+2. **3 replicates for decision-grade runs.** A single run is diagnostic only. For "should I ship this builder change" decisions, 3 replicates per scene are required.
 
-3. **Dual-model scoring is switchable.** Three modes: `gpt_only` (default, day one), `dual_on_flagged` (Claude runs when GPT flags issues), `dual_full` (both models on every run, for release candidates).
+3. **Dual-model scoring is switchable.** Three modes: `gpt_only` (default), `dual_on_flagged` (Claude runs when GPT flags issues), `dual_full` (both models on every run).
 
-4. **Raw vs post-processed scoring.** Store both the raw Call 3 output (before compliance gates) and the post-processed output. This distinguishes "the builder dropped an anchor" from "the compliance gate fixed it."
+4. **Raw vs post-processed scoring.** Both the raw Call 3 output and the post-processed output are stored. This distinguishes "the builder dropped an anchor" from "the compliance gate fixed it."
 
-5. **Phase 3 is human-assisted patch suggestion, not autonomous self-improvement.** The system clusters recurring failures, suggests candidate fixes, and auto-tests them. Martin reviews and approves. No automatic deployment of system prompt changes.
+5. **Phase 3 is human-assisted patch suggestion, not autonomous self-improvement.** The system clusters failures, suggests candidate fixes, and auto-tests them. Martin reviews and approves. No automatic deployment.
 
-6. **Anchor audit uses three levels, not boolean.** Each expected anchor is classified as `exact`, `approximate`, or `dropped`. Defined by a strict matching policy (§3.2).
+6. **Anchor audit uses three levels: `exact`, `approximate`, `dropped`.** Defined by a strict matching policy (§3.2).
 
-7. **Anchors have severity weights.** Each expected anchor is tagged `critical`, `important`, or `optional`. Decision thresholds weight by severity.
+7. **Anchors have severity weights:** `critical` (×3), `important` (×2), `optional` (×1).
 
-8. **2 hidden holdout scenes** are reserved for validation only. Never used during builder tuning. Their purpose is to detect overfitting.
+8. **2 hidden holdout scenes** reserved for validation only. Never used during builder tuning. Their purpose is to detect overfitting.
+
+9. **Heartbeat-based stale detection.** `last_progress_at` updated after every result. Stale = no progress for 10 minutes.
+
+10. **SIGINT handler.** Ctrl+C marks run as `partial`, logs last platform/scene, exits cleanly.
+
+11. **Update-in-place resume model.** Resume updates error rows rather than inserting duplicates. DB unique index enforces one row per combination.
+
+12. **Batch and user-sample scores never mixed.** Separate metrics, separate trend lines. The divergence is the signal.
 
 ---
 
 ## 3. Test Scene Library
 
-8 core scenes + 2 holdout scenes.
+8 core scenes + 2 holdout scenes. Stored in `src/data/scoring/`.
 
-Core scenes stored in `src/data/scoring/test-scenes.json`.  
-Holdout scenes stored separately in `src/data/scoring/holdout-scenes.json` — never shared with ChatGPT, never used during builder tuning.
+| #   | ID                                 | Name                              | Anchors | Stress Target                                     |
+| --- | ---------------------------------- | --------------------------------- | ------- | ------------------------------------------------- |
+| 1   | `scene-01-minimal`                 | Minimal Input                     | 2       | Can the builder handle near-empty input?          |
+| 2   | `scene-02-cyberpunk-courier`       | Dense Multi-Anchor                | 6       | Standard benchmark, multiple named elements       |
+| 3   | `scene-03-fox-shrine`              | Sacred Architecture               | 6       | Spatial relationships, atmosphere                 |
+| 4   | `scene-04-colour-saturation`       | Colour Saturation                 | 10      | Named colours — do they survive?                  |
+| 5   | `scene-05-spatial-relationships`   | Spatial Relationships             | 8       | Prepositions, relative positions                  |
+| 6   | `scene-06-negative-trigger`        | Negative Trigger                  | 9       | Explicit negatives in positive prompt             |
+| 7   | `scene-07-compression-stress`      | Compression Stress                | 12      | ~1,900 chars — forces anchor triage               |
+| 8   | `scene-08-french-new-wave`         | Style/Medium Preservation         | 13      | Camera models, film references, technical terms   |
+| 9   | `scene-09-multi-subject-hierarchy` | Multi-Subject Hierarchy (HOLDOUT) | 14      | Temporal + hierarchical — never used for tuning   |
+| 10  | `scene-10-typical-real-world`      | Typical Real-World (HOLDOUT)      | 9       | Realistic messy user input — overfitting detector |
 
-### 3.1 Scene Data Structures
+### 3.1 Data Structures
 
 ```typescript
 interface TestScene {
   id: string;
   name: string;
   humanText: string;
-  expectedAnchors: AnchorSpec[];
+  expectedAnchors: {
+    term: string;
+    severity: "critical" | "important" | "optional";
+  }[];
   stressTarget: string;
   categoriesExpected: string[];
   holdout: boolean;
 }
-
-interface AnchorSpec {
-  term: string;
-  severity: 'critical' | 'important' | 'optional';
-}
-
-interface AnchorAuditEntry {
-  anchor: string;
-  severity: 'critical' | 'important' | 'optional';
-  status: 'exact' | 'approximate' | 'dropped';
-  note?: string;
-}
 ```
+
+Files: `src/data/scoring/test-scenes.json` (8 core), `src/data/scoring/holdout-scenes.json` (2 holdout), `src/data/scoring/types.ts` (interfaces).
 
 ### 3.2 Approximate Anchor Matching Policy
 
-The `approximate` status is the most subjective classification. Without strict rules it becomes a fudge bucket. These rules define what counts and what doesn't.
+The `approximate` classification follows strict rules. When in doubt, classify as `dropped`.
 
-**Counts as `exact`:**
-- Literal string match (case-insensitive)
-- Match with minor punctuation/whitespace differences
+**Sub-rules:**
 
-**Counts as `approximate`:**
-- Recognised synonym that preserves visual meaning ("crimson" → "deep red")
-- Morphological variant ("running" → "runs", "fallen" → "falling")
-- Reordered phrase that preserves all content words ("red torii gates" → "torii gates in red")
-- Compressed equivalent that keeps the specific noun ("matte-black tactical trench coat" → "black tactical trench coat")
-
-**Counts as `dropped`:**
-- Generic abstraction ("Kodak Vision3 500T" → "film stock")
-- Colour generalisation ("turquoise" → "blue", "acid-green" → "green")
-- Noun class substitution ("torii gates" → "archway", "fox shrine" → "temple")
-- Complete omission — anchor term not present in any form
-- Meaning inversion ("no smoke" → "smoke rising")
-- Flattened to category label ("cinematic wide-angle view" → "wide shot")
-
-**When in doubt:** classify as `dropped`. False negatives (missed problems) are worse than false positives (flagged non-issues) for a regression tool.
-
-**Sub-rule A — Visually distinctive modifier loss:**
-If the dropped modifier is the visually distinctive part of the anchor, classify as `dropped`, not `approximate`. Example: "ornate black armor" → "black armor" = `dropped` (ornate is the visual differentiator). "tall blue lamp" → "blue lamp" = `approximate` (tall is not the distinctive element, blue is).
-
-**Sub-rule B — Distinctive-token loss in multi-word anchors:**
-If the specific token that makes the anchor unique is lost, the whole anchor is `dropped`. Example: "French New Wave" → "French art film" = `dropped` (New Wave is the distinctive identifier). "rule-of-thirds framing" → "cinematic framing" = `dropped` (rule-of-thirds is the specific technique).
-
-**Sub-rule C — Negative anchors are stricter than positive anchors:**
-Negative anchors only count as `approximate` when the absence is stated unambiguously. Implicit absence does not count. Example: "no smoke" → "smokeless chimney" = `approximate`. "no smoke" → "clear chimney" = `dropped` (absence is implied, not stated). "no people" → "empty scene" = `dropped` (implicit).
-
-**Sub-rule D — Proper nouns, model names, and titled references:**
-Proper nouns, camera models, film stocks, branded references, and titled works are `exact`-or-`dropped`. There is no `approximate` for these. Example: "Kodak Vision3 500T" → "Kodak film" = `dropped`. "Ghost in the Shell" → "anime cyberpunk" = `dropped`. "Arriflex 35BL" → "vintage Arriflex" = `exact` (brand preserved, model trivially shortened). "Blade Runner 2049" → "Blade Runner" = `dropped` (the sequel is not the original).
-
-**Sub-rule E — Compound anchors with multiple distinctive modifiers:**
-When an anchor contains multiple distinctive modifiers, loss of any modifier that materially changes the visual identity classifies the anchor as `dropped`. Example: "matte-black tactical trench coat" → "black trench coat" = `dropped` (matte-black and tactical both carry visual information). "warm amber glow of sodium streetlamps" → "warm streetlights" = `dropped` (amber, glow, and sodium are all visually distinctive). The test: would an image generator produce a noticeably different result without the lost modifier? If yes, the anchor is `dropped`.
-
----
-
-### Scene 1 — Minimal Input
-
-**Human text:** "A red ball."
-
-**Expected anchors:**
-
-| Anchor | Severity |
-|--------|----------|
-| red | critical |
-| ball | critical |
-
-**Stress target:** Over-embellishment of sparse input. Does Call 3 pad a 2-word input with invented context?
-
-**Categories covered:** 1 (subject only)
-
----
-
-### Scene 2 — Dense Multi-Anchor (Cyberpunk Courier)
-
-**Human text:** "A cyberpunk courier on a motorcycle weaving through neon-lit rain"
-
-**Expected anchors:**
-
-| Anchor | Severity |
-|--------|----------|
-| cyberpunk | critical |
-| courier | critical |
-| motorcycle | critical |
-| weaving | important |
-| neon | important |
-| rain | important |
-
-**Stress target:** Anchor preservation under moderate complexity. Standard benchmark.
-
-**Categories covered:** 5-6 (subject, action, style, lighting, atmosphere, environment)
-
----
-
-### Scene 3 — Sacred Architecture (Fox Shrine)
-
-**Human text:** "A fox shrine in autumn with red torii gates and falling maple leaves"
-
-**Expected anchors:**
-
-| Anchor | Severity |
-|--------|----------|
-| fox shrine | critical |
-| torii gates | critical |
-| red | important |
-| autumn | important |
-| maple leaves | important |
-| falling | optional |
-
-**Stress target:** Cultural noun preservation. "Torii gates" must not become "archway."
-
-**Categories covered:** 5 (subject, environment, colour, materials, atmosphere)
-
----
-
-### Scene 4 — Colour Saturation
-
-**Human text:** "An explosion of neon colors: a shiny purple sports car parked on a street made of glowing orange bricks, with bright pink palm trees lining the sidewalk, turquoise buildings covered in yellow graffiti, emerald-green streetlights, and a sky swirling with magenta, cyan, and lime clouds all reflecting off a massive rainbow puddle on the ground."
-
-**Expected anchors:**
-
-| Anchor | Severity |
-|--------|----------|
-| purple | critical |
-| orange | critical |
-| pink | critical |
-| turquoise | critical |
-| yellow | important |
-| emerald-green | important |
-| magenta | important |
-| cyan | important |
-| lime | important |
-| rainbow | optional |
-
-**Stress target:** Colour anchor survival. Every named colour must survive.
-
-**Categories covered:** 6-7 (subject, environment, colour, materials, lighting, atmosphere, style)
-
----
-
-### Scene 5 — Spatial Relationships
-
-**Human text:** "A wooden desk in the center of the room. On the left side of the desk sits a tall blue lamp. Directly in front of the lamp is a small green notebook. Behind the notebook and slightly to the right is a red coffee mug. Above the entire desk hangs a yellow clock whose hands point toward the mug. A black chair is positioned under the desk, and a white window is visible on the wall behind the chair."
-
-**Expected anchors:**
-
-| Anchor | Severity |
-|--------|----------|
-| center of the room | critical |
-| left side | critical |
-| in front of | critical |
-| behind | critical |
-| slightly to the right | important |
-| above | important |
-| under | important |
-| behind the chair | important |
-
-**Stress target:** Spatial preposition survival. Relative positions define the composition.
-
-**Categories covered:** 7+ (subject, environment, composition, colour, materials, lighting)
-
----
-
-### Scene 6 — Negative Trigger
-
-**Human text:** "A quiet mountain cabin at dusk with warm lights inside, but no smoke coming from the chimney, no people or animals anywhere, no snow on the roof, no trees near the cabin, and no stars visible in the sky above it."
-
-**Expected anchors:**
-
-| Anchor | Severity |
-|--------|----------|
-| no smoke | critical |
-| no people | critical |
-| no animals | critical |
-| no snow | important |
-| no trees | important |
-| no stars | important |
-| mountain cabin | critical |
-| dusk | important |
-| warm lights | important |
-
-**Stress target:** Explicit negative handling across all negative support types.
-
-**Categories covered:** 5+ (subject, environment, lighting, atmosphere, negative)
-
----
-
-### Scene 7 — Compression Stress Test
-
-**Human text:** "A hyper-detailed nocturnal cyberpunk Tokyo alleyway at 2 AM during a relentless neon-drenched downpour, featuring a solitary female cyber-samurai in a form-fitting matte-black tactical trench coat with glowing crimson circuitry patterns and a katana hilt wrapped in weathered leather, standing on rain-slicked cobblestones between towering holographic billboards displaying animated kanji in electric magenta, cyan, and acid-green, flanked by rusted vending machines overflowing with glowing energy drinks and half-eaten ramen bowls, intricate steam rising from grated manholes under flickering orange sodium streetlamps, distant flying delivery drones with pulsing blue underlights weaving between dense overhead power lines tangled with cherry-blossom petals caught in the wind, foreground puddles reflecting the chaotic scene with perfect mirror-like clarity and subtle oil-slick rainbows, background silhouettes of salarymen in transparent umbrellas hurrying past a dimly lit ramen stall with steaming pots and red paper lanterns, volumetric god rays piercing the thick fog from a massive floating digital billboard advertising futuristic implants in vibrant violet and gold, ultra-realistic textures on every surface including water droplets beading on metallic surfaces, fabric folds, and weathered concrete cracks, cinematic composition with rule-of-thirds framing, extreme depth of field keeping the samurai razor-sharp while the alley recedes into soft atmospheric bokeh, moody low-key lighting with high contrast, intricate details like subtle facial tattoos glowing faintly under her hood, scattered discarded holographic newspapers fluttering in the breeze, and a single ancient torii gate partially visible in the mist at the alley's end, rendered in photorealistic 8K resolution with the combined stylistic influences of Blade Runner 2049, Ghost in the Shell, and Syd Mead's concept art, evoking a tense atmosphere of cyber-noir mystery, melancholy, and quiet resilience."
-
-**Expected anchors:**
-
-| Anchor | Severity |
-|--------|----------|
-| cyber-samurai | critical |
-| matte-black tactical trench coat | critical |
-| crimson circuitry | critical |
-| ancient torii gate | critical |
-| Blade Runner 2049 | important |
-| Ghost in the Shell | important |
-| Syd Mead | important |
-| acid-green | important |
-| oil-slick rainbows | important |
-| rule-of-thirds | important |
-| bokeh | optional |
-| facial tattoos | optional |
-
-**Stress target:** Compression under extreme density (~1,800 chars). What does Call 3 sacrifice first?
-
-**Categories covered:** All 12
-
----
-
-### Scene 8 — Style/Medium Preservation (French New Wave)
-
-**Human text:** "A pristine 35mm film still from an unreleased 1974 French New Wave drama, shot on Kodak Vision3 500T stock with a vintage Arriflex 35BL camera, depicting a solitary woman in a faded red wool coat standing motionless on a rain-slicked Parisian bridge at twilight, her reflection perfectly mirrored in the Seine below, distant Eiffel Tower glowing softly through atmospheric haze, wet cobblestones catching the warm amber glow of sodium streetlamps, scattered autumn leaves drifting in the current, subtle film grain, natural light leaks along the left edge, faint sprocket marks, and gentle vignetting characteristic of analog cinema, captured with shallow depth of field and authentic 1970s color grading, every frame detail preserved exactly as if pulled straight from a developed negative in a Parisian darkroom."
-
-**Expected anchors:**
-
-| Anchor | Severity |
-|--------|----------|
-| 35mm film still | critical |
-| French New Wave | critical |
-| Kodak Vision3 500T | critical |
-| Arriflex 35BL | critical |
-| faded red wool coat | important |
-| Seine | important |
-| Eiffel Tower | important |
-| film grain | important |
-| light leaks | important |
-| sprocket marks | important |
-| vignetting | optional |
-| 1970s color grading | important |
-| 1974 | optional |
-
-**Stress target:** Analog film terminology, camera model names, and period-specific references that builders love to flatten.
-
-**Categories covered:** 8+ (subject, environment, style, camera, lighting, colour, atmosphere, materials, fidelity)
-
----
-
-### Scene 9 — Multi-Subject Hierarchy & Temporal (HOLDOUT)
-
-**Human text:** "In the foreground, the primary subject — a lone samurai in ornate black armor — leaps mid-turn from a crumbling temple roof just before impact with the stone courtyard below, katana raised; secondary subjects include two startled monks in saffron robes frozen in the midground; in the background, a violent storm rages as lightning strikes the distant pagoda, wind-whipped cherry blossoms blurring in motion while dramatic god rays slice through the churning clouds."
-
-**Expected anchors:**
-
-| Anchor | Severity |
-|--------|----------|
-| lone samurai | critical |
-| ornate black armor | critical |
-| mid-turn | critical |
-| just before impact | critical |
-| katana raised | important |
-| two startled monks | critical |
-| saffron robes | important |
-| midground | important |
-| lightning strikes | important |
-| distant pagoda | important |
-| cherry blossoms | optional |
-| god rays | optional |
-| foreground | critical |
-| background | critical |
-
-**Stress target:** Two things at once. First: multi-subject hierarchy — primary (samurai), secondary (monks), background (storm/pagoda). Builders must preserve importance order, not just nouns. Second: temporal/motion specificity — "mid-turn", "just before impact", "frozen in the midground". Builders often collapse timing into static description.
-
-**Categories covered:** 8+ (subject, action, environment, composition, lighting, atmosphere, materials, style)
-
-**Holdout:** YES — never used for tuning.
-
----
-
-### Scene 10 — Typical Real-World User Input (HOLDOUT)
-
-**Human text:** "a cute golden retriever puppy running through a sunny park chasing a red ball, some kids laughing in the background, green grass and trees everywhere, blue sky with a few clouds, make it really happy and bright like a nice summer day"
-
-**Expected anchors:**
-
-| Anchor | Severity |
-|--------|----------|
-| golden retriever puppy | critical |
-| running | important |
-| sunny park | critical |
-| red ball | critical |
-| kids laughing | important |
-| background | important |
-| green grass | important |
-| blue sky | important |
-| summer day | optional |
-
-**Stress target:** Normal person input. Not a stress test, not an edge case. Natural, slightly messy, slightly vague. Tests whether builders handle ordinary usage well without over-embellishing or stripping the casual tone. The phrase "make it really happy and bright" is a mood directive, not a visual anchor — builders should translate it into visual terms without dropping the concrete nouns.
-
-**Categories covered:** 4-5 (subject, action, environment, atmosphere, colour)
-
-**Holdout:** YES — never used for tuning.
+- **(A)** Visually distinctive modifier loss → `dropped` (not approximate). "amber lantern" → "warm lantern" = dropped.
+- **(B)** Distinctive-token loss in multi-word anchors → `dropped`. "Kodak Vision3 500T" → "film stock" = dropped.
+- **(C)** Negative anchors: implicit absence does not count as approximate. "no smoke" must appear explicitly.
+- **(D)** Proper nouns and branded references are exact-or-dropped. No approximate middle ground.
 
 ---
 
 ## 4. Frozen Input Snapshots
 
-**Problem:** Call 2 is non-deterministic (temperature 0.5). If the assembled prompt changes between runs, Call 3 score changes can't be attributed to the builder.
+`scripts/generate-snapshots.ts` runs all scenes through Call 2 once per tier, saves assembled prompts as frozen snapshots.
 
-**Solution:** Freeze Call 2 outputs.
-
-### Snapshot workflow:
-
-1. **Generate snapshots:** Run all 8 core scenes through Call 2 once per tier. Store the assembled prompts.
-2. **Freeze:** These become the fixed input for all Call 3 regression runs.
-3. **Refreeze when Call 2 changes.** If the Call 2 system prompt is updated, regenerate all snapshots. Tag with Call 2 version.
-4. **Freshness rule:** Snapshots older than 30 days trigger a dashboard warning. Call 2 version change = mandatory refreeze.
-
-### Storage:
-
-```typescript
-interface FrozenSnapshot {
-  sceneId: string;
-  tier: 1 | 2 | 3 | 4;
-  call2Version: string;
-  assembledPrompt: string;
-  snapshotHash: string;          // MD5 of assembledPrompt content
-  createdAt: string;
-}
-```
-
-Stored in `src/data/scoring/frozen-snapshots.json`. Committed to repo.
-
-### When Call 2 IS being tested:
-
-Run in `pipeline` mode. Call 2 runs fresh, output feeds Call 3, whole pipeline scored end-to-end.
-
-### Holdout scene snapshots:
-
-Generated and frozen separately. Stored in `src/data/scoring/holdout-snapshots.json`. Same workflow, same freshness rules.
+- `src/data/scoring/frozen-snapshots.json` — 8 core scenes × 4 tiers = 32 entries
+- `src/data/scoring/holdout-snapshots.json` — 2 holdout scenes × 4 tiers = 8 entries
+- Each entry: `sceneId`, `tier`, `call2Version`, `assembledPrompt`, `snapshotHash`, `createdAt`
+- Snapshot hashes are deterministic (same content = same hash)
 
 ---
 
-## 5. Scoring Route Changes
+## 5. Scoring Route
 
-The existing `/api/score-prompt/route.ts` (v1.3.0) is **retained and adapted**.
+**Route:** `/api/score-prompt`  
+**Auth:** `X-Builder-Quality-Key` header required. Requests without valid key get 401.  
+**Model:** GPT-5.4-mini, `temperature: 0.2`, `json_object` response format.  
+**Scorer version:** 2.0.0.
 
-### 5.1 Auth: Internal protection
-A server-side API key (`X-Builder-Quality-Key`) protects the route from external access. Core build requirement, not a later hardening item.
+### 5.1 System prompt
 
-### 5.2 System prompt: Reframed
-Directives become **builder diagnostic notes** for the developer, not the user.
+Diagnostic framing — directives diagnose the builder, not the user. "Call 3 dropped the amber modifier" not "Restore the colour."
 
-- ❌ "Restore the original 'cinematic wide-angle view'"
-- ✅ "Call 3 dropped 'cinematic' from user anchor 'cinematic wide-angle view' — only camera angle survived"
+### 5.2 Anchor audit
 
-### 5.3 Response schema: Enhanced anchor audit
+Three-level classification per §3.2: `exact` / `approximate` / `dropped`, each with severity (`critical` / `important` / `optional`).
 
-```typescript
-anchorAudit: Array<{
-  anchor: string;
-  severity: 'critical' | 'important' | 'optional';
-  status: 'exact' | 'approximate' | 'dropped';
-  note?: string;
-}>
-```
+### 5.3 Shared rubric (SSOT)
 
-Matching follows the strict policy in §3.2. When in doubt, classify as `dropped`.
+`src/lib/builder-quality/scoring-prompt.ts` exports `buildScoringSystemPrompt()` and `buildScoringUserMessage()`. Used by both the GPT scoring route and the Claude scorer. Rubric text exists in one place only.
 
-### 5.4 Scorer mode configuration
+### 5.4 System prompt override (Part 12)
 
-```typescript
-type ScorerMode = 'gpt_only' | 'dual_on_flagged' | 'dual_full';
-```
-
-- `gpt_only`: GPT only. Default. Day one.
-- `dual_on_flagged`: GPT scores first. Claude auto-fires when ANY of these triggers hit:
-  - GPT score < 70
-  - Anchor preservation < 60%
-  - Any critical anchor dropped
-  - `post_processing_changed` is true AND the delta is substantive (compliance gate touched a critical/important anchor, or changed > 10% of the prompt by character count — trivial cleanup like trailing punctuation does not trigger)
-  - Replicate standard deviation > 8 points
-- `dual_full`: Both models score every result. For release candidates.
-
-### 5.5 Rate limit
-Batch runner (server-side key): 200/hour. Client-side (transition): 30/hour.
+The route accepts an optional `systemPromptOverride` field in the request body. Only honoured when `X-Builder-Quality-Key` is valid (admin/script context). Substitutes the builder's system prompt while the full routing, compliance gate, and post-processing pipeline runs unchanged. Used by the patch test script.
 
 ---
 
 ## 6. Database Schema
 
-Two tables, `CREATE TABLE IF NOT EXISTS` pattern.
+Two tables in Postgres (Neon). Auto-created via `ensureTables()` / `ensureTablesExist()`. All migrations are idempotent `CREATE TABLE IF NOT EXISTS` + `ALTER TABLE ADD COLUMN IF NOT EXISTS`.
 
-### 6.1 Runs table (parent)
+### 6.1 `builder_quality_runs` (parent)
 
-```sql
-CREATE TABLE IF NOT EXISTS builder_quality_runs (
-  id              SERIAL PRIMARY KEY,
-  run_id          TEXT NOT NULL UNIQUE,
-  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  completed_at    TIMESTAMPTZ,
-  
-  -- Configuration
-  mode            TEXT NOT NULL,                    -- 'builder' | 'pipeline'
-  scope           TEXT NOT NULL,                    -- 'all' | platform ID
-  scorer_mode     TEXT NOT NULL DEFAULT 'gpt_only', -- 'gpt_only' | 'dual_on_flagged' | 'dual_full'
-  replicate_count SMALLINT NOT NULL DEFAULT 1,
-  include_holdout BOOLEAN NOT NULL DEFAULT FALSE,
-  
-  -- Versioning (all mandatory)
-  scorer_version  TEXT NOT NULL,
-  scorer_prompt_hash TEXT NOT NULL,                 -- MD5 of scoring system prompt content
-  gpt_model       TEXT NOT NULL,
-  claude_model    TEXT,
-  call2_version   TEXT,                             -- null in builder mode
-  
-  -- Comparison
-  baseline_run_id TEXT,
-  
-  -- Status
-  status          TEXT NOT NULL DEFAULT 'pending',  -- 'pending' | 'running' | 'complete' | 'partial' | 'failed'
-  total_expected  SMALLINT,
-  total_completed SMALLINT DEFAULT 0,
-  error_detail    TEXT,
-  
-  -- Summary
-  mean_gpt_score  NUMERIC(5,2),
-  mean_claude_score NUMERIC(5,2),
-  flagged_count   SMALLINT DEFAULT 0
-);
-```
+| Column               | Type         | Notes                                                                      |
+| -------------------- | ------------ | -------------------------------------------------------------------------- |
+| `id`                 | SERIAL PK    |                                                                            |
+| `run_id`             | TEXT UNIQUE  | e.g. `bqr-abc123`, `bqr-sample-xyz`, `bqr-patch-xyz`                       |
+| `created_at`         | TIMESTAMPTZ  |                                                                            |
+| `completed_at`       | TIMESTAMPTZ  | NULL while running. Set on completion.                                     |
+| `mode`               | TEXT         | `builder` / `pipeline` / `user_sample` / `patch_test`                      |
+| `scope`              | TEXT         | `all` / `<platformId>` / `sample` / `patch:<platformId>` / `rerun:<runId>` |
+| `scorer_mode`        | TEXT         | `gpt_only` / `dual_on_flagged` / `dual_full`                               |
+| `replicate_count`    | SMALLINT     | Default 1. Decision-grade = 3.                                             |
+| `include_holdout`    | BOOLEAN      |                                                                            |
+| `scorer_version`     | TEXT         | e.g. `2.0.0`                                                               |
+| `scorer_prompt_hash` | TEXT         | MD5 of scorer version + prompt tag                                         |
+| `gpt_model`          | TEXT         | `gpt-5.4-mini`                                                             |
+| `claude_model`       | TEXT         | `claude-haiku-4-5-20251001` (nullable)                                     |
+| `call2_version`      | TEXT         |                                                                            |
+| `baseline_run_id`    | TEXT         | Comparison lineage                                                         |
+| `parent_run_id`      | TEXT         | Recovery lineage (rerun child → parent)                                    |
+| `last_progress_at`   | TIMESTAMPTZ  | Heartbeat — updated after every result                                     |
+| `resumed_at`         | TIMESTAMPTZ  | Set when --resume prepares run                                             |
+| `status`             | TEXT         | `pending` / `running` / `complete` / `partial`                             |
+| `total_expected`     | SMALLINT     |                                                                            |
+| `total_completed`    | SMALLINT     |                                                                            |
+| `error_detail`       | TEXT         |                                                                            |
+| `mean_gpt_score`     | NUMERIC(5,2) |                                                                            |
+| `mean_claude_score`  | NUMERIC(5,2) |                                                                            |
+| `flagged_count`      | SMALLINT     |                                                                            |
 
-### 6.2 Results table (child)
+**Status semantics:** `complete` = zero error rows. `partial` = one or more errors. Terminality is `completed_at` (non-null = finished).
 
-```sql
-CREATE TABLE IF NOT EXISTS builder_quality_results (
-  id              SERIAL PRIMARY KEY,
-  run_id          TEXT NOT NULL REFERENCES builder_quality_runs(run_id),
-  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  
-  -- What was tested
-  platform_id     TEXT NOT NULL,
-  platform_name   TEXT NOT NULL,
-  scene_id        TEXT NOT NULL,
-  scene_name      TEXT NOT NULL,
-  tier            SMALLINT NOT NULL,
-  call3_mode      TEXT NOT NULL,
-  builder_version TEXT NOT NULL,                    -- MD5 hash of builder file
-  replicate_index SMALLINT NOT NULL DEFAULT 1,
-  
-  -- Snapshot provenance (builder mode only)
-  snapshot_hash   TEXT,                             -- Hash of frozen assembled prompt used
-  
-  -- Prompts captured (full text)
-  human_text      TEXT NOT NULL,
-  assembled_prompt TEXT NOT NULL,
-  raw_optimised_prompt TEXT NOT NULL,
-  optimised_prompt TEXT NOT NULL,
-  negative_prompt  TEXT,
-  
-  -- Hashes
-  input_hash      TEXT NOT NULL,
-  output_hash     TEXT NOT NULL,
-  
-  -- Length metrics
-  assembled_char_count    SMALLINT NOT NULL,
-  raw_optimised_char_count SMALLINT NOT NULL,
-  optimised_char_count    SMALLINT NOT NULL,
-  
-  -- Post-processing effect
-  post_processing_changed BOOLEAN NOT NULL DEFAULT FALSE,
-  post_processing_delta   TEXT,
-  
-  -- GPT scores
-  gpt_score       SMALLINT NOT NULL,
-  gpt_axes        JSONB NOT NULL,
-  gpt_directives  JSONB NOT NULL,
-  gpt_summary     TEXT NOT NULL,
-  
-  -- Claude scores (nullable)
-  claude_score    SMALLINT,
-  claude_axes     JSONB,
-  claude_directives JSONB,
-  claude_summary  TEXT,
-  
-  -- Triangulated result
-  median_score    SMALLINT,
-  divergence      SMALLINT,
-  flagged         BOOLEAN DEFAULT FALSE,
-  
-  -- Anchor audit
-  anchor_audit    JSONB,
-  anchors_expected SMALLINT,
-  anchors_preserved SMALLINT,
-  anchors_dropped SMALLINT,
-  critical_anchors_dropped SMALLINT,
-  
-  -- Source and status
-  source          TEXT NOT NULL DEFAULT 'batch',    -- 'batch' | 'user_sample'
-  status          TEXT NOT NULL DEFAULT 'complete', -- 'complete' | 'error'
-  error_detail    TEXT,
-  is_holdout      BOOLEAN NOT NULL DEFAULT FALSE
-);
+### 6.2 `builder_quality_results` (child)
 
--- Indexes
-CREATE INDEX IF NOT EXISTS idx_bqr_platform_created 
-  ON builder_quality_results (platform_id, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_bqr_run 
-  ON builder_quality_results (run_id);
-CREATE INDEX IF NOT EXISTS idx_bqr_flagged 
-  ON builder_quality_results (flagged) WHERE flagged = TRUE;
-CREATE INDEX IF NOT EXISTS idx_bqr_scene
-  ON builder_quality_results (scene_id, platform_id);
-CREATE INDEX IF NOT EXISTS idx_bqr_critical_drops
-  ON builder_quality_results (critical_anchors_dropped) 
-  WHERE critical_anchors_dropped > 0;
-CREATE INDEX IF NOT EXISTS idx_bqr_holdout
-  ON builder_quality_results (is_holdout) WHERE is_holdout = TRUE;
-```
+| Column                     | Type        | Notes                                         |
+| -------------------------- | ----------- | --------------------------------------------- |
+| `id`                       | SERIAL PK   |                                               |
+| `run_id`                   | TEXT FK     | References `builder_quality_runs(run_id)`     |
+| `created_at`               | TIMESTAMPTZ |                                               |
+| `platform_id`              | TEXT        |                                               |
+| `platform_name`            | TEXT        |                                               |
+| `scene_id`                 | TEXT        |                                               |
+| `scene_name`               | TEXT        |                                               |
+| `tier`                     | SMALLINT    |                                               |
+| `call3_mode`               | TEXT        |                                               |
+| `builder_version`          | TEXT        | MD5 hash of builder file content              |
+| `replicate_index`          | SMALLINT    | Default 1                                     |
+| `snapshot_hash`            | TEXT        |                                               |
+| `human_text`               | TEXT        |                                               |
+| `assembled_prompt`         | TEXT        |                                               |
+| `raw_optimised_prompt`     | TEXT        | Before compliance gates                       |
+| `optimised_prompt`         | TEXT        | After compliance gates                        |
+| `negative_prompt`          | TEXT        |                                               |
+| `input_hash`               | TEXT        |                                               |
+| `output_hash`              | TEXT        |                                               |
+| `assembled_char_count`     | SMALLINT    |                                               |
+| `raw_optimised_char_count` | SMALLINT    |                                               |
+| `optimised_char_count`     | SMALLINT    |                                               |
+| `post_processing_changed`  | BOOLEAN     |                                               |
+| `post_processing_delta`    | TEXT        |                                               |
+| `gpt_score`                | SMALLINT    |                                               |
+| `gpt_axes`                 | JSONB       |                                               |
+| `gpt_directives`           | JSONB       |                                               |
+| `gpt_summary`              | TEXT        |                                               |
+| `claude_score`             | SMALLINT    | Nullable                                      |
+| `claude_axes`              | JSONB       |                                               |
+| `claude_directives`        | JSONB       |                                               |
+| `claude_summary`           | TEXT        |                                               |
+| `median_score`             | SMALLINT    |                                               |
+| `divergence`               | SMALLINT    |                                               |
+| `flagged`                  | BOOLEAN     |                                               |
+| `anchor_audit`             | JSONB       |                                               |
+| `anchors_expected`         | SMALLINT    |                                               |
+| `anchors_preserved`        | SMALLINT    |                                               |
+| `anchors_dropped`          | SMALLINT    |                                               |
+| `critical_anchors_dropped` | SMALLINT    |                                               |
+| `source`                   | TEXT        | `batch` / `user_sample`                       |
+| `status`                   | TEXT        | `complete` / `error`                          |
+| `error_detail`             | TEXT        |                                               |
+| `is_holdout`               | BOOLEAN     |                                               |
+| `showcase_entry_id`        | TEXT        | Links to Community Pulse entry (user samples) |
+| `showcase_created_at`      | TIMESTAMPTZ | When user generated the prompt                |
+| `showcase_tier`            | TEXT        | Tier at generation time                       |
+| `scorer_version`           | TEXT        | Denormalised for idempotency index            |
+
+### 6.3 Indexes
+
+| Index                            | Columns                                                            | Notes                                      |
+| -------------------------------- | ------------------------------------------------------------------ | ------------------------------------------ |
+| `idx_bqr_platform_created`       | `(platform_id, created_at DESC)`                                   | Dashboard queries                          |
+| `idx_bqr_run`                    | `(run_id)`                                                         | FK lookups                                 |
+| `idx_bqr_flagged`                | `(flagged) WHERE flagged = TRUE`                                   | Partial                                    |
+| `idx_bqr_scene`                  | `(scene_id, platform_id)`                                          | Scene analysis                             |
+| `idx_bqr_critical_drops`         | `(critical_anchors_dropped) WHERE > 0`                             | Partial                                    |
+| `idx_bqr_holdout`                | `(is_holdout) WHERE is_holdout = TRUE`                             | Partial                                    |
+| `bqr_results_unique_logical`     | `(run_id, platform_id, scene_id, replicate_index)`                 | **UNIQUE** — one row per combination       |
+| `bqr_results_unique_user_sample` | `(showcase_entry_id, scorer_version) WHERE source = 'user_sample'` | **UNIQUE** — idempotency for user sampling |
 
 ---
 
 ## 7. Batch Runner
 
-**Location:** `scripts/builder-quality-run.ts`  
-**Execution:** `npx tsx scripts/builder-quality-run.ts` or cron.
+**File:** `scripts/builder-quality-run.ts` v1.3.0  
+**Execution:** `npx tsx scripts/builder-quality-run.ts <flags>`
 
-### Arguments:
+### CLI flags
 
-| Flag | Effect |
-|------|--------|
-| `--platform <id>` | Single platform |
-| `--all` | All 40 platforms |
-| `--mode builder` | Frozen input (default) — tests Call 3 only |
-| `--mode pipeline` | Fresh Call 2 — tests entire pipeline |
-| `--replicates 3` | Runs per scene (default: 1 diagnostic, 3 decision-grade) |
-| `--scorer gpt_only` | GPT only (default) |
-| `--scorer dual_on_flagged` | Claude auto-fires on triggers |
-| `--scorer dual_full` | Both models always |
-| `--holdout` | Include holdout scenes |
-| `--baseline <run_id>` | Link to prior run for comparison |
-| `--rerun <run_id>` | Rerun only failed results from a prior run |
-| `--resume <run_id>` | Resume a partial/crashed run |
+| Flag                       | Effect                                                 |
+| -------------------------- | ------------------------------------------------------ |
+| `--platform <id>`          | Single platform                                        |
+| `--all`                    | All 40 platforms                                       |
+| `--mode builder`           | Frozen input (default) — tests Call 3 only             |
+| `--mode pipeline`          | Fresh Call 2 — tests entire pipeline                   |
+| `--replicates 3`           | Runs per scene (default 1, decision-grade 3)           |
+| `--scorer gpt_only`        | GPT only (default)                                     |
+| `--scorer dual_on_flagged` | Claude auto-fires on triggers                          |
+| `--scorer dual_full`       | Both models always                                     |
+| `--holdout`                | Include holdout scenes                                 |
+| `--baseline <run_id>`      | Compare against prior run                              |
+| `--rerun <run_id>`         | Re-run only error results (creates child run)          |
+| `--resume <run_id>`        | Continue a crashed run in-place                        |
+| `--force`                  | Required for resuming stale runs (10+ min no progress) |
 
-### Pipeline per platform per scene per replicate:
+### Pipeline per platform per scene per replicate
 
-1. **Load input:** `builder` mode = frozen snapshot. `pipeline` mode = fresh Call 2.
-2. **Call 3:** Capture raw output (before compliance gates) and post-processed output.
-3. **Compute post-processing delta.**
-4. **Score (GPT).**
-5. **Score (Claude, if mode requires it).**
-6. **Anchor audit:** Classify each expected anchor as `exact`, `approximate`, or `dropped` per §3.2 policy.
-7. **Store.** Update run `total_completed`.
+1. Load frozen snapshot (builder mode) or fresh Call 2 (pipeline mode)
+2. Call 3: optimise
+3. Compute post-processing delta
+4. Score (GPT)
+5. Score (Claude, if mode requires it)
+6. Anchor audit per §3.2
+7. Store result. Update heartbeat.
 
-### Rerun / Resume rules:
+### Rerun mechanics
 
-- **`--rerun <run_id>`:** Creates a new child run linked to the original. Runs only results with `status: 'error'` from the original run. New results are stored with the new `run_id` but reference the original for comparison.
-- **`--resume <run_id>`:** Continues a `running` or `partial` run. Skips scene+platform+replicate combinations that already have `status: 'complete'` results. Updates the original run's `total_completed`.
-- **Stale detection:** Dashboard warns for runs with `status: 'running'` older than 1 hour.
+Creates a new child run linked via `parent_run_id`. Only runs error results from the original. Fresh INSERTs under the new run_id.
 
-### Decision thresholds:
+### Resume mechanics
 
-**Regression** (flag for review):
-- Mean score drops ≥ 5 points AND any critical anchor previously preserved is now dropped
-- OR mean score drops ≥ 8 points regardless of anchor changes
+Continues the same run in-place. Skips completed combinations. Updates error rows in place (no duplicates). DB unique index enforces one row per combination.
 
-**Improvement** (safe to ship):
-- Mean score rises ≥ 3 points AND no previously preserved critical/important anchor is now dropped
+### SIGINT handler
 
-### Builder version:
+Ctrl+C sets run to `partial`, logs last platform/scene being processed, closes DB, exits cleanly. Second Ctrl+C force-kills. Next `--resume --force` picks up where it left off.
 
-MD5 hash of the builder file content. Computed at runtime. Deterministic.
+### Heartbeat
 
-### Error handling:
+`last_progress_at` updated after every result (piggybacks on `total_completed` UPDATE). Stale = no progress for 10 minutes.
 
-- Single failure: log, mark result `error`, continue.
-- \> 50% errors: mark run `partial`.
-- Crash: run stays `running`. Dashboard warns after 1 hour.
+### Decision thresholds
 
-### Holdout cadence:
+- **Regression:** Mean score drops ≥5 AND any critical anchor previously preserved is now dropped, OR mean drops ≥8 regardless.
+- **Improvement:** Mean score rises ≥3 AND no previously preserved critical/important anchor is now dropped.
 
-Holdout scenes run:
-- On every release candidate run
-- Monthly (scheduled)
-- After any patch that targets a weakness found in core scenes
-- Never during builder tuning or diagnostic runs
+### Cost estimate
 
-### Cost estimate:
-
-- 8 core scenes × 40 platforms × 1 replicate = 320 runs per full batch
-- Builder mode, gpt_only: 2 API calls per run → 640 calls, ~$0.50–$1.00
-- With 3 replicates: ~$1.50–$3.00
+- Full batch (gpt_only, 1 rep): ~320 runs, ~$0.50–$1.00
+- Decision-grade (3 reps): ~$1.50–$3.00
 - With Claude (dual_full): add ~$0.20–$0.50
-- Single platform: 8 scenes × 3 replicates = 24 calls, under $0.10
-- Holdout addition: +2 scenes × 40 platforms = +80 runs
 
 ---
 
 ## 8. Dual-Model Scoring
 
-### Launch strategy:
+**Claude model:** `claude-haiku-4-5-20251001`  
+**Client:** `src/lib/builder-quality/claude-scorer.ts` — direct fetch to Anthropic API, 30s timeout, single retry on 429/5xx.  
+**Shared rubric:** `src/lib/builder-quality/scoring-prompt.ts` — SSOT for both GPT and Claude. Rubric text is never duplicated.
 
-- **Day one:** `gpt_only`.
-- **Phase 2:** `dual_on_flagged` for normal, `dual_full` for release candidates.
-- **Schema supports all modes from the start.**
+### `dual_on_flagged` triggers
 
-### Claude: Anthropic API direct. `claude-haiku-4-5-20251001`. Same rubric.
+Claude auto-fires when: GPT score < 75, OR critical dropped > 0, OR important dropped ≥ 2, OR post-processing changed substantively (~15–25% trigger rate).
 
-### Divergence:
+### Divergence
 
-| Gap | Action |
-|-----|--------|
-| 0–4 pts | Agreement. Median. |
-| 5–8 pts | Minor. Median. Log. |
-| 9+ pts | Flagged. Dashboard. Manual review. |
+| Gap     | Action                             |
+| ------- | ---------------------------------- |
+| 0–4 pts | Agreement. Median.                 |
+| 5–8 pts | Minor. Median. Log.                |
+| 9+ pts  | Flagged. Dashboard. Manual review. |
 
 ---
 
-## 9. Admin Dashboard
+## 9. User Sampling
+
+**File:** `scripts/builder-quality-sample.ts` v1.0.0  
+**Source:** Community Pulse (`prompt_showcase_entries` table, `source = 'user'`)
+
+**What it does:** Scores real user prompts — the actual optimised prompts users received (Option A: historical output audit). Answers "how good were the prompts we actually delivered?"
+
+**It does NOT re-run the pipeline.** The 60-char description truncation in Community Pulse makes pipeline re-run unreliable. Option B deferred.
+
+### Sampling rules
+
+- Only `source = 'user'` entries (no weather demos)
+- `prompt_text` ≥ 20 chars, junk filtered (repeated punctuation, URLs, single-token, placeholders)
+- Most recent **unsampled** entry per platform — already-scored entries excluded via `NOT EXISTS`
+- Idempotency: DB unique index on `(showcase_entry_id, scorer_version)` prevents duplicate scoring
+- Error rows don't block re-sampling — only `status = 'complete'` rows are excluded
+
+### Storage
+
+Results stored with `source = 'user_sample'`, `showcase_entry_id` (required), `showcase_created_at`, `showcase_tier`, denormalised `scorer_version`.
+
+### Dashboard
+
+Platform Overview shows **"User (7d)"** column — rolling 7-day mean with sample count `n=`. Confidence styling: n≥5 white, n=3–4 dimmed, n=1–2 further dimmed, n=0 shows "—". Batch and user-sample scores never mixed in trend lines or averages.
+
+---
+
+## 10. Failure Analysis
+
+**File:** `scripts/builder-quality-analyse.ts` v1.0.0  
+**Prerequisites:** 50+ results per platform, 3+ scorer versions.
+
+### Five analysis categories
+
+1. **Anchor Drop Frequency** — severity-weighted (critical ×3, important ×2, optional ×1)
+2. **Scene Weakness Map** — per-scene mean/min/max/stddev
+3. **Recurring Directives** — canonicalised (lowercase, strip action verbs, Jaccard dedup at 80% overlap), classified by type (anchor-loss / style / compliance)
+4. **Score Trend** — rolling 5-run average
+5. **Post-Processing Reliance** — % of runs where compliance gate changed output
+
+### Fix-Class Nomination (deterministic)
+
+The analysis deterministically nominates one fix class based on the highest-weighted failure pattern:
+
+| Fix Class               | Trigger                                            | Target Section     |
+| ----------------------- | -------------------------------------------------- | ------------------ |
+| `modifier_preservation` | Critical/important multi-word anchors dropped ≥40% | Preservation rules |
+| `colour_preservation`   | Colour anchors dropped ≥50%                        | Preservation rules |
+| `spatial_preservation`  | Spatial anchors dropped ≥40%                       | Composition rules  |
+| `anti_invention`        | "Invented content" directives ≥30%                 | Ban list           |
+| `length_floor`          | Compression scene <65 mean                         | Length rules       |
+| `anti_synonym`          | Synonym churn directives ≥30%                      | Fidelity rules     |
+| `compliance_dependency` | Post-processing reliance >60%                      | Core rules         |
+
+Output: `reports/failure-report-<platformId>.json`
+
+---
+
+## 11. Patch Suggestion
+
+**File:** `scripts/builder-quality-suggest.ts` v1.0.0
+
+GPT writes ONE targeted edit for the nominated fix class and target section. GPT does NOT diagnose — the analysis script does that deterministically. GPT's role is narrowly: "write one rule for this section that addresses this failure."
+
+### GPT constraints
+
+- One edit per suggestion. Never multiple.
+- Must target the nominated section only.
+- Must include WRONG/RIGHT example (matches builder convention).
+- Must reference specific failure data (anchor name, drop rate, scene).
+- Bans vague suggestions ("add more detail", "be more creative", "ensure quality").
+- Pattern library from Phase 2/3 proven fixes included in the prompt.
+
+### Validation
+
+Response validated: fix class must match nomination, WRONG/RIGHT must be present, evidence must be cited.
+
+Output: `reports/patch-suggestion-<platformId>.json`
+
+---
+
+## 12. Patch Testing
+
+**File:** `scripts/builder-quality-test-patch.ts` v1.0.0
+
+### Route-faithful testing
+
+Patches are tested through the actual `/api/optimise-prompt` route via `systemPromptOverride` body field (admin-only, gated behind `X-Builder-Quality-Key`). The full compliance gate, post-processing, and routing pipeline run. No deployed files are modified during testing.
+
+### Pipeline
+
+- 8 core scenes + 2 holdout scenes × 3 replicates = 30 results
+- Scored via `/api/score-prompt`
+- Compared against baseline (latest complete batch run or explicit `--baseline`)
+
+### Overfitting guard
+
+| Condition                                                                    | Verdict                                      |
+| ---------------------------------------------------------------------------- | -------------------------------------------- |
+| Core improves, holdout improves/neutral, no single holdout scene drops >4pts | **SAFE** — safe to review and manually apply |
+| Core improves, one holdout scene drops >4pts                                 | **CAUTION** — review specific regression     |
+| Core improves, holdout regresses ≤2pts aggregate                             | **CAUTION** — marginal                       |
+| Core improves, holdout regresses >2pts aggregate                             | **REJECT** — overfitting                     |
+| Core neutral or worse                                                        | **REJECT** — patch didn't help               |
+
+**SAFE means "safe to review and manually apply."** Final confidence requires a normal batch rerun after the manual file change.
+
+Output: `reports/patch-test-<platformId>-<runId>.json` + run in DB with `mode = 'patch_test'`
+
+---
+
+## 13. Validation Harness
+
+**File:** `src/lib/validation/validate-builder.ts`  
+**Execution:** `pnpm exec tsx src/lib/validation/validate-builder.ts --all`
+
+Quick sanity check for the 7 GPT-powered NL builders. Tests the fox shrine scene through each builder's system prompt via raw OpenAI API call, then runs 4 gates:
+
+1. **Anchor preservation** — all 9 named anchors present?
+2. **Banned content** — no invented textures, composition scaffolding, synonym churn, camera-direction language?
+3. **Character count** — within platform's `maxChars`?
+4. **Length preservation** — GPT hasn't compressed the prompt?
+
+Run after editing any builder system prompt. Takes seconds.
+
+---
+
+## 14. Admin Dashboard
 
 **Route:** `/admin/builder-quality`  
-**Access:** Admin-only.
+**Access:** Admin-only via Clerk.
 
-### Views:
+### 14.1 Platform Overview
 
-**9.1 Platform Overview:** 40 platforms sorted by median score (lowest first). Columns: name, tier, latest median, 7-day trend, anchor preservation %, critical drops, flagged count, last run.
+40 platforms sorted by score (lowest first). Columns: platform, tier, mean, **User (7d)** (with n= count and confidence styling), stddev, preservation %, critical drops, unstable scenes, status.
 
-**9.2 Platform Detail:** Scene results, trend line, recurring directives, anchor audit with severity, raw vs post-processed comparison, post-processing reliance.
+### 14.2 Run History
 
-**9.3 Flagged Divergences:** GPT vs Claude > 9pts.
+All runs with badges: status (complete/partial/running), **↩ rerun** (purple, when `parent_run_id` non-null), **↻ resumed** (sky, when `resumed_at` non-null), **⚡ sample** (teal, when `mode = 'user_sample'`). Stale detection via `last_progress_at` (10 min threshold).
 
-**9.4 Run History:** Timestamp, scope, status, scorer mode, replicates, baseline linkage, summary.
+### 14.3 Flagged Divergences
 
-**9.5 Replicate Variance:** Mean/min/max/stddev per scene. High variance = unstable builder.
+GPT vs Claude > 9pts. Three-state logic depending on whether dual-model runs exist.
 
-**9.6 Post-Processing Reliance:** Platforms where `post_processing_changed` > 50% of runs.
+### 14.4 Platform Detail (`/admin/builder-quality/[platformId]`)
 
-**9.7 Holdout Results:** Separate view. Never mixed with core scene trend lines. Shows whether builder improvements generalise to unseen input.
+Scene results (expandable anchor audit), replicate variance, post-processing reliance, holdout results, baseline comparison, **failure patterns** (anchor drop heatmap, recurring directives, patch test history with verdict badges).
 
-**Hard rule:** Builder-mode and pipeline-mode results are never mixed in the same trend line. Separate views, clearly labelled.
+### Hard rules
 
----
-
-## 10. Real User Sampling (Phase 2)
-
-After batch system is stable. Sample one per platform per day from Community Pulse copies. Score by active scorer mode. Store with `source = 'user_sample'`. Dashboard shows rolling 7-day average alongside batch scores.
+- Builder-mode and pipeline-mode results never mixed in the same trend line.
+- Batch and user-sample scores never mixed in means or rankings.
+- Holdout results shown separately, never in core trend lines.
 
 ---
 
-## 11. Human-Assisted Patch Suggestion (Phase 3)
+## 15. Storage Authority
 
-**NOT autonomous.** Human-assisted only.
-
-**Prerequisites:** 50+ results per platform. 3+ stable scorer versions. Enough failures to cluster.
-
-**Can do:** Cluster failures, surface weak rules, suggest simple edits, auto-test candidates, show deltas.
-
-**Cannot do:** Infer deep causal issues, rewrite complex builders, guarantee no overfitting.
-
-**Overfitting check:** If a proposed patch improves core scene scores but regresses holdout scene scores, it's overfitting. Reject.
-
-**Timing:** Do not build early. Only after scoring pipeline produces stable, believable signals.
+| What                                             | Where                                                   |
+| ------------------------------------------------ | ------------------------------------------------------- |
+| Scoring results, run metadata, aggregates        | Postgres (DB) — authoritative                           |
+| Failure analysis reports                         | `reports/failure-report-*.json` (file) — intermediate   |
+| Patch suggestions (text, rationale, WRONG/RIGHT) | `reports/patch-suggestion-*.json` (file) — human review |
+| Patch test deltas                                | `reports/patch-test-*.json` (file) + DB (run/results)   |
+| Martin's approve/reject decision                 | Not stored in v1 — manual workflow                      |
 
 ---
 
-## 12. User-Facing Changes
+## 16. File Inventory
 
-### 12.1 Score section killed
+### Scripts (6)
 
-`XRayScore` removed from `pipeline-xray.tsx`. `usePromptScore` removed from `playground-page-client.tsx`. Auto-fire `useEffect` removed. `SectionWire` before Score removed. Right rail: Decoder → Switchboard → Alignment. Three sections.
+| File                                    | Purpose                                                        |
+| --------------------------------------- | -------------------------------------------------------------- |
+| `scripts/builder-quality-run.ts`        | Batch runner v1.3.0 (normal, rerun, resume, SIGINT, heartbeat) |
+| `scripts/builder-quality-sample.ts`     | User sampling from Community Pulse                             |
+| `scripts/builder-quality-analyse.ts`    | Failure analysis + fix-class nomination                        |
+| `scripts/builder-quality-suggest.ts`    | GPT-constrained patch suggestion                               |
+| `scripts/builder-quality-test-patch.ts` | Route-faithful patch testing + overfitting guard               |
+| `scripts/generate-snapshots.ts`         | Frozen snapshot generator                                      |
 
-### 12.2 No replacement UI
+### Library (7)
 
-No score visible to the user. The product produces good prompts — it doesn't grade its own work in front of the customer.
+| File                                        | Purpose                                                                         |
+| ------------------------------------------- | ------------------------------------------------------------------------------- |
+| `src/lib/builder-quality/database.ts`       | Table creation, query helpers, health check                                     |
+| `src/lib/builder-quality/scoring-prompt.ts` | Shared rubric builder (SSOT for GPT + Claude)                                   |
+| `src/lib/builder-quality/claude-scorer.ts`  | Anthropic API scoring client                                                    |
+| `src/lib/builder-quality/aggregation.ts`    | Three-layer aggregation (platform, scene, platform×scene) + baseline comparison |
+| `src/lib/builder-quality/anchor-audit.ts`   | Client-side anchor matching per §3.2                                            |
+| `src/lib/builder-quality/runner.ts`         | Core runner logic (separated from CLI)                                          |
+| `src/lib/builder-quality/hash.ts`           | MD5 helpers                                                                     |
 
----
+### Admin pages (2)
 
-## 13. Build Order
+| File                                                                                 | Purpose             |
+| ------------------------------------------------------------------------------------ | ------------------- |
+| `src/app/admin/builder-quality/page.tsx` + `builder-quality-client.tsx`              | Dashboard overview  |
+| `src/app/admin/builder-quality/[platformId]/page.tsx` + `platform-detail-client.tsx` | Platform drill-down |
 
-| Part | Scope | Effort |
-|------|-------|--------|
-| **1** | Test scene JSON (8 core + 2 holdout + anchors with severity) | 1 hr |
-| **2** | Kill user-facing score (XRayScore, hook, auto-fire, SectionWire) | 1 hr |
-| **3** | DB schema + route hardening (tables, server-side key) | 2 hrs |
-| **4** | Reframe scoring prompt (diagnostics, three-level audit, §3.2 policy) | 2–3 hrs |
-| **5** | Frozen snapshot generator | 2 hrs |
-| **6** | Batch runner (Call 3 → Score, single + full, error handling) | 5–7 hrs |
-| **7** | Replicate support + variance + decision thresholds | 2–3 hrs |
-| **8** | Admin dashboard (read-only, all views) | 5–7 hrs |
-| **9** | Dual-model scoring (Claude, switchable modes, triggers) | 2–3 hrs |
-| **10** | Rerun/resume mechanics | 1–2 hrs |
-| **11** | User sampling | 2–3 hrs |
-| **12** | Human-assisted patch suggestion | 5–7 hrs |
+### Admin API routes (6)
 
-**Parts 1–6: Core. ~13–16 hours.**  
-**Parts 7–12: Incremental. ~17–25 hours.**  
-**Total: ~30–41 hours.**
+| Route                                            | Purpose                                               |
+| ------------------------------------------------ | ----------------------------------------------------- |
+| `/api/admin/builder-quality/runs`                | Recent runs list                                      |
+| `/api/admin/builder-quality/run-results`         | Results for a selected run                            |
+| `/api/admin/builder-quality/platform-detail`     | Full drill-down data for one platform                 |
+| `/api/admin/builder-quality/flagged-divergences` | GPT vs Claude divergence table                        |
+| `/api/admin/builder-quality/user-sample-stats`   | 7-day rolling average per platform (user samples)     |
+| `/api/admin/builder-quality/failure-patterns`    | Anchor drops, directives, scene weakness, patch tests |
 
----
+### Dashboard components (10)
 
-## 14. What This Replaces
+| Component                             | Purpose                                        |
+| ------------------------------------- | ---------------------------------------------- |
+| `platform-overview-table.tsx`         | 40-platform sorted table with User (7d) column |
+| `run-history-table.tsx`               | Run list with rerun/resumed/sample badges      |
+| `scene-results-table.tsx`             | Per-scene results with expandable anchor audit |
+| `anchor-audit-panel.tsx`              | Anchor audit detail view                       |
+| `replicate-variance-table.tsx`        | Min/max/stddev per scene                       |
+| `post-processing-panel.tsx`           | Post-processing reliance stats                 |
+| `holdout-panel.tsx`                   | Holdout scene results                          |
+| `comparison-panel.tsx`                | Baseline comparison view                       |
+| `flagged-divergences-table.tsx`       | GPT vs Claude divergence flags                 |
+| `flagged-divergences-placeholder.tsx` | Placeholder (should be deleted)                |
 
-| Before | After |
-|--------|-------|
-| User sees score | User sees nothing |
-| Call 4 fires per optimisation | Batch/cron/on-demand |
-| Directives blame user | Directives diagnose builder |
-| GPT only | Switchable: gpt_only / dual_on_flagged / dual_full |
-| No history | Full Postgres with versioning |
-| Manual testing | Automated regression with replicates |
-| Boolean anchor audit | Three-level (exact/approximate/dropped) + severity |
-| No overfitting check | 2 hidden holdout scenes |
-| No rerun capability | Rerun failed / resume partial |
+### Data files (4)
 
----
+| File                                      | Purpose                  |
+| ----------------------------------------- | ------------------------ |
+| `src/data/scoring/test-scenes.json`       | 8 core scenes            |
+| `src/data/scoring/holdout-scenes.json`    | 2 holdout scenes         |
+| `src/data/scoring/frozen-snapshots.json`  | 32 frozen Call 2 outputs |
+| `src/data/scoring/holdout-snapshots.json` | 8 frozen holdout outputs |
 
-## 15. Non-Regression Rules
+### Validation (1)
 
-1. Removing XRayScore must not affect Decoder, Switchboard, or Alignment
-2. Removing usePromptScore must not affect Call 1, 2, or 3 wiring
-3. `/api/score-prompt` stays deployed — batch runner uses it
-4. Batch runner runs offline, never during user sessions
-5. Admin dashboard behind admin auth
-6. No user-facing string references scoring or quality grades
-7. Frozen snapshots committed to repo
-8. Raw output stored alongside post-processed — never overwritten
-9. Holdout scenes never used for tuning
-10. `builder_version` is file hash, never free text
-11. Builder-mode and pipeline-mode never mixed in trend lines
-12. `approximate` classification follows §3.2 strictly — when in doubt, `dropped`
+| File                                     | Purpose                                   |
+| ---------------------------------------- | ----------------------------------------- |
+| `src/lib/validation/validate-builder.ts` | Quick 4-gate sanity check for NL builders |
 
----
+### Modified routes (2)
 
-## 16. Acceptance Criteria (Core System Release Gate)
-
-The core system (Parts 1–6) is "done" when:
-
-- [ ] 8 core + 2 holdout scene JSON files pass TypeScript validation
-- [ ] User-facing score killed — no XRayScore, no hook, no auto-fire, no SectionWire
-- [ ] DB tables create successfully on fresh Postgres
-- [ ] Route rejects requests without valid `X-Builder-Quality-Key`
-- [ ] Route accepts requests with valid key
-- [ ] Frozen snapshots generated for all 8 core scenes × 4 tiers
-- [ ] Holdout snapshots generated separately
-- [ ] One full batch run completes for all 40 platforms (`status: 'complete'`)
-- [ ] One single-platform run completes for a known-weak builder
-- [ ] Anchor audit correctly classifies `exact`, `approximate`, and `dropped` on fox shrine scene
-- [ ] Anchor audit correctly classifies a borderline `approximate` case per §3.2 policy
-- [ ] Dashboard renders platform overview sorted by score
-- [ ] Dashboard renders run history with status indicators
-- [ ] Dashboard separates builder-mode and pipeline-mode results
-- [ ] One builder change shows measurable regression (score drop + critical anchor loss)
-- [ ] One builder change shows measurable improvement (score rise, no critical loss)
-- [ ] Error handling tested: partial run when Call 3 errors on one platform
-- [ ] Raw vs post-processed difference visible in platform detail view
-- [ ] Holdout scenes excluded from standard runs, included only with `--holdout` flag
-- [ ] Holdout results displayed in separate dashboard view, not mixed with core trends
+| File                                   | Change                                                                           |
+| -------------------------------------- | -------------------------------------------------------------------------------- |
+| `src/app/api/score-prompt/route.ts`    | Auth hardening, diagnostic rubric, shared scoring-prompt.ts import, anchor audit |
+| `src/app/api/optimise-prompt/route.ts` | `systemPromptOverride` body field for patch testing (admin-only)                 |
 
 ---
 
-## Changelog
+## 17. Non-Regression Rules
 
-- **3 Apr 2026 (v2.5.0 FINAL):** ChatGPT sign-off: 97/100, "build it." Added Sub-rule E to §3.2: compound anchors with multiple distinctive modifiers — loss of any modifier that materially changes visual identity = `dropped`. Architecture complete. No further review required.
-- **3 Apr 2026 (v2.4.0):** Final pre-build revision incorporating ChatGPT review round 3 (95/100, "build it"). Added 4 sub-rules to §3.2 Approximate Anchor Matching Policy: (A) visually distinctive modifier loss, (B) distinctive-token loss in multi-word anchors, (C) stricter negative anchor treatment — implicit absence does not count as approximate, (D) proper nouns and branded references are exact-or-dropped with no approximate middle ground. Refined `dual_on_flagged` post-processing trigger: Claude now fires only when the compliance gate delta is substantive (touched a critical/important anchor or changed > 10% of prompt), not on trivial cleanup like trailing punctuation.
-- **3 Apr 2026 (v2.3.0):** All 10 scenes complete. Added Scene 9 (Multi-Subject Hierarchy & Temporal, holdout) and Scene 10 (Typical Real-World User Input, holdout). Added §3.2 Approximate Anchor Matching Policy with strict rules and examples. Added `--rerun` and `--resume` flags to batch runner with explicit rules (§7). Added `scorer_prompt_hash` to runs table. Added `snapshot_hash` to results table. Added `is_holdout` column + index to results table. Added `include_holdout` to runs table. Expanded `dual_on_flagged` triggers: critical anchor drop, post-processing delta, replicate variance (§5.4). Added holdout cadence rules (§7). Dashboard hard rule: builder-mode and pipeline-mode never mixed (§9). Added holdout results view (§9.7). Non-regression rule 11 (mode separation) and 12 (approximate defaults to dropped). Acceptance criteria expanded to 20 items including unhappy-path tests.
-- **3 Apr 2026 (v2.2.0):** ChatGPT review round 2. Anchor audit three-level. Severity weighting. Baseline linkage. Length metrics. Post-processing tracking. Scorer modes. Route hardening moved to core.
-- **3 Apr 2026 (v2.1.0):** ChatGPT review round 1. Frozen inputs. Replicates. Runs table. Versioning. Raw vs processed. Scene 7 + 8.
+1. `/api/score-prompt` stays deployed — batch runner, sampling, and patch testing all use it
+2. Batch runner runs offline, never during user sessions
+3. Admin dashboard behind admin auth
+4. No user-facing string references scoring or quality grades
+5. Frozen snapshots committed to repo
+6. Raw output stored alongside post-processed — never overwritten
+7. Holdout scenes never used for tuning
+8. `builder_version` is file hash, never free text
+9. Builder-mode and pipeline-mode never mixed in trend lines
+10. `approximate` classification follows §3.2 strictly — when in doubt, `dropped`
+11. Batch and user-sample scores never mixed in means, rankings, or trend lines
+12. One row per `(run_id, platform_id, scene_id, replicate_index)` — DB-enforced
+13. No builder files are ever modified automatically by the system
+
+---
+
+## 18. Changelog
+
+- **4 Apr 2026 (v3.0.0):** Complete rewrite reflecting all 12 deployed parts. Added: rerun/resume mechanics (Part 10), SIGINT handler, heartbeat, user sampling (Part 11), failure analysis + fix-class nomination (Part 12), GPT-constrained patch suggestion (Part 12), route-faithful patch testing with overfitting guard (Part 12), `systemPromptOverride` on optimise route, `showcase_entry_id`/`showcase_created_at`/`showcase_tier`/`scorer_version` on results, two unique indexes, storage authority section, full file inventory, validation harness reference.
+- **3 Apr 2026 (v2.5.0):** Final pre-build revision. All 10 scenes complete. Three ChatGPT reviews (97/100). BUILD APPROVED.
 - **3 Apr 2026 (v2.0.0):** Pivot to internal system. User-facing score killed.
-- **2 Apr 2026 (v1.3.0):** Auth removed, wiring fixed.
 - **1 Apr 2026 (v1.0.0):** Initial implementation.

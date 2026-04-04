@@ -25,6 +25,11 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
+import { config } from 'dotenv';
+
+// Load .env.local (same pattern as builder-quality-run.ts)
+config({ path: path.resolve('.env.local') });
+config({ path: path.resolve('.env') });
 
 // ============================================================================
 // CLI OUTPUT HELPER — uses console.debug (allowed by lint rules)

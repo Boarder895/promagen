@@ -144,6 +144,15 @@ export function PlatformDetailClient({ platformId }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState<'platform' | 'run' | null>(null);
 
+  // Part 12: Failure patterns state
+  const [failurePatterns, setFailurePatterns] = useState<{
+    anchorDrops: { anchor: string; severity: string; dropRate: number; scenes: string[] }[];
+    recurringDirectives: { canonical: string; occurrenceRate: number }[];
+    sceneWeakness: { sceneId: string; meanScore: number; minScore: number; maxScore: number }[];
+    postProcessingReliance: number;
+    patchTests: { runId: string; createdAt: string; status: string; meanScore: number | null }[];
+  } | null>(null);
+
   // ── Data fetching ────────────────────────────────────────────────
   const fetchData = useCallback(async () => {
     if (!runId) {
@@ -188,6 +197,21 @@ export function PlatformDetailClient({ platformId }: Props) {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Part 12: Fetch failure patterns (independent of selected run)
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`/api/admin/builder-quality/failure-patterns?platformId=${encodeURIComponent(platformId)}`);
+        const json = await res.json();
+        if (json.ok && json.data) {
+          setFailurePatterns(json.data);
+        }
+      } catch (err) {
+        console.debug('[builder-quality] Error fetching failure patterns:', err);
+      }
+    })();
+  }, [platformId]);
 
   // ── Back link ────────────────────────────────────────────────────
   const backHref = runId
@@ -356,6 +380,99 @@ export function PlatformDetailClient({ platformId }: Props) {
           <span className="font-mono text-white">--baseline {'<run_id>'}</span> to compare against
           a prior run.
         </EmptyState>
+      )}
+
+      {/* ── Section 8: Failure Patterns (Part 12, §11) ─────────────── */}
+      <SectionHeading>Failure Patterns</SectionHeading>
+      {failurePatterns ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(12px, 1.5vw, 20px)' }}>
+          {/* Anchor Drop Frequency */}
+          {failurePatterns.anchorDrops.length > 0 && (
+            <div className="rounded-lg border border-white/10 bg-white/5" style={{ padding: 'clamp(12px, 1.2vw, 20px)' }}>
+              <h3 className="font-semibold text-white" style={{ fontSize: 'clamp(12px, 1.1vw, 15px)', marginBottom: 'clamp(8px, 0.8vw, 12px)' }}>
+                Anchor Drop Frequency
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse" style={{ fontSize: 'clamp(10px, 0.9vw, 13px)' }}>
+                  <thead>
+                    <tr className="border-b border-white/10">
+                      {['Anchor', 'Severity', 'Drop Rate', 'Scenes'].map((h) => (
+                        <th key={h} className="text-left font-medium text-slate-200" style={{ padding: 'clamp(4px, 0.4vw, 8px) clamp(8px, 0.8vw, 12px)', textTransform: 'uppercase' as const, fontSize: 'clamp(9px, 0.8vw, 11px)', letterSpacing: '0.03em' }}>
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {failurePatterns.anchorDrops.slice(0, 10).map((a) => (
+                      <tr key={a.anchor} className="border-b border-white/5">
+                        <td className="font-mono text-white" style={{ padding: 'clamp(4px, 0.4vw, 6px) clamp(8px, 0.8vw, 12px)' }}>{a.anchor}</td>
+                        <td style={{ padding: 'clamp(4px, 0.4vw, 6px) clamp(8px, 0.8vw, 12px)' }}>
+                          <span className={`inline-block rounded-full border font-medium ${a.severity === 'critical' ? 'bg-red-500/20 text-red-300 border-red-500/40' : a.severity === 'important' ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' : 'bg-white/10 text-slate-200 border-white/20'}`} style={{ fontSize: 'clamp(9px, 0.75vw, 10px)', padding: '1px clamp(5px, 0.5vw, 8px)' }}>
+                            {a.severity}
+                          </span>
+                        </td>
+                        <td className={`font-mono font-semibold ${a.dropRate > 50 ? 'text-red-400' : a.dropRate > 20 ? 'text-amber-400' : 'text-emerald-400'}`} style={{ padding: 'clamp(4px, 0.4vw, 6px) clamp(8px, 0.8vw, 12px)' }}>
+                          {a.dropRate}%
+                        </td>
+                        <td className="font-mono text-slate-200" style={{ padding: 'clamp(4px, 0.4vw, 6px) clamp(8px, 0.8vw, 12px)', fontSize: 'clamp(9px, 0.8vw, 11px)' }}>
+                          {a.scenes.slice(0, 3).join(', ')}{a.scenes.length > 3 ? ` +${a.scenes.length - 3}` : ''}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Recurring Directives */}
+          {failurePatterns.recurringDirectives.length > 0 && (
+            <div className="rounded-lg border border-white/10 bg-white/5" style={{ padding: 'clamp(12px, 1.2vw, 20px)' }}>
+              <h3 className="font-semibold text-white" style={{ fontSize: 'clamp(12px, 1.1vw, 15px)', marginBottom: 'clamp(8px, 0.8vw, 12px)' }}>
+                Recurring Directives
+              </h3>
+              {failurePatterns.recurringDirectives.slice(0, 5).map((d) => (
+                <div key={d.canonical} className="border-b border-white/5" style={{ padding: 'clamp(6px, 0.6vw, 10px) 0' }}>
+                  <span className="text-white" style={{ fontSize: 'clamp(10px, 0.9vw, 13px)' }}>
+                    &ldquo;{d.canonical}&rdquo;
+                  </span>
+                  <span className="text-amber-400 font-mono" style={{ fontSize: 'clamp(10px, 0.85vw, 12px)', marginLeft: 'clamp(6px, 0.6vw, 10px)' }}>
+                    {d.occurrenceRate}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Patch Test History */}
+          {failurePatterns.patchTests.length > 0 && (
+            <div className="rounded-lg border border-white/10 bg-white/5" style={{ padding: 'clamp(12px, 1.2vw, 20px)' }}>
+              <h3 className="font-semibold text-white" style={{ fontSize: 'clamp(12px, 1.1vw, 15px)', marginBottom: 'clamp(8px, 0.8vw, 12px)' }}>
+                Patch Test History
+              </h3>
+              {failurePatterns.patchTests.map((pt) => (
+                <div key={pt.runId} className="flex items-center border-b border-white/5" style={{ padding: 'clamp(6px, 0.6vw, 10px) 0', gap: 'clamp(8px, 0.8vw, 12px)' }}>
+                  <span className="font-mono text-slate-200" style={{ fontSize: 'clamp(10px, 0.85vw, 12px)' }}>{pt.runId.slice(0, 16)}</span>
+                  <span className={`inline-block rounded-full border font-medium ${pt.status === 'complete' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : 'bg-amber-500/20 text-amber-300 border-amber-500/40'}`} style={{ fontSize: 'clamp(9px, 0.75vw, 10px)', padding: '1px clamp(5px, 0.5vw, 8px)' }}>
+                    {pt.status}
+                  </span>
+                  {pt.meanScore !== null && (
+                    <span className="font-mono text-white" style={{ fontSize: 'clamp(10px, 0.9vw, 13px)' }}>
+                      {pt.meanScore.toFixed(1)}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {failurePatterns.anchorDrops.length === 0 && failurePatterns.recurringDirectives.length === 0 && (
+            <EmptyState>No failure patterns detected yet. Run more batches to build up data.</EmptyState>
+          )}
+        </div>
+      ) : (
+        <EmptyState>Loading failure patterns...</EmptyState>
       )}
     </div>
   );

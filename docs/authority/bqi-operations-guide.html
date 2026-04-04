@@ -1,0 +1,1267 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Builder Quality Intelligence — Operations Guide</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg-deep: #0a0a0f;
+        --bg-card: rgba(255, 255, 255, 0.04);
+        --bg-card-hover: rgba(255, 255, 255, 0.07);
+        --border: rgba(255, 255, 255, 0.08);
+        --border-hover: rgba(255, 255, 255, 0.15);
+        --text: #e2e2e8;
+        --text-dim: #8b8b9e;
+        --text-bright: #ffffff;
+        --accent-purple: #a78bfa;
+        --accent-emerald: #34d399;
+        --accent-amber: #fbbf24;
+        --accent-sky: #38bdf8;
+        --accent-teal: #2dd4bf;
+        --accent-red: #f87171;
+        --accent-pink: #f472b6;
+        --cmd-bg: rgba(139, 92, 246, 0.08);
+        --cmd-border: rgba(139, 92, 246, 0.25);
+        --cmd-hover-bg: rgba(139, 92, 246, 0.15);
+        --cmd-hover-border: rgba(139, 92, 246, 0.4);
+        --copied-bg: rgba(52, 211, 153, 0.15);
+        --copied-border: rgba(52, 211, 153, 0.4);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: var(--bg-deep);
+        color: var(--text);
+        font-family: "DM Sans", sans-serif;
+        line-height: 1.6;
+        min-height: 100vh;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Subtle grid background */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+          linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0.015) 1px,
+            transparent 1px
+          );
+        background-size: 60px 60px;
+      }
+
+      .container {
+        position: relative;
+        z-index: 1;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 24px 80px;
+      }
+
+      /* Header */
+      .header {
+        text-align: center;
+        margin-bottom: 48px;
+        padding-bottom: 32px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .header-badge {
+        display: inline-block;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent-purple);
+        background: rgba(139, 92, 246, 0.1);
+        border: 1px solid rgba(139, 92, 246, 0.25);
+        border-radius: 20px;
+        padding: 4px 14px;
+        margin-bottom: 16px;
+      }
+
+      .header h1 {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--text-bright);
+        margin-bottom: 8px;
+        letter-spacing: -0.02em;
+      }
+
+      .header p {
+        color: var(--text-dim);
+        font-size: 15px;
+        max-width: 600px;
+        margin: 0 auto;
+      }
+
+      /* Navigation */
+      .nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 40px;
+        padding: 12px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+      }
+
+      .nav a {
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--text-dim);
+        text-decoration: none;
+        padding: 6px 12px;
+        border-radius: 6px;
+        transition: all 0.15s;
+        white-space: nowrap;
+      }
+
+      .nav a:hover {
+        color: var(--text-bright);
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      /* Sections */
+      .section {
+        margin-bottom: 40px;
+      }
+
+      .section-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .section-number {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--accent-purple);
+        background: rgba(139, 92, 246, 0.12);
+        border-radius: 4px;
+        padding: 2px 8px;
+        min-width: 28px;
+        text-align: center;
+      }
+
+      .section h2 {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--text-bright);
+        letter-spacing: -0.01em;
+      }
+
+      .section p,
+      .section li {
+        font-size: 14px;
+        color: var(--text);
+        margin-bottom: 8px;
+      }
+
+      .section ul {
+        list-style: none;
+        padding-left: 0;
+        margin-bottom: 12px;
+      }
+
+      .section li::before {
+        content: "→";
+        color: var(--accent-purple);
+        margin-right: 8px;
+        font-weight: 600;
+      }
+
+      /* Command blocks */
+      .cmd-group {
+        margin-bottom: 16px;
+      }
+
+      .cmd-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-dim);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 6px;
+      }
+
+      .cmd {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12.5px;
+        color: var(--accent-purple);
+        background: var(--cmd-bg);
+        border: 1px solid var(--cmd-border);
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin-bottom: 6px;
+        cursor: pointer;
+        transition: all 0.15s;
+        position: relative;
+        overflow: hidden;
+        user-select: none;
+      }
+
+      .cmd:hover {
+        background: var(--cmd-hover-bg);
+        border-color: var(--cmd-hover-border);
+        color: var(--text-bright);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 12px rgba(139, 92, 246, 0.12);
+      }
+
+      .cmd:active {
+        transform: translateY(0);
+      }
+
+      .cmd.copied {
+        background: var(--copied-bg) !important;
+        border-color: var(--copied-border) !important;
+        color: var(--accent-emerald) !important;
+      }
+
+      .cmd-text {
+        flex: 1;
+        overflow-x: auto;
+        white-space: nowrap;
+        scrollbar-width: none;
+      }
+      .cmd-text::-webkit-scrollbar {
+        display: none;
+      }
+
+      .cmd-icon {
+        flex-shrink: 0;
+        margin-left: 12px;
+        font-size: 14px;
+        opacity: 0.5;
+        transition: opacity 0.15s;
+      }
+
+      .cmd:hover .cmd-icon {
+        opacity: 1;
+      }
+
+      /* Description text under commands */
+      .cmd-desc {
+        font-size: 12px;
+        color: var(--text-dim);
+        margin-bottom: 12px;
+        padding-left: 4px;
+      }
+
+      /* Cards */
+      .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 16px;
+        margin-bottom: 12px;
+        transition: border-color 0.15s;
+      }
+
+      .card:hover {
+        border-color: var(--border-hover);
+      }
+
+      .card h3 {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-bright);
+        margin-bottom: 8px;
+      }
+
+      /* Workflow steps */
+      .workflow {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        margin: 16px 0;
+      }
+
+      .workflow-step {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        position: relative;
+      }
+
+      .workflow-step:first-child {
+        border-radius: 10px 10px 2px 2px;
+      }
+      .workflow-step:last-child {
+        border-radius: 2px 2px 10px 10px;
+      }
+      .workflow-step:only-child {
+        border-radius: 10px;
+      }
+
+      .step-num {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--bg-deep);
+        background: var(--accent-purple);
+        border-radius: 50%;
+        width: 22px;
+        height: 22px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-top: 1px;
+      }
+
+      .step-content {
+        flex: 1;
+      }
+
+      .step-content strong {
+        color: var(--text-bright);
+        font-size: 13px;
+      }
+
+      .step-content p {
+        font-size: 12px;
+        color: var(--text-dim);
+        margin: 2px 0 0;
+      }
+
+      /* Status badges */
+      .badge {
+        display: inline-block;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 10px;
+        border: 1px solid;
+        vertical-align: middle;
+      }
+
+      .badge-safe {
+        color: var(--accent-emerald);
+        background: rgba(52, 211, 153, 0.12);
+        border-color: rgba(52, 211, 153, 0.3);
+      }
+      .badge-caution {
+        color: var(--accent-amber);
+        background: rgba(251, 191, 36, 0.12);
+        border-color: rgba(251, 191, 36, 0.3);
+      }
+      .badge-reject {
+        color: var(--accent-red);
+        background: rgba(248, 113, 113, 0.12);
+        border-color: rgba(248, 113, 113, 0.3);
+      }
+      .badge-part {
+        color: var(--accent-sky);
+        background: rgba(56, 189, 248, 0.1);
+        border-color: rgba(56, 189, 248, 0.25);
+      }
+
+      /* Warning/info boxes */
+      .info-box {
+        border-radius: 8px;
+        padding: 12px 14px;
+        font-size: 13px;
+        margin: 12px 0;
+      }
+
+      .info-box.warning {
+        background: rgba(251, 191, 36, 0.08);
+        border: 1px solid rgba(251, 191, 36, 0.2);
+        color: var(--accent-amber);
+      }
+
+      .info-box.tip {
+        background: rgba(52, 211, 153, 0.08);
+        border: 1px solid rgba(52, 211, 153, 0.2);
+        color: var(--accent-emerald);
+      }
+
+      /* Table */
+      .parts-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+        margin: 12px 0;
+      }
+
+      .parts-table th {
+        text-align: left;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-dim);
+        padding: 6px 10px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .parts-table td {
+        padding: 8px 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        color: var(--text);
+      }
+
+      .parts-table tr:hover td {
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      /* Toast notification */
+      .toast {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(80px);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        color: var(--accent-emerald);
+        background: rgba(10, 10, 15, 0.95);
+        border: 1px solid rgba(52, 211, 153, 0.3);
+        border-radius: 8px;
+        padding: 8px 18px;
+        pointer-events: none;
+        opacity: 0;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        z-index: 999;
+        backdrop-filter: blur(12px);
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      @media (max-width: 640px) {
+        .container {
+          padding: 20px 16px 60px;
+        }
+        .header h1 {
+          font-size: 24px;
+        }
+        .cmd {
+          font-size: 11px;
+          padding: 8px 10px;
+        }
+        .nav {
+          gap: 4px;
+        }
+        .nav a {
+          font-size: 11px;
+          padding: 4px 8px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <div class="header">
+        <div class="header-badge">Promagen Internal</div>
+        <h1>Builder Quality Intelligence</h1>
+        <p>
+          Operations guide for the 12-part automated quality regression system.
+          Click any command to copy it to your clipboard.
+        </p>
+      </div>
+
+      <!-- Nav -->
+      <nav class="nav" id="nav">
+        <a href="#prerequisites">Prerequisites</a>
+        <a href="#batch-runner">Batch Runner</a>
+        <a href="#rerun-resume">Rerun &amp; Resume</a>
+        <a href="#user-sampling">User Sampling</a>
+        <a href="#failure-analysis">Failure Analysis</a>
+        <a href="#patch-suggestion">Patch Suggestion</a>
+        <a href="#patch-testing">Patch Testing</a>
+        <a href="#validation">Validation Harness</a>
+        <a href="#dashboard">Dashboard</a>
+        <a href="#database">Database Queries</a>
+        <a href="#troubleshooting">Troubleshooting</a>
+        <a href="#parts-map">Parts Map</a>
+      </nav>
+
+      <!-- Prerequisites -->
+      <div class="section" id="prerequisites">
+        <div class="section-header">
+          <span class="section-number">00</span>
+          <h2>Prerequisites</h2>
+        </div>
+        <p>
+          All commands run from
+          <strong>C:\Users\Proma\Projects\promagen\frontend\</strong> with the
+          dev server running in a separate terminal.
+        </p>
+
+        <div class="cmd-group">
+          <div class="cmd-label">Start dev server</div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text">npm run dev</span>
+            <span class="cmd-icon">📋</span>
+          </div>
+        </div>
+
+        <div class="cmd-group">
+          <div class="cmd-label">
+            Clear cache (do this after every file drop)
+          </div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text">Remove-Item -Recurse -Force .next</span>
+            <span class="cmd-icon">📋</span>
+          </div>
+        </div>
+
+        <div class="cmd-group">
+          <div class="cmd-label">Typecheck + lint</div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text">pnpm run typecheck</span>
+            <span class="cmd-icon">📋</span>
+          </div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text">pnpm run lint -- --cache</span>
+            <span class="cmd-icon">📋</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Batch Runner -->
+      <div class="section" id="batch-runner">
+        <div class="section-header">
+          <span class="section-number">01</span>
+          <h2>Batch Runner</h2>
+        </div>
+        <p>
+          Runs Call 3 → Score for each platform × scene. The core regression
+          testing tool. 40 platforms × 8 scenes = 320 results per full batch.
+        </p>
+
+        <div class="cmd-group">
+          <div class="cmd-label">
+            Single platform diagnostic (fast, ~30 seconds)
+          </div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text"
+              >npx tsx scripts/builder-quality-run.ts --platform lexica --mode
+              builder</span
+            >
+            <span class="cmd-icon">📋</span>
+          </div>
+          <div class="cmd-desc">
+            Tests one platform across 8 scenes. Good for quick checks after a
+            builder edit.
+          </div>
+        </div>
+
+        <div class="cmd-group">
+          <div class="cmd-label">
+            Full batch (all 40 platforms, ~15–20 minutes)
+          </div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text"
+              >npx tsx scripts/builder-quality-run.ts --all --mode builder</span
+            >
+            <span class="cmd-icon">📋</span>
+          </div>
+        </div>
+
+        <div class="cmd-group">
+          <div class="cmd-label">
+            Decision-grade (3 replicates — use before shipping a builder change)
+          </div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text"
+              >npx tsx scripts/builder-quality-run.ts --all --mode builder
+              --replicates 3</span
+            >
+            <span class="cmd-icon">📋</span>
+          </div>
+        </div>
+
+        <div class="cmd-group">
+          <div class="cmd-label">
+            Include holdout scenes (release candidates only)
+          </div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text"
+              >npx tsx scripts/builder-quality-run.ts --all --mode builder
+              --holdout</span
+            >
+            <span class="cmd-icon">📋</span>
+          </div>
+        </div>
+
+        <div class="cmd-group">
+          <div class="cmd-label">Compare against a baseline run</div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text"
+              >npx tsx scripts/builder-quality-run.ts --all --mode builder
+              --baseline bqr-REPLACE-WITH-RUN-ID</span
+            >
+            <span class="cmd-icon">📋</span>
+          </div>
+          <div class="cmd-desc">
+            Replace bqr-REPLACE-WITH-RUN-ID with an actual run ID from a
+            previous batch.
+          </div>
+        </div>
+      </div>
+
+      <!-- Rerun & Resume -->
+      <div class="section" id="rerun-resume">
+        <div class="section-header">
+          <span class="section-number">02</span>
+          <h2>Rerun &amp; Resume</h2>
+        </div>
+        <p>
+          Recovery mechanics. <strong>Rerun</strong> = re-run only failed
+          results (creates a child run). <strong>Resume</strong> = continue a
+          crashed run in-place.
+        </p>
+
+        <div class="cmd-group">
+          <div class="cmd-label">Rerun failed results from a prior run</div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text"
+              >npx tsx scripts/builder-quality-run.ts --rerun
+              bqr-REPLACE-WITH-RUN-ID</span
+            >
+            <span class="cmd-icon">📋</span>
+          </div>
+          <div class="cmd-desc">
+            Creates a new child run linked to the original. Only re-runs error
+            results.
+          </div>
+        </div>
+
+        <div class="cmd-group">
+          <div class="cmd-label">Resume a crashed/interrupted run</div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text"
+              >npx tsx scripts/builder-quality-run.ts --resume
+              bqr-REPLACE-WITH-RUN-ID --force</span
+            >
+            <span class="cmd-icon">📋</span>
+          </div>
+          <div class="cmd-desc">
+            Continues the same run. Skips completed results, retries errors
+            in-place. --force required for stale runs (no progress for 10+ min).
+          </div>
+        </div>
+
+        <div class="info-box warning">
+          <strong>Ctrl+C is safe.</strong> The SIGINT handler marks the run as
+          'partial' and logs which platform/scene was last being processed.
+          Resume picks up exactly where it left off.
+        </div>
+      </div>
+
+      <!-- User Sampling -->
+      <div class="section" id="user-sampling">
+        <div class="section-header">
+          <span class="section-number">03</span>
+          <h2>User Sampling</h2>
+        </div>
+        <p>
+          Scores real user prompts from Community Pulse. Answers: "how good were
+          the prompts we actually delivered?" Each entry is scored once
+          (idempotency enforced).
+        </p>
+
+        <div class="cmd-group">
+          <div class="cmd-label">
+            Dry run (see what would be sampled, no scoring)
+          </div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text"
+              >npx tsx scripts/builder-quality-sample.ts --dry-run</span
+            >
+            <span class="cmd-icon">📋</span>
+          </div>
+        </div>
+
+        <div class="cmd-group">
+          <div class="cmd-label">
+            Full sample (all platforms with user entries)
+          </div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text"
+              >npx tsx scripts/builder-quality-sample.ts</span
+            >
+            <span class="cmd-icon">📋</span>
+          </div>
+        </div>
+
+        <div class="cmd-group">
+          <div class="cmd-label">Single platform sample</div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text"
+              >npx tsx scripts/builder-quality-sample.ts --platform
+              midjourney</span
+            >
+            <span class="cmd-icon">📋</span>
+          </div>
+        </div>
+
+        <div class="cmd-group">
+          <div class="cmd-label">Custom look-back window</div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text"
+              >npx tsx scripts/builder-quality-sample.ts --days 14
+              --max-per-platform 3</span
+            >
+            <span class="cmd-icon">📋</span>
+          </div>
+        </div>
+
+        <div class="info-box tip">
+          <strong>Idempotency:</strong> Running the sampler twice on the same
+          window scores zero new entries. Already-scored entries are excluded
+          automatically.
+        </div>
+      </div>
+
+      <!-- Failure Analysis -->
+      <div class="section" id="failure-analysis">
+        <div class="section-header">
+          <span class="section-number">04</span>
+          <h2>Failure Analysis</h2>
+        </div>
+        <p>
+          Clusters recurring failures for a platform. Nominates a fix class +
+          target section. Requires 50+ results and 3+ scorer versions.
+        </p>
+
+        <div class="cmd-group">
+          <div class="cmd-label">Analyse one platform</div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text"
+              >npx tsx scripts/builder-quality-analyse.ts --platform bing</span
+            >
+            <span class="cmd-icon">📋</span>
+          </div>
+          <div class="cmd-desc">
+            Outputs a structured failure report + fix-class nomination. Saves to
+            reports/failure-report-bing.json.
+          </div>
+        </div>
+
+        <div class="cmd-group">
+          <div class="cmd-label">Find the worst platforms across all</div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text"
+              >npx tsx scripts/builder-quality-analyse.ts --all --top 5</span
+            >
+            <span class="cmd-icon">📋</span>
+          </div>
+        </div>
+
+        <div class="cmd-group">
+          <div class="cmd-label">
+            Lower the data threshold (if you don't have 50 results yet)
+          </div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text"
+              >npx tsx scripts/builder-quality-analyse.ts --platform bing
+              --min-results 20 --scorer-versions 1</span
+            >
+            <span class="cmd-icon">📋</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Patch Suggestion -->
+      <div class="section" id="patch-suggestion">
+        <div class="section-header">
+          <span class="section-number">05</span>
+          <h2>Patch Suggestion</h2>
+        </div>
+        <p>
+          Uses GPT to write ONE targeted edit for the nominated fix class. GPT
+          does not diagnose — it only writes the rule for the section chosen by
+          the analysis.
+        </p>
+
+        <div class="cmd-group">
+          <div class="cmd-label">Preview the GPT prompt (no API call)</div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text"
+              >npx tsx scripts/builder-quality-suggest.ts --platform bing
+              --dry-run</span
+            >
+            <span class="cmd-icon">📋</span>
+          </div>
+        </div>
+
+        <div class="cmd-group">
+          <div class="cmd-label">Generate a suggestion</div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text"
+              >npx tsx scripts/builder-quality-suggest.ts --platform bing</span
+            >
+            <span class="cmd-icon">📋</span>
+          </div>
+          <div class="cmd-desc">
+            Auto-runs analysis first if no failure report exists. Saves to
+            reports/patch-suggestion-bing.json.
+          </div>
+        </div>
+      </div>
+
+      <!-- Patch Testing -->
+      <div class="section" id="patch-testing">
+        <div class="section-header">
+          <span class="section-number">06</span>
+          <h2>Patch Testing</h2>
+        </div>
+        <p>
+          Tests a patched builder through the actual /api/optimise-prompt route
+          (full compliance + post-processing). Compares core + holdout against
+          baseline. Applies overfitting guard.
+        </p>
+
+        <div class="workflow">
+          <div class="workflow-step">
+            <span class="step-num">1</span>
+            <div class="step-content">
+              <strong>Copy the builder file</strong>
+              <p>
+                Create a .patched copy to edit without touching the deployed
+                file.
+              </p>
+            </div>
+          </div>
+          <div class="workflow-step">
+            <span class="step-num">2</span>
+            <div class="step-content">
+              <strong>Apply the suggested rule</strong>
+              <p>
+                Open the .patched file, add the suggested rule to the nominated
+                section.
+              </p>
+            </div>
+          </div>
+          <div class="workflow-step">
+            <span class="step-num">3</span>
+            <div class="step-content">
+              <strong>Run the patch test</strong>
+              <p>
+                Tests through actual route with system prompt override. 3
+                replicates × 10 scenes.
+              </p>
+            </div>
+          </div>
+          <div class="workflow-step">
+            <span class="step-num">4</span>
+            <div class="step-content">
+              <strong>Review verdict</strong>
+              <p>
+                <span class="badge badge-safe">SAFE</span> = apply.
+                <span class="badge badge-caution">CAUTION</span> = review
+                regression. <span class="badge badge-reject">REJECT</span> =
+                discard.
+              </p>
+            </div>
+          </div>
+          <div class="workflow-step">
+            <span class="step-num">5</span>
+            <div class="step-content">
+              <strong
+                >If SAFE: replace the builder file, run a normal batch to
+                confirm</strong
+              >
+              <p>Final verification through the standard batch runner.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="cmd-group">
+          <div class="cmd-label">Step 1 — Copy builder</div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text"
+              >copy src\lib\optimise-prompts\group-nl-bing.ts
+              src\lib\optimise-prompts\group-nl-bing.ts.patched</span
+            >
+            <span class="cmd-icon">📋</span>
+          </div>
+        </div>
+
+        <div class="cmd-group">
+          <div class="cmd-label">Step 3 — Test the patch</div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text"
+              >npx tsx scripts/builder-quality-test-patch.ts --platform bing
+              --patched-file
+              src\lib\optimise-prompts\group-nl-bing.ts.patched</span
+            >
+            <span class="cmd-icon">📋</span>
+          </div>
+        </div>
+
+        <div class="cmd-group">
+          <div class="cmd-label">
+            Step 5 — After applying, run a normal batch to confirm
+          </div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text"
+              >npx tsx scripts/builder-quality-run.ts --platform bing --mode
+              builder --replicates 3</span
+            >
+            <span class="cmd-icon">📋</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Validation Harness -->
+      <div class="section" id="validation">
+        <div class="section-header">
+          <span class="section-number">07</span>
+          <h2>Validation Harness</h2>
+        </div>
+        <p>
+          Quick sanity check for the 7 GPT-powered NL builders. Tests 1 scene ×
+          4 gates (anchor preservation, banned content, char count, length).
+          Seconds, not minutes.
+        </p>
+
+        <div class="cmd-group">
+          <div class="cmd-label">Validate all 7 NL builders</div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text"
+              >pnpm exec tsx src/lib/validation/validate-builder.ts --all</span
+            >
+            <span class="cmd-icon">📋</span>
+          </div>
+        </div>
+
+        <div class="cmd-group">
+          <div class="cmd-label">Validate a single builder</div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text"
+              >pnpm exec tsx src/lib/validation/validate-builder.ts bing</span
+            >
+            <span class="cmd-icon">📋</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dashboard -->
+      <div class="section" id="dashboard">
+        <div class="section-header">
+          <span class="section-number">08</span>
+          <h2>Dashboard</h2>
+        </div>
+        <p>Admin-only. All quality data in one place.</p>
+
+        <div class="card">
+          <h3>Platform Overview</h3>
+          <p>
+            40 platforms sorted by score (lowest first). Columns: tier, mean,
+            user (7d), stddev, preservation, critical drops, unstable scenes,
+            status.
+          </p>
+          <p>Click any row to drill into Platform Detail.</p>
+        </div>
+
+        <div class="card">
+          <h3>Run History</h3>
+          <p>
+            All runs with status badges.
+            <span class="badge badge-part">↩ rerun</span> for child runs.
+            <span class="badge badge-part">↻ resumed</span> for resumed runs.
+            <span class="badge badge-part">⚡ sample</span> for user sampling
+            runs.
+          </p>
+        </div>
+
+        <div class="card">
+          <h3>Platform Detail</h3>
+          <p>
+            Scene results with expandable anchor audit. Replicate variance.
+            Post-processing reliance. Holdout results. Baseline comparison.
+            Failure patterns (anchor heatmap, recurring directives, patch test
+            history).
+          </p>
+        </div>
+
+        <div class="cmd-group">
+          <div class="cmd-label">Access (dev server must be running)</div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text"
+              >http://localhost:3000/admin/builder-quality</span
+            >
+            <span class="cmd-icon">📋</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Database Queries -->
+      <div class="section" id="database">
+        <div class="section-header">
+          <span class="section-number">09</span>
+          <h2>Database Queries</h2>
+        </div>
+        <p>
+          Run these in the Neon SQL Editor (neon.tech → your project → SQL
+          Editor).
+        </p>
+
+        <div class="cmd-group">
+          <div class="cmd-label">Check worst scores from a run</div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text"
+              >SELECT platform_id, scene_id, gpt_score, anchors_preserved,
+              anchors_dropped FROM builder_quality_results WHERE run_id =
+              'REPLACE' ORDER BY gpt_score ASC LIMIT 10;</span
+            >
+            <span class="cmd-icon">📋</span>
+          </div>
+        </div>
+
+        <div class="cmd-group">
+          <div class="cmd-label">
+            Check for duplicate rows (should return zero)
+          </div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text"
+              >SELECT run_id, platform_id, scene_id, replicate_index, COUNT(*)
+              FROM builder_quality_results GROUP BY run_id, platform_id,
+              scene_id, replicate_index HAVING COUNT(*) > 1;</span
+            >
+            <span class="cmd-icon">📋</span>
+          </div>
+        </div>
+
+        <div class="cmd-group">
+          <div class="cmd-label">View recent runs</div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text"
+              >SELECT run_id, mode, scope, status, mean_gpt_score,
+              total_completed, total_expected, created_at FROM
+              builder_quality_runs ORDER BY created_at DESC LIMIT 10;</span
+            >
+            <span class="cmd-icon">📋</span>
+          </div>
+        </div>
+
+        <div class="cmd-group">
+          <div class="cmd-label">User sample rolling average (7 days)</div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text"
+              >SELECT platform_id, AVG(gpt_score)::numeric(5,2) AS mean,
+              COUNT(*) AS n FROM builder_quality_results WHERE source =
+              'user_sample' AND created_at > NOW() - INTERVAL '7 days' AND
+              status = 'complete' GROUP BY platform_id ORDER BY mean ASC;</span
+            >
+            <span class="cmd-icon">📋</span>
+          </div>
+        </div>
+
+        <div class="cmd-group">
+          <div class="cmd-label">Clean up a failed run (replace ID)</div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text"
+              >DELETE FROM builder_quality_results WHERE run_id = 'REPLACE';
+              DELETE FROM builder_quality_runs WHERE run_id = 'REPLACE';</span
+            >
+            <span class="cmd-icon">📋</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Troubleshooting -->
+      <div class="section" id="troubleshooting">
+        <div class="section-header">
+          <span class="section-number">10</span>
+          <h2>Troubleshooting</h2>
+        </div>
+
+        <div class="card">
+          <h3>"BUILDER_QUALITY_KEY not set"</h3>
+          <p>
+            Add <code>BUILDER_QUALITY_KEY=your-secret-key</code> to .env.local.
+            Any string works — it just needs to match between the script and the
+            route.
+          </p>
+        </div>
+
+        <div class="card">
+          <h3>"column bqr.showcase_entry_id does not exist"</h3>
+          <p>
+            The Part 11 schema hasn't been created yet. Run a batch (<code
+              >--platform lexica --mode builder</code
+            >) first — its ensureTables() creates the columns.
+          </p>
+        </div>
+
+        <div class="card">
+          <h3>"OPENAI_API_KEY not set"</h3>
+          <p>
+            The validation harness and suggest script need OPENAI_API_KEY in
+            .env.local. The batch runner uses it via the dev server route (which
+            reads it from env).
+          </p>
+        </div>
+
+        <div class="card">
+          <h3>502 errors during batch runs</h3>
+          <p>
+            Usually Vercel/dev server timeout. The runner retries 502s on
+            scoring (falls back to scoring without anchor audit). If persistent,
+            check the dev server terminal for errors.
+          </p>
+        </div>
+
+        <div class="card">
+          <h3>Run stuck as 'running' after crash</h3>
+          <p>
+            Use <code>--resume &lt;run_id&gt; --force</code> to pick up where it
+            left off. The SIGINT handler prevents this in most Ctrl+C cases.
+          </p>
+        </div>
+      </div>
+
+      <!-- Parts Map -->
+      <div class="section" id="parts-map">
+        <div class="section-header">
+          <span class="section-number">11</span>
+          <h2>Parts Map</h2>
+        </div>
+        <p>The complete Builder Quality Intelligence system.</p>
+
+        <table class="parts-table">
+          <thead>
+            <tr>
+              <th>Part</th>
+              <th>What</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>Test Scene Library (8 core + 2 holdout)</td>
+              <td style="color: var(--accent-emerald)">✓</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>Kill User-Facing Score</td>
+              <td style="color: var(--accent-emerald)">✓</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>DB Schema + Route Hardening</td>
+              <td style="color: var(--accent-emerald)">✓</td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>Scoring Prompt Reframe</td>
+              <td style="color: var(--accent-emerald)">✓</td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td>Frozen Snapshot Generator</td>
+              <td style="color: var(--accent-emerald)">✓</td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td>Batch Runner</td>
+              <td style="color: var(--accent-emerald)">✓</td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td>Replicate Support</td>
+              <td style="color: var(--accent-emerald)">✓</td>
+            </tr>
+            <tr>
+              <td>8</td>
+              <td>Admin Dashboard</td>
+              <td style="color: var(--accent-emerald)">✓</td>
+            </tr>
+            <tr>
+              <td>9</td>
+              <td>Dual-Model Scoring (Claude)</td>
+              <td style="color: var(--accent-emerald)">✓</td>
+            </tr>
+            <tr>
+              <td>10</td>
+              <td>Rerun / Resume / SIGINT</td>
+              <td style="color: var(--accent-emerald)">✓</td>
+            </tr>
+            <tr>
+              <td>11</td>
+              <td>User Sampling</td>
+              <td style="color: var(--accent-emerald)">✓</td>
+            </tr>
+            <tr>
+              <td>12</td>
+              <td>Human-Assisted Patch Suggestion</td>
+              <td style="color: var(--accent-emerald)">✓</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">✓ Copied to clipboard</div>
+
+    <script>
+      function copyCmd(el) {
+        const text = el.querySelector(".cmd-text").textContent.trim();
+        navigator.clipboard.writeText(text).then(() => {
+          // Flash the command
+          el.classList.add("copied");
+          el.querySelector(".cmd-icon").textContent = "✓";
+          setTimeout(() => {
+            el.classList.remove("copied");
+            el.querySelector(".cmd-icon").textContent = "📋";
+          }, 1200);
+
+          // Show toast
+          const toast = document.getElementById("toast");
+          toast.textContent =
+            "✓ Copied: " + (text.length > 50 ? text.slice(0, 50) + "…" : text);
+          toast.classList.add("show");
+          setTimeout(() => toast.classList.remove("show"), 1800);
+        });
+      }
+
+      // Smooth scroll for nav
+      document.querySelectorAll(".nav a").forEach((a) => {
+        a.addEventListener("click", (e) => {
+          e.preventDefault();
+          const target = document.querySelector(a.getAttribute("href"));
+          if (target)
+            target.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      });
+    </script>
+  </body>
+</html>

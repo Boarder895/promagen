@@ -65,6 +65,13 @@ interface RunListItem {
 
 type ModeFilter = 'all' | 'builder' | 'pipeline';
 
+// Part 11: User sample stats for the "User (7d)" column
+interface UserSampleStat {
+  platformId: string;
+  meanScore: number;
+  sampleCount: number;
+}
+
 // =============================================================================
 // COMPONENT
 // =============================================================================
@@ -78,6 +85,7 @@ export function BuilderQualityClient() {
   const [warning, setWarning] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [userSampleStats, setUserSampleStats] = useState<UserSampleStat[]>([]);
 
   // Filters
   const [modeFilter, setModeFilter] = useState<ModeFilter>('all');
@@ -124,11 +132,25 @@ export function BuilderQualityClient() {
     }
   }, []);
 
+  // Part 11: Fetch user sample stats for the "User (7d)" column
+  const fetchUserSampleStats = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/builder-quality/user-sample-stats');
+      const json = await res.json();
+      if (json.ok && json.data) {
+        setUserSampleStats(json.data);
+      }
+    } catch (err) {
+      console.debug('[builder-quality] Error fetching user sample stats:', err);
+    }
+  }, []);
+
   // Initial load
   useEffect(() => {
     fetchRuns();
     fetchRunResults();
-  }, [fetchRuns, fetchRunResults]);
+    fetchUserSampleStats();
+  }, [fetchRuns, fetchRunResults, fetchUserSampleStats]);
 
   // ── Run selection ────────────────────────────────────────────────
   const handleSelectRun = useCallback(
@@ -296,6 +318,7 @@ export function BuilderQualityClient() {
         <PlatformOverviewTable
           platforms={filteredPlatforms}
           runId={selectedRun?.runId ?? null}
+          userSampleStats={userSampleStats}
         />
       )}
 
