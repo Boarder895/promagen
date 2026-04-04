@@ -82,8 +82,7 @@ export function LabGateOverlay({ requiresSignIn = false }: LabGateOverlayProps) 
             className="text-slate-300"
             style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.9rem)', maxWidth: '400px' }}
           >
-            The Prompt Lab turns your words into 4 platform-optimised prompts in seconds.
-            Sign in to get 1 free generation per day.
+            Sign in to get 2 free generations per day.
           </p>
         </div>
 
@@ -153,14 +152,14 @@ export function LabGateOverlay({ requiresSignIn = false }: LabGateOverlayProps) 
           className="font-semibold text-white"
           style={{ fontSize: 'clamp(0.9rem, 1.1vw, 1.3rem)' }}
         >
-          Your daily generation has been used
+          Your daily generations have been used
         </h3>
         <p
           className="text-slate-300"
           style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.9rem)', maxWidth: '420px' }}
         >
           The Prompt Lab reshapes every description into prompts tailored for 40 platforms.
-          One generation per day barely scratches the surface.
+          Two generations per day barely scratches the surface.
           Go unlimited — no waiting, no limits.
         </p>
       </div>
@@ -213,7 +212,7 @@ export function FreeGenerationBadge({ remaining }: { remaining: number }) {
         className="text-amber-400 font-medium"
         style={{ fontSize: 'clamp(0.6rem, 0.7vw, 0.8rem)' }}
       >
-        ✦ {remaining} free generation — make it count
+        ✦ {remaining} free {remaining === 1 ? 'generation' : 'generations'} — make {remaining === 1 ? 'it' : 'them'} count
       </span>
     </div>
   );

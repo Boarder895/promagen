@@ -180,13 +180,13 @@ function ProviderSelector({ providers, selectedId, onSelect }: ProviderSelectorP
     <div className="w-[220px]">
       <Combobox
         id="playground-provider-selector"
-        label="AI Provider"
+        label="Provider"
         options={options}
         selected={selected}
         customValue=""
         onSelectChange={handleSelectChange}
         onCustomChange={handleCustomChange}
-        placeholder="Select AI Provider..."
+        placeholder="Select Provider..."
         maxSelections={1}
         allowFreeText={false}
         isLocked={false}
@@ -223,6 +223,7 @@ export default function PlaygroundWorkspace({ providers, onProviderChange, onPro
   const {
     aiTierPrompts,
     isGenerating: isTierGenerating,
+    error: tierError,
     generatedForProvider,
     generate: generateTiers,
     clear: clearTiers,
@@ -364,15 +365,15 @@ export default function PlaygroundWorkspace({ providers, onProviderChange, onPro
   // ── Derived state ─────────────────────────────────────────────────
 
   // ★ Fire markUsed() AFTER successful generation — not on click.
-  // Watches aiTierPrompts: null → non-null = success. Ref prevents
-  // double-firing on provider-switch re-generation.
+  // Only counts when aiTierPrompts exists AND no tier error.
+  // If Call 2 failed (even partially), quota is preserved.
   const hasMarkedUsedRef = useRef(false);
   useEffect(() => {
-    if (aiTierPrompts && !hasMarkedUsedRef.current) {
+    if (aiTierPrompts && !tierError && !hasMarkedUsedRef.current) {
       hasMarkedUsedRef.current = true;
       markUsed();
     }
-  }, [aiTierPrompts, markUsed]);
+  }, [aiTierPrompts, tierError, markUsed]);
 
   // Reset the ref when tiers are cleared (new generation cycle)
   useEffect(() => {
@@ -380,6 +381,44 @@ export default function PlaygroundWorkspace({ providers, onProviderChange, onPro
       hasMarkedUsedRef.current = false;
     }
   }, [aiTierPrompts]);
+
+  // ── Template fallback — when Call 2 fails, build from user's text ────
+  // Not AI-generated, no quota consumed. User sees their own text arranged
+  // into tier cards so they have something to copy. They can retry for AI.
+  const fallbackPrompts = useMemo<GeneratedPrompts | null>(() => {
+    // Only build fallback when Call 2 failed AND user has text
+    // Don't build for content policy — user should change their content
+    if (aiTierPrompts || !tierError || !humanText.trim()) return null;
+    if (tierError.type === 'content-policy') return null;
+
+    const text = humanText.trim();
+
+    // Extract matched phrases from Call 1 if available
+    const keywords: string[] = [];
+    if (assessment?.coverage) {
+      for (const data of Object.values(assessment.coverage)) {
+        if (data.matchedPhrases) {
+          keywords.push(...data.matchedPhrases);
+        }
+      }
+    }
+
+    // Tier 1 (CLIP): comma-separated keywords, or raw text if no keywords
+    const t1 = keywords.length > 0
+      ? keywords.join(', ') + ', high quality, detailed'
+      : text;
+
+    return {
+      tier1: t1,
+      tier2: text,     // Tier 2 (Midjourney): raw text
+      tier3: text,     // Tier 3 (Natural Language): raw text
+      tier4: text,     // Tier 4 (Plain Language): raw text
+      negative: { tier1: '', tier2: '', tier3: '', tier4: '' },
+    };
+  }, [aiTierPrompts, tierError, humanText, assessment]);
+
+  // ── Effective tier prompts — AI-generated or fallback ─────────────
+  const effectiveTierPrompts = aiTierPrompts ?? fallbackPrompts;
 
   const selectedProvider = useMemo(() => {
     if (!selectedProviderId) return null;
@@ -404,28 +443,19 @@ export default function PlaygroundWorkspace({ providers, onProviderChange, onPro
 
   return (
     <div className="flex h-full min-h-0 flex-col" data-testid="playground-workspace">
-      {/* ★ Lab Gate: auth + quota check ────────────────────────────────── */}
+      {/* ★ Lab Gate: quota check ────────────────────────────────────────── */}
       {/* Not ready: render nothing until Clerk resolves AND usage is read */}
-      {!isReady ? null : !isAuthenticated ? (
-        /* Anonymous: must sign in first */
-        <LabGateOverlay requiresSignIn />
-      ) : isExhausted && !aiTierPrompts ? (
-        /* Free user exhausted quota AND no active results showing.
-           This is the "next visit" state — they come back, no results in memory,
-           they see the upgrade overlay. */
-        <LabGateOverlay />
+      {isReady && isExhausted && !aiTierPrompts ? (
+        /* Exhausted quota AND no active results showing.
+           Anonymous → sign-in CTA. Free → upgrade CTA. */
+        <LabGateOverlay requiresSignIn={!isAuthenticated} />
       ) : (
         /* Authenticated + has quota (or Pro) OR has active results showing.
            When isExhausted=true but aiTierPrompts exists, the workspace stays
            visible so the user can see their results, copy, use optimizer.
            The Generate button is already blocked by canGenerate check. */
         <>
-          {/* Free generation badge — shown to free users with remaining quota */}
-          {!isPro && remaining > 0 && (
-            <div style={{ marginBottom: 'clamp(8px, 0.7vw, 14px)' }}>
-              <FreeGenerationBadge remaining={remaining} />
-            </div>
-          )}
+          {/* Free generation badge — passed to child header for inline display */}
 
           {/* ★ Exhausted banner — shown inline when quota used but results visible.
               User can still see/copy/optimize their prompt. Generate is blocked. */}
@@ -444,14 +474,16 @@ export default function PlaygroundWorkspace({ providers, onProviderChange, onPro
                 className="text-amber-400"
                 style={{ fontSize: 'clamp(0.6rem, 0.7vw, 0.8rem)' }}
               >
-                Your free generation is used for today.
+                {isAuthenticated
+                  ? 'Your free generations are used for today.'
+                  : 'Your free prompt is used for today. Sign in for 2 daily prompts.'}
               </span>
               <a
-                href="/pro-promagen"
+                href={isAuthenticated ? '/pro-promagen' : '/sign-in'}
                 className="no-underline cursor-pointer font-medium transition-colors hover:text-amber-200"
                 style={{ fontSize: 'clamp(0.6rem, 0.7vw, 0.8rem)', color: 'rgb(251, 191, 36)' }}
               >
-                Unlock unlimited prompts →
+                {isAuthenticated ? 'Unlock unlimited prompts →' : 'Sign in →'}
               </a>
             </div>
           )}
@@ -460,13 +492,14 @@ export default function PlaygroundWorkspace({ providers, onProviderChange, onPro
             <PromptBuilder
               provider={builderProvider}
               providerSelector={providerSelectorElement}
+              freeBadge={!isPro && remaining > 0 ? <FreeGenerationBadge remaining={remaining} /> : undefined}
               // AI Disguise callbacks (passed through to DescribeYourImage)
               onDescribeTextChange={handleDescribeTextChange}
               onDescribeGenerate={handleDescribeGenerate}
               onDescribeClear={handleDescribeClear}
               isDrifted={isDrifted}
               driftChangeCount={driftChangeCount}
-              aiTierPrompts={aiTierPrompts}
+              aiTierPrompts={effectiveTierPrompts}
               isTierGenerating={isTierGenerating}
               generatedForProvider={generatedForProvider}
               // Coverage data for text colouring + category pills
@@ -478,13 +511,14 @@ export default function PlaygroundWorkspace({ providers, onProviderChange, onPro
             <EnhancedEducationalPreview
               providers={providers}
               onProviderChange={onProviderChange}
+              freeBadge={!isPro && remaining > 0 ? <FreeGenerationBadge remaining={remaining} /> : undefined}
               // AI Disguise callbacks + tier data
               onDescribeTextChange={handleDescribeTextChange}
               onDescribeGenerate={handleDescribeGenerate}
               onDescribeClear={handleDescribeClear}
               isDrifted={isDrifted}
               driftChangeCount={driftChangeCount}
-              aiTierPrompts={aiTierPrompts}
+              aiTierPrompts={effectiveTierPrompts}
               isTierGenerating={isTierGenerating}
               generatedForProvider={generatedForProvider}
               // Coverage data for text colouring + category pills
@@ -502,18 +536,51 @@ export default function PlaygroundWorkspace({ providers, onProviderChange, onPro
             />
           )}
 
-          {/* Assessment error display */}
+          {/* ── Error displays ──────────────────────────────────────────── */}
+
+          {/* Call 2 (tier generation) error — critical, shown prominently */}
+          {tierError && (
+            <div
+              className="flex items-center justify-center rounded-lg"
+              style={{
+                marginTop: 'clamp(6px, 0.5vw, 8px)',
+                padding: 'clamp(6px, 0.5vw, 10px) clamp(12px, 1vw, 18px)',
+                gap: 'clamp(6px, 0.5vw, 10px)',
+                background: tierError.type === 'content-policy'
+                  ? 'rgba(239, 68, 68, 0.08)'
+                  : 'rgba(251, 146, 60, 0.08)',
+                border: tierError.type === 'content-policy'
+                  ? '1px solid rgba(239, 68, 68, 0.2)'
+                  : '1px solid rgba(251, 146, 60, 0.2)',
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 'clamp(0.6rem, 0.7vw, 0.8rem)',
+                  color: tierError.type === 'content-policy' ? '#F87171' : '#FBBF24',
+                }}
+              >
+                {fallbackPrompts
+                  ? 'Optimisation unavailable — showing your description as a starting point. Try again for full prompts.'
+                  : tierError.message}
+              </span>
+            </div>
+          )}
+
+          {/* Call 1 (assessment) error — non-critical, subtle when any prompts exist */}
           {assessmentError && (
             <p
-              className="text-red-400"
               style={{
-            marginTop: 'clamp(6px, 0.5vw, 8px)',
-            padding: '0 clamp(12px, 1vw, 16px)',
-            fontSize: 'clamp(0.65rem, 0.7vw, 0.78rem)',
-          }}
-        >
-          {assessmentError.message}
-        </p>
+                marginTop: 'clamp(6px, 0.5vw, 8px)',
+                padding: '0 clamp(12px, 1vw, 16px)',
+                fontSize: 'clamp(0.6rem, 0.65vw, 0.72rem)',
+                color: effectiveTierPrompts ? '#94A3B8' : '#F87171',
+              }}
+            >
+              {effectiveTierPrompts
+                ? 'Text highlighting unavailable — prompts generated successfully.'
+                : assessmentError.message}
+            </p>
           )}
         </>
       )}

@@ -29,14 +29,14 @@ const SPEED_INSIGHTS_SAMPLE_RATE = 0.2;
 export const metadata: Metadata = {
   title: 'Promagen',
   description:
-    'AI prompt builder with 10,000+ phrases for 40 image generators. Elo-ranked leaderboard and live financial market data.',
+    'Most prompts lose detail between what you imagine and what the platform receives. Promagen rebuilds your words in each platform\'s native language. 40 platforms. One click.',
   metadataBase: new URL(SITE),
   robots: { index: true, follow: true },
   alternates: { canonical: '/' },
   openGraph: {
-    title: 'AI Prompt Builder for 40 Image Generators | Promagen',
+    title: 'Promagen: Prompt Builder for 40 Image Platforms',
     description:
-      'Build prompts for Midjourney, DALL·E & 40 AI image generators. 10,000+ phrase vocabulary, Elo-ranked leaderboard, and live financial market data.',
+      'Most prompts lose detail between what you imagine and what the platform receives. Promagen rebuilds your words in each platform\'s native language. 40 platforms. One click.',
     type: 'website',
     url: SITE,
     images: [
@@ -44,16 +44,16 @@ export const metadata: Metadata = {
         url: '/og.png',
         width: 1200,
         height: 630,
-        alt: 'Promagen — AI prompt builder for 40 image generators',
+        alt: 'Promagen — prompt builder for 40 image platforms',
       },
     ],
     siteName: 'Promagen',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'AI Prompt Builder for 40 Image Generators | Promagen',
+    title: 'Promagen: Prompt Builder for 40 Image Platforms',
     description:
-      'Build prompts for Midjourney, DALL·E & 40 AI image generators. 10,000+ phrase vocabulary, Elo-ranked leaderboard, and live financial market data.',
+      'Most prompts lose detail between what you imagine and what the platform receives. Promagen rebuilds your words in each platform\'s native language. 40 platforms. One click.',
     images: ['/og.png'],
   },
   other: {

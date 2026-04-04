@@ -43,9 +43,9 @@ import { generatePotmData } from '@/lib/homepage/generate-potm-data';
 // ============================================================================
 
 export const metadata: Metadata = {
-  title: 'AI Prompt Builder for 40 Image Generators | Promagen',
+  title: 'Promagen: Prompt Builder for 40 Image Platforms',
   description:
-    'Build prompts for Midjourney, DALL·E & 40+ AI image generators. 10,000+ phrase vocabulary, Elo-ranked leaderboard, and intelligent weather-driven prompts.',
+    'Most prompts lose detail between what you imagine and what the platform receives. Promagen rebuilds your words in each platform\'s native language. 40 platforms. One click.',
 };
 
 // ============================================================================

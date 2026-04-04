@@ -212,6 +212,8 @@ export interface PromptBuilderProps {
   onDone?: () => void;
   /** Optional: Custom element to replace the static provider title (e.g., dropdown selector) */
   providerSelector?: React.ReactNode;
+  /** Free generation badge — rendered inline in header next to provider selector */
+  freeBadge?: React.ReactNode;
   // ── AI Disguise pass-through (lifted from playground-workspace) ────
   /** Called on every "Describe Your Image" textarea change */
   onDescribeTextChange?: (text: string) => void;
@@ -953,6 +955,7 @@ export function PromptBuilder({
   provider,
   onDone,
   providerSelector,
+  freeBadge,
   // AI Disguise pass-through (from playground-workspace orchestrator)
   onDescribeTextChange,
   onDescribeGenerate,
@@ -2619,8 +2622,10 @@ export function PromptBuilder({
               {hasContent && <CategoryColourLegend isPro={isPro} />}
             </div>
 
-            {/* Right side: Intelligence badges + Usage counter */}
+            {/* Right side: Free badge + Intelligence badges + Usage counter */}
             <div className="flex items-center gap-3">
+              {/* Free generation badge — inline */}
+              {freeBadge}
               {/* Prompt Intelligence indicators */}
               {hasContent && promptAnalysis && (
                 <div className="flex items-center gap-2">

@@ -1,24 +1,19 @@
 // src/hooks/use-tier-generation.ts
 // ============================================================================
-// useTierGeneration — AI Tier Prompt Generation (Call 2)
+// useTierGeneration — AI Tier Prompt Generation (Call 2) v2.0.0
 // ============================================================================
+// v2.0.0 (5 Apr 2026): Resilience layer
+//   - Auto-retry once on transient errors (network, format, rate limit)
+//   - No retry on content policy violations
+//   - Tier validation: at least 1 tier must have non-empty positive content
+//   - Error type classification for UI routing
+//   - 1.5s delay before retry (avoids hammering on rate limits)
+//
 // Calls POST /api/generate-tier-prompts to generate all 4 tier prompts
-// directly from the user's human text description via the Prompt Intelligence Engine.
-//
-// Fires in parallel with Call 1 (useSentenceConversion).
-// When a provider is selected, generates provider-tailored output.
-// When no provider is selected, generates generic best-practice tiers.
-//
-// Human factors:
-//   §2 Variable Reward — each generation produces different AI output
-//       for the same input, keeping the user engaged with "what will
-//       it produce this time?"
+// directly from the user's human text description.
 //
 // Authority: ai-disguise.md §5 (Call 2 — AI Tier Generation)
-// Scope: Prompt Lab (/studio/playground) ONLY
-// One Brain rule: This does NOT replace generators.ts or assemblePrompt().
-//                 Template generators remain as fallback.
-// Existing features preserved: Yes (new file, no modifications).
+// Existing features preserved: Yes — same return type, same API contract.
 // ============================================================================
 
 'use client';
@@ -30,58 +25,46 @@ import type { GeneratedPrompts } from '@/types/prompt-intelligence';
 // TYPES
 // ============================================================================
 
-/**
- * Provider context sent to the API for provider-tailored generation.
- * Built from PlatformFormat + PlatformTierId on the client side.
- */
 export interface TierGenerationProviderContext {
-  /** Platform tier (1–4) */
   tier: number;
-  /** Provider display name */
   name: string;
-  /** Prompt style: keywords | natural | plain */
   promptStyle: string;
-  /** Sweet spot token count */
   sweetSpot: number;
-  /** Maximum token limit */
   tokenLimit: number;
-  /** Quality prefix terms */
   qualityPrefix?: string[];
-  /** Weight syntax pattern (e.g., "{term}::{weight}") */
   weightingSyntax?: string;
-  /** Whether the platform supports term weighting */
   supportsWeighting?: boolean;
-  /** How the platform handles negative prompts */
   negativeSupport: 'separate' | 'inline' | 'none' | 'converted';
 }
 
+/** Error types for UI routing */
+export type TierErrorType = 'content-policy' | 'rate-limit' | 'network' | 'format' | 'validation' | 'unknown';
+
+export interface TierGenerationError {
+  type: TierErrorType;
+  message: string;
+  /** Whether the error is retryable (false for content policy) */
+  retryable: boolean;
+}
+
 export interface UseTierGenerationReturn {
-  /** AI-generated tier prompts (null until first generation) */
   aiTierPrompts: GeneratedPrompts | null;
-  /** Whether the API call is in progress */
   isGenerating: boolean;
-  /** Error message if the call failed */
-  error: string | null;
-  /** Provider name the tiers were generated for (null = generic). For badge display. */
+  error: TierGenerationError | null;
   generatedForProvider: string | null;
-  /** Provider ID the tiers were generated for (null = generic). For re-fire detection. */
   generatedForProviderId: string | null;
-  /** Trigger tier generation. Returns true if successful, false if failed. */
   generate: (
     sentence: string,
     providerId: string | null,
     providerContext: TierGenerationProviderContext | null,
-    /** v4: Gap intent from Check → Assess → Decide flow */
     gapIntent?: 'all-satisfied' | 'skipped' | 'user-decided',
-    /** v4: Category decisions (only when gapIntent is "user-decided") */
     categoryDecisions?: Array<{ category: string; fill: string }>,
   ) => Promise<boolean>;
-  /** Clear all generated results (e.g., on "Clear All") */
   clear: () => void;
 }
 
 // ============================================================================
-// API RESPONSE SHAPE (matches route.ts ResponseSchema)
+// API RESPONSE SHAPE
 // ============================================================================
 
 interface ApiTierOutput {
@@ -99,14 +82,16 @@ interface ApiResponse {
 }
 
 // ============================================================================
+// CONSTANTS
+// ============================================================================
+
+/** Delay before auto-retry (ms) */
+const RETRY_DELAY = 1500;
+
+// ============================================================================
 // HELPERS
 // ============================================================================
 
-/**
- * Convert API response shape → GeneratedPrompts (UI shape).
- * The API returns { positive, negative } per tier.
- * The UI expects flat strings + a nested negative object.
- */
 function apiToGeneratedPrompts(api: ApiResponse['tiers']): GeneratedPrompts {
   return {
     tier1: api.tier1.positive,
@@ -122,6 +107,89 @@ function apiToGeneratedPrompts(api: ApiResponse['tiers']): GeneratedPrompts {
   };
 }
 
+/** Validate that at least 1 tier has non-empty positive content */
+function validateTiers(prompts: GeneratedPrompts): boolean {
+  return !!(
+    prompts.tier1?.trim() ||
+    prompts.tier2?.trim() ||
+    prompts.tier3?.trim() ||
+    prompts.tier4?.trim()
+  );
+}
+
+/** Classify error type from HTTP status and response body */
+function classifyTierError(
+  status: number,
+  errorCode?: string,
+  message?: string,
+): TierGenerationError {
+  const msg = message ?? 'Something went wrong. Please try again.';
+
+  if (errorCode === 'CONTENT_POLICY' || status === 451) {
+    return { type: 'content-policy', message: 'Your description may contain restricted content. Try different wording.', retryable: false };
+  }
+  if (status === 429 || errorCode === 'RATE_LIMITED') {
+    return { type: 'rate-limit', message: 'Busy — retrying...', retryable: true };
+  }
+  if (status === 0) {
+    return { type: 'network', message: 'Connection issue — retrying...', retryable: true };
+  }
+  if (msg.toLowerCase().includes('format') || msg.toLowerCase().includes('parse')) {
+    return { type: 'format', message: 'Algorithm hiccup — retrying...', retryable: true };
+  }
+  return { type: 'unknown', message: 'Algorithm overload — retrying...', retryable: true };
+}
+
+/** Wait for a specified duration */
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// ============================================================================
+// SINGLE ATTEMPT — extracted for retry logic
+// ============================================================================
+
+interface AttemptResult {
+  ok: boolean;
+  prompts?: GeneratedPrompts;
+  error?: TierGenerationError;
+}
+
+async function attemptGenerate(
+  requestBody: Record<string, unknown>,
+  signal: AbortSignal,
+): Promise<AttemptResult> {
+  const res = await fetch('/api/generate-tier-prompts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(requestBody),
+    signal,
+  });
+
+  if (signal.aborted) return { ok: false };
+
+  if (!res.ok) {
+    let data: { error?: string; message?: string } = {};
+    try { data = await res.json(); } catch { /* ignore */ }
+    return { ok: false, error: classifyTierError(res.status, data.error, data.message) };
+  }
+
+  const data: ApiResponse = await res.json();
+
+  if (!data.tiers) {
+    return { ok: false, error: { type: 'format', message: 'No prompts returned. Please try again.', retryable: true } };
+  }
+
+  const prompts = apiToGeneratedPrompts(data.tiers);
+
+  // Validate: at least 1 tier must have content
+  if (!validateTiers(prompts)) {
+    return { ok: false, error: { type: 'validation', message: 'Generated prompts were empty. Please try again.', retryable: true } };
+  }
+
+  return { ok: true, prompts };
+}
+
 // ============================================================================
 // HOOK
 // ============================================================================
@@ -129,12 +197,14 @@ function apiToGeneratedPrompts(api: ApiResponse['tiers']): GeneratedPrompts {
 export function useTierGeneration(): UseTierGenerationReturn {
   const [aiTierPrompts, setAiTierPrompts] = useState<GeneratedPrompts | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<TierGenerationError | null>(null);
   const [generatedForProvider, setGeneratedForProvider] = useState<string | null>(null);
   const [generatedForProviderId, setGeneratedForProviderId] = useState<string | null>(null);
 
-  // Abort controller for in-flight requests (cancel on re-fire)
   const abortRef = useRef<AbortController | null>(null);
+  // Generation counter — only the latest generation's results are accepted.
+  // Eliminates abort race condition where old response arrives after new call starts.
+  const generationIdRef = useRef(0);
 
   const generate = useCallback(
     async (
@@ -146,73 +216,96 @@ export function useTierGeneration(): UseTierGenerationReturn {
     ): Promise<boolean> => {
       const trimmed = sentence.trim();
       if (!trimmed) {
-        setError('No description provided.');
+        setError({ type: 'unknown', message: 'No description provided.', retryable: false });
         return false;
       }
 
-      // Cancel any in-flight request (e.g., provider switch mid-generation)
+      // Cancel any in-flight request
       if (abortRef.current) {
         abortRef.current.abort();
       }
       const controller = new AbortController();
       abortRef.current = controller;
 
+      // Increment generation ID — stale responses from older calls are rejected
+      generationIdRef.current += 1;
+      const thisGenerationId = generationIdRef.current;
+
       setIsGenerating(true);
       setError(null);
 
       try {
-        // Build request body — v4 fields are optional for backward compat
         const requestBody: Record<string, unknown> = {
           sentence: trimmed,
           providerId,
           providerContext,
         };
-        if (gapIntent) {
-          requestBody.gapIntent = gapIntent;
-        }
+        if (gapIntent) requestBody.gapIntent = gapIntent;
         if (categoryDecisions && categoryDecisions.length > 0) {
           requestBody.categoryDecisions = categoryDecisions;
         }
 
-        const res = await fetch('/api/generate-tier-prompts', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestBody),
-          signal: controller.signal,
+        // ── Attempt 1 ──────────────────────────────────────────────
+        const first = await attemptGenerate(requestBody, controller.signal);
+
+        // Reject if aborted OR a newer generation has started
+        if (controller.signal.aborted || generationIdRef.current !== thisGenerationId) return false;
+
+        if (first.ok && first.prompts) {
+          setAiTierPrompts(first.prompts);
+          setGeneratedForProvider(providerContext?.name ?? null);
+          setGeneratedForProviderId(providerId);
+          setIsGenerating(false);
+          return true;
+        }
+
+        // ── Check if retryable ─────────────────────────────────────
+        if (!first.error?.retryable) {
+          // Content policy — don't retry, show error immediately
+          setError(first.error ?? { type: 'unknown', message: 'Generation failed.', retryable: false });
+          setIsGenerating(false);
+          return false;
+        }
+
+        // ── Auto-retry after delay ─────────────────────────────────
+        console.debug('[PromptAlgorithm] Attempt 1 failed, retrying in', RETRY_DELAY, 'ms...');
+        await wait(RETRY_DELAY);
+
+        if (controller.signal.aborted || generationIdRef.current !== thisGenerationId) return false;
+
+        const second = await attemptGenerate(requestBody, controller.signal);
+
+        if (controller.signal.aborted || generationIdRef.current !== thisGenerationId) return false;
+
+        if (second.ok && second.prompts) {
+          setAiTierPrompts(second.prompts);
+          setGeneratedForProvider(providerContext?.name ?? null);
+          setGeneratedForProviderId(providerId);
+          setIsGenerating(false);
+          return true;
+        }
+
+        // ── Both attempts failed ───────────────────────────────────
+        const finalError = second.error ?? first.error ?? {
+          type: 'unknown' as TierErrorType,
+          message: 'Something went wrong. Please try again.',
+          retryable: true,
+        };
+        // Override message for user-facing display after retry exhausted
+        setError({
+          ...finalError,
+          message: finalError.type === 'rate-limit'
+            ? 'Service is busy. Please try again in a moment.'
+            : 'Something went wrong. Your free prompt is still available — try again.',
         });
-
-        // Don't process if this request was aborted (a newer one replaced it)
-        if (controller.signal.aborted) return false;
-
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({ message: 'Request failed' }));
-          setError(data.message ?? 'Failed to generate prompts. Please try again.');
-          setIsGenerating(false);
-          return false;
-        }
-
-        const data: ApiResponse = await res.json();
-
-        if (!data.tiers) {
-          setError('No prompts returned. Please try again.');
-          setIsGenerating(false);
-          return false;
-        }
-
-        // Convert to UI shape and store
-        const prompts = apiToGeneratedPrompts(data.tiers);
-        setAiTierPrompts(prompts);
-        setGeneratedForProvider(providerContext?.name ?? null);
-        setGeneratedForProviderId(providerId);
         setIsGenerating(false);
-        return true;
+        return false;
       } catch (err) {
-        // AbortError is expected when we cancel — don't show error
         if (err instanceof DOMException && err.name === 'AbortError') {
           return false;
         }
-        console.error('[useTierGeneration] Error:', err);
-        setError('Something went wrong. Please try again.');
+        console.error('[PromptAlgorithm] Error:', err);
+        setError({ type: 'network', message: 'Connection failed. Your free prompt is still available — try again.', retryable: true });
         setIsGenerating(false);
         return false;
       }

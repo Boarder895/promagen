@@ -102,19 +102,49 @@ export function useCategoryAssessment(): CategoryAssessmentResult {
         signal: controller.signal,
       });
 
-      // Handle error responses
+      // Handle error responses — auto-retry once on transient errors
       if (!res.ok) {
         let data: { error?: string; message?: string } = {};
-        try {
-          data = await res.json();
-        } catch {
-          // Can't parse error body
-        }
+        try { data = await res.json(); } catch { /* ignore */ }
 
         const errorType = classifyError(res.status, data.error);
-        const message = data.message ?? 'Failed to analyse your description. Please try again.';
 
-        setError({ type: errorType, message });
+        // Content policy — don't retry
+        if (errorType === 'content-policy') {
+          setError({ type: errorType, message: 'Your description may contain restricted content.' });
+          setIsChecking(false);
+          abortRef.current = null;
+          return null;
+        }
+
+        // Transient error — retry once after 1s
+        if (!controller.signal.aborted) {
+          console.debug('[TextAnalysis] Attempt 1 failed, retrying...');
+          await new Promise((r) => setTimeout(r, 1000));
+
+          if (controller.signal.aborted) { setIsChecking(false); return null; }
+
+          const retry = await fetch('/api/parse-sentence', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sentence: trimmed, mode: 'assess' }),
+            signal: controller.signal,
+          });
+
+          if (retry.ok) {
+            const retryData = await retry.json();
+            const retryResult = retryData.assessment as CoverageAssessment;
+            if (retryResult?.coverage) {
+              setAssessment(retryResult);
+              setIsChecking(false);
+              abortRef.current = null;
+              return retryResult;
+            }
+          }
+        }
+
+        // Both attempts failed — set error but don't block (Call 1 is non-critical)
+        setError({ type: errorType, message: 'Text analysis unavailable. Your prompts still work.' });
         setIsChecking(false);
         abortRef.current = null;
         return null;
@@ -125,7 +155,7 @@ export function useCategoryAssessment(): CategoryAssessmentResult {
       const result = data.assessment as CoverageAssessment;
 
       if (!result || !result.coverage) {
-        setError({ type: 'unknown', message: 'No analysis returned. Please try again.' });
+        setError({ type: 'unknown', message: 'Text analysis unavailable. Your prompts still work.' });
         setIsChecking(false);
         abortRef.current = null;
         return null;

@@ -126,6 +126,8 @@ export interface EnhancedEducationalPreviewProps {
   onAssembledPromptChange?: (text: string) => void;
   /** External provider selection from rail navigator — syncs EEP internal state */
   railSelectedProviderId?: string | null;
+  /** Free generation badge — rendered inline in header next to provider selector */
+  freeBadge?: React.ReactNode;
 }
 
 // ============================================================================
@@ -227,13 +229,13 @@ function ProviderSelector({ providers, selectedId, onSelect }: ProviderSelectorP
     <div className="w-[220px] shrink-0">
       <Combobox
         id="edu-provider-selector"
-        label="AI Provider"
+        label="Provider"
         options={options}
         selected={selected}
         customValue=""
         onSelectChange={handleSelectChange}
         onCustomChange={handleCustomChange}
-        placeholder="Select AI Provider..."
+        placeholder="Select Provider..."
         maxSelections={1}
         allowFreeText={false}
         isLocked={false}
@@ -358,6 +360,7 @@ export default function EnhancedEducationalPreview({
   onOptimisationChange,
   onAssembledPromptChange,
   railSelectedProviderId,
+  freeBadge,
 }: EnhancedEducationalPreviewProps) {
   // State
   const [selections, setSelections] = useState<PromptSelections>(EMPTY_SELECTIONS);
@@ -1168,6 +1171,9 @@ export default function EnhancedEducationalPreview({
 
           {/* Pro Promagen: Colour legend */}
           {hasContent && <LabCategoryColourLegend isPro={isPro} />}
+
+          {/* Free generation badge — inline, right-aligned */}
+          {freeBadge && <div style={{ marginLeft: 'auto' }}>{freeBadge}</div>}
         </div>
 
         {/* Show selected provider tier info */}

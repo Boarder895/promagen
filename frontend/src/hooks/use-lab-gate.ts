@@ -1,21 +1,22 @@
 // src/hooks/use-lab-gate.ts
 // ============================================================================
-// PROMPT LAB GATE — Daily Generation Limiter (v2.0.0)
+// PROMPT LAB GATE — Daily Generation Limiter (v3.0.0)
 // ============================================================================
-// Tracks free-tier Prompt Lab usage: 1 generation per day.
-// Pro users: unlimited. Anonymous: blocked (redirected to sign-in).
+// Tracks Prompt Lab usage per tier:
+//   - Anonymous (not signed in): 1 generation per day
+//   - Free (signed in):          2 generations per day
+//   - Pro (paid):                unlimited
 //
-// v2.0.0 (30 Mar 2026): Three bug fixes:
-//   1. Key is now USER-SPECIFIC: `promagen:lab-gen:{userId}:{date}`
-//      Previously browser-global — a second account on the same browser
-//      inherited the first account's counter. New account = locked out.
-//   2. Added `isReady` flag — render gates on this to prevent flash
-//      between "auth loaded" and "usage read" states.
-//   3. Removed immediate markUsed from generate handler. Workspace now
-//      calls markUsed via useEffect AFTER successful generation.
+// v3.0.0 (4 Apr 2026): Open gate for anonymous users.
+//   - Anonymous users get 1 free generation (browser-level localStorage)
+//   - Free signed-in users get 2 generations (user-keyed localStorage)
+//   - Pro: unlimited (unchanged)
+//   - canGenerate no longer requires isAuthenticated
+//
+// v2.0.0 (30 Mar 2026): Three bug fixes (user-specific key, isReady, markUsed).
 //
 // Storage: localStorage with user+date-keyed counter.
-//   Key: 'promagen:lab-gen:{userId}:{YYYY-MM-DD}'
+//   Key: 'promagen:lab-gen:{userId|anon}:{YYYY-MM-DD}'
 //   Value: number of generations used today
 //
 // Authority: paid_tier.md §5.13, human-factors.md §8 (Loss Aversion)
@@ -32,8 +33,11 @@ import { usePromagenAuth } from '@/hooks/use-promagen-auth';
 // CONSTANTS
 // ============================================================================
 
-/** Free tier: 1 generation per day */
-const FREE_DAILY_LIMIT = 1;
+/** Anonymous (not signed in): 1 generation per day */
+const ANON_DAILY_LIMIT = 1;
+
+/** Free tier (signed in): 2 generations per day */
+const FREE_DAILY_LIMIT = 2;
 
 /** localStorage key prefix */
 const STORAGE_PREFIX = 'promagen:lab-gen';
@@ -47,16 +51,16 @@ function todayKey(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-/** Full localStorage key for a specific user today */
-function storageKey(userId: string): string {
-  return `${STORAGE_PREFIX}:${userId}:${todayKey()}`;
+/** Full localStorage key for a specific user (or 'anon') today */
+function storageKey(userIdOrAnon: string): string {
+  return `${STORAGE_PREFIX}:${userIdOrAnon}:${todayKey()}`;
 }
 
-/** Read today's usage count from localStorage for a specific user */
-function readUsage(userId: string): number {
+/** Read today's usage count from localStorage */
+function readUsage(userIdOrAnon: string): number {
   if (typeof window === 'undefined') return 0;
   try {
-    const raw = localStorage.getItem(storageKey(userId));
+    const raw = localStorage.getItem(storageKey(userIdOrAnon));
     if (!raw) return 0;
     const n = parseInt(raw, 10);
     return isNaN(n) ? 0 : n;
@@ -65,11 +69,11 @@ function readUsage(userId: string): number {
   }
 }
 
-/** Write today's usage count to localStorage for a specific user */
-function writeUsage(userId: string, count: number): void {
+/** Write today's usage count to localStorage */
+function writeUsage(userIdOrAnon: string, count: number): void {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(storageKey(userId), String(count));
+    localStorage.setItem(storageKey(userIdOrAnon), String(count));
   } catch {
     // Storage full or blocked — silent
   }
@@ -84,7 +88,7 @@ export interface UseLabGateResult {
   canGenerate: boolean;
   /** Number of generations used today */
   generationsUsed: number;
-  /** Whether user has exhausted their free quota (only relevant for free tier) */
+  /** Whether user has exhausted their quota */
   isExhausted: boolean;
   /** Whether user is Pro (unlimited) */
   isPro: boolean;
@@ -94,7 +98,7 @@ export interface UseLabGateResult {
   isReady: boolean;
   /** Mark a generation as used — call AFTER successful generation */
   markUsed: () => void;
-  /** Remaining generations for free users (0 when exhausted, Infinity for Pro) */
+  /** Remaining generations (0 when exhausted, Infinity for Pro) */
   remaining: number;
 }
 
@@ -105,13 +109,9 @@ export interface UseLabGateResult {
 /**
  * Gate for Prompt Lab generation.
  *
- * - Anonymous: canGenerate = false (must sign in)
- * - Free signed-in: canGenerate = true for first generation, false after
+ * - Anonymous: canGenerate = true for 1 generation per day
+ * - Free signed-in: canGenerate = true for 2 generations per day
  * - Pro: canGenerate = always true
- *
- * The hook is not "ready" until both Clerk auth AND the user-specific
- * localStorage read have completed. Consumers should render null until
- * isReady is true — this prevents flash between loading states.
  */
 export function useLabGate(): UseLabGateResult {
   const { isLoaded, isSignedIn, userId } = useAuth();
@@ -120,19 +120,28 @@ export function useLabGate(): UseLabGateResult {
   const isPro = userTier === 'paid';
   const isAuthenticated = isLoaded && isSignedIn === true;
 
+  // Resolve the effective user key: real userId for signed-in, 'anon' otherwise
+  const effectiveUserId = userId ?? 'anon';
+
+  // Daily limit depends on auth state
+  const dailyLimit = isPro ? Infinity : isAuthenticated ? FREE_DAILY_LIMIT : ANON_DAILY_LIMIT;
+
   const [generationsUsed, setGenerationsUsed] = useState(0);
   const [usageReady, setUsageReady] = useState(false);
 
-  // ★ Read user-specific usage when userId resolves.
-  // This fires once when Clerk loads, and never again (userId is stable).
-  // The usageReady flag prevents the workspace from rendering before
-  // we've read the correct counter — no flash, no race.
+  // ★ Read usage when auth resolves.
+  // For anonymous: reads 'anon' key immediately once Clerk loads.
+  // For signed-in: reads user-specific key once userId resolves.
   useEffect(() => {
+    if (!isLoaded) return;
+
     if (userId) {
+      // Signed-in user
       setGenerationsUsed(readUsage(userId));
       setUsageReady(true);
-    } else if (isLoaded && !isSignedIn) {
-      // Anonymous user — no usage to read, but mark as ready
+    } else if (!isSignedIn) {
+      // Anonymous user
+      setGenerationsUsed(readUsage('anon'));
       setUsageReady(true);
     }
   }, [userId, isLoaded, isSignedIn]);
@@ -140,17 +149,16 @@ export function useLabGate(): UseLabGateResult {
   // Gate is ready when auth is loaded AND usage has been read
   const isReady = isLoaded && usageReady;
 
-  const isExhausted = !isPro && generationsUsed >= FREE_DAILY_LIMIT;
-  const canGenerate = isAuthenticated && (isPro || !isExhausted);
-  const remaining = isPro ? Infinity : Math.max(0, FREE_DAILY_LIMIT - generationsUsed);
+  const isExhausted = !isPro && generationsUsed >= dailyLimit;
+  const canGenerate = isPro || !isExhausted;
+  const remaining = isPro ? Infinity : Math.max(0, dailyLimit - generationsUsed);
 
   const markUsed = useCallback(() => {
     if (isPro) return; // Pro users don't consume quota
-    if (!userId) return; // Safety — should never happen when authenticated
     const next = generationsUsed + 1;
     setGenerationsUsed(next);
-    writeUsage(userId, next);
-  }, [isPro, userId, generationsUsed]);
+    writeUsage(effectiveUserId, next);
+  }, [isPro, effectiveUserId, generationsUsed]);
 
   return {
     canGenerate,
