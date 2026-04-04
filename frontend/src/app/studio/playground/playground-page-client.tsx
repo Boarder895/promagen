@@ -59,7 +59,7 @@ import { getRawPlatformConfig } from '@/data/providers/platform-config';
 import MobileBuilderGate from '@/components/layout/mobile-builder-gate';
 
 // ── Intelligence rails ────────────────────────────────────────────────
-import { PlatformMatchRail } from '@/components/prompt-lab/platform-match-rail';
+import { LeaderboardRail } from '@/components/prompt-lab/leaderboard-rail';
 import { PipelineXRay } from '@/components/prompt-lab/pipeline-xray';
 
 // ============================================================================
@@ -218,9 +218,9 @@ export default function PlaygroundPageClient({
   // Provider IDs for market pulse
   const providerIds = providers.map((p) => p.id);
 
-  // ── LEFT RAIL: Platform Match Navigator ─────────────────────────────
+  // ── LEFT RAIL: AI Leaderboard Navigator ─────────────────────────────
   const leftContent = (
-    <PlatformMatchRail
+    <LeaderboardRail
       providers={providers}
       selectedProviderId={selectedProviderId}
       onSelectProvider={handleRailSelectProvider}
