@@ -5,6 +5,7 @@
 
 import React, { useCallback } from 'react';
 import { useImageQualityVote } from '@/hooks/use-image-quality-vote';
+import { useIndexRatingEvents } from '@/hooks/use-index-rating-events';
 import { cn } from '@/lib/cn';
 
 export type ImageQualityVoteButtonProps = {
@@ -38,6 +39,8 @@ export function ImageQualityVoteButton({
     isAuthenticated
   );
 
+  const { trackVote } = useIndexRatingEvents();
+
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
@@ -49,8 +52,10 @@ export function ImageQualityVoteButton({
       }
 
       vote();
+      // Fire index rating event — vote is the highest-value action (5pts, K=32)
+      trackVote(providerId, 'image_quality_vote');
     },
-    [isAuthenticated, hasVoted, canVoteMore, vote]
+    [isAuthenticated, hasVoted, canVoteMore, vote, trackVote, providerId]
   );
 
   // Don't render until hydrated to avoid flash

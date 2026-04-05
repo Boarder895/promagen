@@ -32,6 +32,9 @@ export const INDEX_RATING_ADVISORY_LOCK_ID = 424243;
 /** Minimum rating floor */
 export const INDEX_RATING_MIN_FLOOR = 100;
 
+/** Display-layer inflation offset — cosmetic only, not stored in DB */
+export const DISPLAY_INFLATION_OFFSET = 200;
+
 // =============================================================================
 // EVENT TYPES
 // =============================================================================
@@ -44,6 +47,14 @@ export const EVENT_CONFIG = {
   open: { basePoints: 2, kFactor: 16 },
   click: { basePoints: 2, kFactor: 16 }, // Legacy alias for open
   social_click: { basePoints: 1, kFactor: 8 },
+  // Prompt Lab events — premium surface, higher value than standard builder
+  prompt_lab_select: { basePoints: 4, kFactor: 20 },
+  prompt_lab_generate: { basePoints: 7, kFactor: 28 },
+  prompt_lab_copy: { basePoints: 6, kFactor: 24 },
+  prompt_lab_optimise: { basePoints: 8, kFactor: 32 },
+  // Library events
+  prompt_save: { basePoints: 4, kFactor: 20 },
+  prompt_reformat: { basePoints: 3, kFactor: 16 },
 } as const;
 
 export type IndexRatingEventType = keyof typeof EVENT_CONFIG;

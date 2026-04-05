@@ -29,6 +29,7 @@
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { triggerQuickSaveToast } from './quick-save-toast';
+import { sendTrackEvent, getOrCreateSessionId } from '@/hooks/use-index-rating-events';
 
 // ============================================================================
 // LIGHTWEIGHT SAVE HELPER (no hook dependency)
@@ -157,6 +158,10 @@ export function SaveIcon({
           promptName: result.name,
           promptId: result.id,
         });
+        // ★ Index Rating: prompt saved to library (4pts, K=20)
+        if (saveData.platformId) {
+          sendTrackEvent(saveData.platformId, 'prompt_save', `save_icon_${saveData.source}`, getOrCreateSessionId());
+        }
         timeoutRef.current = setTimeout(() => setSaved(false), 1500);
       }
     },

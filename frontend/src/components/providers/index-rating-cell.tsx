@@ -22,6 +22,7 @@
 
 'use client';
 
+import { useState, useEffect, useRef } from 'react';
 import type { DisplayRating, RatingChangeState } from '@/types/index-rating';
 
 // =============================================================================
@@ -72,20 +73,79 @@ function getTickColorClass(state: RatingChangeState): string {
 }
 
 // =============================================================================
+// TICKER HOOK — animates number from old to new over 600ms
+// =============================================================================
+
+function useRatingTicker(target: number | null): number | null {
+  const [display, setDisplay] = useState(target);
+  const prevRef = useRef(target);
+  const rafRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const prev = prevRef.current;
+    prevRef.current = target;
+
+    // No animation needed
+    if (target === null || prev === null || prev === target) {
+      setDisplay(target);
+      return;
+    }
+
+    // Respect reduced motion
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setDisplay(target);
+      return;
+    }
+
+    // Cancel any running animation
+    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+
+    const diff = target - prev;
+    const from = prev; // capture non-null for closure
+    const duration = 600;
+    const start = performance.now();
+
+    function tick(now: number) {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease-out cubic — fast start, gentle landing
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplay(from + diff * eased);
+      if (progress < 1) {
+        rafRef.current = requestAnimationFrame(tick);
+      } else {
+        rafRef.current = null;
+      }
+    }
+
+    rafRef.current = requestAnimationFrame(tick);
+
+    return () => {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    };
+  }, [target]);
+
+  return display;
+}
+
+// =============================================================================
 // COMPONENT
 // =============================================================================
 
 export function IndexRatingCell({ rating, compact = false, className = '' }: IndexRatingCellProps) {
   const { rating: ratingValue, change, changePercent, state } = rating;
 
+  // Ticker: animates the number from old to new value
+  const displayValue = useRatingTicker(ratingValue);
+
   const symbol = getDirectionSymbol(state);
   const tickColorClass = getTickColorClass(state);
 
   return (
     <div className={`index-rating-cell ${className}`}>
-      {/* Line 1: Rating value - white */}
+      {/* Line 1: Rating value - white, animated ticker */}
       <span className="index-rating-value">
-        {formatRating(ratingValue)}
+        {formatRating(displayValue)}
       </span>
 
       {/* Line 2: Change indicator - COLORED */}

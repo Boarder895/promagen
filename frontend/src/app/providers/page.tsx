@@ -4,7 +4,7 @@ import React from 'react';
 import type { Metadata } from 'next';
 
 import ProvidersTable from '@/components/providers/providers-table';
-import { getProviders } from '@/lib/providers/api';
+import { getProvidersWithPromagenUsers } from '@/lib/providers/api';
 
 export const metadata: Metadata = {
   title: 'AI Providers Leaderboard • Promagen',
@@ -13,9 +13,8 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-export default function ProvidersPage(): JSX.Element {
-  // No limit — shows all providers from SSOT (providers.json)
-  const providers = getProviders();
+export default async function ProvidersPage() {
+  const providers = await getProvidersWithPromagenUsers();
 
   return (
     <main role="main" className="p-6">

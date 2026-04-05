@@ -30,7 +30,7 @@ import type { Metadata } from 'next';
 export const revalidate = 60;
 
 import NewHomepageClient from '@/components/home/new-homepage-client';
-import { getProviders } from '@/lib/providers/api';
+import { getProvidersWithPromagenUsers } from '@/lib/providers/api';
 import { getHomepageExchanges } from '@/lib/exchange-order';
 import { getWeatherIndex } from '@/lib/weather/fetch-weather';
 import type { ExchangeWeatherData } from '@/components/exchanges/types';
@@ -98,8 +98,8 @@ function toWeatherFull(w: ExchangeWeatherData): ExchangeWeatherFull {
  * so it appears in the initial HTML with zero client-side fetch latency.
  */
 export default async function HomePage() {
-  // Providers + exchanges are synchronous JSON reads — instant
-  const providers = getProviders();
+  // Providers: async with promagenUsers enrichment from DB
+  const providers = await getProvidersWithPromagenUsers();
   const allExchanges = getHomepageExchanges();
 
   // Weather: non-blocking with 2s timeout. Empty map fallback.

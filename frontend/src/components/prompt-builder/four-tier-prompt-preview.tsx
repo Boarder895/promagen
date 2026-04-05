@@ -38,6 +38,7 @@ import {
 } from '@/lib/prompt-colours';
 import type { PromptCategory } from '@/types/prompt-builder';
 import { TierGenerationCycling } from '@/components/prompt-lab/tier-generation-cycling';
+import { sendTrackEvent, getOrCreateSessionId } from '@/hooks/use-index-rating-events';
 
 // ============================================================================
 // TYPES
@@ -430,9 +431,15 @@ function TierCard({
     await navigator.clipboard.writeText(text);
     setCopied(true);
     onCopy();
+
+    // ★ Index Rating: tier prompt copied (6pts, K=24)
+    // platformId is 'playground' when no provider selected — skip tracking
+    if (platformId && platformId !== 'playground') {
+      sendTrackEvent(platformId, 'prompt_lab_copy', `tier_${tier}_copy`, getOrCreateSessionId());
+    }
     
     setTimeout(() => setCopied(false), 2000);
-  }, [positive, negative, tier, onCopy]);
+  }, [positive, negative, tier, onCopy, platformId]);
 
   // Step 7.9d: Compute gauge data from compression lookup
   const gaugeData = useMemo(() => {

@@ -42,6 +42,20 @@ type UseIndexRatingEventsReturn = {
   trackPromptSubmit: TrackEventFn;
   /** Track social icon click */
   trackSocialClick: TrackSocialClickFn;
+  /** Track image quality vote */
+  trackVote: TrackEventFn;
+  /** Track Prompt Lab provider selection */
+  trackLabSelect: TrackEventFn;
+  /** Track Prompt Lab generate */
+  trackLabGenerate: TrackEventFn;
+  /** Track Prompt Lab tier copy */
+  trackLabCopy: TrackEventFn;
+  /** Track Prompt Lab optimise (Call 3) */
+  trackLabOptimise: TrackEventFn;
+  /** Track prompt save to library */
+  trackPromptSave: TrackEventFn;
+  /** Track prompt reformat to different platform */
+  trackPromptReformat: TrackEventFn;
   /** Session ID for this browser session */
   sessionId: string;
 };
@@ -78,8 +92,9 @@ function generateId(length: number = 16): string {
 /**
  * Get or create a session ID.
  * Stored in sessionStorage to persist across page loads but not browser sessions.
+ * Exported for lightweight components using sendTrackEvent directly.
  */
-function getOrCreateSessionId(): string {
+export function getOrCreateSessionId(): string {
   if (typeof window === 'undefined') {
     return generateId(16);
   }
@@ -108,8 +123,9 @@ function getOrCreateSessionId(): string {
 /**
  * Send tracking event to API.
  * Fire and forget - don't await or block UI.
+ * Exported for use in lightweight components that don't mount the full hook.
  */
-function sendTrackEvent(
+export function sendTrackEvent(
   providerId: string,
   eventType: IndexRatingEventType,
   src: string | undefined,
@@ -194,10 +210,87 @@ export function useIndexRatingEvents(): UseIndexRatingEventsReturn {
     );
   }, [getSessionId]);
 
+  // Track image quality vote
+  const trackVote = useCallback<TrackEventFn>((providerId, src) => {
+    sendTrackEvent(
+      providerId,
+      'vote',
+      src || 'image_quality_vote',
+      getSessionId()
+    );
+  }, [getSessionId]);
+
+  // Track Prompt Lab provider selection
+  const trackLabSelect = useCallback<TrackEventFn>((providerId, src) => {
+    sendTrackEvent(
+      providerId,
+      'prompt_lab_select',
+      src || 'prompt_lab_rail',
+      getSessionId()
+    );
+  }, [getSessionId]);
+
+  // Track Prompt Lab generate
+  const trackLabGenerate = useCallback<TrackEventFn>((providerId, src) => {
+    sendTrackEvent(
+      providerId,
+      'prompt_lab_generate',
+      src || 'prompt_lab_generate',
+      getSessionId()
+    );
+  }, [getSessionId]);
+
+  // Track Prompt Lab tier copy
+  const trackLabCopy = useCallback<TrackEventFn>((providerId, src) => {
+    sendTrackEvent(
+      providerId,
+      'prompt_lab_copy',
+      src || 'prompt_lab_tier_copy',
+      getSessionId()
+    );
+  }, [getSessionId]);
+
+  // Track Prompt Lab optimise (Call 3)
+  const trackLabOptimise = useCallback<TrackEventFn>((providerId, src) => {
+    sendTrackEvent(
+      providerId,
+      'prompt_lab_optimise',
+      src || 'prompt_lab_call3',
+      getSessionId()
+    );
+  }, [getSessionId]);
+
+  // Track prompt save to library
+  const trackPromptSave = useCallback<TrackEventFn>((providerId, src) => {
+    sendTrackEvent(
+      providerId,
+      'prompt_save',
+      src || 'save_icon',
+      getSessionId()
+    );
+  }, [getSessionId]);
+
+  // Track prompt reformat to different platform
+  const trackPromptReformat = useCallback<TrackEventFn>((providerId, src) => {
+    sendTrackEvent(
+      providerId,
+      'prompt_reformat',
+      src || 'reformat_preview',
+      getSessionId()
+    );
+  }, [getSessionId]);
+
   return {
     trackPromptBuilderOpen,
     trackPromptSubmit,
     trackSocialClick,
+    trackVote,
+    trackLabSelect,
+    trackLabGenerate,
+    trackLabCopy,
+    trackLabOptimise,
+    trackPromptSave,
+    trackPromptReformat,
     sessionId: sessionIdRef.current || getSessionId(),
   };
 }

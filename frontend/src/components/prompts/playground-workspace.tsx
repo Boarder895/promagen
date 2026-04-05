@@ -57,6 +57,9 @@ import { getPlatformFormat } from '@/lib/prompt-builder';
 import { useLabGate } from '@/hooks/use-lab-gate';
 import { LabGateOverlay, FreeGenerationBadge } from '@/components/prompts/lab-gate-overlay';
 
+// ★ Index Rating — track Prompt Lab engagement
+import { useIndexRatingEvents } from '@/hooks/use-index-rating-events';
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -213,6 +216,9 @@ export default function PlaygroundWorkspace({ providers, onProviderChange, onPro
     remaining,
   } = useLabGate();
 
+  // ── Index Rating: track Prompt Lab engagement ────────────────────
+  const { trackLabSelect, trackLabGenerate } = useIndexRatingEvents();
+
   // ── Provider selection state ──────────────────────────────────────
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
 
@@ -277,8 +283,10 @@ export default function PlaygroundWorkspace({ providers, onProviderChange, onPro
       setSelectedProviderId(providerId);
       onProviderChange?.(true);
       onProviderIdChange?.(providerId);
+      // ★ Index Rating: provider selected in Prompt Lab (4pts, K=20)
+      trackLabSelect(providerId, 'prompt_lab_selector');
     },
-    [onProviderChange, onProviderIdChange],
+    [onProviderChange, onProviderIdChange, trackLabSelect],
   );
 
   // ── External provider sync REMOVED from workspace level ────────
@@ -352,6 +360,11 @@ export default function PlaygroundWorkspace({ providers, onProviderChange, onPro
       assess(trimmed);
       generateTiers(trimmed, effectiveProviderId, ctx);
 
+      // ★ Index Rating: prompt generated in Prompt Lab (7pts, K=28)
+      if (effectiveProviderId) {
+        trackLabGenerate(effectiveProviderId, 'prompt_lab_generate');
+      }
+
       // Sync drift detection baseline
       markDriftSynced(trimmed);
 
@@ -359,7 +372,7 @@ export default function PlaygroundWorkspace({ providers, onProviderChange, onPro
       // when aiTierPrompts transitions from null to non-null (successful generation).
       // This prevents losing the free generation on API failure.
     },
-    [assess, canGenerate, clearTiers, clearAssessment, generateTiers, markDriftSynced, selectedProviderId, providers],
+    [assess, canGenerate, clearTiers, clearAssessment, generateTiers, markDriftSynced, selectedProviderId, providers, trackLabGenerate],
   );
 
   // ── Derived state ─────────────────────────────────────────────────

@@ -20,7 +20,7 @@ import type { Metadata } from 'next';
 export const dynamic = 'force-dynamic';
 
 import PlaygroundPageClient from './playground-page-client';
-import { getProviders } from '@/lib/providers/api';
+import { getProvidersWithPromagenUsers } from '@/lib/providers/api';
 import { getHomepageExchanges } from '@/lib/exchange-order';
 import { getWeatherIndex } from '@/lib/weather/fetch-weather';
 
@@ -54,7 +54,7 @@ export const metadata: Metadata = {
 export default async function PlaygroundPage() {
   // Load data on server (parallel fetches) - same pattern as homepage
   const [providers, allExchanges, weatherIndex] = await Promise.all([
-    Promise.resolve(getProviders()),
+    getProvidersWithPromagenUsers(),
     Promise.resolve(getHomepageExchanges()),
     getWeatherIndex(),
   ]);

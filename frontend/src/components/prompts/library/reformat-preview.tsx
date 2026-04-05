@@ -40,6 +40,7 @@ import type { PlatformTierId } from '@/data/platform-tiers';
 import type { SavedPrompt } from '@/types/saved-prompt';
 import type { PromptSelections } from '@/types/prompt-builder';
 import { PromptDiff } from './prompt-diff';
+import { sendTrackEvent, getOrCreateSessionId } from '@/hooks/use-index-rating-events';
 
 // ============================================================================
 // PLATFORM DISPLAY NAMES
@@ -239,6 +240,9 @@ export function ReformatPreview({
       source: 'builder',
       tier: tierId,
     });
+
+    // ★ Index Rating: prompt reformatted for target platform (3pts, K=16)
+    sendTrackEvent(selectedPlatformId, 'prompt_reformat', 'reformat_save_as_new', getOrCreateSessionId());
 
     setSaved(true);
     setTimeout(() => setSaved(false), 1500);

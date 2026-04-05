@@ -27,6 +27,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { Provider } from '@/types/providers';
 import type { ProviderRating, DisplayRating, RatingChangeState } from '@/types/index-rating';
+import { DISPLAY_INFLATION_OFFSET } from '@/types/index-rating';
 import { IndexRatingCell } from '@/components/providers/index-rating-cell';
 import { SupportIconsCell } from '@/components/providers/support-icons-cell';
 
@@ -42,7 +43,7 @@ const typedMarketPowerData = marketPowerData as MarketPowerData;
 // ============================================================================
 
 const DEFAULT_VISIBLE = 10;
-const DEMO_JITTER_INTERVAL = 30_000;
+const DEMO_JITTER_INTERVAL = 45_000;
 const DEMO_JITTER_MIN = 1;
 const DEMO_JITTER_MAX = 3;
 const FALLBACK_ICON = '/icons/providers/fallback.png';
@@ -125,7 +126,7 @@ function toDisplayRating(provider: Provider, dbRating: ProviderRating | undefine
       : false;
 
     return {
-      rating: dbRating.currentRating,
+      rating: dbRating.currentRating + DISPLAY_INFLATION_OFFSET,
       change: dbRating.change,
       changePercent: dbRating.changePercent,
       state,
@@ -138,7 +139,7 @@ function toDisplayRating(provider: Provider, dbRating: ProviderRating | undefine
   }
 
   return {
-    rating: typeof provider.score === 'number' ? provider.score * 20 : null,
+    rating: typeof provider.score === 'number' ? (provider.score * 20) + DISPLAY_INFLATION_OFFSET : null,
     change: null,
     changePercent: null,
     state: 'fallback',
@@ -148,35 +149,6 @@ function toDisplayRating(provider: Provider, dbRating: ProviderRating | undefine
     isUnderdog: isProviderUnderdog(providerId),
     isNewcomer: isProviderNewcomer(providerId),
   };
-}
-
-// ============================================================================
-// DEMO JITTER
-// ============================================================================
-
-function applyJitter(providers: ProviderWithRating[]): ProviderWithRating[] {
-  return providers.map((p) => {
-    if (!p.indexRating || p.indexRating.rating === null) return p;
-
-    const jitter =
-      (Math.random() * (DEMO_JITTER_MAX - DEMO_JITTER_MIN) + DEMO_JITTER_MIN) *
-      (Math.random() > 0.5 ? 1 : -1);
-
-    const newRating = p.indexRating.rating + jitter;
-    const newState: RatingChangeState =
-      jitter > 0 ? 'gain' : jitter < 0 ? 'loss' : 'flat';
-
-    return {
-      ...p,
-      indexRating: {
-        ...p.indexRating,
-        rating: newRating,
-        change: jitter,
-        changePercent: p.indexRating.rating > 0 ? (jitter / p.indexRating.rating) * 100 : 0,
-        state: newState,
-      },
-    };
-  });
 }
 
 // ============================================================================
@@ -243,12 +215,16 @@ export function LeaderboardRail({
   }, [providers]);
 
   // ── Demo jitter timer ───────────────────────────────────────────────
+  // Controlled by NEXT_PUBLIC_DEMO_JITTER env var (true = on, false = off).
+  const demoEnabled = process.env.NEXT_PUBLIC_DEMO_JITTER === 'true';
+
   useEffect(() => {
+    if (!demoEnabled) return;
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
     if (mq.matches) return;
     const interval = setInterval(() => setJitterTick((t) => t + 1), DEMO_JITTER_INTERVAL);
     return () => clearInterval(interval);
-  }, []);
+  }, [demoEnabled]);
 
   // ── Build providers with ratings ────────────────────────────────────
   // hasRankUp uses Date.now() which differs server vs client — force false
@@ -274,20 +250,43 @@ export function LeaderboardRail({
     return map;
   }, [enriched]);
 
-  // ── Apply jitter + sort ─────────────────────────────────────────────
-  // jitterTick starts at 0 — skip jitter on initial render to avoid
-  // hydration mismatch (Math.random differs server vs client).
-  // First jitter fires after DEMO_JITTER_INTERVAL (30s) on client only.
+  // ── Sort stable, then apply cosmetic jitter ──────────────────────────
+  // Sort uses base ratings so rows never swap from jitter alone.
+  // jitterTick=0 → no jitter (hydration safe).
+  // Jitter applied AFTER sort — display values only.
   const sorted = useMemo(() => {
     void jitterTick; // reactive dependency
-    const data = jitterTick === 0 ? enriched : applyJitter(enriched);
 
-    return [...data].sort((a, b) => {
+    // Step 1: Sort on stable base data
+    const arr = [...enriched];
+    arr.sort((a, b) => {
       const aVal = a.indexRating?.rating ?? 0;
       const bVal = b.indexRating?.rating ?? 0;
       return sortDirection === 'desc' ? bVal - aVal : aVal - bVal;
     });
-  }, [enriched, jitterTick, sortDirection]);
+
+    // Step 2: Cosmetic jitter after sort (±1-3, display only)
+    // Gated behind NEXT_PUBLIC_DEMO_JITTER env var.
+    if (demoEnabled && jitterTick > 0) {
+      for (const p of arr) {
+        if (p.indexRating && p.indexRating.rating !== null) {
+          const jitter =
+            (Math.random() * (DEMO_JITTER_MAX - DEMO_JITTER_MIN) + DEMO_JITTER_MIN) *
+            (Math.random() > 0.5 ? 1 : -1);
+          const base = p.indexRating.rating;
+          p.indexRating = {
+            ...p.indexRating,
+            rating: base + jitter,
+            change: jitter,
+            changePercent: base > 0 ? (jitter / base) * 100 : 0,
+            state: jitter > 0 ? 'gain' : jitter < 0 ? 'loss' : 'flat',
+          };
+        }
+      }
+    }
+
+    return arr;
+  }, [enriched, jitterTick, sortDirection, demoEnabled]);
 
   const displayed = isExpanded ? sorted : sorted.slice(0, DEFAULT_VISIBLE);
   const hiddenCount = sorted.length - DEFAULT_VISIBLE;
@@ -365,9 +364,9 @@ export function LeaderboardRail({
                 <tr
                   key={p.id}
                   data-provider-id={p.id}
-                  className={`providers-table-row border-t border-slate-800 hover:bg-slate-900/30 transition-colors ${
-                    isSelected ? 'bg-cyan-950/30' : ''
-                  }`}
+                  className={`providers-table-row border-t border-slate-800 hover:bg-slate-900/30 transition-colors${
+                    isSelected ? ' bg-cyan-950/30' : ''
+                  }${p.indexRating?.hasRankUp ? ' rank-climber-row' : ''}`}
                   style={{
                     borderLeft: isSelected
                       ? '3px solid rgba(34, 211, 238, 0.8)'

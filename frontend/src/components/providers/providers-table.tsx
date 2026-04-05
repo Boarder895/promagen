@@ -26,14 +26,14 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { Provider } from '@/types/provider';
-import type { ProviderRating, DisplayRating } from '@/types/index-rating';
+import type { ProviderRating, DisplayRating, RatingChangeState } from '@/types/index-rating';
+import { DISPLAY_INFLATION_OFFSET } from '@/types/index-rating';
 import { ProviderCell } from './provider-cell';
 import { ImageQualityVoteButton } from './image-quality-vote-button';
 import { SupportIconsCell } from './support-icons-cell';
 import { IndexRatingCell } from './index-rating-cell';
-import { toRomanNumeral } from '@/lib/format/number';
 import { Flag } from '@/components/ui/flag';
 import Tooltip from '@/components/ui/tooltip';
 import { getPlatformTierId, type PlatformTierId } from '@/data/platform-tiers';
@@ -78,6 +78,8 @@ type PromagenUsersCountryUsage = {
 
 type ProviderWithExtras = Provider & {
   promagenUsers?: ReadonlyArray<PromagenUsersCountryUsage>;
+  visibleUsers?: PromagenUsersCountryUsage[];
+  visibleFlagCount?: number;
   indexRating?: DisplayRating;
 };
 
@@ -184,7 +186,7 @@ function toDisplayRating(provider: Provider, dbRating: ProviderRating | undefine
     const isNewcomer = isProviderNewcomer(providerId);
 
     return {
-      rating: dbRating.currentRating,
+      rating: dbRating.currentRating + DISPLAY_INFLATION_OFFSET,
       change: dbRating.change,
       changePercent: dbRating.changePercent,
       state,
@@ -196,9 +198,9 @@ function toDisplayRating(provider: Provider, dbRating: ProviderRating | undefine
     };
   }
 
-  // Fallback: use static score × 20 (or null if no score)
+  // Fallback: use static score × 20 + display inflation (or null if no score)
   return {
-    rating: typeof provider.score === 'number' ? provider.score * 20 : null,
+    rating: typeof provider.score === 'number' ? (provider.score * 20) + DISPLAY_INFLATION_OFFSET : null,
     change: null,
     changePercent: null,
     state: 'fallback',
@@ -367,6 +369,384 @@ function SortableHeader({
 }
 
 // =============================================================================
+// =============================================================================
+// PROMAGEN USERS DEMO v3.0 — Regional Affinity System
+// =============================================================================
+// 66-country pool with regional affinities, country personalities, phase offsets,
+// time-of-day activity curves, dynamic flag counts, bracket floors/ceilings,
+// page-level diversity pass, last-slot hysteresis, and damped real-user merge.
+//
+// Sanctioned demo exception (§2.6 of build plan): This is a declared product
+// demo layer for pre-traffic social proof, gated behind NEXT_PUBLIC_DEMO_JITTER
+// with a defined cutover path. Real users blend additively with damping taper.
+//
+// Authority: promagen-users-demo-plan-v3.md
+// =============================================================================
+
+// ── Tuning Constants (named for post-build adjustment) ──────────────────────
+const ACTIVITY_SCALE = 1.3;
+const MIN_ACTIVITY = 0.10; // Floor: sleeping countries produce tiny counts, not zero
+const DIVERSITY_MAX_APPEARANCES = { US: 16, GB: 12, DE: 12, JP: 12, _default: 10 } as const;
+const DIVERSITY_SWAP_PROXIMITY = 0.30;  // challenger must be within 30% of incumbent
+const LAST_SLOT_HYSTERESIS_MARGIN = 0.15;  // 15% margin to displace last slot
+const REAL_USER_DEMO_DAMPING = [
+  { threshold: 25, damping: 1.0 },
+  { threshold: 100, damping: 0.75 },
+  { threshold: 300, damping: 0.4 },
+  { threshold: 500, damping: 0.15 },
+] as const;
+const RANK_BRACKETS = [
+  { maxRank: 4,  flagCeiling: 6, flagFloor: 3, totalMin: 8,  totalMax: 45 },
+  { maxRank: 10, flagCeiling: 5, flagFloor: 2, totalMin: 5,  totalMax: 30 },
+  { maxRank: 20, flagCeiling: 4, flagFloor: 2, totalMin: 3,  totalMax: 18 },
+  { maxRank: 30, flagCeiling: 4, flagFloor: 1, totalMin: 1,  totalMax: 10 },
+  { maxRank: 99, flagCeiling: 3, flagFloor: 1, totalMin: 1,  totalMax: 5 },
+] as const;
+
+// ── 66-Country Pool ─────────────────────────────────────────────────────────
+// region: AM=Americas, WE=W.Europe, NE=N/E.Europe, MA=ME+Africa, EA=E.Asia, AO=S/SE.Asia+Oceania
+type DemoCountry = { code: string; weight: number; offset: number; region: string };
+
+const DEMO_COUNTRIES: DemoCountry[] = [
+  // Americas (13)
+  { code: 'US', weight: 0.180, offset: -5, region: 'AM' },
+  { code: 'CA', weight: 0.035, offset: -5, region: 'AM' },
+  { code: 'MX', weight: 0.018, offset: -6, region: 'AM' },
+  { code: 'BR', weight: 0.040, offset: -3, region: 'AM' },
+  { code: 'AR', weight: 0.014, offset: -3, region: 'AM' },
+  { code: 'CO', weight: 0.012, offset: -5, region: 'AM' },
+  { code: 'CL', weight: 0.008, offset: -4, region: 'AM' },
+  { code: 'PE', weight: 0.005, offset: -5, region: 'AM' },
+  { code: 'CR', weight: 0.003, offset: -6, region: 'AM' },
+  { code: 'DO', weight: 0.003, offset: -4, region: 'AM' },
+  { code: 'UY', weight: 0.003, offset: -3, region: 'AM' },
+  { code: 'EC', weight: 0.002, offset: -5, region: 'AM' },
+  { code: 'TT', weight: 0.002, offset: -4, region: 'AM' },
+  // Western Europe (11)
+  { code: 'GB', weight: 0.090, offset: 0, region: 'WE' },
+  { code: 'DE', weight: 0.065, offset: 1, region: 'WE' },
+  { code: 'FR', weight: 0.040, offset: 1, region: 'WE' },
+  { code: 'NL', weight: 0.022, offset: 1, region: 'WE' },
+  { code: 'ES', weight: 0.020, offset: 1, region: 'WE' },
+  { code: 'IT', weight: 0.018, offset: 1, region: 'WE' },
+  { code: 'BE', weight: 0.008, offset: 1, region: 'WE' },
+  { code: 'CH', weight: 0.008, offset: 1, region: 'WE' },
+  { code: 'AT', weight: 0.008, offset: 1, region: 'WE' },
+  { code: 'IE', weight: 0.007, offset: 0, region: 'WE' },
+  { code: 'PT', weight: 0.007, offset: 0, region: 'WE' },
+  // Northern + Eastern Europe (17)
+  { code: 'SE', weight: 0.012, offset: 1, region: 'NE' },
+  { code: 'NO', weight: 0.008, offset: 1, region: 'NE' },
+  { code: 'DK', weight: 0.008, offset: 1, region: 'NE' },
+  { code: 'FI', weight: 0.007, offset: 2, region: 'NE' },
+  { code: 'PL', weight: 0.016, offset: 1, region: 'NE' },
+  { code: 'CZ', weight: 0.006, offset: 1, region: 'NE' },
+  { code: 'RO', weight: 0.005, offset: 2, region: 'NE' },
+  { code: 'UA', weight: 0.006, offset: 2, region: 'NE' },
+  { code: 'HU', weight: 0.004, offset: 1, region: 'NE' },
+  { code: 'HR', weight: 0.003, offset: 1, region: 'NE' },
+  { code: 'BG', weight: 0.003, offset: 2, region: 'NE' },
+  { code: 'SK', weight: 0.003, offset: 1, region: 'NE' },
+  { code: 'LT', weight: 0.003, offset: 2, region: 'NE' },
+  { code: 'LV', weight: 0.002, offset: 2, region: 'NE' },
+  { code: 'EE', weight: 0.003, offset: 2, region: 'NE' },
+  { code: 'IS', weight: 0.002, offset: 0, region: 'NE' },
+  { code: 'GR', weight: 0.004, offset: 2, region: 'NE' },
+  // Middle East + Africa (13)
+  { code: 'TR', weight: 0.015, offset: 3, region: 'MA' },
+  { code: 'AE', weight: 0.008, offset: 4, region: 'MA' },
+  { code: 'SA', weight: 0.006, offset: 3, region: 'MA' },
+  { code: 'IL', weight: 0.007, offset: 2, region: 'MA' },
+  { code: 'QA', weight: 0.003, offset: 3, region: 'MA' },
+  { code: 'JO', weight: 0.002, offset: 2, region: 'MA' },
+  { code: 'EG', weight: 0.005, offset: 2, region: 'MA' },
+  { code: 'MA', weight: 0.003, offset: 0, region: 'MA' },
+  { code: 'NG', weight: 0.005, offset: 1, region: 'MA' },
+  { code: 'KE', weight: 0.004, offset: 3, region: 'MA' },
+  { code: 'ZA', weight: 0.005, offset: 2, region: 'MA' },
+  { code: 'GH', weight: 0.002, offset: 0, region: 'MA' },
+  { code: 'TN', weight: 0.002, offset: 1, region: 'MA' },
+  // East Asia (5)
+  { code: 'JP', weight: 0.050, offset: 9, region: 'EA' },
+  { code: 'KR', weight: 0.030, offset: 9, region: 'EA' },
+  { code: 'TW', weight: 0.008, offset: 8, region: 'EA' },
+  { code: 'HK', weight: 0.005, offset: 8, region: 'EA' },
+  { code: 'CN', weight: 0.002, offset: 8, region: 'EA' },
+  // South/SE Asia + Oceania (11)
+  { code: 'IN', weight: 0.040, offset: 5.5, region: 'AO' },
+  { code: 'AU', weight: 0.035, offset: 10, region: 'AO' },
+  { code: 'NZ', weight: 0.008, offset: 12, region: 'AO' },
+  { code: 'SG', weight: 0.008, offset: 8, region: 'AO' },
+  { code: 'MY', weight: 0.006, offset: 8, region: 'AO' },
+  { code: 'TH', weight: 0.012, offset: 7, region: 'AO' },
+  { code: 'PH', weight: 0.011, offset: 8, region: 'AO' },
+  { code: 'ID', weight: 0.013, offset: 7, region: 'AO' },
+  { code: 'VN', weight: 0.005, offset: 7, region: 'AO' },
+  { code: 'BD', weight: 0.002, offset: 6, region: 'AO' },
+  { code: 'LK', weight: 0.002, offset: 5.5, region: 'AO' },
+];
+
+// ── Activity Curve (local hour 0-23) ────────────────────────────────────────
+const HOUR_ACTIVITY = [
+  0.05, 0.03, 0.02, 0.02, 0.03, 0.05,
+  0.10, 0.20, 0.35, 0.50, 0.60, 0.65,
+  0.70, 0.65, 0.55, 0.50, 0.55, 0.65,
+  0.80, 0.90, 0.95, 0.85, 0.60, 0.30,
+];
+
+// ── Regional Affinity Profiles ──────────────────────────────────────────────
+type AffinityProfile = { primary: string[]; primaryMult: number; otherMult: number };
+
+const AFFINITY_PROFILES: { range: [number, number]; profile: AffinityProfile }[] = [
+  { range: [0, 19],   profile: { primary: ['AM'],       primaryMult: 4.0, otherMult: 0.2 } },
+  { range: [20, 37],  profile: { primary: ['WE', 'NE'], primaryMult: 3.5, otherMult: 0.25 } },
+  { range: [38, 51],  profile: { primary: ['EA', 'AO'], primaryMult: 4.0, otherMult: 0.2 } },
+  { range: [52, 64],  profile: { primary: [],           primaryMult: 1.0, otherMult: 1.0 } },
+  { range: [65, 77],  profile: { primary: ['MA'],       primaryMult: 5.0, otherMult: 0.15 } },
+  { range: [78, 87],  profile: { primary: ['WE'],       primaryMult: 3.5, otherMult: 0.2 } },
+  { range: [88, 99],  profile: { primary: ['AM', 'EA', 'AO'], primaryMult: 3.0, otherMult: 0.2 } },
+];
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
+
+function hashSeed(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) {
+    h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h % 10000) / 10000;
+}
+
+function hashInt(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) {
+    h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h);
+}
+
+function getAffinity(providerId: string): AffinityProfile {
+  const bucket = hashInt(providerId) % 100;
+  for (const a of AFFINITY_PROFILES) {
+    if (bucket >= a.range[0] && bucket <= a.range[1]) return a.profile;
+  }
+  return AFFINITY_PROFILES[3]!.profile; // Global-balanced fallback
+}
+
+function getBracket(rank: number) {
+  for (const b of RANK_BRACKETS) {
+    if (rank <= b.maxRank) return b;
+  }
+  return RANK_BRACKETS[RANK_BRACKETS.length - 1]!;
+}
+
+function getDemoDamping(realUserTotal: number): number {
+  for (let i = 0; i < REAL_USER_DEMO_DAMPING.length; i++) {
+    const tier = REAL_USER_DEMO_DAMPING[i]!;
+    if (realUserTotal <= tier.threshold) return tier.damping;
+  }
+  return 0; // 500+ real users → demo off
+}
+
+function getDiversityCap(code: string): number {
+  if (code in DIVERSITY_MAX_APPEARANCES) {
+    return DIVERSITY_MAX_APPEARANCES[code as keyof typeof DIVERSITY_MAX_APPEARANCES];
+  }
+  return DIVERSITY_MAX_APPEARANCES._default;
+}
+
+// ── Core Generator ──────────────────────────────────────────────────────────
+
+function generateDemoUsers(
+  providerId: string,
+  rank: number,
+  totalProviders: number,
+  homeCountry?: string,
+): PromagenUsersCountryUsage[] {
+  const now = new Date();
+  const utcHour = now.getUTCHours();
+  const utcMinute = now.getUTCMinutes();
+
+  // Per-provider phase offset (0-59 seconds) → prevents lockstep ticking
+  const phaseOffset = hashInt(providerId + '_phase') % 60;
+  const effectiveMinute = (utcMinute + phaseOffset) % 60;
+  const frac = effectiveMinute / 60;
+
+  // Rank-based base engagement
+  const rankFraction = rank / Math.max(totalProviders, 1);
+  const providerSeed = hashSeed(providerId);
+  const baseEngagement = 28 - rankFraction * 22 + providerSeed * 6; // ~12 to ~34
+
+  // Provider's regional affinity
+  const affinity = getAffinity(providerId);
+  const bracket = getBracket(rank);
+
+  // Country personality: within provider's primary region, top 3 by hash get anchor boost
+  const primaryCountries = DEMO_COUNTRIES
+    .filter(c => affinity.primary.includes(c.region))
+    .map(c => ({ code: c.code, pref: hashSeed(providerId + c.code + '_pref') }))
+    .sort((a, b) => b.pref - a.pref);
+  const anchorCodes = new Set(primaryCountries.slice(0, 3).map(c => c.code));
+  const weakCodes = new Set(primaryCountries.slice(-3).map(c => c.code));
+
+  const entries: PromagenUsersCountryUsage[] = [];
+
+  for (const c of DEMO_COUNTRIES) {
+    // Regional affinity multiplier
+    let regionMult: number;
+    if (affinity.primary.includes(c.region)) {
+      regionMult = affinity.primaryMult;
+    } else if (affinity.primary.length === 0) {
+      regionMult = affinity.otherMult; // Global-balanced
+    } else {
+      regionMult = affinity.otherMult;
+    }
+
+    // Country personality within primary region
+    let personalityMult = 1.0;
+    if (anchorCodes.has(c.code)) personalityMult = 3.0;
+    else if (weakCodes.has(c.code)) personalityMult = 0.5;
+
+    // Per-provider country variance (0.6–1.4)
+    const countryVariance = 0.6 + hashSeed(providerId + c.code) * 0.8;
+
+    // Time-of-day activity with minimum floor (sleeping countries don't vanish)
+    const localHour = ((utcHour + c.offset + 24) % 24);
+    const curActivity = HOUR_ACTIVITY[Math.floor(localHour)] ?? 0.05;
+    const nextActivity = HOUR_ACTIVITY[(Math.floor(localHour) + 1) % 24] ?? 0.05;
+    const activity = Math.max(MIN_ACTIVITY, curActivity + (nextActivity - curActivity) * frac);
+
+    const count = Math.round(
+      baseEngagement * c.weight * regionMult * personalityMult * countryVariance * activity * ACTIVITY_SCALE
+    );
+
+    if (count > 0) {
+      entries.push({ countryCode: c.code, count });
+    }
+  }
+
+  // Anchor guarantee: primary-region anchor countries always produce at least 1
+  // This ensures EMEA providers always show an African flag, EA providers always
+  // show an Asian flag, etc. — even when those countries are sleeping.
+  for (const ac of anchorCodes) {
+    if (!entries.find(e => e.countryCode === ac)) {
+      entries.push({ countryCode: ac, count: 1 });
+    }
+  }
+
+  // Home country boost: provider's country of origin gets higher presence
+  // Photoleap → IL, Leonardo → AU, Kling → CN, etc.
+  if (homeCountry) {
+    const homeEntry = entries.find(e => e.countryCode === homeCountry);
+    if (homeEntry) {
+      homeEntry.count = Math.max(homeEntry.count, 2) + 1; // Ensure visible presence
+    } else {
+      entries.push({ countryCode: homeCountry, count: 2 }); // Add if not in pool
+    }
+  }
+
+  // Sort by count descending — ALL countries returned
+  entries.sort((a, b) => b.count - a.count);
+
+  // Clamp total to bracket limits
+  const rawTotal = entries.reduce((s, e) => s + e.count, 0);
+  if (rawTotal > bracket.totalMax) {
+    const scale = bracket.totalMax / rawTotal;
+    for (const e of entries) e.count = Math.max(1, Math.round(e.count * scale));
+    // Math.max(1,...) can push total over ceiling — trim weakest entries
+    let clampedTotal = entries.reduce((s, e) => s + e.count, 0);
+    while (clampedTotal > bracket.totalMax && entries.length > 1) {
+      entries.pop(); // remove weakest (already sorted desc)
+      clampedTotal = entries.reduce((s, e) => s + e.count, 0);
+    }
+  } else if (rawTotal < bracket.totalMin && entries.length > 0) {
+    const deficit = bracket.totalMin - rawTotal;
+    entries[0]!.count += deficit;
+  }
+
+  return entries;
+}
+
+// ── Page-Level Diversity Pass ───────────────────────────────────────────────
+
+function applyDiversityPass(
+  allRows: { providerId: string; visible: PromagenUsersCountryUsage[]; all: PromagenUsersCountryUsage[] }[]
+): void {
+  // Count flag appearances across all visible sets
+  const flagCounts = new Map<string, number>();
+  for (const row of allRows) {
+    for (const entry of row.visible) {
+      flagCounts.set(entry.countryCode, (flagCounts.get(entry.countryCode) ?? 0) + 1);
+    }
+  }
+
+  // For over-represented flags, try swapping last-slot entries
+  for (const [code, count] of flagCounts) {
+    const cap = getDiversityCap(code);
+    if (count <= cap) continue;
+
+    let excess = count - cap;
+    for (const row of allRows) {
+      if (excess <= 0) break;
+      const vis = row.visible;
+      if (vis.length < 2) continue; // Don't touch single-flag rows
+
+      const lastIdx = vis.length - 1;
+      if (vis[lastIdx]!.countryCode !== code) continue;
+
+      // Find best non-visible challenger
+      const visibleCodes = new Set(vis.map(v => v.countryCode));
+      const challenger = row.all.find(e =>
+        !visibleCodes.has(e.countryCode) &&
+        e.count >= vis[lastIdx]!.count * (1 - DIVERSITY_SWAP_PROXIMITY)
+      );
+
+      if (challenger) {
+        vis[lastIdx] = challenger;
+        excess--;
+      }
+    }
+  }
+}
+
+// ── Hysteresis: Apply last-slot stability ───────────────────────────────────
+
+function applyHysteresis(
+  currentVisible: PromagenUsersCountryUsage[],
+  previousVisible: PromagenUsersCountryUsage[] | undefined,
+): PromagenUsersCountryUsage[] {
+  if (!previousVisible || previousVisible.length === 0 || currentVisible.length === 0) {
+    return currentVisible;
+  }
+
+  // Only apply to last slot
+  const lastIdx = currentVisible.length - 1;
+  const prevLastIdx = Math.min(lastIdx, previousVisible.length - 1);
+  const prevLastCode = previousVisible[prevLastIdx]?.countryCode;
+
+  if (!prevLastCode) return currentVisible;
+
+  const currentLast = currentVisible[lastIdx]!;
+
+  // If last slot changed, check if new entry exceeds old by > HYSTERESIS margin
+  if (currentLast.countryCode !== prevLastCode) {
+    const prevEntry = currentVisible.find(e => e.countryCode === prevLastCode);
+    // If previous holder is still in the visible range with reasonable count, keep it
+    if (prevEntry && prevEntry.count >= currentLast.count * (1 - LAST_SLOT_HYSTERESIS_MARGIN)) {
+      // Swap: keep previous holder in last slot
+      const result = [...currentVisible];
+      const prevIdx = result.findIndex(e => e.countryCode === prevLastCode);
+      if (prevIdx >= 0 && prevIdx !== lastIdx) {
+        [result[prevIdx]!, result[lastIdx]!] = [result[lastIdx]!, result[prevIdx]!];
+      }
+      return result;
+    }
+  }
+
+  return currentVisible;
+}
+
+// =============================================================================
 // HELPER COMPONENTS
 // =============================================================================
 
@@ -379,25 +759,36 @@ function chunkPairs<T>(items: ReadonlyArray<T>): Array<ReadonlyArray<T>> {
 }
 
 /**
- * Promagen Users cell: 2×2×2 grid of flags + Roman numeral counts
+ * Promagen Users cell: total (worldwide) + top N flags with standard numbers
  */
-function PromagenUsersCell({ usage }: { usage?: ReadonlyArray<PromagenUsersCountryUsage> }) {
+function PromagenUsersCell({
+  usage,
+  visibleFlags,
+}: {
+  usage?: ReadonlyArray<PromagenUsersCountryUsage>;
+  visibleFlags?: ReadonlyArray<PromagenUsersCountryUsage>;
+}) {
   if (!usage || usage.length === 0) {
     return <span className="text-slate-600 text-base">—</span>;
   }
 
-  // Take top 6
-  const top6 = usage.slice(0, 6);
-  const rows = chunkPairs(top6);
+  // Total = ALL countries worldwide
+  const total = usage.reduce((sum, e) => sum + e.count, 0);
+  // Flags = pre-computed visible set (diversity + hysteresis applied), or top 6 fallback
+  const flags = visibleFlags ?? usage.slice(0, 6);
+  const rows = chunkPairs(flags);
 
   return (
     <div className="promagen-users-cell flex flex-col items-center gap-1">
+      <span style={{ fontSize: 'clamp(0.7rem, 0.85vw, 0.95rem)', color: '#E2E8F0', fontWeight: 600 }}>
+        {total.toLocaleString('en-US')}
+      </span>
       {rows.map((row, rowIdx) => (
         <div key={rowIdx} className="flex items-center justify-center gap-3">
           {row.map((item) => (
             <span key={item.countryCode} className="inline-flex items-center gap-1">
               <Flag countryCode={item.countryCode} size={26} decorative />
-              <span className="text-xl text-slate-400">{toRomanNumeral(item.count)}</span>
+              <span style={{ fontSize: 'clamp(0.65rem, 0.8vw, 0.9rem)', color: '#94A3B8' }}>{item.count}</span>
             </span>
           ))}
         </div>
@@ -496,16 +887,40 @@ export function ProvidersTable({
       .finally(() => clearTimeout(timeout));
   }, [providers]);
 
+  // ── Demo jitter — subtle simulated rating movement ──────────────────
+  // Controlled by NEXT_PUBLIC_DEMO_JITTER env var (true = on, false = off).
+  // jitterTick=0 on initial render → no jitter (hydration safe).
+  const demoEnabled = process.env.NEXT_PUBLIC_DEMO_JITTER === 'true';
+  const [jitterTick, setJitterTick] = useState(0);
+
+  useEffect(() => {
+    if (!demoEnabled) return;
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (mq.matches) return;
+    const interval = setInterval(() => setJitterTick((t) => t + 1), 45_000);
+    return () => clearInterval(interval);
+  }, [demoEnabled]);
+
+  // ── Demo user tick — refreshes time-of-day user counts every 60s ────
+  const [demoUserTick, setDemoUserTick] = useState(0);
+  // Hysteresis ref: previous visible flag sets per provider
+  const prevVisibleRef = useRef<Map<string, PromagenUsersCountryUsage[]>>(new Map());
+
+  useEffect(() => {
+    if (!demoEnabled) return;
+    if (typeof window === 'undefined') return;
+    setDemoUserTick(1);
+    const interval = setInterval(() => setDemoUserTick((t) => t + 1), 60_000);
+    return () => clearInterval(interval);
+  }, [demoEnabled]);
+
   // Handle sort toggle: if same column, flip direction; else switch column with default direction
   const handleSort = (column: SortColumn) => {
     if (sortBy === column) {
-      // Toggle direction
       setSortDirection((prev) => (prev === 'desc' ? 'asc' : 'desc'));
     } else {
-      // Switch to new column with default direction
       setSortBy(column);
-      // Image quality: lower rank = better, so default to asc (shows rank 1 first)
-      // Index Rating: higher = better, so default to desc (shows highest first)
       setSortDirection(column === 'imageQuality' ? 'asc' : 'desc');
     }
   };
@@ -515,39 +930,129 @@ export function ProvidersTable({
       ? providers.slice(0, Math.floor(limit))
       : providers;
 
-  // Enrich providers with Index Rating display data
-  const enriched: ProviderWithExtras[] = sliced.map((p) => ({
-    ...p,
-    indexRating: toDisplayRating(p, indexRatings.get(p.id.toLowerCase())),
-  }));
+  // ── Enrich providers: demo + real merge + diversity + hysteresis ────
+  const enriched: ProviderWithExtras[] = React.useMemo(() => {
+    void demoUserTick; // reactive dependency
+    const total = sliced.length;
+    const prevMap = prevVisibleRef.current;
+
+    // Step 1: Generate raw data for all providers
+    const rows = sliced.map((p, idx) => {
+      const rank = idx + 1;
+      // Demo base layer (all 66 countries)
+      const demoData = (demoEnabled && demoUserTick > 0)
+        ? generateDemoUsers(p.id, rank, total, p.countryCode?.toUpperCase())
+        : [];
+      const realData: ReadonlyArray<PromagenUsersCountryUsage> = p.promagenUsers ?? [];
+
+      // Damped merge: demo × damping + real (additive)
+      const realTotal = realData.reduce((s, e) => s + e.count, 0);
+      const damping = demoEnabled ? getDemoDamping(realTotal) : 0;
+      const merged = new Map<string, number>();
+
+      for (const e of demoData) {
+        const damped = Math.round(e.count * damping);
+        if (damped > 0) merged.set(e.countryCode, damped);
+      }
+      for (const e of realData) {
+        merged.set(e.countryCode, (merged.get(e.countryCode) ?? 0) + e.count);
+      }
+
+      const allCountries = Array.from(merged.entries())
+        .map(([countryCode, count]) => ({ countryCode, count }))
+        .filter(e => e.count > 0)
+        .sort((a, b) => {
+          // Primary: count descending
+          if (b.count !== a.count) return b.count - a.count;
+          // Tie-break: even rank = A→Z, odd rank = Z→A
+          return rank % 2 === 0
+            ? a.countryCode.localeCompare(b.countryCode)
+            : b.countryCode.localeCompare(a.countryCode);
+        });
+
+      // Visible flag count = min(ceiling, countries with data)
+      const bracket = getBracket(rank);
+      const flagCount = Math.min(bracket.flagCeiling, allCountries.length);
+
+      // Initial visible set (before diversity/hysteresis)
+      const visible = allCountries.slice(0, flagCount);
+
+      return { providerId: p.id, all: allCountries, visible, rank, provider: p, flagCount };
+    });
+
+    // Step 2: Page-level diversity pass
+    if (demoEnabled && demoUserTick > 0) {
+      applyDiversityPass(rows);
+    }
+
+    // Step 3: Hysteresis on last slot
+    for (const row of rows) {
+      const prev = prevMap.get(row.providerId);
+      row.visible = applyHysteresis(row.visible, prev);
+    }
+
+    // Step 4: Update hysteresis ref for next tick
+    const newMap = new Map<string, PromagenUsersCountryUsage[]>();
+    for (const row of rows) {
+      newMap.set(row.providerId, [...row.visible]);
+    }
+    prevVisibleRef.current = newMap;
+
+    // Step 5: Build final enriched array
+    return rows.map((row) => ({
+      ...row.provider,
+      indexRating: toDisplayRating(row.provider, indexRatings.get(row.provider.id.toLowerCase())),
+      promagenUsers: row.all,
+      visibleUsers: row.visible,
+      visibleFlagCount: row.flagCount,
+    }));
+  }, [sliced, indexRatings, demoEnabled, demoUserTick]);
 
   // Sort providers based on selected column and direction
+  // Sort uses STABLE base ratings — jitter is cosmetic-only, applied AFTER sort
+  // so rows never swap position from jitter alone.
   const sorted = React.useMemo(() => {
+    void jitterTick; // reactive dependency
     const arr = [...enriched];
 
+    // ── Step 1: Sort on stable base ratings ──
     if (sortBy === 'imageQuality') {
-      // For imageQuality: lower rank = better
-      // 'asc' (default) → show rank 1, 2, 3... (best first) → natural order
-      // 'desc' → show worst first → inverted
       const dir = sortDirection === 'asc' ? 1 : -1;
-      return arr.sort((a, b) => {
+      arr.sort((a, b) => {
         const aRank = a.imageQualityRank ?? 999;
         const bRank = b.imageQualityRank ?? 999;
         return (aRank - bRank) * dir;
       });
+    } else {
+      const dir = sortDirection === 'desc' ? 1 : -1;
+      arr.sort((a, b) => {
+        const aRating = a.indexRating?.rating ?? 0;
+        const bRating = b.indexRating?.rating ?? 0;
+        return (bRating - aRating) * dir;
+      });
     }
 
-    // Default: sort by Index Rating
-    // For indexRating: higher = better
-    // 'desc' (default) → show highest first → natural order for (bRating - aRating)
-    // 'asc' → show lowest first → inverted
-    const dir = sortDirection === 'desc' ? 1 : -1;
-    return arr.sort((a, b) => {
-      const aRating = a.indexRating?.rating ?? 0;
-      const bRating = b.indexRating?.rating ?? 0;
-      return (bRating - aRating) * dir;
-    });
-  }, [enriched, sortBy, sortDirection]);
+    // ── Step 2: Apply cosmetic jitter AFTER sort (display values only) ──
+    // jitterTick=0 → skip (hydration safe). ±1-3 range, subtle breathing.
+    // Gated behind NEXT_PUBLIC_DEMO_JITTER env var.
+    if (demoEnabled && jitterTick > 0) {
+      for (const p of arr) {
+        if (p.indexRating && p.indexRating.rating !== null) {
+          const jitter = (Math.random() * 2 + 1) * (Math.random() > 0.5 ? 1 : -1); // ±1-3
+          const base = p.indexRating.rating;
+          p.indexRating = {
+            ...p.indexRating,
+            rating: base + jitter,
+            change: jitter,
+            changePercent: base > 0 ? (jitter / base) * 100 : 0,
+            state: (jitter > 0 ? 'gain' : 'loss') as RatingChangeState,
+          };
+        }
+      }
+    }
+
+    return arr;
+  }, [enriched, sortBy, sortDirection, jitterTick, demoEnabled]);
 
   // Notify parent of displayed provider IDs (for market pulse)
   useEffect(() => {
@@ -615,7 +1120,9 @@ export function ProvidersTable({
               <tr
                 key={p.id}
                 data-provider-id={p.id}
-                className="providers-table-row border-t border-slate-800 hover:bg-slate-900/30 transition-colors market-pulse-target"
+                className={`providers-table-row border-t border-slate-800 hover:bg-slate-900/30 transition-colors market-pulse-target${
+                  p.indexRating?.hasRankUp ? ' rank-climber-row' : ''
+                }`}
                 style={{
                   borderLeft: highlightBorder,
                   backgroundColor: highlightBg,
@@ -633,7 +1140,7 @@ export function ProvidersTable({
                 </td>
 
                 <td className="providers-table-td px-4 py-3 w-[18%] text-center border-r border-white/5">
-                  <PromagenUsersCell usage={p.promagenUsers} />
+                  <PromagenUsersCell usage={p.promagenUsers} visibleFlags={p.visibleUsers} />
                 </td>
 
                 <td className="providers-table-td px-4 py-3 w-[18%] text-center border-r border-white/5">

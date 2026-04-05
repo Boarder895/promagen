@@ -7,6 +7,14 @@
  * - prompt_builder_open: User opens provider detail page
  * - prompt_submit: User clicks Copy in prompt builder
  * - social_click: User clicks social media icon
+ * - vote: User votes on image quality
+ * - open: User visits provider page / outbound click
+ * - prompt_lab_select: User selects provider in Prompt Lab
+ * - prompt_lab_generate: User generates prompts in Prompt Lab
+ * - prompt_lab_copy: User copies tier prompt in Prompt Lab
+ * - prompt_lab_optimise: User runs Call 3 in Prompt Lab
+ * - prompt_save: User saves prompt to library
+ * - prompt_reformat: User reformats prompt for different platform
  * 
  * SECURITY:
  * - Input validation on all fields
@@ -44,6 +52,14 @@ const ALLOWED_EVENT_TYPES: IndexRatingEventType[] = [
   'prompt_builder_open',
   'prompt_submit',
   'social_click',
+  'vote',
+  'open',
+  'prompt_lab_select',
+  'prompt_lab_generate',
+  'prompt_lab_copy',
+  'prompt_lab_optimise',
+  'prompt_save',
+  'prompt_reformat',
 ];
 
 // In-memory rate limiter (resets on deploy)
