@@ -1,9 +1,13 @@
 // src/app/studio/playground/playground-page-client.tsx
 // ============================================================================
-// PROMPT LAB CLIENT WRAPPER (v4.2.0)
+// PROMPT LAB CLIENT WRAPPER (v4.3.0)
 // ============================================================================
 // Client component for /studio/playground (Prompt Lab).
 // Same pattern as homepage-client.tsx and library-client.tsx.
+//
+// v4.3.0 (5 Apr 2026):
+// - Bletchley Machine experiment reverted. PipelineXRay restored as
+//   right rail component. Three.js files deleted.
 //
 // v4.2.0 (3 Apr 2026):
 // - User-facing score killed. Removed usePromptScore import + hook call,
@@ -255,7 +259,7 @@ export default function PlaygroundPageClient({
     </MobileBuilderGate>
   );
 
-  // ── RIGHT RAIL: Pipeline X-Ray Glass Case (Decoder → Switchboard → Alignment) ──
+  // ── RIGHT RAIL: Pipeline X-Ray (Decoder → Switchboard → Alignment) ──
   const rightContent = (
     <PipelineXRay
       assessment={xrayAssessment}

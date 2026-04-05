@@ -171,11 +171,10 @@ export function PipelineXRay({
           // ── Glass Case visual chrome (righthand-rail.md §11) ────────
           borderRadius: 'clamp(12px, 1.2vw, 20px)',
           backgroundColor: '#0A0D14',  // solid dark — slightly warmer than slate-950
+          border: '1px solid #F97316', // continuous orange border around entire unit
           boxShadow: [
             'inset 0 1px 0 0 rgba(255, 255, 255, 0.06)',   // top glass reflection edge
             'inset 0 -1px 0 0 rgba(0, 0, 0, 0.4)',          // bottom shadow
-            '0 0 0 1px #7A5C3E',                              // brass frame ring — visible
-            '0 0 0 2px #2A1F15',                              // outer dark trim
             '0 0 16px #1A1208',                               // warm ambient glow
           ].join(', '),
           padding: 'clamp(10px, 0.9vw, 16px)',

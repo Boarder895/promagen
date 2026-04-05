@@ -41,7 +41,7 @@ import { XRayTeletype } from './xray-teletype';
 const COLOURS = {
   // ── Solid colours only — NO rgba opacity dimming (§6.0.3) ──────────
   dimBrass: '#5C4328',       // Dormant rotor rings — dark but VISIBLE
-  headerBrass: '#B87333',    // Section header — full brass, always readable
+  headerBrass: '#FBBF24',    // Section header — Analyse yellow
   dormantText: '#9B7B55',    // Dormant rotor text — muted gold, readable
   activeAmber: '#FBBF24',    // Spinning/processing state
   lockEmerald: '#34D399',    // Completion state
@@ -350,7 +350,11 @@ export function XRayDecoder({ assessment, isChecking, generationId }: XRayDecode
     <>
       <style dangerouslySetInnerHTML={{ __html: DECODER_STYLES }} />
       <div
-        style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(6px, 0.5vw, 10px)' }}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 'clamp(6px, 0.5vw, 10px)',
+        }}
         role="status"
         aria-live="polite"
         aria-label={
@@ -372,6 +376,7 @@ export function XRayDecoder({ assessment, isChecking, generationId }: XRayDecode
             lineHeight: 1,
             userSelect: 'none',
             transition: 'color 0.4s ease',
+            marginBottom: 'clamp(6px, 0.5vw, 10px)',
           }}
           aria-hidden="true"
         >

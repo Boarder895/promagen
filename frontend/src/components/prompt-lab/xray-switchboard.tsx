@@ -56,7 +56,7 @@ function muteColour(hex: string, strength: number): string {
 }
 
 const COLOURS = {
-  headerBrass: '#B87333',
+  headerBrass: '#c084fc',   // Section header — Generate purple
   headerActive: '#FBBF24',
   warmAmber: '#FCD34D',
   lockEmerald: '#34D399',
@@ -299,6 +299,7 @@ export function XRaySwitchboard({ tierPrompts, isGenerating, generationId }: XRa
             lineHeight: 1,
             userSelect: 'none',
             transition: 'color 0.4s ease',
+            marginBottom: 'clamp(6px, 0.5vw, 10px)',
           }}
           aria-hidden="true"
         >
