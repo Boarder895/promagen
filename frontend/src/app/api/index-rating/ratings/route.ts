@@ -113,7 +113,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       timestamp: new Date().toISOString(),
     };
 
-    return NextResponse.json(response);
+    return NextResponse.json(response, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=30',
+      },
+    });
 
   } catch (error) {
     console.error('[Index Rating API] Error:', error);

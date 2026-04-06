@@ -466,29 +466,47 @@ export function getUserHash(request: NextRequest, userId: string | null): string
 
 /**
  * Validate cron job authentication.
- * Cron jobs must provide a secret header.
- * 
+ *
+ * Accepted auth inputs:
+ * - Authorization: Bearer <PROMAGEN_CRON_SECRET>  (Vercel Cron default)
+ * - x-promagen-cron header
+ * - x-cron-secret header
+ * - x-promagen-cron-secret header
+ * - ?secret= query param  (manual testing only)
+ *
  * Security:
- * - Uses timing-safe comparison
- * - Requires CRON_SECRET env var to be set
+ * - Uses timing-safe comparison (safeCompare)
+ * - Requires PROMAGEN_CRON_SECRET env var to be set (>= 16 chars)
  * - Rejects if no secret configured (fail closed)
  */
 export function validateCronAuth(request: NextRequest): boolean {
-  const cronSecret = process.env.CRON_SECRET;
-  
-  if (!cronSecret || cronSecret.length < 32) {
-    // No secret configured or too short = cron disabled
-    console.error('[Security] CRON_SECRET not configured or too short');
+  const cronSecret = process.env.PROMAGEN_CRON_SECRET;
+
+  if (!cronSecret || cronSecret.length < 16) {
+    console.error('[Security] PROMAGEN_CRON_SECRET not configured or too short');
     return false;
   }
-  
-  const providedSecret = request.headers.get('x-cron-secret');
-  
-  if (!providedSecret) {
+
+  const url = new URL(request.url);
+  const authorization = request.headers.get('authorization') ?? '';
+  const bearerSecret = authorization.toLowerCase().startsWith('bearer ')
+    ? authorization.slice('bearer '.length).trim()
+    : '';
+
+  const provided = (
+    bearerSecret ||
+    request.headers.get('x-promagen-cron') ||
+    request.headers.get('x-cron-secret') ||
+    request.headers.get('x-promagen-cron-secret') ||
+    url.searchParams.get('secret') ||
+    ''
+  ).trim();
+
+  if (!provided) {
     return false;
   }
-  
-  return safeCompare(providedSecret, cronSecret);
+
+  return safeCompare(provided, cronSecret);
 }
 
 // ============================================================================

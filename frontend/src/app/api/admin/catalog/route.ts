@@ -55,11 +55,19 @@ function isAuthorized(request: NextRequest): boolean {
     return env.nodeEnv !== 'production';
   }
 
-  const provided =
-    request.headers.get('x-promagen-cron') ??
-    request.headers.get('x-cron-secret') ??
-    request.nextUrl.searchParams.get('secret') ??
-    '';
+  const authorization = request.headers.get('authorization') ?? '';
+  const bearerSecret = authorization.toLowerCase().startsWith('bearer ')
+    ? authorization.slice('bearer '.length).trim()
+    : '';
+
+  const provided = (
+    bearerSecret ||
+    request.headers.get('x-promagen-cron') ||
+    request.headers.get('x-cron-secret') ||
+    request.headers.get('x-promagen-cron-secret') ||
+    request.nextUrl.searchParams.get('secret') ||
+    ''
+  ).trim();
 
   return provided.length > 0 && constantTimeEquals(provided, expected);
 }

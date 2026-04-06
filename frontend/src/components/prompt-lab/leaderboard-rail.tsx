@@ -26,7 +26,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { Provider } from '@/types/providers';
-import type { ProviderRating, DisplayRating, RatingChangeState } from '@/types/index-rating';
+import type { ProviderRating, SerializableProviderRating, DisplayRating, RatingChangeState } from '@/types/index-rating';
 import { DISPLAY_INFLATION_OFFSET } from '@/types/index-rating';
 import { IndexRatingCell } from '@/components/providers/index-rating-cell';
 import { SupportIconsCell } from '@/components/providers/support-icons-cell';
@@ -59,6 +59,8 @@ export interface LeaderboardRailProps {
   providers: Provider[];
   selectedProviderId: string | null;
   onSelectProvider: (providerId: string) => void;
+  /** Server-prefetched Index Ratings */
+  initialRatings?: Record<string, SerializableProviderRating>;
 }
 
 type SortColumn = 'indexRating';
@@ -196,8 +198,16 @@ export function LeaderboardRail({
   providers,
   selectedProviderId,
   onSelectProvider,
+  initialRatings,
 }: LeaderboardRailProps) {
-  const [indexRatings, setIndexRatings] = useState<Map<string, ProviderRating>>(new Map());
+  const [indexRatings, setIndexRatings] = useState<Map<string, ProviderRating>>(
+    () => {
+      if (initialRatings && Object.keys(initialRatings).length > 0) {
+        return new Map(Object.entries(initialRatings));
+      }
+      return new Map();
+    },
+  );
   const [isExpanded, setIsExpanded] = useState(false);
   const [jitterTick, setJitterTick] = useState(0);
   const [sortBy, setSortBy] = useState<SortColumn>('indexRating');
@@ -207,12 +217,13 @@ export function LeaderboardRail({
   // ── Mark as mounted — avoids Date.now() hydration mismatch ──────────
   useEffect(() => { setHasMounted(true); }, []);
 
-  // ── Fetch index ratings on mount ────────────────────────────────────
+  // ── Fetch index ratings on mount — skip if server prefetched ─────────
   useEffect(() => {
+    if (initialRatings && Object.keys(initialRatings).length > 0) return;
     const ids = providers.map((p) => p.id);
     if (ids.length === 0) return;
     fetchIndexRatings(ids).then(setIndexRatings);
-  }, [providers]);
+  }, [providers, initialRatings]);
 
   // ── Demo jitter timer ───────────────────────────────────────────────
   // Controlled by NEXT_PUBLIC_DEMO_JITTER env var (true = on, false = off).

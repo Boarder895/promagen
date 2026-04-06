@@ -4,7 +4,7 @@ import React from 'react';
 import type { Metadata } from 'next';
 
 import ProvidersTable from '@/components/providers/providers-table';
-import { getProvidersWithPromagenUsers } from '@/lib/providers/api';
+import { getProvidersWithPromagenUsers, getIndexRatingsRecord } from '@/lib/providers/api';
 
 // Ensure the leaderboard can update after Cron runs (cheap + near-live).
 // Promagen Users displays are guarded by freshness checks in the loader.
@@ -18,8 +18,8 @@ export const metadata: Metadata = {
 };
 
 export default async function ProvidersLeaderboardPage(): Promise<JSX.Element> {
-  // No limit — shows all providers from SSOT (providers.json)
   const providers = await getProvidersWithPromagenUsers();
+  const initialRatings = await getIndexRatingsRecord(providers.map((p) => p.id));
 
   return (
     <main role="main" className="p-6">
@@ -28,6 +28,7 @@ export default async function ProvidersLeaderboardPage(): Promise<JSX.Element> {
         title="AI Providers Leaderboard"
         caption="Score stays far right; other columns follow the display contract."
         showRank
+        initialRatings={initialRatings}
       />
     </main>
   );

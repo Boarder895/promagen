@@ -23,7 +23,7 @@ import type { Metadata } from 'next';
 export const dynamic = 'force-dynamic';
 
 import HomepageClient from '@/components/home/homepage-client';
-import { getProvidersWithPromagenUsers } from '@/lib/providers/api';
+import { getProvidersWithPromagenUsers, getIndexRatingsRecord } from '@/lib/providers/api';
 import { getHomepageExchanges } from '@/lib/exchange-order';
 import { getWeatherIndex } from '@/lib/weather/fetch-weather';
 
@@ -61,12 +61,16 @@ export default async function WorldContextPage() {
     getWeatherIndex(),
   ]);
 
+  // Index Ratings: server-side prefetch eliminates client waterfall
+  const initialRatings = await getIndexRatingsRecord(providers.map((p) => p.id));
+
   return (
     <HomepageClient
       exchanges={allExchanges}
       weatherIndex={weatherIndex}
       providers={providers}
       headingText={"World Context — Live Markets, Weather Prompts &\nCommodity Inspiration"}
+      initialRatings={initialRatings}
     />
   );
 }

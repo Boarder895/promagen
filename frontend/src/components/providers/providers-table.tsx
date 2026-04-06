@@ -30,6 +30,7 @@ import React, { useState, useEffect, useRef } from "react";
 import type { Provider } from "@/types/provider";
 import type {
   ProviderRating,
+  SerializableProviderRating,
   DisplayRating,
   RatingChangeState,
 } from "@/types/index-rating";
@@ -73,6 +74,8 @@ export type ProvidersTableProps = {
   highlightTierId?: number;
   /** Active tier filter from parent — filters table to show only matching platforms */
   tierFilter?: PlatformTierId | null;
+  /** Server-prefetched Index Ratings — eliminates client-side fetch waterfall */
+  initialRatings?: Record<string, SerializableProviderRating>;
 };
 
 type PromagenUsersCountryUsage = {
@@ -977,6 +980,7 @@ export function ProvidersTable({
   isPro = false,
   highlightTierId,
   tierFilter,
+  initialRatings,
 }: ProvidersTableProps) {
   // Sort state: default to Index Rating descending (highest first)
   const [sortBy, setSortBy] = useState<SortColumn>("indexRating");
@@ -996,16 +1000,30 @@ export function ProvidersTable({
   };
 
   // Index Rating data from database
+  // If initialRatings provided by server, use immediately (no waterfall).
+  // Otherwise start with empty Map and fetch client-side.
   const [indexRatings, setIndexRatings] = useState<Map<string, ProviderRating>>(
-    new Map(),
+    () => {
+      if (initialRatings && Object.keys(initialRatings).length > 0) {
+        return new Map(Object.entries(initialRatings));
+      }
+      return new Map();
+    },
   );
-  const [_ratingsLoaded, setRatingsLoaded] = useState(false);
+  const [_ratingsLoaded, setRatingsLoaded] = useState(
+    () => !!(initialRatings && Object.keys(initialRatings).length > 0),
+  );
 
-  // Fetch Index Ratings on mount
+  // Fetch Index Ratings on mount — only if server didn't prefetch
   useEffect(() => {
+    // Skip client-side fetch if server already provided ratings
+    if (initialRatings && Object.keys(initialRatings).length > 0) {
+      return;
+    }
+
     const providerIds = providers.map((p) => p.id);
     if (providerIds.length === 0) {
-      setRatingsLoaded(true); // No providers = nothing to wait for
+      setRatingsLoaded(true);
       return;
     }
 
@@ -1018,11 +1036,10 @@ export function ProvidersTable({
         setRatingsLoaded(true);
       })
       .catch(() => {
-        // Ensure table becomes visible even on unexpected errors
         setRatingsLoaded(true);
       })
       .finally(() => clearTimeout(timeout));
-  }, [providers]);
+  }, [providers, initialRatings]);
 
   // ── Demo jitter — subtle simulated rating movement ──────────────────
   // Controlled by NEXT_PUBLIC_DEMO_JITTER env var (true = on, false = off).

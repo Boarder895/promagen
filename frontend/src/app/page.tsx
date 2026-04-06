@@ -30,7 +30,7 @@ import type { Metadata } from 'next';
 export const revalidate = 60;
 
 import NewHomepageClient from '@/components/home/new-homepage-client';
-import { getProvidersWithPromagenUsers } from '@/lib/providers/api';
+import { getProvidersWithPromagenUsers, getIndexRatingsRecord } from '@/lib/providers/api';
 import { getHomepageExchanges } from '@/lib/exchange-order';
 import { getWeatherIndex } from '@/lib/weather/fetch-weather';
 import type { ExchangeWeatherData } from '@/components/exchanges/types';
@@ -98,9 +98,12 @@ function toWeatherFull(w: ExchangeWeatherData): ExchangeWeatherFull {
  * so it appears in the initial HTML with zero client-side fetch latency.
  */
 export default async function HomePage() {
-  // Providers: async with promagenUsers enrichment from DB
+  // Providers + Index Ratings: parallel async fetch from DB
   const providers = await getProvidersWithPromagenUsers();
   const allExchanges = getHomepageExchanges();
+
+  // Index Ratings: server-side prefetch eliminates 10-20s client waterfall
+  const initialRatings = await getIndexRatingsRecord(providers.map((p) => p.id));
 
   // Weather: non-blocking with 2s timeout. Empty map fallback.
   // Client-side useWeather() refreshes after hydration anyway.
@@ -143,6 +146,7 @@ export default async function HomePage() {
       weatherIndex={weatherIndex}
       providers={providers}
       initialShowcaseData={initialShowcaseData}
+      initialRatings={initialRatings}
     />
   );
 }

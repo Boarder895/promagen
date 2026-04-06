@@ -55,6 +55,7 @@ import PlaygroundWorkspace from '@/components/prompts/playground-workspace';
 import type { Exchange } from '@/data/exchanges/types';
 import type { ExchangeWeatherData } from '@/components/exchanges/types';
 import type { Provider } from '@/types/providers';
+import type { SerializableProviderRating } from '@/types/index-rating';
 import type { CoverageAssessment } from '@/types/category-assessment';
 import type { GeneratedPrompts } from '@/types/prompt-intelligence';
 import type { AiOptimiseResult } from '@/hooks/use-ai-optimisation';
@@ -104,6 +105,8 @@ export interface PlaygroundPageClientProps {
   exchanges: ReadonlyArray<Exchange>;
   /** Weather data indexed by exchange ID */
   weatherIndex: Map<string, ExchangeWeatherData>;
+  /** Server-prefetched Index Ratings */
+  initialRatings?: Record<string, SerializableProviderRating>;
 }
 
 // ============================================================================
@@ -114,6 +117,7 @@ export default function PlaygroundPageClient({
   providers,
   exchanges,
   weatherIndex,
+  initialRatings,
 }: PlaygroundPageClientProps) {
   // ── Provider selection state (lifted — shared between left rail + workspace)
   const [hasProvider, setHasProvider] = useState(false);
@@ -228,6 +232,7 @@ export default function PlaygroundPageClient({
       providers={providers}
       selectedProviderId={selectedProviderId}
       onSelectProvider={handleRailSelectProvider}
+      initialRatings={initialRatings}
     />
   );
 

@@ -13,7 +13,7 @@
  * 6. Stores results in KV cache
  * 
  * Security:
- * - Requires CRON_SECRET header
+ * - Requires PROMAGEN_CRON_SECRET (bearer auth + custom headers)
  * - Rate limited (cannot run more than once per minute)
  * - Timeout protection
  */

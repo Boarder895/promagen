@@ -298,3 +298,20 @@ export const RATING_COLORS = {
   flat: '#6b7280',
   fallback: '#6b7280',
 } as const;
+
+/**
+ * JSON-serializable rating shape for the RSC → client component boundary.
+ * Identical to ProviderRating but Date fields are ISO strings.
+ * Used by server-prefetched initialRatings props.
+ */
+export type SerializableProviderRating = {
+  providerId: string;
+  currentRating: number;
+  previousRating: number;
+  change: number;
+  changePercent: number;
+  currentRank: number | null;
+  previousRank: number | null;
+  rankChangedAt: string | null;
+  calculatedAt: string;
+};

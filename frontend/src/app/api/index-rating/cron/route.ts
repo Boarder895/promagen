@@ -15,6 +15,8 @@
  * @see docs/authority/index-rating.md
  */
 
+import crypto from 'node:crypto';
+
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
@@ -53,6 +55,14 @@ import type {
 // =============================================================================
 
 const CRON_SECRET = process.env.PROMAGEN_CRON_SECRET;
+
+
+function constantTimeEquals(a: string, b: string): boolean {
+  const aa = Buffer.from(a, 'utf8');
+  const bb = Buffer.from(b, 'utf8');
+  if (aa.length !== bb.length) return false;
+  return crypto.timingSafeEqual(aa, bb);
+}
 
 // Cast market power data to typed version
 const typedMarketPowerData = marketPowerData as MarketPowerData;
@@ -95,9 +105,11 @@ function generateRequestId(): string {
  * Validate cron request authentication.
  * 
  * Accepts auth via:
+ * - Header: Authorization: Bearer <secret> (Vercel Cron default)
  * - Header: x-promagen-cron
  * - Header: x-cron-secret
- * - Query param: secret
+ * - Header: x-promagen-cron-secret
+ * - Query param: secret (manual testing)
  * 
  * Returns 404 (not 401/403) to hide endpoint existence from attackers.
  */
@@ -107,24 +119,26 @@ function validateCronAuth(request: NextRequest): boolean {
     return false;
   }
 
-  // Check headers (constant-time comparison would be ideal but not critical for cron)
-  const headerSecret = 
-    request.headers.get('x-promagen-cron') ?? 
-    request.headers.get('x-cron-secret');
-  
-  if (headerSecret === CRON_SECRET) {
-    return true;
-  }
-
-  // Check query param
   const url = new URL(request.url);
-  const querySecret = url.searchParams.get('secret');
-  
-  if (querySecret === CRON_SECRET) {
-    return true;
+  const authorization = request.headers.get('authorization') ?? '';
+  const bearerSecret = authorization.toLowerCase().startsWith('bearer ')
+    ? authorization.slice('bearer '.length).trim()
+    : '';
+
+  const provided = (
+    bearerSecret ||
+    request.headers.get('x-promagen-cron') ||
+    request.headers.get('x-cron-secret') ||
+    request.headers.get('x-promagen-cron-secret') ||
+    url.searchParams.get('secret') ||
+    ''
+  ).trim();
+
+  if (!provided) {
+    return false;
   }
 
-  return false;
+  return constantTimeEquals(provided, CRON_SECRET);
 }
 
 // =============================================================================

@@ -73,6 +73,8 @@
  * Existing features preserved: Yes.
  */
 
+import { timingSafeEqual } from 'node:crypto';
+
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
@@ -158,7 +160,7 @@ import type { SceneStartersFile } from '@/types/scene-starters';
 // CONFIGURATION
 // =============================================================================
 
-// CRON_SECRET read at request time inside validateCronAuth() — not module level
+// PROMAGEN_CRON_SECRET read at request time inside validateCronAuth() — not module level
 
 /** Feature flag for Phase 6 scoring layers (default: false).
  *  Read at request time so env var changes take effect without redeployment. */
@@ -328,9 +330,29 @@ function generateRequestId(): string {
 // =============================================================================
 
 /**
+ * Constant-time string comparison to prevent timing attacks.
+ */
+function constantTimeEquals(a: string, b: string): boolean {
+  const aa = Buffer.from(a, 'utf8');
+  const bb = Buffer.from(b, 'utf8');
+  if (aa.length !== bb.length) {
+    timingSafeEqual(aa, aa); // dummy comparison to maintain constant time
+    return false;
+  }
+  return timingSafeEqual(aa, bb);
+}
+
+/**
  * Validate cron request authentication.
- * Accepts auth via header or query param.
- * Returns 404 (not 401/403) to hide endpoint existence.
+ *
+ * Accepted auth inputs:
+ * - Authorization: Bearer <PROMAGEN_CRON_SECRET>  (Vercel Cron default)
+ * - x-promagen-cron header
+ * - x-cron-secret header
+ * - x-promagen-cron-secret header
+ * - ?secret= query param  (manual testing only)
+ *
+ * Returns false to trigger 404 (hides endpoint existence).
  */
 function validateCronAuth(request: NextRequest): boolean {
   const cronSecret = process.env.PROMAGEN_CRON_SECRET;
@@ -340,17 +362,26 @@ function validateCronAuth(request: NextRequest): boolean {
     return false;
   }
 
-  const headerSecret =
-    request.headers.get('x-promagen-cron') ?? request.headers.get('x-cron-secret');
-
-  if (headerSecret === cronSecret) return true;
-
   const url = new URL(request.url);
-  const querySecret = url.searchParams.get('secret');
+  const authorization = request.headers.get('authorization') ?? '';
+  const bearerSecret = authorization.toLowerCase().startsWith('bearer ')
+    ? authorization.slice('bearer '.length).trim()
+    : '';
 
-  if (querySecret === cronSecret) return true;
+  const provided = (
+    bearerSecret ||
+    request.headers.get('x-promagen-cron') ||
+    request.headers.get('x-cron-secret') ||
+    request.headers.get('x-promagen-cron-secret') ||
+    url.searchParams.get('secret') ||
+    ''
+  ).trim();
 
-  return false;
+  if (!provided) {
+    return false;
+  }
+
+  return constantTimeEquals(provided, cronSecret);
 }
 
 // =============================================================================

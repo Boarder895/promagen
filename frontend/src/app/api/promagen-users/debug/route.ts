@@ -52,12 +52,20 @@ function constantTimeEquals(a: string, b: string): boolean {
  */
 function requireAuth(req: NextRequest): void {
   const expected = requireCronSecret();
+  const url = new URL(req.url);
+  const authorization = req.headers.get('authorization') ?? '';
+  const bearerSecret = authorization.toLowerCase().startsWith('bearer ')
+    ? authorization.slice('bearer '.length).trim()
+    : '';
 
-  const provided =
-    req.headers.get('x-promagen-cron') ??
-    req.headers.get('x-cron-secret') ??
-    new URL(req.url).searchParams.get('secret') ??
-    '';
+  const provided = (
+    bearerSecret ||
+    req.headers.get('x-promagen-cron') ||
+    req.headers.get('x-cron-secret') ||
+    req.headers.get('x-promagen-cron-secret') ||
+    url.searchParams.get('secret') ||
+    ''
+  ).trim();
 
   if (!provided || !constantTimeEquals(provided, expected)) {
     throw new Error('Unauthorized');

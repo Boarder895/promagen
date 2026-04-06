@@ -46,6 +46,7 @@ import { getRailsRelative } from '@/lib/location';
 import type { Exchange } from '@/data/exchanges/types';
 import type { ExchangeWeatherData, IndexQuoteData } from '@/components/exchanges/types';
 import type { Provider } from '@/types/providers';
+import type { SerializableProviderRating } from '@/types/index-rating';
 
 // ============================================================================
 // TYPES
@@ -60,6 +61,8 @@ export interface HomepageClientProps {
   providers: Provider[];
   /** Override the centre heading text */
   headingText?: string;
+  /** Server-prefetched Index Ratings */
+  initialRatings?: Record<string, SerializableProviderRating>;
 }
 
 // ============================================================================
@@ -155,6 +158,7 @@ export default function HomepageClient({
   weatherIndex,
   providers,
   headingText,
+  initialRatings,
 }: HomepageClientProps) {
   const { isAuthenticated, userTier, locationInfo, setReferenceFrame } = usePromagenAuth();
 
@@ -453,6 +457,7 @@ export default function HomepageClient({
         isExpanded={isTableExpanded}
         onExpandToggle={handleExpandToggle}
         weatherMap={providerWeatherMap}
+        initialRatings={initialRatings}
       />
     </section>
   );

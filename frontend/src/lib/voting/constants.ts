@@ -202,7 +202,7 @@ export const CRON_TIMEOUT_MS = 30_000;
 
 /**
  * Secret for cron job authentication.
- * Must match CRON_SECRET env var.
+ * Must match PROMAGEN_CRON_SECRET env var.
  */
 export const CRON_SECRET_HEADER = 'x-cron-secret';
 

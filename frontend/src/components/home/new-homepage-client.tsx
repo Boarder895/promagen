@@ -43,6 +43,7 @@ import { useWeather, type WeatherData } from '@/hooks/use-weather';
 import type { Exchange } from '@/data/exchanges/types';
 import type { ExchangeWeatherData } from '@/components/exchanges/types';
 import type { Provider } from '@/types/providers';
+import type { SerializableProviderRating } from '@/types/index-rating';
 import type { PromptOfTheMoment } from '@/types/homepage';
 import { type PlatformTierId, getPlatformTierId } from '@/data/platform-tiers';
 // ============================================================================
@@ -58,6 +59,8 @@ export interface NewHomepageClientProps {
   providers: Provider[];
   /** ★ SSR-generated POTM data — renders in initial HTML, no client fetch needed */
   initialShowcaseData?: PromptOfTheMoment | null;
+  /** Server-prefetched Index Ratings — eliminates client-side fetch waterfall */
+  initialRatings?: Record<string, SerializableProviderRating>;
 }
 
 // ============================================================================
@@ -80,6 +83,7 @@ export default function NewHomepageClient({
   weatherIndex,
   providers,
   initialShowcaseData,
+  initialRatings,
 }: NewHomepageClientProps) {
   const { isAuthenticated, userTier, locationInfo, setReferenceFrame } = usePromagenAuth();
 
@@ -326,6 +330,7 @@ export default function NewHomepageClient({
           weatherMap={providerWeatherMap}
           highlightTierId={showcaseTierId}
           tierFilter={tierFilter}
+          initialRatings={initialRatings}
         />
       </section>
     </div>

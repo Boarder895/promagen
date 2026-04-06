@@ -7,6 +7,8 @@ import { z } from 'zod';
 import rawProviders from '@/data/providers/providers.json';
 import { db, hasDatabaseConfigured } from '@/lib/db';
 import { env } from '@/lib/env';
+import { getProviderRatings } from '@/lib/index-rating/database';
+import type { SerializableProviderRating } from '@/types/index-rating';
 import type { Provider } from '@/types/providers';
 
 export type ProvidersApiResponse = Provider[];
@@ -236,4 +238,54 @@ export async function getProvidersWithPromagenUsers(
       ? ({ ...p, promagenUsers } as ProviderWithPromagenUsers)
       : (p as ProviderWithPromagenUsers);
   });
+}
+
+// =============================================================================
+// INDEX RATINGS — Server-Side Prefetch
+// =============================================================================
+// Eliminates the 10-20 second client-side waterfall by fetching ratings
+// alongside providers during server rendering. Data arrives with the
+// initial HTML — zero client-side wait.
+//
+// Dates are serialized to ISO strings for the RSC boundary.
+// =============================================================================
+
+// SerializableProviderRating imported from @/types/index-rating
+
+/**
+ * Fetch Index Ratings server-side and return as a JSON-serializable Record.
+ *
+ * Called alongside getProvidersWithPromagenUsers() in server pages.
+ * Returns {} if DB unavailable — ProvidersTable falls back to client fetch.
+ */
+export async function getIndexRatingsRecord(
+  providerIds: string[],
+): Promise<Record<string, SerializableProviderRating>> {
+  if (providerIds.length === 0) return {};
+
+  if (!hasDatabaseConfigured()) return {};
+
+  try {
+    const ratingsMap = await getProviderRatings(providerIds);
+    const record: Record<string, SerializableProviderRating> = {};
+
+    for (const [id, rating] of ratingsMap.entries()) {
+      record[id] = {
+        providerId: rating.providerId,
+        currentRating: rating.currentRating,
+        previousRating: rating.previousRating,
+        change: rating.change,
+        changePercent: rating.changePercent,
+        currentRank: rating.currentRank,
+        previousRank: rating.previousRank,
+        rankChangedAt: rating.rankChangedAt?.toISOString() ?? null,
+        calculatedAt: rating.calculatedAt.toISOString(),
+      };
+    }
+
+    return record;
+  } catch (error) {
+    console.error('[getIndexRatingsRecord] Error:', error);
+    return {};
+  }
 }
