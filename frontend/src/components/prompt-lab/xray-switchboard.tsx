@@ -137,7 +137,7 @@ function TierBar({
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 'clamp(6px, 0.5vw, 8px)',
+        gap: 'clamp(10px, 0.9vw, 16px)',
       }}
     >
       {/* Tier label */}
@@ -147,7 +147,7 @@ function TierBar({
           fontWeight: 700,
           color: isFilled ? tier.color : tier.dimColor,
           width: 'clamp(18px, 1.5vw, 22px)',
-          textAlign: 'right',
+          textAlign: 'left',
           flexShrink: 0,
           userSelect: 'none',
           lineHeight: 1,
@@ -196,14 +196,14 @@ function TierBar({
       </div>
 
       {/* Word count — split-flap counter */}
-      <div style={{ width: 'clamp(50px, 4vw, 65px)', textAlign: 'right', flexShrink: 0 }}>
+      <div style={{ width: 'auto', textAlign: 'right', flexShrink: 0 }}>
         {isFilled ? (
           <XRaySplitFlap
             value={words}
             digits={3}
             suffix=" words"
             duration={600}
-            color={tier.color}
+            color="#FFFFFF"
             fontSize="clamp(0.65rem, 0.8vw, 0.875rem)"
           />
         ) : (

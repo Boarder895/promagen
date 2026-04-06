@@ -162,6 +162,7 @@ export function XRaySplitFlap({
           gap: '1px',
           fontFamily: "'SF Mono', 'Fira Code', 'Cascadia Code', monospace",
           fontSize,
+          fontWeight: 400,
           color,
           lineHeight: 1,
           textShadow: `0 0 6px rgba(251, 191, 36, 0.3)`,
@@ -187,7 +188,7 @@ export function XRaySplitFlap({
           <span
             style={{
               fontSize: 'clamp(0.65rem, 0.8vw, 0.875rem)',
-              color: '#7A5C3E', // solid muted brass — NO opacity dimming
+              color: '#FFFFFF', // white — no muted text
               marginLeft: 'clamp(2px, 0.2vw, 4px)',
               fontFamily: 'inherit',
             }}
