@@ -90,7 +90,8 @@ export function getProviders(limit = 0): Provider[] {
 type UsageRow = {
   providerId: string;
   countryCode: string;
-  count: number;
+  /** BIGINT from Postgres — the driver returns this as a string, not a number */
+  count: number | string;
 };
 
 type UsageSnapshot = {
@@ -173,7 +174,9 @@ async function loadUsageSnapshot(providerIds: string[]): Promise<UsageSnapshot> 
     const cc = (r.countryCode ?? '').trim().toUpperCase();
     if (!/^[A-Z]{2}$/.test(cc)) continue;
 
-    const count = Number.isFinite(r.count) ? Math.floor(r.count) : 0;
+    // BIGINT columns return as strings from postgres driver — coerce before checking
+    const rawCount = Number(r.count);
+    const count = Number.isFinite(rawCount) ? Math.floor(rawCount) : 0;
     if (count <= 0) continue;
 
     const list = byProvider.get(r.providerId) ?? [];
