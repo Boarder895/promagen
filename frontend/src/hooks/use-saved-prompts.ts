@@ -485,7 +485,16 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
     setIsLoading(false);
   }, [storageMode]);
 
-  // Cloud mode: fetch from API
+  // ============================================================================
+  // CLOUD MODE: Sync-then-load (single sequenced effect)
+  // ============================================================================
+  // When storageMode switches to 'cloud':
+  //   1. If localStorage has un-synced prompts → sync them to DB first
+  //   2. THEN fetch from cloud (which now includes the synced data)
+  //   3. If sync fails → keep localStorage data, show error, do NOT wipe
+  //   4. If cloud fetch fails → keep localStorage data, show error
+  // ============================================================================
+
   useEffect(() => {
     if (storageMode !== 'cloud') return;
     if (cloudLoadedRef.current) return;
@@ -493,68 +502,59 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
 
     let cancelled = false;
 
-    async function loadCloud() {
+    async function initCloud() {
+      // Step 1: Check if one-time sync is needed
+      const needsSync = !hasSyncCompleted();
+      const localPrompts = loadFromStorage();
+
+      if (needsSync && localPrompts.length > 0) {
+        // Sync localStorage → cloud FIRST
+        syncTriggeredRef.current = true;
+        try {
+          console.debug(`[SavedPrompts:cloud] Syncing ${localPrompts.length} local prompts to cloud…`);
+          const syncOk = await cloudSyncFromLocal(localPrompts);
+          if (cancelled) return;
+
+          if (syncOk) {
+            markSyncComplete();
+            console.debug('[SavedPrompts:cloud] Sync complete');
+          } else {
+            // Sync failed — keep localStorage data, do NOT overwrite with empty cloud
+            console.error('[SavedPrompts:cloud] Sync returned non-ok');
+            setSyncError('Failed to sync local prompts to cloud. Will retry next time.');
+            setIsLoading(false);
+            return; // STOP — don't fetch from empty cloud
+          }
+        } catch (error) {
+          if (cancelled) return;
+          console.error('[SavedPrompts:cloud] Sync failed:', error);
+          setSyncError('Failed to sync local prompts to cloud. Will retry next time.');
+          setIsLoading(false);
+          return; // STOP — keep localStorage data
+        }
+      } else if (needsSync && localPrompts.length === 0) {
+        // No local data to sync — mark complete
+        markSyncComplete();
+      }
+
+      // Step 2: Fetch from cloud (DB now has synced data if sync ran)
       try {
         const cloudPrompts = await cloudFetchPrompts();
-        if (!cancelled) {
-          setPrompts(cloudPrompts);
-          setEmptyFolderNames(loadEmptyFolders());
-          setIsLoading(false);
-        }
+        if (cancelled) return;
+        setPrompts(cloudPrompts);
+        setEmptyFolderNames(loadEmptyFolders());
+        setIsLoading(false);
       } catch (error) {
-        console.error('[SavedPrompts:cloud] Initial load failed:', error);
-        if (!cancelled) {
-          // Fallback to localStorage so the user isn't left with nothing
-          const local = loadFromStorage();
-          setPrompts(local);
-          setIsLoading(false);
-          setSyncError('Could not reach the cloud. Showing local prompts.');
-        }
+        if (cancelled) return;
+        console.error('[SavedPrompts:cloud] Cloud load failed:', error);
+        // Keep localStorage data — don't wipe to empty
+        setSyncError('Could not reach the cloud. Showing local prompts.');
+        setIsLoading(false);
       }
     }
 
-    void loadCloud();
+    void initCloud();
     return () => { cancelled = true; };
-  }, [storageMode]);
-
-  // ============================================================================
-  // ONE-TIME SYNC: localStorage → Cloud (on first cloud-mode mount)
-  // ============================================================================
-
-  useEffect(() => {
-    if (storageMode !== 'cloud') return;
-    if (syncTriggeredRef.current) return;
-    if (hasSyncCompleted()) return;
-
-    // Check if localStorage has prompts worth syncing
-    const localPrompts = loadFromStorage();
-    if (localPrompts.length === 0) {
-      markSyncComplete();
-      return;
-    }
-
-    syncTriggeredRef.current = true;
-
-    async function runSync() {
-      try {
-        console.debug(`[SavedPrompts:cloud] Syncing ${localPrompts.length} local prompts to cloud…`);
-        const ok = await cloudSyncFromLocal(localPrompts);
-        if (ok) {
-          markSyncComplete();
-          // Re-fetch from cloud to get the canonical state
-          const cloudPrompts = await cloudFetchPrompts();
-          setPrompts(cloudPrompts);
-          console.debug('[SavedPrompts:cloud] Sync complete');
-        } else {
-          setSyncError('Failed to sync local prompts to cloud. Will retry next time.');
-        }
-      } catch (error) {
-        console.error('[SavedPrompts:cloud] Sync failed:', error);
-        setSyncError('Failed to sync local prompts to cloud. Will retry next time.');
-      }
-    }
-
-    void runSync();
   }, [storageMode]);
 
   // ============================================================================

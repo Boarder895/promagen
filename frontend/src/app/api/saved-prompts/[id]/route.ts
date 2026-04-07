@@ -19,7 +19,7 @@
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { auth, clerkClient } from '@clerk/nextjs/server';
 import { rateLimit } from '@/lib/rate-limit';
 import { env } from '@/lib/env';
 import {
@@ -48,7 +48,7 @@ async function ensureTable(): Promise<void> {
 // AUTH + TIER CHECK
 // ============================================================================
 
-interface SessionPublicMetadata {
+interface ClerkPublicMetadata {
   tier?: 'free' | 'paid';
   [key: string]: unknown;
 }
@@ -57,7 +57,7 @@ async function authenticate(): Promise<
   | { ok: true; userId: string }
   | { ok: false; response: NextResponse }
 > {
-  const { userId, sessionClaims } = await auth();
+  const { userId } = await auth();
 
   if (!userId) {
     return {
@@ -69,8 +69,10 @@ async function authenticate(): Promise<
     };
   }
 
-  const meta = sessionClaims?.publicMetadata as SessionPublicMetadata | undefined;
-  const isPaid = meta?.tier === 'paid';
+  const client = await clerkClient();
+  const user = await client.users.getUser(userId);
+  const meta = (user.publicMetadata ?? {}) as ClerkPublicMetadata;
+  const isPaid = meta.tier === 'paid';
 
   if (!isPaid) {
     return {
