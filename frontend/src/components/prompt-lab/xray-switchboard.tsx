@@ -241,6 +241,15 @@ export function XRaySwitchboard({ tierPrompts, isGenerating, generationId }: XRa
   };
   const maxWords = Math.max(wordCounts.tier1, wordCounts.tier2, wordCounts.tier3, wordCounts.tier4, 1);
 
+  // Reset to dormant when tierPrompts cleared (Clear All)
+  useEffect(() => {
+    if (tierPrompts === null && !isGenerating) {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      setIsFilled(false);
+      setShowSummary(false);
+    }
+  }, [tierPrompts, isGenerating]);
+
   // Reset when generating starts
   useEffect(() => {
     if (isGenerating) {

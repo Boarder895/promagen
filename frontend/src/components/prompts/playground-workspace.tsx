@@ -524,6 +524,7 @@ export default function PlaygroundWorkspace({ providers, onProviderChange, onPro
             <EnhancedEducationalPreview
               providers={providers}
               onProviderChange={onProviderChange}
+              onProviderIdChange={onProviderIdChange}
               freeBadge={!isPro && remaining > 0 ? <FreeGenerationBadge remaining={remaining} /> : undefined}
               // AI Disguise callbacks + tier data
               onDescribeTextChange={handleDescribeTextChange}

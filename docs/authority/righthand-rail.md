@@ -1,12 +1,12 @@
 # Right-Hand Rail — Pipeline X-Ray (The Glass Case)
 
-**Version:** 1.2.0
+**Version:** 2.0.0
 **Created:** 2 April 2026
-**Updated:** 2 April 2026
+**Updated:** 6 April 2026
 **Owner:** Promagen
-**Status:** APPROVED — v1.2.0 final review revision. Architecture locked. Ready to build.
+**Status:** DEPLOYED — All three phases live in production. Score killed (3 Apr). Visual polish applied (5–6 Apr).
 **Scope:** Prompt Lab (`/studio/playground`) right rail ONLY. Homepage and World Context right rails remain exchange-based — untouched.
-**Authority:** This document defines the architecture, visual design, animation system, and build order for the Prompt Lab's right-hand rail replacement — a real-time visualisation of the three-call pipeline, styled as a WWII-era decryption machine viewed through glass.
+**Authority:** This document defines the architecture, visual design, animation system, and build order for the Prompt Lab's right-hand rail — a real-time visualisation of the three-call pipeline, styled as a WWII-era decryption machine viewed through glass.
 
 > **Cross-references:**
 >
@@ -78,6 +78,7 @@ This is not steampunk. No excessive cogs, no leather textures, no sepia filters.
 ## 3. What It Replaces
 
 **Removed from Prompt Lab page only:**
+
 - `ReorderedExchangeRails` (right content)
 - `ExchangeList` component rendering in the right rail
 - All exchange-related data flow for the right rail in `playground-page-client.tsx`
@@ -90,15 +91,15 @@ The `HomepageGrid` three-column grid stays. New content passes via the existing 
 
 ## 4. Human Factors Declaration
 
-| Element | Primary Factor | Why |
-|---|---|---|
-| Dormant machine with barely-moving parts | Zeigarnik Effect (§4) | The incomplete, waiting machine creates psychological tension — it wants to run. The user wants to see it run. |
-| Phase 1 rotor cascade | Anticipatory Dopamine (§3) | Each rotor locking into place is a micro-reward. The cascade builds: "another one found, and another..." The user counts the categories detected. |
-| Phase 2 parallel drum spin | Temporal Compression (§6) | Four elements processing simultaneously occupies working memory across multiple visual focal points. A 2-second wait feels like half a second. |
-| Phase 3 cable routing + cog alignment | Optimal Stimulation Theory (§5) | The most complex visual phase arrives at the moment the user has been waiting longest. Complexity peaks at maximum anticipation. |
-| Unique output per prompt | Variable Reward (§2) | Different prompts produce different rotor positions, different cable routes, different counter values. Same machine, unpredictable output. |
-| Ticker tape text reveal | Curiosity Gap (§1) | Characters appear one by one. The user can read ahead slightly but can't see the full message until the tape finishes. |
-| Glass case reflection | Aesthetic-Usability Effect (§14) | The glass gives the machine perceived value. The same components without the glass look like a dashboard. With the glass, they look like a museum exhibit. |
+| Element                                  | Primary Factor                   | Why                                                                                                                                                        |
+| ---------------------------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Dormant machine with barely-moving parts | Zeigarnik Effect (§4)            | The incomplete, waiting machine creates psychological tension — it wants to run. The user wants to see it run.                                             |
+| Phase 1 rotor cascade                    | Anticipatory Dopamine (§3)       | Each rotor locking into place is a micro-reward. The cascade builds: "another one found, and another..." The user counts the categories detected.          |
+| Phase 2 parallel drum spin               | Temporal Compression (§6)        | Four elements processing simultaneously occupies working memory across multiple visual focal points. A 2-second wait feels like half a second.             |
+| Phase 3 cable routing + cog alignment    | Optimal Stimulation Theory (§5)  | The most complex visual phase arrives at the moment the user has been waiting longest. Complexity peaks at maximum anticipation.                           |
+| Unique output per prompt                 | Variable Reward (§2)             | Different prompts produce different rotor positions, different cable routes, different counter values. Same machine, unpredictable output.                 |
+| Ticker tape text reveal                  | Curiosity Gap (§1)               | Characters appear one by one. The user can read ahead slightly but can't see the full message until the tape finishes.                                     |
+| Glass case reflection                    | Aesthetic-Usability Effect (§14) | The glass gives the machine perceived value. The same components without the glass look like a dashboard. With the glass, they look like a museum exhibit. |
 
 **Anti-pattern:** Repetitive animations. If the user sees the exact same rotor sequence every time, the Variable Reward dies. Rotor positions, drum spin durations, cable routing paths, and counter values must all derive from the actual prompt data — making every run visually unique.
 
@@ -108,24 +109,24 @@ The `HomepageGrid` three-column grid stays. New content passes via the existing 
 
 The X-Ray derives ALL visual content from existing Call 1, Call 2, and Call 3 responses. No new API calls. No builder modifications. This is purely a visual layer on top of data that already exists.
 
-| Phase | Data Source | Available Fields |
-|---|---|---|
-| **Phase 1** (Category Detection) | Call 1 response — dual-compatible (see §8.1) | **Current (extract mode):** 12 category arrays — which categories have content, term count per category. **v4 (assess mode):** Coverage map with `covered: boolean` + `matchedPhrases: string[]` per category. Phase 1 must consume either shape. |
-| **Phase 2** (Tier Generation) | Call 2 response (`aiTierPrompts`) | 4 tier outputs — `.positive` text, `.negative` text, word counts, character counts |
-| **Phase 3** (Platform Optimisation) | Call 3 response (`AiOptimiseResult`) | `optimised` text, `negative` text, `changes: string[]`, `charCount`, `tokenEstimate` |
+| Phase                               | Data Source                                  | Available Fields                                                                                                                                                                                                                                  |
+| ----------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Phase 1** (Category Detection)    | Call 1 response — dual-compatible (see §8.1) | **Current (extract mode):** 12 category arrays — which categories have content, term count per category. **v4 (assess mode):** Coverage map with `covered: boolean` + `matchedPhrases: string[]` per category. Phase 1 must consume either shape. |
+| **Phase 2** (Tier Generation)       | Call 2 response (`aiTierPrompts`)            | 4 tier outputs — `.positive` text, `.negative` text, word counts, character counts                                                                                                                                                                |
+| **Phase 3** (Platform Optimisation) | Call 3 response (`AiOptimiseResult`)         | `optimised` text, `negative` text, `changes: string[]`, `charCount`, `tokenEstimate`                                                                                                                                                              |
 
 ### Derived Metrics (Client-Side Computation)
 
 These are computed from the existing data at render time — not stored or transmitted:
 
-| Metric | Derivation | Visual Use |
-|---|---|---|
-| Categories detected (count) | Count non-empty arrays in Call 1 response | Number of rotors that lock |
-| Category richness (per-category) | Term count per category (1 = thin, 3+ = rich) | Rotor "depth" indicator |
-| Tier word counts | `prompt.split(/\s+/).length` on each tier's `.positive` | Drum counter display |
-| Optimisation delta | Compare assembled vs optimised text length | Cable routing distance |
-| Changes count | `changes.length` from Call 3 | Number of cog alignments |
-| Character budget usage | `charCount / maxChars × 100` | Gauge fill percentage |
+| Metric                           | Derivation                                              | Visual Use                 |
+| -------------------------------- | ------------------------------------------------------- | -------------------------- |
+| Categories detected (count)      | Count non-empty arrays in Call 1 response               | Number of rotors that lock |
+| Category richness (per-category) | Term count per category (1 = thin, 3+ = rich)           | Rotor "depth" indicator    |
+| Tier word counts                 | `prompt.split(/\s+/).length` on each tier's `.positive` | Drum counter display       |
+| Optimisation delta               | Compare assembled vs optimised text length              | Cable routing distance     |
+| Changes count                    | `changes.length` from Call 3                            | Number of cog alignments   |
+| Character budget usage           | `charCount / maxChars × 100`                            | Gauge fill percentage      |
 
 ---
 
@@ -211,14 +212,14 @@ The Decoder must consume **either** shape:
 ```typescript
 // Normalised input the Decoder actually uses
 interface DecoderCategoryInput {
-  category: string;        // 'subject', 'lighting', etc.
-  detected: boolean;       // true if Call 1 found content
-  richness: number;        // 0 = not detected, 1–3+ = term/phrase count
+  category: string; // 'subject', 'lighting', etc.
+  detected: boolean; // true if Call 1 found content
+  richness: number; // 0 = not detected, 1–3+ = term/phrase count
 }
 
 // Adapter: extract mode (current)
 function fromExtract(data: ParsedCategories): DecoderCategoryInput[] {
-  return CATEGORY_NAMES.map(cat => ({
+  return CATEGORY_NAMES.map((cat) => ({
     category: cat,
     detected: data[cat].length > 0,
     richness: data[cat].length,
@@ -227,7 +228,7 @@ function fromExtract(data: ParsedCategories): DecoderCategoryInput[] {
 
 // Adapter: assess mode (v4)
 function fromAssess(data: CoverageAssessmentResponse): DecoderCategoryInput[] {
-  return CATEGORY_NAMES.map(cat => ({
+  return CATEGORY_NAMES.map((cat) => ({
     category: cat,
     detected: data.coverage[cat]?.covered ?? false,
     richness: data.coverage[cat]?.matchedPhrases?.length ?? 0,
@@ -288,10 +289,14 @@ This is Variable Reward — the user sees different rotor configurations for eve
    - T4: `#fb923c` (orange-400)
 
 3. **Mechanical counters** — at the right end of each bar, a word count appears in a split-flap display style:
-   - Numbers "flip" from 000 to the actual count over 600ms
-   - Each digit flips independently (tens column stabilises before units)
-   - Font: monospace, amber glow effect (`text-shadow: 0 0 6px rgba(251, 191, 36, 0.3)`)
-   - The flipping animation uses `rotateX()` — each digit rotates on its X-axis as it changes, like an airport departure board
+   - Numbers are **white** (`#FFFFFF`), **normal weight** (`fontWeight: 400`) — not tier-coloured, not bold
+   - The suffix " words" is also **white** (`#FFFFFF`) — not muted brass
+   - Numbers "flip" from 000 to the actual count over 600ms with `rotateX()` axis rotation
+   - Font: monospace (`SF Mono`, `Fira Code`, `Cascadia Code`)
+   - Subtle amber glow: `text-shadow: 0 0 6px rgba(251, 191, 36, 0.3)` (cosmetic warmth)
+   - **Balanced gaps:** The flex gap between tier label → bar → word count is `clamp(10px, 0.9vw, 16px)` — matching the glass case padding. This ensures edge→T1, bar→numbers, and words→edge are all equal.
+   - Word count container has `width: 'auto'` (not fixed width) to prevent text hitting the right edge
+   - Tier labels are `textAlign: 'left'` to sit flush with the glass case padding edge
 
    ```
    T1 ▓▓▓▓▓▓░░  127 words
@@ -341,6 +346,7 @@ This is the peak moment. The most complex visual phase arrives at the moment of 
    **Phase 3 time budget: 3.5 seconds maximum.** If cog count × stagger + teletype would exceed this budget, batch remaining cogs: show them simultaneously with a single summary teletype line. This prevents Phase 3 from feeling ceremonial when `changes[]` is long.
 
    Example:
+
    ```
    ⚙ Subject-front restructure applied
    ⚙ Atmosphere anchors expanded to 3 terms
@@ -358,9 +364,11 @@ This is the peak moment. The most complex visual phase arrives at the moment of 
 4. **If `changes[]` is empty** (prompt was already optimal): A single cog spins and locks with the text "Prompt already optimised — no adaptations needed" in emerald. The gauge still fills. One cog, not zero — the machine still did something.
 
 5. **Ticker tape conclusion** (after gauge completes): The final summary line types out:
+
    ```
    ✓ {changes.length} adaptations · {charCount} chars · {tokenEstimate} tokens
    ```
+
    The `✓` is emerald. The rest is amber. The line appears via teletype at 30ms per character — slow enough to read, fast enough to feel mechanical.
 
 6. **All cogs settle** (final moment): Once the ticker tape finishes, all gear icons in Phase 3 brighten simultaneously — a single coordinated brightness pulse (`filter: brightness(1) → brightness(1.2) → brightness(1)` over 200ms). Subtle, not theatrical. The Alignment section header brightens to full brass. This is the "machine has finished" signal — brief, not a performance.
@@ -378,59 +386,50 @@ The SVG cable from Switchboard to Alignment becomes platform-aware in Phase 3:
 
 ## 11. The Glass Case — Container Aesthetic
 
-The right rail's panel chrome changes from the standard `rounded-3xl bg-slate-950/70 ring-1 ring-white/10` to the glass case style. This is passed via the `rightRailClassName` prop on `HomepageGrid`.
+The right rail's panel chrome uses the glass case style, applied via inline styles in `pipeline-xray.tsx`. The `rightRailClassName` prop on `HomepageGrid` is also used for additional class overrides.
 
-### CSS Implementation
+### Inline Style Implementation (from `pipeline-xray.tsx`)
 
-```css
-/* The glass case — outermost container */
-.glass-case {
-  border-radius: clamp(12px, 1.2vw, 20px);
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.025) 0%,
-      transparent 20%
-    ),
-    rgba(2, 6, 23, 0.85);  /* slate-950 at 85% — slightly more transparent than standard */
-  box-shadow:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.04),  /* top glass reflection */
-    inset 0 -1px 0 0 rgba(0, 0, 0, 0.3),         /* bottom shadow */
-    0 0 0 1px rgba(184, 115, 51, 0.12),            /* brass frame ring */
-    0 0 20px rgba(184, 115, 51, 0.03);             /* very faint brass ambient */
-}
-
-/* When the machine is processing (any phase active) */
-.glass-case--active {
-  box-shadow:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.06),
-    inset 0 -1px 0 0 rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(184, 115, 51, 0.25),            /* brass ring brightens */
-    0 0 30px rgba(251, 191, 36, 0.04);             /* warm amber ambient glow */
-  transition: box-shadow 600ms ease;
-}
+```typescript
+style={{
+  display: 'flex',
+  flexDirection: 'column',
+  flex: '1 1 0',
+  minHeight: 0,
+  gap: 'clamp(10px, 0.9vw, 16px)',
+  borderRadius: 'clamp(12px, 1.2vw, 20px)',
+  backgroundColor: '#0A0D14',         // solid dark — slightly warmer than slate-950
+  border: '1px solid #F97316',        // continuous orange border around entire unit
+  boxShadow: [
+    'inset 0 1px 0 0 rgba(255, 255, 255, 0.06)',  // top glass reflection edge
+    'inset 0 -1px 0 0 rgba(0, 0, 0, 0.4)',         // bottom shadow
+    '0 0 16px #1A1208',                              // warm ambient glow
+  ].join(', '),
+  padding: 'clamp(10px, 0.9vw, 16px)',
+  backgroundImage: [
+    'radial-gradient(circle at 20% 50%, #1A1210 0%, transparent 50%)',
+    'radial-gradient(circle at 80% 30%, #181310 0%, transparent 40%)',
+  ].join(', '),
+}}
 ```
 
-The glass effect is subtle. At rest, the rail looks almost standard but with a slightly warmer tone. When processing, the brass frame brightens and a warm glow appears — the machine is powered on.
+**Key design decisions (verified in code):**
 
-### Internal "Back Panel"
+- **Continuous orange border** (`#F97316`) around the entire glass case — no individual section borders. The Decoder, Switchboard, and Alignment sections sit inside this single container.
+- **Solid background** (`#0A0D14`) — not rgba transparency. This ensures the dark background is consistent regardless of what's behind the rail.
+- **Internal "back panel"** — two subtle radial gradients create a warm tint suggesting the machine's internal panel. Solid hex colours (`#1A1210`, `#181310`), not rgba.
+- **Padding** matches the flex gap: `clamp(10px, 0.9vw, 16px)`. This ensures the gap between content and the glass edge equals the gap between sections.
+- **Scrollable** — `overflow-y-auto` with thin scrollbar styling. Content scrolls within the glass case if it overflows.
 
-Behind the three phase sections, a very faint texture suggests the internal panel of the machine:
+### Section Wiring
 
-```css
-.glass-case-interior {
-  background-image:
-    radial-gradient(
-      circle at 20% 50%,
-      rgba(184, 115, 51, 0.02) 0%,
-      transparent 50%
-    ),
-    radial-gradient(
-      circle at 80% 30%,
-      rgba(251, 191, 36, 0.015) 0%,
-      transparent 40%
-    );
-}
+Between each section (Decoder → Switchboard → Alignment), a thin vertical brass wire connects them:
+
+```typescript
+// SectionWire component
+width: '1px',
+height: 'clamp(10px, 1vw, 16px)',
+backgroundColor: '#5C4328',  // visible brass wire
 ```
 
 Two faint radial gradients in brass/amber create the impression of internal structure without being distracting. These are static — no animation.
@@ -441,17 +440,17 @@ Two faint radial gradients in brass/amber create the impression of internal stru
 
 The X-Ray uses a restricted palette that evokes WWII-era instrumentation. This is a deliberate departure from Promagen's standard purple/pink/cyan vocabulary — the machine is its own visual world behind the glass.
 
-| Colour | Hex | Usage |
-|---|---|---|
-| **Brass** | `#B87333` | Section headers, frame ring, structural elements. The "metal" of the machine. |
-| **Copper** | `#CD7F32` | Rotor rings (idle), cable outlines, gauge track. Warmer than brass for smaller details. |
-| **Active Amber** | `#FBBF24` | Processing states, spinning elements, data flow dots. The "powered on" colour. |
-| **Warm Amber** | `#FCD34D` | Teletype text, counter digits, summary lines. The "output" colour. |
-| **Lock Emerald** | `#34D399` | Rotor lock state, cog lock state, completion indicators. "This part is done." |
-| **Tier Colours** | Blue/Purple/Emerald/Orange | Switchboard bars, platform badge, cable routing. Tier identity inside the machine. |
-| **Category Colours** | 13-colour SSOT | Rotor lock colours (each category's rotor locks to its own colour). Identity through the machine. |
-| **Dim Brass** | `rgba(184, 115, 51, 0.15)` | Dormant state elements. "The machine exists but isn't running." |
-| **Glass Reflection** | `rgba(255, 255, 255, 0.025)` | Top edge gradient. "You're looking through glass." |
+| Colour               | Hex                          | Usage                                                                                             |
+| -------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------- |
+| **Brass**            | `#B87333`                    | Section headers, frame ring, structural elements. The "metal" of the machine.                     |
+| **Copper**           | `#CD7F32`                    | Rotor rings (idle), cable outlines, gauge track. Warmer than brass for smaller details.           |
+| **Active Amber**     | `#FBBF24`                    | Processing states, spinning elements, data flow dots. The "powered on" colour.                    |
+| **Warm Amber**       | `#FCD34D`                    | Teletype text, counter digits, summary lines. The "output" colour.                                |
+| **Lock Emerald**     | `#34D399`                    | Rotor lock state, cog lock state, completion indicators. "This part is done."                     |
+| **Tier Colours**     | Blue/Purple/Emerald/Orange   | Switchboard bars, platform badge, cable routing. Tier identity inside the machine.                |
+| **Category Colours** | 13-colour SSOT               | Rotor lock colours (each category's rotor locks to its own colour). Identity through the machine. |
+| **Dim Brass**        | `rgba(184, 115, 51, 0.15)`   | Dormant state elements. "The machine exists but isn't running."                                   |
+| **Glass Reflection** | `rgba(255, 255, 255, 0.025)` | Top edge gradient. "You're looking through glass."                                                |
 
 **Rule:** No purple, pink, or cyan inside the glass case (those are Promagen UI colours, not machine colours). The only exceptions are category colours on rotor locks (which must match `prompt-colours.ts`) and tier colours on the switchboard bars (which must match `TIER_META`).
 
@@ -465,14 +464,14 @@ Every animation inside the glass case must feel **mechanical** — weight, inert
 
 ### Easing Curves
 
-| Motion Type | CSS Easing | Feel |
-|---|---|---|
-| Rotor spin-up | `cubic-bezier(0.2, 0, 0.8, 1)` | Heavy start, building momentum |
-| Rotor lock (deceleration) | `cubic-bezier(0, 0, 0.2, 1)` | Rapid deceleration, decisive stop |
-| Bar fill | `cubic-bezier(0.4, 0, 0.2, 1)` | Standard material motion |
-| Cog spin + lock | `cubic-bezier(0.1, 0, 0.3, 1)` | Weighted rotation that slows with resistance |
-| Gauge fill | `cubic-bezier(0.4, 0, 0, 1)` | Fast start, slow precision fill to exact value |
-| Scale pop (lock moment) | `cubic-bezier(0.34, 1.56, 0.64, 1)` | Slight overshoot then settle — the mechanical "clunk" |
+| Motion Type               | CSS Easing                          | Feel                                                  |
+| ------------------------- | ----------------------------------- | ----------------------------------------------------- |
+| Rotor spin-up             | `cubic-bezier(0.2, 0, 0.8, 1)`      | Heavy start, building momentum                        |
+| Rotor lock (deceleration) | `cubic-bezier(0, 0, 0.2, 1)`        | Rapid deceleration, decisive stop                     |
+| Bar fill                  | `cubic-bezier(0.4, 0, 0.2, 1)`      | Standard material motion                              |
+| Cog spin + lock           | `cubic-bezier(0.1, 0, 0.3, 1)`      | Weighted rotation that slows with resistance          |
+| Gauge fill                | `cubic-bezier(0.4, 0, 0, 1)`        | Fast start, slow precision fill to exact value        |
+| Scale pop (lock moment)   | `cubic-bezier(0.34, 1.56, 0.64, 1)` | Slight overshoot then settle — the mechanical "clunk" |
 
 ### Co-Located Keyframes
 
@@ -481,63 +480,124 @@ All keyframes live in a single `<style dangerouslySetInnerHTML>` block in the ro
 ```css
 /* Rotor idle breathing — each rotor gets a random animation-delay */
 @keyframes xray-rotor-breathe {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(3deg); }
-  75% { transform: rotate(-3deg); }
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(3deg);
+  }
+  75% {
+    transform: rotate(-3deg);
+  }
 }
 
 /* Rotor spin-up when processing starts */
 @keyframes xray-rotor-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(720deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(720deg);
+  }
 }
 
 /* Scale pop when a rotor/cog locks */
 @keyframes xray-lock-pop {
-  0% { transform: scale(1.0); }
-  50% { transform: scale(1.15); }
-  100% { transform: scale(1.0); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* Split-flap digit flip */
 @keyframes xray-digit-flip {
-  0% { transform: rotateX(0deg); opacity: 1; }
-  50% { transform: rotateX(-90deg); opacity: 0; }
-  51% { transform: rotateX(90deg); opacity: 0; }
-  100% { transform: rotateX(0deg); opacity: 1; }
+  0% {
+    transform: rotateX(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: rotateX(-90deg);
+    opacity: 0;
+  }
+  51% {
+    transform: rotateX(90deg);
+    opacity: 0;
+  }
+  100% {
+    transform: rotateX(0deg);
+    opacity: 1;
+  }
 }
 
 /* Cog spin before locking */
 @keyframes xray-cog-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(180deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(180deg);
+  }
 }
 
 /* Data dot travelling along cable */
 @keyframes xray-data-dot {
-  0% { transform: translateY(0); opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
-  100% { transform: translateY(var(--cable-length)); opacity: 0; }
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(var(--cable-length));
+    opacity: 0;
+  }
 }
 
 /* Gauge fill shimmer */
 @keyframes xray-gauge-shimmer {
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
 }
 
 /* Synchronized cog pulse (final alignment) */
 @keyframes xray-alignment-pulse {
-  0% { transform: scale(1.0); filter: brightness(1); }
-  50% { transform: scale(1.08); filter: brightness(1.3); }
-  100% { transform: scale(1.0); filter: brightness(1); }
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.08);
+    filter: brightness(1.3);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
 }
 
 /* Teletype cursor blink */
 @keyframes xray-cursor-blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
 }
 
 /* prefers-reduced-motion: disable all rotation/translation */
@@ -563,15 +623,15 @@ All keyframes live in a single `<style dangerouslySetInnerHTML>` block in the ro
 
 Animations must derive timing and values from the actual data, ensuring no two runs look identical:
 
-| Variable | Source | Visual Effect |
-|---|---|---|
-| Rotor lock angle | Term count per category | Different rotors stop at different positions |
-| Rotor lock stagger | Order of categories in Call 1 response | Different cascade sequence each time |
-| Bar fill width | Word count per tier | Different proportions in the switchboard |
-| Counter target values | Actual word counts | Different numbers flip to |
-| Cog count | `changes.length` from Call 3 | 0–6 cogs appear (different every time) |
-| Gauge fill percentage | `charCount / maxChars` | Different fill level |
-| Cable colour | Selected platform's tier colour | Blue/purple/emerald/orange routing |
+| Variable              | Source                                 | Visual Effect                                |
+| --------------------- | -------------------------------------- | -------------------------------------------- |
+| Rotor lock angle      | Term count per category                | Different rotors stop at different positions |
+| Rotor lock stagger    | Order of categories in Call 1 response | Different cascade sequence each time         |
+| Bar fill width        | Word count per tier                    | Different proportions in the switchboard     |
+| Counter target values | Actual word counts                     | Different numbers flip to                    |
+| Cog count             | `changes.length` from Call 3           | 0–6 cogs appear (different every time)       |
+| Gauge fill percentage | `charCount / maxChars`                 | Different fill level                         |
+| Cable colour          | Selected platform's tier colour        | Blue/purple/emerald/orange routing           |
 
 ---
 
@@ -612,11 +672,11 @@ The Glass Case has multiple concurrent animations (rotors, bars, counters, cable
 
 ### Three Rendering Tiers
 
-| Tier | Name | Trigger | What's Active | What's Removed |
-|---|---|---|---|---|
-| **Full** | All effects | Default on modern hardware | Everything: rotor spin, split-flap counters, SVG cable dots, teletype, cog cascade, idle breathing, glass reflections | Nothing |
-| **Reduced** | Core + simplifications | `prefers-reduced-motion: reduce` OR detected low framerate (<30fps for 500ms) | Rotors: instant lock (no spin). Bars: instant fill (no animation). Counters: final value shown (no flip). Cables: static lines (no data dots). Teletype: 2× speed (12ms/char). Cogs: instant appear (no spin). Idle breathing: disabled. | Rotor spin-up, split-flap flip, data dot travel, cog spin, idle breathing, glass case glow transitions |
-| **Minimal** | Information only | Very low framerate (<15fps for 1s) OR `navigator.hardwareConcurrency <= 2` | Static display: all phases show final state immediately when data arrives. No animation. Category dots show detected/not as coloured/dim. Bars show final width. Cogs show as static emerald dots. | All animation. Teletype replaced with instant text. Split-flap replaced with plain numbers. Cables as thin static lines. |
+| Tier        | Name                   | Trigger                                                                       | What's Active                                                                                                                                                                                                                            | What's Removed                                                                                                           |
+| ----------- | ---------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| **Full**    | All effects            | Default on modern hardware                                                    | Everything: rotor spin, split-flap counters, SVG cable dots, teletype, cog cascade, idle breathing, glass reflections                                                                                                                    | Nothing                                                                                                                  |
+| **Reduced** | Core + simplifications | `prefers-reduced-motion: reduce` OR detected low framerate (<30fps for 500ms) | Rotors: instant lock (no spin). Bars: instant fill (no animation). Counters: final value shown (no flip). Cables: static lines (no data dots). Teletype: 2× speed (12ms/char). Cogs: instant appear (no spin). Idle breathing: disabled. | Rotor spin-up, split-flap flip, data dot travel, cog spin, idle breathing, glass case glow transitions                   |
+| **Minimal** | Information only       | Very low framerate (<15fps for 1s) OR `navigator.hardwareConcurrency <= 2`    | Static display: all phases show final state immediately when data arrives. No animation. Category dots show detected/not as coloured/dim. Bars show final width. Cogs show as static emerald dots.                                       | All animation. Teletype replaced with instant text. Split-flap replaced with plain numbers. Cables as thin static lines. |
 
 ### Framerate Detection
 
@@ -648,24 +708,24 @@ Maximum DOM elements inside the Glass Case at any time: ~80 at peak (Phase 3 act
 
 ## 15. Edge Cases
 
-| Edge Case | Behaviour |
-|---|---|
-| **User regenerates prompt** | Phase 1 rotors spin back to neutral (200ms), then re-lock with new data. Phases 2–3 clear and rebuild. The machine "resets and reprocesses" — not a clean wipe, a mechanical reset. |
-| **Call 1 fails** | Phase 1 rotors slow-stop in random positions (no lock). Section header shows "DECODER · signal lost" in rose. Phases 2–3 stay dormant. |
-| **Call 2 fails** | Phase 1 stays locked. Phase 2 bars flash once in rose then return to dim. "SWITCHBOARD · generation failed" in rose. Phase 3 stays dormant. |
-| **Call 3 not triggered** | Phases 1–2 complete normally. Phase 3 stays dormant with breathing idle animation. The Zeigarnik Effect does work — the incomplete machine nags. |
-| **Call 3 fails** | Phases 1–2 stay locked. Phase 3 platform badge appears but cogs spin and fail to lock — they slow-stop at random angles in rose. "ALIGNMENT · calibration failed" in rose. |
-| **Call 3 returns empty `changes[]`** | One cog still spins and locks ("Prompt already optimised"). The machine always does *something* — it never feels like it didn't try. |
-| **Platform switch after Phase 3** | Phase 3 clears (cogs spin back to neutral). When Call 3 re-fires, Phase 3 rebuilds for the new platform. Phases 1–2 remain stable. Cable colour changes to new platform's tier. |
-| **Very long `changes[]` (6+ items)** | Show first 4 cogs individually. Remaining entries collapse to "… and {N} more adaptations" in amber. Phase 3 time budget (3.5s) enforced — if stagger would exceed budget, batch remaining cogs. |
-| **All 12 categories detected** | All rotors lock in their category colours. Summary shows "12 of 12 categories decoded" in emerald with a brightness pulse — all rotors flash simultaneously. |
-| **Rapid generation (Call 1 + 2 complete in <500ms)** | Enforce minimum Phase 1 display time of 800ms before Phase 2 begins. |
-| **New generation while animation is in-flight** | **Cancellation model:** All in-flight animations cancelled immediately. Animated elements snap to idle/neutral state (no partial locks, no half-filled bars). New generation's Phase 1 begins fresh. No queueing — new generation always wins. Stale animations must never complete after new data arrives. Implementation: each generation gets a monotonic `generationId`; animation callbacks check their `generationId` against current before executing any state update. |
-| **Data snapshot ownership** | Each generation captures a frozen data snapshot at generation start. Phase 1 reads from its generation's Call 1 snapshot. Phase 2 reads from its generation's Call 2 snapshot. Phase 3 reads from its generation's Call 3 snapshot. Later-arriving upstream data from a different generation never mutates an in-flight visualisation. The snapshot is the generation's ground truth. |
-| **Call 2 arrives while Phase 1 still animating** | Phase 2 data is buffered. Phase 2 begins only after Phase 1's minimum display time (800ms) has elapsed AND the last Phase 1 rotor has locked. If Phase 1 finishes before Call 2 returns, the Switchboard holds in dormant state with locked Decoder above. |
-| **Call 3 data stale (prompt edited after Call 3 fired)** | The drift indicator in the centre column flags this. The X-Ray shows the Phase 3 data that Call 3 returned — it does not detect staleness itself. Centre column owns that responsibility. |
-| **Container height overflow** | Glass Case has `overflow-y: auto` with standard Promagen scrollbar. Phase 0 + 1 + 2 fit without scrolling. Phase 3 with 4+ cogs may scroll. The gauge and ticker tape must always be visible on scroll — if cogs push them below the fold, cap visible cogs at 3 and collapse the rest. |
-| **Low-end device** | Performance degradation ladder (§14.1) activates. Minimal tier: all phases show final state immediately with no animation. The Glass Case still shows the data — it just doesn't perform. |
+| Edge Case                                                | Behaviour                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **User regenerates prompt**                              | Phase 1 rotors spin back to neutral (200ms), then re-lock with new data. Phases 2–3 clear and rebuild. The machine "resets and reprocesses" — not a clean wipe, a mechanical reset.                                                                                                                                                                                                                                                                                            |
+| **Call 1 fails**                                         | Phase 1 rotors slow-stop in random positions (no lock). Section header shows "DECODER · signal lost" in rose. Phases 2–3 stay dormant.                                                                                                                                                                                                                                                                                                                                         |
+| **Call 2 fails**                                         | Phase 1 stays locked. Phase 2 bars flash once in rose then return to dim. "SWITCHBOARD · generation failed" in rose. Phase 3 stays dormant.                                                                                                                                                                                                                                                                                                                                    |
+| **Call 3 not triggered**                                 | Phases 1–2 complete normally. Phase 3 stays dormant with breathing idle animation. The Zeigarnik Effect does work — the incomplete machine nags.                                                                                                                                                                                                                                                                                                                               |
+| **Call 3 fails**                                         | Phases 1–2 stay locked. Phase 3 platform badge appears but cogs spin and fail to lock — they slow-stop at random angles in rose. "ALIGNMENT · calibration failed" in rose.                                                                                                                                                                                                                                                                                                     |
+| **Call 3 returns empty `changes[]`**                     | One cog still spins and locks ("Prompt already optimised"). The machine always does _something_ — it never feels like it didn't try.                                                                                                                                                                                                                                                                                                                                           |
+| **Platform switch after Phase 3**                        | Phase 3 clears (cogs spin back to neutral). When Call 3 re-fires, Phase 3 rebuilds for the new platform. Phases 1–2 remain stable. Cable colour changes to new platform's tier.                                                                                                                                                                                                                                                                                                |
+| **Very long `changes[]` (6+ items)**                     | Show first 4 cogs individually. Remaining entries collapse to "… and {N} more adaptations" in amber. Phase 3 time budget (3.5s) enforced — if stagger would exceed budget, batch remaining cogs.                                                                                                                                                                                                                                                                               |
+| **All 12 categories detected**                           | All rotors lock in their category colours. Summary shows "12 of 12 categories decoded" in emerald with a brightness pulse — all rotors flash simultaneously.                                                                                                                                                                                                                                                                                                                   |
+| **Rapid generation (Call 1 + 2 complete in <500ms)**     | Enforce minimum Phase 1 display time of 800ms before Phase 2 begins.                                                                                                                                                                                                                                                                                                                                                                                                           |
+| **New generation while animation is in-flight**          | **Cancellation model:** All in-flight animations cancelled immediately. Animated elements snap to idle/neutral state (no partial locks, no half-filled bars). New generation's Phase 1 begins fresh. No queueing — new generation always wins. Stale animations must never complete after new data arrives. Implementation: each generation gets a monotonic `generationId`; animation callbacks check their `generationId` against current before executing any state update. |
+| **Data snapshot ownership**                              | Each generation captures a frozen data snapshot at generation start. Phase 1 reads from its generation's Call 1 snapshot. Phase 2 reads from its generation's Call 2 snapshot. Phase 3 reads from its generation's Call 3 snapshot. Later-arriving upstream data from a different generation never mutates an in-flight visualisation. The snapshot is the generation's ground truth.                                                                                          |
+| **Call 2 arrives while Phase 1 still animating**         | Phase 2 data is buffered. Phase 2 begins only after Phase 1's minimum display time (800ms) has elapsed AND the last Phase 1 rotor has locked. If Phase 1 finishes before Call 2 returns, the Switchboard holds in dormant state with locked Decoder above.                                                                                                                                                                                                                     |
+| **Call 3 data stale (prompt edited after Call 3 fired)** | The drift indicator in the centre column flags this. The X-Ray shows the Phase 3 data that Call 3 returned — it does not detect staleness itself. Centre column owns that responsibility.                                                                                                                                                                                                                                                                                      |
+| **Container height overflow**                            | Glass Case has `overflow-y: auto` with standard Promagen scrollbar. Phase 0 + 1 + 2 fit without scrolling. Phase 3 with 4+ cogs may scroll. The gauge and ticker tape must always be visible on scroll — if cogs push them below the fold, cap visible cogs at 3 and collapse the rest.                                                                                                                                                                                        |
+| **Low-end device**                                       | Performance degradation ladder (§14.1) activates. Minimal tier: all phases show final state immediately with no animation. The Glass Case still shows the data — it just doesn't perform.                                                                                                                                                                                                                                                                                      |
 
 ---
 
@@ -691,23 +751,32 @@ No interactive elements in the X-Ray. It is display-only. No focus traps, no tab
 
 ## 17. File Map
 
-| File | Purpose | New/Modified |
-|---|---|---|
-| `src/components/prompt-lab/pipeline-xray.tsx` | Root X-Ray component — glass case container + 3 phase sections | NEW |
-| `src/components/prompt-lab/xray-decoder.tsx` | Phase 1: 12 category rotors | NEW |
-| `src/components/prompt-lab/xray-switchboard.tsx` | Phase 2: 4 tier drum bars + counters | NEW |
-| `src/components/prompt-lab/xray-alignment.tsx` | Phase 3: platform badge + cog cascade + gauge + ticker tape | NEW |
-| `src/components/prompt-lab/xray-teletype.tsx` | Shared teletype text reveal component | NEW |
-| `src/components/prompt-lab/xray-cable.tsx` | SVG cable + data dot animation between sections | NEW |
-| `src/components/prompt-lab/xray-split-flap.tsx` | Split-flap mechanical counter digit component | NEW |
-| `src/lib/pipeline-xray/derive-metrics.ts` | Client-side metric computation from Call 1/2/3 data + v4 adapter functions | NEW |
-| `src/lib/pipeline-xray/types.ts` | TypeScript types for X-Ray state + derived metrics | NEW |
-| `src/app/studio/playground/playground-page-client.tsx` | Pass new `rightContent` to HomepageGrid + `rightRailClassName` for glass case | MODIFIED |
+| File                                                    | Purpose                                                              | Status                                    |
+| ------------------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------- |
+| `src/components/prompt-lab/pipeline-xray.tsx`           | Root X-Ray component — glass case container, 3 sections, SectionWire | **ACTIVE** (8,800 lines, modified 5 Apr)  |
+| `src/components/prompt-lab/xray-decoder.tsx`            | Phase 1: 12 category rotors                                          | **ACTIVE** (14,402 lines, modified 5 Apr) |
+| `src/components/prompt-lab/xray-switchboard.tsx`        | Phase 2: 4 tier bars + white split-flap counters                     | **ACTIVE** (11,024 lines, modified 6 Apr) |
+| `src/components/prompt-lab/xray-alignment.tsx`          | Phase 3: platform badge + cog cascade + capacity gauge + ticker tape | **ACTIVE** (16,234 lines, modified 5 Apr) |
+| `src/components/prompt-lab/xray-split-flap.tsx`         | Split-flap mechanical counter (white text, fontWeight 400)           | **ACTIVE** (6,436 lines, modified 6 Apr)  |
+| `src/components/prompt-lab/xray-teletype.tsx`           | Shared teletype text reveal component                                | **ACTIVE** (5,431 lines)                  |
+| `src/components/prompt-lab/algorithm-cycling.tsx`       | Call 3 algorithm cycling animation                                   | **ACTIVE** (8,850 lines)                  |
+| `src/components/prompt-lab/tier-generation-cycling.tsx` | Call 2 tier generation cycling animation                             | **ACTIVE** (10,776 lines)                 |
+| `src/components/prompt-lab/drift-indicator.tsx`         | Text change drift detection indicator                                | **ACTIVE** (4,666 lines)                  |
+| `src/components/prompt-lab/anchor-survival-panel.tsx`   | Anchor preservation display                                          | **ACTIVE** (7,992 lines)                  |
+| `src/components/prompt-lab/xray-score.tsx`              | Killed Call 4 score display                                          | **DEAD CODE** — delete                    |
+| `src/app/studio/playground/playground-page-client.tsx`  | Wires `PipelineXRay` into right content slot + `rightRailClassName`  | MODIFIED                                  |
+
+**Planned files that were never created (design absorbed into existing components):**
+
+- `xray-cable.tsx` — cable animation between sections replaced by `SectionWire` in `pipeline-xray.tsx`
+- `src/lib/pipeline-xray/derive-metrics.ts` — metric computation done inline in each component
+- `src/lib/pipeline-xray/types.ts` — types imported directly from existing type files
 
 **No modifications to:**
+
 - `HomepageGrid` (uses existing `rightContent` + `rightRailClassName` props)
 - Any Call 1/2/3 routes or hooks
-- Any of the 43 builder files
+- Any of the 25 NL builder files
 - `platform-config.json`
 - `prompt-colours.ts` (imported, not modified)
 
@@ -715,18 +784,18 @@ No interactive elements in the X-Ray. It is display-only. No focus traps, no tab
 
 ## 18. Build Order
 
-| Part | What | Depends On | Estimated Lines |
-|---|---|---|---|
-| **1** | `types.ts` — X-Ray state types + derived metric types | None | ~60 |
-| **2** | `derive-metrics.ts` — Compute visual metrics from Call 1/2/3 responses | Part 1 | ~80 |
-| **3** | `xray-teletype.tsx` — Shared teletype component | None | ~100 |
-| **4** | `xray-split-flap.tsx` — Shared split-flap counter component | None | ~120 |
-| **5** | `pipeline-xray.tsx` — Glass case container + Phase 0 dormant state | Parts 1, 3 | ~200 |
-| **6** | `xray-decoder.tsx` — Phase 1: 12 category rotors with lock animation | Parts 2, 5 | ~250 |
-| **7** | `xray-cable.tsx` — SVG cable + data dot animation | Part 5 | ~100 |
-| **8** | `xray-switchboard.tsx` — Phase 2: 4 tier bars + counters | Parts 2, 4, 7 | ~250 |
-| **9** | `xray-alignment.tsx` — Phase 3: platform badge + cog cascade + gauge + ticker | Parts 2, 3, 7 | ~300 |
-| **10** | `playground-page-client.tsx` — Wire right rail + glass case className | Parts 5–9 | ~40 lines modified |
+| Part   | What                                                                          | Depends On    | Estimated Lines    |
+| ------ | ----------------------------------------------------------------------------- | ------------- | ------------------ |
+| **1**  | `types.ts` — X-Ray state types + derived metric types                         | None          | ~60                |
+| **2**  | `derive-metrics.ts` — Compute visual metrics from Call 1/2/3 responses        | Part 1        | ~80                |
+| **3**  | `xray-teletype.tsx` — Shared teletype component                               | None          | ~100               |
+| **4**  | `xray-split-flap.tsx` — Shared split-flap counter component                   | None          | ~120               |
+| **5**  | `pipeline-xray.tsx` — Glass case container + Phase 0 dormant state            | Parts 1, 3    | ~200               |
+| **6**  | `xray-decoder.tsx` — Phase 1: 12 category rotors with lock animation          | Parts 2, 5    | ~250               |
+| **7**  | `xray-cable.tsx` — SVG cable + data dot animation                             | Part 5        | ~100               |
+| **8**  | `xray-switchboard.tsx` — Phase 2: 4 tier bars + counters                      | Parts 2, 4, 7 | ~250               |
+| **9**  | `xray-alignment.tsx` — Phase 3: platform badge + cog cascade + gauge + ticker | Parts 2, 3, 7 | ~300               |
+| **10** | `playground-page-client.tsx` — Wire right rail + glass case className         | Parts 5–9     | ~40 lines modified |
 
 Parts 3–4 are shared components used across phases. Build them first.
 Part 5 (the glass case shell + dormant state) is the visual foundation. Ship it early so the aesthetic can be evaluated before building the complex animations.
@@ -764,34 +833,35 @@ Parts 6–9 are the three phases — build in order since Phase 2 depends on Pha
 
 ## 20. Decisions Log
 
-| # | Decision | Rationale | Date |
-|---|---|---|---|
-| D1 | WWII Enigma/Bombe/Colossus aesthetic, not steampunk | Steampunk is decoration. Military engineering is purposeful. Every element has a function. The machine must feel serious, not whimsical. | 2 Apr 2026 |
-| D2 | Zero new API calls — derive everything from existing responses | The X-Ray is a visualisation layer, not a data layer. Adding API calls would increase latency and cost for a display-only feature. All data already exists in Call 1/2/3 responses. | 2 Apr 2026 |
-| D3 | Glass case styling via `rightRailClassName` prop, not by modifying HomepageGrid | HomepageGrid already supports panel className overrides. No grid changes needed. | 2 Apr 2026 |
-| D4 | Brass/copper/amber palette inside the glass case | The machine needs its own visual world. Promagen's standard purple/pink/cyan would make it look like a dashboard widget, not a precision instrument. Brass evokes engineering heritage. | 2 Apr 2026 |
-| D5 | Data-derived animation parameters (rotor angles, bar widths, counter values) | Fixed animations would be repetitive. Data-driven animations make every run visually unique, which drives Variable Reward. The user watches to see what the machine does *this time*. | 2 Apr 2026 |
-| D6 | Minimum 800ms display time for Phase 1 even on fast API responses | Mechanical things take time. A machine that processes instantly doesn't look like it did anything. The enforced minimum creates the perception of serious computation. | 2 Apr 2026 |
-| D7 | Teletype text reveal instead of instant text | Teletype creates Curiosity Gap (what's the full message?) and reinforces the mechanical aesthetic. Instant text would break the metaphor. | 2 Apr 2026 |
-| D8 | No audio for mechanical sound effects | Browser autoplay policies would require user interaction. Audio would clash with the Listen button. The visual metaphor is strong enough alone. | 2 Apr 2026 |
-| D9 | ~~5-cog maximum~~ → 4-cog individual maximum + collapse | Reduced from 5 to 4 to tighten Phase 3 timing. Combined with 3.5s phase time budget to prevent ceremony. | 2 Apr 2026 |
-| D10 | Empty `changes[]` still shows one cog | The machine must always visibly do something. A Phase 3 with zero animation would feel broken. One cog with "already optimised" maintains the metaphor. | 2 Apr 2026 |
-| D11 | Phase 1 Decoder uses adapter pattern for v4 Call 1 compatibility | ChatGPT review identified contract conflict: Call 1 is moving from category arrays (extract mode) to coverage map (assess mode). Adapter pattern means the v4 flow can ship without touching X-Ray code. | 2 Apr 2026 |
-| D12 | Three-tier performance degradation ladder (full → reduced → minimal) | ChatGPT review: "no performance fallbacks." Added framerate detection, three rendering tiers, DOM budget cap. The Glass Case must degrade gracefully, never jank. | 2 Apr 2026 |
-| D13 | Phase 3 time budget: 3.5 seconds maximum | ChatGPT review: "Phase 3 is in danger of dragging." Cog stagger reduced 500→350ms. Time budget enforced — excess cogs batched. Precision, not ceremony. | 2 Apr 2026 |
-| D14 | Generation cancellation model with `generationId` | New generation immediately cancels all in-flight animations. No queueing, no stale completions. Each generation gets a monotonic ID; callbacks verify before executing. | 2 Apr 2026 |
-| D15 | Synchronized cog pulse simplified to brightness-only | ChatGPT review: "sounds satisfying on paper but often lands as overproduced." Reduced from scale+glow to a 200ms brightness pulse. Subtle, not theatrical. | 2 Apr 2026 |
+| #   | Decision                                                                        | Rationale                                                                                                                                                                                                | Date       |
+| --- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| D1  | WWII Enigma/Bombe/Colossus aesthetic, not steampunk                             | Steampunk is decoration. Military engineering is purposeful. Every element has a function. The machine must feel serious, not whimsical.                                                                 | 2 Apr 2026 |
+| D2  | Zero new API calls — derive everything from existing responses                  | The X-Ray is a visualisation layer, not a data layer. Adding API calls would increase latency and cost for a display-only feature. All data already exists in Call 1/2/3 responses.                      | 2 Apr 2026 |
+| D3  | Glass case styling via `rightRailClassName` prop, not by modifying HomepageGrid | HomepageGrid already supports panel className overrides. No grid changes needed.                                                                                                                         | 2 Apr 2026 |
+| D4  | Brass/copper/amber palette inside the glass case                                | The machine needs its own visual world. Promagen's standard purple/pink/cyan would make it look like a dashboard widget, not a precision instrument. Brass evokes engineering heritage.                  | 2 Apr 2026 |
+| D5  | Data-derived animation parameters (rotor angles, bar widths, counter values)    | Fixed animations would be repetitive. Data-driven animations make every run visually unique, which drives Variable Reward. The user watches to see what the machine does _this time_.                    | 2 Apr 2026 |
+| D6  | Minimum 800ms display time for Phase 1 even on fast API responses               | Mechanical things take time. A machine that processes instantly doesn't look like it did anything. The enforced minimum creates the perception of serious computation.                                   | 2 Apr 2026 |
+| D7  | Teletype text reveal instead of instant text                                    | Teletype creates Curiosity Gap (what's the full message?) and reinforces the mechanical aesthetic. Instant text would break the metaphor.                                                                | 2 Apr 2026 |
+| D8  | No audio for mechanical sound effects                                           | Browser autoplay policies would require user interaction. Audio would clash with the Listen button. The visual metaphor is strong enough alone.                                                          | 2 Apr 2026 |
+| D9  | ~~5-cog maximum~~ → 4-cog individual maximum + collapse                         | Reduced from 5 to 4 to tighten Phase 3 timing. Combined with 3.5s phase time budget to prevent ceremony.                                                                                                 | 2 Apr 2026 |
+| D10 | Empty `changes[]` still shows one cog                                           | The machine must always visibly do something. A Phase 3 with zero animation would feel broken. One cog with "already optimised" maintains the metaphor.                                                  | 2 Apr 2026 |
+| D11 | Phase 1 Decoder uses adapter pattern for v4 Call 1 compatibility                | ChatGPT review identified contract conflict: Call 1 is moving from category arrays (extract mode) to coverage map (assess mode). Adapter pattern means the v4 flow can ship without touching X-Ray code. | 2 Apr 2026 |
+| D12 | Three-tier performance degradation ladder (full → reduced → minimal)            | ChatGPT review: "no performance fallbacks." Added framerate detection, three rendering tiers, DOM budget cap. The Glass Case must degrade gracefully, never jank.                                        | 2 Apr 2026 |
+| D13 | Phase 3 time budget: 3.5 seconds maximum                                        | ChatGPT review: "Phase 3 is in danger of dragging." Cog stagger reduced 500→350ms. Time budget enforced — excess cogs batched. Precision, not ceremony.                                                  | 2 Apr 2026 |
+| D14 | Generation cancellation model with `generationId`                               | New generation immediately cancels all in-flight animations. No queueing, no stale completions. Each generation gets a monotonic ID; callbacks verify before executing.                                  | 2 Apr 2026 |
+| D15 | Synchronized cog pulse simplified to brightness-only                            | ChatGPT review: "sounds satisfying on paper but often lands as overproduced." Reduced from scale+glow to a 200ms brightness pulse. Subtle, not theatrical.                                               | 2 Apr 2026 |
 
 ---
 
 ## Changelog
 
+- **6 Apr 2026 (v2.0.0):** **DEPLOYMENT UPDATE — doc now reflects deployed code from src.zip.** Status changed from "Ready to build" to "DEPLOYED". (1) §11 Glass Case: Complete rewrite — CSS class spec replaced with actual inline styles from `pipeline-xray.tsx`. Continuous orange border (`1px solid #F97316`) documented. Solid background `#0A0D14` (not rgba). SectionWire component documented. (2) §9 Switchboard: Split-flap counters are white `#FFFFFF` with `fontWeight: 400` (not tier-coloured, not bold). Suffix " words" is white (not muted brass). Flex gap `clamp(10px, 0.9vw, 16px)` matches glass case padding for balanced gaps. Tier labels left-aligned. Word count container auto-width. (3) §17 File Map: Rebuilt from actual src.zip. Added 4 active files not in original spec (`algorithm-cycling.tsx`, `tier-generation-cycling.tsx`, `drift-indicator.tsx`, `anchor-survival-panel.tsx`). Removed 3 planned files that were never created (`xray-cable.tsx`, `derive-metrics.ts`, `types.ts`). `xray-score.tsx` flagged as dead code. Builder count corrected from 43 to 25 NL. (4) All section headers now have `marginBottom: 'clamp(6px, 0.5vw, 10px)'` — not documented in v1.2.0. (5) Score killed: `XRayScore` removed from pipeline on 3 Apr (was undocumented in v1.2.0). Right rail is now 3 sections only: Decoder → Switchboard → Alignment.
 - **2 Apr 2026 (v1.2.0):** **FINAL REVIEW POLISH (88→90+ target).** 4 precision fixes from second ChatGPT review. (1) §14.1: Framerate degradation confirmed as one-way per generation — once reduced, stays reduced for that generation even if fps recovers. Next generation re-evaluates fresh. Prevents visual thrashing. (2) §14.1: DOM hard cap clarified as per-rail total (all three phases combined, including dormant elements). (3) §15: Added data snapshot ownership edge case — each generation captures frozen snapshots of Call 1/2/3 data at generation start. Later-arriving upstream data never mutates an in-flight visualisation. (4) Cross-reference version in lefthand-rail.md updated from v1.0.0 to v1.1.0 (now v1.2.0).
 - **2 Apr 2026 (v1.1.0):** **POST-REVIEW REVISION.** 5 targeted fixes from ChatGPT architectural review (79/100 → target 88+). (1) §8: Phase 1 Decoder updated with dual-schema compatibility for v4 Prompt Lab flow. Adapter pattern normalises both extract-mode (category arrays) and assess-mode (coverage map) into `DecoderCategoryInput[]`. Component never touches raw API response. (2) §14.1: NEW performance degradation ladder — three rendering tiers (full, reduced, minimal). Framerate detection at 500ms intervals. Thresholds: <30fps → reduced, <15fps → minimal. DOM budget hard cap: 100 elements. (3) §10: Phase 3 timing tightened — cog stagger reduced 500→350ms. Phase 3 time budget capped at 3.5 seconds. Excess cogs batched. Synchronized cog pulse simplified to brightness-only (200ms, no scale). (4) §15: Edge cases expanded from 10 to 16 — added animation cancellation model (`generationId` pattern), Call 2 buffering during Phase 1, stale Call 3 data handling, container height overflow strategy, low-end device degradation. Cog cap reduced 5→4 individual + collapse. (5) §19: Non-regression rules expanded 18→23 — added Phase 3 time budget, cancellation, v4 compatibility, performance tiers, DOM cap. Decisions log expanded D10→D15.
 - **2 Apr 2026 (v1.0.0):** Initial version.
 
 ---
 
-_This document is the authority for the Prompt Lab right-hand rail. No code is written until this doc is approved._
+_This document is the authority for the Prompt Lab right-hand rail. `src.zip` is the Single Source of Truth — this document describes what exists in deployed code._
 
 _**Key principle:** The machine doesn't just report what happened. It performs. The user peers through glass into precision engineering. Every run is unique because every prompt is unique. The excitement isn't the result — it's watching the machine find it._

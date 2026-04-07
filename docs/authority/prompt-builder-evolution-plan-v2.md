@@ -1,15 +1,18 @@
 # Prompt Builder Evolution Plan v2.0
 
-**Version:** 2.5.0
+**Version:** 3.0.0
 **Created:** 2026-02-24
-**Last Updated:** 2026-03-25
-**Status:** ✅ ALL PHASES COMPLETE — Phases 0–7.12 delivered
+**Last Updated:** 2026-04-06
+**Status:** ✅ ALL PHASES COMPLETE — Phases 0–7.12 delivered. Plan is now a historical record.
 
-> **Next phase:** The Unified Prompt Brain initiative builds on top of this evolution plan. It consolidates the weather generator's assembly path into the prompt builder's `assemblePrompt()` — one brain for all prompt paths. See `unified-prompt-brain.md` for full architecture, implementation details, and the 10 post-integration fixes shipped.
-> **AI Intelligence Engine:** The Prompt Lab's AI tier generation system (Call 2) was built on top of this evolution plan. See `ai-disguise.md` v4.0.0 for the full specification (30-rule system prompt, P1–P12 post-processing pipeline, 115-test lockdown suite, 6+ rounds + 3 stress tests scoring 96/100).
-> **Authority:** This document is the single source of truth for the prompt builder evolution.
-> **Admin Route:** `/admin` (live), `/admin/scoring-health` (live — 12 dashboard sections)
-> **Tests:** 161 test files across 8 Jest projects (136 running, 25 orphaned — see `test.md` for inventory and orphan fix). This document references test files but does not include test source.
+> **What happened after this plan:** Three major systems were built on top of this evolution:
+>
+> 1. **Unified Prompt Brain** — consolidated weather assembly into `assemblePrompt()`. See `unified-prompt-brain.md`.
+> 2. **AI Intelligence Engine (Prompt Lab)** — Call 1 (category assessment), Call 2 (4-tier generation with 30-rule system prompt + P1–P12 post-processing), Call 3 (platform-specific optimisation via 40 independent builder files). See `ai-disguise.md`, `prompt-optimizer.md` v6.0.0, `api-3.md`.
+> 3. **Builder Quality Intelligence** — internal regression testing for Call 3 builders. 8 core + 2 holdout test scenes, batch runner, GPT + Claude dual-model scoring, admin dashboard. Replaced user-facing scoring entirely. See `builder-quality-intelligence.md` v3.0.0.
+>    **Authority:** This document is a historical record of the prompt builder evolution. For current architecture, see `architecture.md` v3.0.0.
+>    **Admin Route:** `/admin` (live), `/admin/scoring-health` (live — 12 dashboard sections)
+>    **Tests:** 161 test files across 8 Jest projects (136 running, 25 orphaned — see `test.md` for inventory and orphan fix). This document references test files but does not include test source.
 
 ---
 
@@ -88,7 +91,7 @@ A prompt builder that thinks with the user AND gets smarter every day without co
 - **Self-Improving Scorer** automatically recalibrates its own weights against real outcomes
 - **Advanced Learning** detects anti-patterns, tracks iterations, finds magic combinations, learns per-platform, A/B tests improvements, crowdsources vocabulary, responds to temporal trends, compresses prompts intelligently, and incorporates direct user feedback
 
-All features work across all 4 optimizer tiers (CLIP, Midjourney, Natural Language, Plain Language) and all 42 platforms.
+All features work across all 4 optimizer tiers (CLIP, Midjourney, Natural Language, Plain Language) and all 40 platforms.
 
 ---
 
@@ -1125,14 +1128,18 @@ UI copy → sendPromptTelemetry({ conversionMeta }) → POST /api/prompt-telemet
 | **Compression**            | Gentle. 15+ terms OK.                                                  | Medium. 8–12 + params.                                  | 2–3 sentences.                                    | Brutal. 5–8 words max.                                        |
 | **Conversions (7.12)**     | Pass-through (fidelity kept verbatim). Negatives via separate field.   | Parametric (--quality/--stylize, free). Neg via --no.   | Budget-gated NL clauses. Neg → positive convert.  | Neg → positive convert (tight budget). Fidelity pass-through. |
 
-### Tier Platform Lists (45 platforms)
+### Tier Platform Lists (40 platforms — updated 6 Apr 2026)
 
-| Tier | Name              | Count | Platforms                                                                                                                                         |
-| ---- | ----------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1    | CLIP-Based        | 13    | artguru, clipdrop, dreamlike, dreamstudio, getimg, leonardo, lexica, nightcafe, novelai, openart, playground, stability, tensor-art               |
-| 2    | Midjourney Family | 2     | bluewillow, midjourney                                                                                                                            |
-| 3    | Natural Language  | 14    | adobe-firefly, bing, flux, google-imagen, hotpot, ideogram, imagine-meta, jasper-art, kling, luma-ai, microsoft-designer, openai, recraft, runway |
-| 4    | Plain Language    | 16    | 123rf, artbreeder, artistly, canva, craiyon, deepai, fotor, freepik, myedit, photoleap, picsart, picwish, pixlr, simplified, visme, vistacreate   |
+> **Note:** The original plan listed 45 platforms. 5 multi-engine aggregators were removed in March 2026 (NightCafe, OpenArt, Tensor.Art, GetImg, Freepik). Several platforms also changed tiers based on the 26 March audit. The current SSOT is `platform-config.json` with 40 platforms. See `ai_providers_affiliate.md` for the full tier change log.
+
+Current tier assignment (from `platform-config.json`):
+
+| Tier | Name              | Count | Platforms                                                                                                                                                        |
+| ---- | ----------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | CLIP-Based        | 7     | dreamlike, dreamstudio, fotor, leonardo, lexica, novelai, stability                                                                                              |
+| 2    | Midjourney Family | 1     | midjourney                                                                                                                                                       |
+| 3    | Natural Language  | 16    | adobe-firefly, artbreeder, bing, canva, deepai, flux, google-imagen, ideogram, imagine-meta, kling, luma-ai, openai, pixlr, playground, recraft, simplified      |
+| 4    | Plain Language    | 16    | 123rf, artguru, artistly, bluewillow, clipdrop, craiyon, hotpot, jasper-art, microsoft-designer, myedit, photoleap, picsart, picwish, runway, visme, vistacreate |
 
 ---
 
@@ -1374,9 +1381,9 @@ Every file is JSON. Code reads them. Code never changes. Data gets smarter night
 | File | Purpose |
 | ---- | ------- |
 | `src/app/api/generate-tier-prompts/route.ts` (523 lines) | Call 2 — AI tier generation (30-rule system prompt, imports postProcessTiers) |
-| `src/app/api/optimise-prompt/route.ts` (336 lines) | Call 3 — AI prompt optimisation |
+| `src/app/api/optimise-prompt/route.ts` (651 lines) | Call 3 — AI prompt optimisation (40 builder files via resolveGroupPrompt) |
 | `src/app/api/parse-sentence/route.ts` (455 lines) | Call 1 — Category assessment + matched phrases |
-| `src/lib/harmony-post-processing.ts` (342 lines) | P1–P12 post-processing pipeline (7 active functions) |
+| `src/lib/harmony-post-processing.ts` (272 lines) | P1–P12 post-processing pipeline (7 active functions). **⚠️ No tests — see test.md v2.0.0 §3** |
 | `src/lib/harmony-compliance.ts` (486 lines) | Compliance gate + rule ceiling tracking (RULE_CEILING=30) |
 | `src/lib/__tests__/harmony-post-processing.test.ts` (601 lines) | 72-test lockdown suite — real GPT fixtures |
 | `src/lib/__tests__/harmony-compliance.test.ts` (453 lines) | 43-test compliance suite — drift detection |
@@ -1509,16 +1516,16 @@ Every file is JSON. Code reads them. Code never changes. Data gets smarter night
 
 All phases are feature-complete. The main outstanding work is test coverage expansion:
 
-| Area                                                      | Status                         | Gap                                                                                                                                                               |
-| --------------------------------------------------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Learning engines (`lib/learning/`)                        | 30 test files, strong coverage | Temporal, compression, feedback-streaks have dedicated tests now                                                                                                  |
-| Admin dashboard (`__tests__/admin/`)                      | 11 test files                  | Coverage for weight-editor-modal, weight-tuning-sandbox integration. **NOTE: admin tests are orphaned from jest.config.cjs — never run in CI. See `test.md` §3.** |
-| **Harmony post-processing pipeline (NEW)**                | **115 tests (72+43)**          | **✅ CLOSED** — lockdown suite with drift detection. See `ai-disguise.md` v4.0.0 §7.                                                                              |
-| Weather engine (`lib/weather/`, 7,859 lines)              | No test files                  | ~200 test cases estimated                                                                                                                                         |
-| Prompt optimizer (`lib/prompt-optimizer.ts`, 1,604 lines) | No test file                   | ~60 test cases estimated                                                                                                                                          |
-| API routes (17 learning + 18 admin)                       | Aggregate route tested         | Individual route tests needed                                                                                                                                     |
-| Hooks (34+ untested)                                      | Partial coverage               | `use-sentence-conversion` added; others still need coverage                                                                                                       |
-| **Orphaned test files (NEW)**                             | **25 files not running**       | **jest.config.cjs patterns don't match 12 `__tests__/` files + 11 admin/ files**                                                                                  |
+| Area                                                      | Status                         | Gap                                                                                                                                                                                                                                                                                                   |
+| --------------------------------------------------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Learning engines (`lib/learning/`)                        | 30 test files, strong coverage | Temporal, compression, feedback-streaks have dedicated tests now                                                                                                                                                                                                                                      |
+| Admin dashboard (`__tests__/admin/`)                      | 11 test files                  | Coverage for weight-editor-modal, weight-tuning-sandbox integration. **NOTE: admin tests are orphaned from jest.config.cjs — never run in CI. See `test.md` §3.**                                                                                                                                     |
+| **Harmony post-processing pipeline**                      | **0 test files**               | **⚠️ CRITICAL GAP** — The claimed 115-test lockdown suite does NOT exist in the codebase (verified 6 Apr 2026). `harmony-post-processing.test.ts` and `harmony-compliance.test.ts` are not present. Source files exist (1,544 lines across 3 files) with zero test coverage. See `test.md` v2.0.0 §3. |
+| Weather engine (`lib/weather/`, 7,859 lines)              | No test files                  | ~200 test cases estimated                                                                                                                                                                                                                                                                             |
+| Prompt optimizer (`lib/prompt-optimizer.ts`, 1,604 lines) | No test file                   | ~60 test cases estimated                                                                                                                                                                                                                                                                              |
+| API routes (17 learning + 18 admin)                       | Aggregate route tested         | Individual route tests needed                                                                                                                                                                                                                                                                         |
+| Hooks (34+ untested)                                      | Partial coverage               | `use-sentence-conversion` added; others still need coverage                                                                                                                                                                                                                                           |
+| **Orphaned test files**                                   | **54 files not running**       | **jest.config.cjs patterns may not match 43 `__tests__/` files + 11 admin/ files. See `test.md` v2.0.0 §5.**                                                                                                                                                                                          |
 
 See `test.md` v1.0.0 for the full inventory, orphan analysis, and gap closure build order.
 
@@ -1582,7 +1589,7 @@ See `test.md` v1.0.0 for the full inventory, orphan analysis, and gap closure bu
 
 ### The Competitive Moat
 
-Nobody can replicate this because nobody else has platform-spanning data across 42 platforms and 4 tiers. A tool that only works with Midjourney learns Midjourney patterns. Promagen learns patterns across ALL platforms simultaneously and cross-pollinates insights.
+Nobody can replicate this because nobody else has platform-spanning data across 40 platforms and 4 tiers. A tool that only works with Midjourney learns Midjourney patterns. Promagen learns patterns across ALL platforms simultaneously and cross-pollinates insights.
 
 By month 6, Promagen knows:
 
@@ -1596,6 +1603,8 @@ This data is the product. The vocabulary, the scenes, the cascading intelligence
 
 ---
 
-_End of document. Version 2.5.0. Updated 2026-03-25. Previous version: 2.4.0 (2026-03-07)._
+_End of document. Version 3.0.0. Updated 2026-04-06. Previous version: 2.5.0 (2026-03-25)._
 
-**Changelog (v2.5.0):** Updated test count 131→161 (136 running, 25 orphaned). Added AI Intelligence Engine to header and §17 file impact map: 13 new files (3 API routes, 2 harmony modules, 2 test files, 3 hooks, 2 components, 1 data file). Updated learning test count 24→30. Updated prompt-builder.tsx 2,015→3,670 lines, scene-selector 1,233→1,260, explore-drawer 852→865. Updated §18 Remaining Work: harmony pipeline closed (115 tests), admin orphan issue flagged, references changed from test-in-place.md/test-gap-analysis.md to test.md v1.0.0. Cross-references: ai-disguise v4.0.0, harmonizing v2.0.0.
+**Changelog (v3.0.0):** Updated from src.zip SSoT (6 Apr 2026). CRITICAL: Harmony lockdown suite (claimed 115 tests) does NOT exist — changed from "✅ CLOSED" to "⚠️ CRITICAL GAP". Platform count corrected from 42/45 to 40 (5 multi-engine aggregators removed Mar 2026). Tier platform lists updated to match current `platform-config.json` (7 T1, 1 T2, 16 T3, 16 T4). Orphaned test count updated 25→54. Call 3 route line count 336→651. Harmony-post-processing line count 342→272. Header rewritten: doc is now a historical record, not the active architecture authority. Three successor systems documented (Unified Prompt Brain, AI Intelligence Engine with 40 builders, BQI). Cross-references updated to current doc versions.
+
+**Changelog (v2.5.0):** Updated test count 131→161 (136 running, 25 orphaned). Added AI Intelligence Engine to header and §17 file impact map. Updated learning test count 24→30. Updated prompt-builder.tsx 2,015→3,670 lines. Updated §18 Remaining Work: harmony pipeline claimed closed. Cross-references: ai-disguise v4.0.0, harmonizing v2.0.0.

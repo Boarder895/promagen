@@ -1,9 +1,25 @@
 # Prompt Intelligence
 
-**Last updated:** 23 March 2026  
-**Owner:** Promagen  
-**Authority:** This document defines the architecture, data structures, and implementation plan for the Prompt Intelligence system.
-**Cross-reference:** For colour-coded prompt anatomy, see `paid_tier.md` §5.14. For Prompt Lab parity features, see `paid_tier.md` §5.13. For AI Disguise system (including Call 2 system prompt v3.0.0, post-processing layer, and harmony engineering), see `ai-disguise.md` v3.0.0. For Prompt Lab architecture, see `prompt-lab.md` v3.1.0. For human sentence conversion UI and term matching, see `human-sentence-conversion.md` v2.0.0. For Image Generation preview panel (colour-coded segments from static data), see `paid_tier.md` §5.10 ImageGen Preview Panel. For prompt builder architecture, see `prompt-builder-page.md`. For button styling standards, see `buttons.md` v4.0.0.
+**Last updated:** 6 April 2026
+**Version:** 3.0.0
+**Owner:** Promagen
+**Authority:** This document defines the architecture, data structures, and implementation for the **client-side** Prompt Intelligence system used in the standard prompt builder (`/providers/[id]`).
+
+> **Scope clarification:** This system runs entirely in the browser — no server calls for scoring, suggestions, or conflict detection. It powers the standard prompt builder's dropdown intelligence, smart suggestions, conflict warnings, and coherent randomise.
+>
+> **This is NOT the Prompt Lab AI engine.** The Prompt Lab (`/studio/playground`) uses a separate server-side three-call pipeline (Call 1: category assessment, Call 2: 4-tier generation, Call 3: platform optimisation) documented in `ai-disguise.md` v5.0.0, `prompt-lab.md` v4.0.0, and `prompt-optimizer.md` v6.0.0. The client-side prompt intelligence described here is used by the standard builder only.
+
+**Cross-references:**
+
+- `ai-disguise.md` v5.0.0 — AI engine, Call 2 system prompt v4.5, post-processing, harmony engineering
+- `prompt-lab.md` v4.0.0 — Prompt Lab routes, component table, data flow
+- `prompt-lab-v4-flow.md` v2.0.0 — Check → Assess → Decide → Generate four-phase flow
+- `prompt-optimizer.md` v6.0.0 — Call 3 architecture, 40 independent builders
+- `prompt-builder-page.md` — Standard builder architecture
+- `human-sentence-conversion.md` v2.0.0 — Human sentence conversion UI and term matching
+- `paid_tier.md` v8.0.0 — §5.14 colour-coded prompt anatomy, §5.13 Prompt Lab parity
+- `buttons.md` v4.0.0 — Button styling standards
+- `builder-quality-intelligence.md` v3.0.0 — Internal regression testing for Call 3 builders
 
 ---
 
@@ -38,7 +54,7 @@ Prompt Intelligence transforms Promagen's prompt builder from a simple selection
 
 ### Client-Side Design
 
-All intelligence runs in the browser. No server calls for scoring or suggestions.
+All intelligence runs in the browser. No server calls for scoring or suggestions. This applies to the **standard prompt builder** (`/providers/[id]`) only. The Prompt Lab (`/studio/playground`) uses server-side AI calls (Call 1/2/3) documented separately in `ai-disguise.md` v5.0.0.
 
 **Rationale:**
 
@@ -352,7 +368,9 @@ Maps live market states to suggestion boosts.
 }
 ```
 
-## 4.5 Gallery Mode Integration (NEW v2.1.0)
+## 4.5 Gallery Mode Integration (v2.1.0 — SUPERSEDED)
+
+> **Status:** Gallery Mode as a standalone feature was never shipped. The concept evolved into the **Scene Starters** system (200 scenes across 23 worlds, deployed on the homepage as `SceneStartersPreview`) and the **Prompt Showcase** (Prompt of the Moment, weather-driven). The integration architecture described below was the design intent — some data flows (weather→atmosphere, market mood→prompt influence) are used by the weather prompt generator but not as a standalone gallery page. No `/gallery` route exists in the codebase.
 
 The Prompt Intelligence system powers Gallery Mode's automatic prompt generation. Market moods, semantic tags, and the 4-tier platform system work together to create city-specific prompts.
 
@@ -1459,87 +1477,13 @@ When modifying for Prompt Intelligence:
 
 ## Changelog
 
-- **23 Mar 2026 (v2.3.0):** **PROMPT LAB UI POLISH + HARMONY ENGINEERING REFS.** Cross-references updated to `prompt-lab.md` v3.1.0, `ai-disguise.md` v3.0.0, `human-sentence-conversion.md` v2.0.0, `buttons.md` v4.0.0. §9 Prompt Lab parity: Added features 12–16: tier provider icons strip (788 lines, `TierProviderIcons` component, `providers` prop, PotM-matching style), white tier labels (`text-white font-medium`), engine bay Generate button styling (pulse + shimmer), purple gradient Clear All buttons (`clearSignal` mechanism), Call 2 harmony engineering reference (18 rules, 93/100, 5 rounds). File tables updated: `four-tier-prompt-preview.tsx` 684→788, `enhanced-educational-preview.tsx` 2,008→2,014, `generate-tier-prompts/route.ts` 319→406. §12 files table updated with v3.1.0 versions and new features. §15: Added 5 non-regression rules (tier icons non-clickable, white tier labels, engine bay Generate, purple Clear All, post-processing mandatory).
+- **6 Apr 2026 (v3.0.0):** Updated from src.zip SSoT. Header rewritten: scope clarified as client-side standard builder only (NOT the Prompt Lab AI engine). Cross-references updated to current versions (ai-disguise v5.0.0, prompt-lab v4.0.0, prompt-optimizer v6.0.0, paid_tier v8.0.0). Added builder-quality-intelligence v3.0.0 cross-ref. §4.5 Gallery Mode marked as SUPERSEDED — concept evolved into Scene Starters + Prompt Showcase, no `/gallery` route exists. Added scope disambiguation note to §2 Client-Side Design. Removed accidentally appended "Weather Description → City Prompt Fix" section (stale patch notes that don't belong in the authority doc).
+- **23 Mar 2026 (v2.3.0):** Prompt Lab UI Polish + Harmony Engineering refs. Cross-references updated. Features 12–16 added to §9. File tables updated.
+- **23 Mar 2026 (v2.2.0):** AI Disguise integration — IntelligencePanel removed from Prompt Lab render. Standard builder retains it.
+- **19 Mar 2026 (v2.1.0):** Colour pipeline extension to Pro page previews.
+- **18 Mar 2026 (v2.0.0):** Prompt Lab Parity + colour-coded intelligence + route correction.
+- **7 Jan 2026 (v1.0.0):** Initial document.
 
-- **23 Mar 2026 (v2.2.0):** **AI DISGUISE INTEGRATION — INTELLIGENCE PANEL REMOVAL FROM PROMPT LAB** — §9: Updated Prompt Lab file table with actual line counts (`playground-workspace.tsx` 313, `enhanced-educational-preview.tsx` 2,008, `four-tier-prompt-preview.tsx` 684). `IntelligencePanel` marked as REMOVED from Prompt Lab render (scored 52/100 for AI Disguise workflow) — code file untouched (515 lines), still used by standard builder, DnaBar still fed via simplified `useRealIntelligence`. Added "Prompt Lab AI Disguise Update (v3.0.0)" subsection documenting impact on intelligence system: `usePromptAnalysis` still runs for DnaBar, `conflicts`/`suggestions`/`platformHints`/`weatherSuggestions` mappings removed, layout changed to full-width single column. §12: Updated Lab file line counts and versions. Added AI Disguise wiring notes. IntelligencePanel marked as removed from Lab render. §15: Updated cursor-pointer rule (standard builder only). Added 2 new rules: IntelligencePanel removal from Lab, `useRealIntelligence` preservation for DnaBar. Updated cross-references to include `ai-disguise.md` and `prompt-lab.md` v3.0.0.
-- **19 Mar 2026 (v2.1.0):** **COLOUR PIPELINE EXTENSION TO PRO PAGE PREVIEWS** — Added "Colour Pipeline in Pro Page Preview Panels" subsection documenting 3 consumers: DailyPromptsPreviewPanel (dynamic `sharedParsePrompt`), LabTierWindow (dynamic `labParsePrompt`), ImageGenPreviewPanel (static `IG_C` segments). §12: Added `pro-promagen-client.tsx` to modified files table (v6.0.0, 3,560 lines). §15: Added non-regression rule for ImageGen static segments (do not convert to dynamic parsing). Updated cross-reference header to include ImageGen preview panel.
-- **18 Mar 2026 (v2.0.0):** **PROMPT LAB PARITY + COLOUR-CODED INTELLIGENCE + ROUTE CORRECTION** — §9: Corrected Prompt Lab route from `/prompts/playground` to `/studio/playground` (actual implementation). Library route corrected to `/studio/library`. Added full Prompt Lab Parity Features subsection (11 features): colour-coded 4-tier prompts via `isPro`/`termIndex` props on `FourTierPromptPreview`, assembled prompt box with StageBadge and dynamic label switching, provider icon on optimized label, optimizer neutral mode (disabled until provider selected), green "Within optimal range" feedback, `LabCategoryColourLegend` in header, inline copy + save icons, `incrementLifetimePrompts()` wiring. §12: Updated files table — added `enhanced-educational-preview.tsx` (1,899 lines), `four-tier-prompt-preview.tsx` (647 lines), `intelligence-panel.tsx` (515 lines), `prompt-intelligence-builder.tsx` (714 lines), `prompt-colours.ts` (210 lines), `lifetime-counter.ts` (33 lines). Updated `prompt-builder.tsx` to v11.0.0 (3,104 lines), `combobox.tsx` to v7.3.0 (811 lines). §15: Added 7 new non-regression rules (SSOT colours, no `wasOptimized` gate, lifetime counter, cursor-pointer, isPro props, optimizer neutral mode, route path). Updated navigation structure §9.3 with corrected routes including `/studio/*`, `/world-context`, `/pro-promagen`.
-- **7 Jan 2026 (v1.0.0):** Initial document. Defines Prompt Intelligence architecture, data structures, scoring algorithm, integration plan, new pages, and build phases.
+---
 
-# Weather Description → City Prompt Fix
-
-## What This Does
-
-Injects the **real OpenWeatherMap `description`** (e.g., "haze", "broken clouds", "light rain")
-verbatim into the city prompt. Demo data has no description → it's simply absent from the prompt.
-
-**Result:**
-
-- **Live API prompt:** `...Mumbai, bustling streets energy, haze, deep night stillness...`
-- **Demo prompt:** `...Mumbai, bustling streets energy, deep night stillness...`
-
-Nobody sees the difference on the card. But the AI-generated images from live data will be subtly
-richer — and the description text is word-for-word identical to the API response.
-
-## Files (all in `src/lib/weather/`)
-
-### 1. `fetch-weather.ts`
-
-**Change:** `demoToWeatherData()` — `description: item.condition` → `description: undefined`
-**Why:** Demo data should NOT have a description. Only live API provides real OWM descriptions.
-
-### 2. `weather-types.ts`
-
-**Change:** `toFullWeather()` — fallback `display.description ?? display.condition ?? 'unknown conditions'` → `display.description || ''`
-**Why:** Empty string when no real description exists, so prompt builder skips it.
-
-### 3. `weather-prompt-generator.ts`
-
-**Changes:**
-
-- **CITY_VIBES expanded:** 51 cities × 5 vibes → **97 cities × 10 vibes** (970 total phrases)
-  - All 83 unique catalog cities now have vibes (was missing 46)
-  - 14 bonus cities kept for broader matching (Seoul, Barcelona, Rome, etc.)
-  - Every city upgraded from 5 to 10 culturally authentic phrases
-  - Added `são paulo` key alongside `sao paulo` for accent matching
-- `buildContext()` — Added `cond.includes('storm')` and `cond.includes('drizzle')` to context flags so demo storms/drizzle still get dramatic atmosphere even without description
-- **All 4 tier generators** — Inject `ctx.description` into prompt when non-empty:
-  - Tier 1 (CLIP): After city vibe, as comma-separated term
-  - Tier 2 (Midjourney): After city vibe in description flow
-  - Tier 3 (Natural Language): `...in Mumbai with haze, with cinematic warm glow...`
-  - Tier 4 (Plain): After city vibe as comma-separated term
-
-## Deploy Steps (PowerShell, repo root: `frontend`)
-
-```powershell
-# Copy the 3 files
-Copy-Item description-fix\fetch-weather.ts src\lib\weather\fetch-weather.ts
-Copy-Item description-fix\weather-types.ts src\lib\weather\weather-types.ts
-Copy-Item description-fix\weather-prompt-generator.ts src\lib\weather\weather-prompt-generator.ts
-
-# Verify types
-npx tsc --noEmit
-
-# Verify lint
-npx next lint
-
-# Test locally
-npm run dev
-# → Open http://localhost:3000
-# → Click any exchange with LIVE weather data (Batch A — the 16 homepage defaults)
-# → Check the prompt tooltip — should include the API description text
-# → Click an exchange with DEMO data (non-Batch-A) — prompt should NOT have description
-
-# Deploy
-git add src/lib/weather/fetch-weather.ts src/lib/weather/weather-types.ts src/lib/weather/weather-prompt-generator.ts
-git commit -m "feat: inject live API weather description into city prompt"
-git push
-```
-
-## Existing Features Preserved: Yes
-
-- Demo weather cards still show temp, emoji, humidity, wind — unchanged
-- Context flags (isStormy, isRainy) still work for both live and demo
-- All 4 prompt tiers still generate full prompts — description is additive only
-- Legacy deprecated exports unchanged
-- No visual UI changes — the difference is ONLY in the prompt text
+_This document is the authority for the client-side Prompt Intelligence system (standard prompt builder). For the Prompt Lab AI engine (Call 1/2/3), see `ai-disguise.md` v5.0.0 and `prompt-lab.md` v4.0.0. `src.zip` is the Single Source of Truth._

@@ -279,6 +279,17 @@ export function XRayAlignment({
     };
   }, [optimiseResult]);
 
+  // Reset to dormant when optimiseResult cleared (Clear All)
+  useEffect(() => {
+    if (optimiseResult === null && !isOptimising) {
+      clearTimers();
+      setCogStates([]);
+      setShowGauge(false);
+      setShowTicker(false);
+      setShowBadge(false);
+    }
+  }, [optimiseResult, isOptimising]);
+
   // Reset when optimising starts
   useEffect(() => {
     if (isOptimising) {

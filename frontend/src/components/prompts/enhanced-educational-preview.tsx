@@ -94,6 +94,8 @@ export interface EnhancedEducationalPreviewProps {
   providers: Provider[];
   /** Notify parent when provider selection changes (for Listen text only — does NOT trigger view switch) */
   onProviderChange?: (hasProvider: boolean) => void;
+  /** Notify parent of the actual provider ID when selection changes — syncs page-level selectedProviderId */
+  onProviderIdChange?: (providerId: string | null) => void;
   // ── AI Disguise pass-through (lifted from playground-workspace) ────
   /** Called on every "Describe Your Image" textarea change */
   onDescribeTextChange?: (text: string) => void;
@@ -344,6 +346,7 @@ function LabCategoryColourLegend({ isPro }: { isPro: boolean }) {
 export default function EnhancedEducationalPreview({
   providers,
   onProviderChange: _onProviderChange,
+  onProviderIdChange: _onProviderIdChange,
   // AI Disguise pass-through (from playground-workspace orchestrator)
   onDescribeTextChange,
   onDescribeGenerate,
@@ -994,7 +997,8 @@ export default function EnhancedEducationalPreview({
     clearAiOptimise();
     setLastOptimisedFor(null);
     _onProviderChange?.(!!providerId);
-  }, [_onProviderChange, clearAiOptimise]);
+    _onProviderIdChange?.(providerId);
+  }, [_onProviderChange, _onProviderIdChange, clearAiOptimise]);
 
   // Handle category selection change
   // handleCategoryChange REMOVED — no dropdown UI in Prompt Lab
@@ -1020,7 +1024,7 @@ export default function EnhancedEducationalPreview({
   // AI tiers, AI optimisation, human text via clearSignal)
   const handleClear = useCallback(() => {
     setSelections(EMPTY_SELECTIONS);
-    setSelectedProviderId(null);
+    // Provider stays in dropdown — user likely reuses the same platform
     clearAiOptimise();
     setLastOptimisedFor(null);
     onDescribeClear?.();

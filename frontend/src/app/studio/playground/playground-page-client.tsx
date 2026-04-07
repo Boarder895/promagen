@@ -71,17 +71,18 @@ import { PipelineXRay } from '@/components/prompt-lab/pipeline-xray';
 // SPEECH TEXT — British female voice (same pattern as homepage/library/pro)
 // ============================================================================
 
-/** Listen text when no provider is selected — invitation to explore */
-const HERO_TEXT_NO_PROVIDER =
-  "Every platform speaks its own language. On the standard builder, you write for one. " +
-  "Here, you write for all of them. Pick your subject, your style, your mood " +
-  "— then switch platforms and watch the same idea reshape itself. " +
-  "Your selections stay. The syntax transforms. That's the Lab.";
-
-/** Listen text when a provider is selected — guidance */
-const HERO_TEXT_WITH_PROVIDER =
-  "Same selections, different output. Switch platforms freely " +
-  "— your choices stay put, the prompt reshapes to match.";
+// ============================================================================
+// HERO TEXT — British female voice, state-aware (5 states)
+// ============================================================================
+// Each text: 8–12s spoken, short sentences, written for speech rhythm.
+// State derived from: hasProvider, xrayTierPrompts, xrayOptimiseResult.
+//
+// State 1: No provider, no prompts → Curiosity Gap (§1)
+// State 2: Provider set, no prompts → Anticipatory Dopamine (§3)
+// State 3: Prompts generated, no provider → Zeigarnik Effect (§4)
+// State 4: Provider + prompts, no optimisation → Anticipatory Dopamine (§3) + Curiosity Gap (§1)
+// State 5: Optimised → Variable Reward (§2)
+// ============================================================================
 
 // ============================================================================
 // GLASS CASE — Right rail panel override (righthand-rail.md §11)
@@ -221,7 +222,47 @@ export default function PlaygroundPageClient({
   const { ordered } = useExchangeOrder(exchanges);
 
   // Speech text changes based on provider selection
-  const heroText = hasProvider ? HERO_TEXT_WITH_PROVIDER : HERO_TEXT_NO_PROVIDER;
+  // ── Hero text — changes with pipeline state (5 states) ──────────────
+  // Human factors applied per state — see docs/authority/human-factors.md
+  const heroText = useMemo(() => {
+    // State 5: Optimised — Variable Reward (§2): plants the next action
+    if (hasProvider && xrayOptimiseResult) {
+      return (
+        "That prompt was built for this platform. " +
+        "Try the same words on a different one " +
+        "— the result won't be the same. It never is."
+      );
+    }
+    // State 4: Generated with provider, pre-optimise — Anticipatory Dopamine (§3) + Curiosity Gap (§1)
+    if (hasProvider && xrayTierPrompts) {
+      return (
+        "Your prompt is sitting across four tiers. " +
+        "Click optimise and keep your eye on the right " +
+        "— you'll see something most prompt tools never show you."
+      );
+    }
+    // State 3: Generated without provider — Zeigarnik Effect (§4)
+    if (!hasProvider && xrayTierPrompts) {
+      return (
+        "Four versions, but none of them are finished. " +
+        "Pick a platform and the engine tunes every word to match " +
+        "— that's the part most people don't expect."
+      );
+    }
+    // State 2: Provider set, pre-generate — Anticipatory Dopamine (§3)
+    if (hasProvider) {
+      return (
+        "Whatever you type in that box, the system will pull it apart " +
+        "and rebuild it four ways. " +
+        "The more you give it, the more it has to work with."
+      );
+    }
+    // State 1: No provider, no prompts — Curiosity Gap (§1)
+    return (
+      "That box in the middle is waiting. Type what you see in your head, " +
+      "hit generate — and watch what happens to your words."
+    );
+  }, [hasProvider, xrayTierPrompts, xrayOptimiseResult]);
 
   // Provider IDs for market pulse
   const providerIds = providers.map((p) => p.id);

@@ -273,6 +273,18 @@ export function XRayDecoder({ assessment, isChecking, generationId }: XRayDecode
     lockTimersRef.current = [];
   };
 
+  // ── RESET: When assessment is cleared (Clear All) ──────────────────
+  useEffect(() => {
+    if (assessment === null && !isChecking) {
+      clearTimers();
+      const idle: Record<string, RotorState> = {};
+      for (const cat of CATEGORY_ORDER) idle[cat] = 'idle';
+      setRotorStates(idle);
+      setSummaryText('');
+      setShowSummary(false);
+    }
+  }, [assessment, isChecking]);
+
   // ── SPINNING: When Call 1 starts ──────────────────────────────────
   useEffect(() => {
     if (!isChecking) return;

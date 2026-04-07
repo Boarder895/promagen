@@ -1,401 +1,285 @@
 # Promagen — Master Test Document
 
-**Version:** 1.0.0  
-**Created:** 25 March 2026  
-**Updated:** 25 March 2026  
-**Owner:** Promagen  
-**Status:** Authoritative — replaces `test-in-place.md`, `test-strategy-plan.md`, `test-groups.md`, `test-gap-analysis.md`  
-**Source of truth:** `src.zip` (25 Mar 2026) + `jest.config.cjs` + Martin's test run output  
-**Runner:** Jest 29.7.0 via `jest.config.cjs` (8 named projects)
-
-> **Cross-references:**
->
-> - `ai-disguise.md` v4.0.0 — §7 post-processing pipeline, §8 harmony engineering (115-test lockdown suite)
-> - `harmonizing-claude-openai.md` v2.0.0 — §11 non-regression rules (rule 8: 115-test lockdown)
-> - `code-standard.md` v4.0 — All code standards
-> - `jest.config.cjs` — Group pattern SSoT (8 projects)
-
----
-
-## Table of Contents
-
-1. [Summary Dashboard](#1-summary-dashboard)
-2. [Jest Project Overview](#2-jest-project-overview)
-3. [Orphaned Test Files — CRITICAL](#3-orphaned-test-files--critical)
-4. [Full File Inventory by Project](#4-full-file-inventory-by-project)
-5. [Harmony Lockdown Suite (v4.0.0)](#5-harmony-lockdown-suite-v400)
-6. [Coverage Gaps](#6-coverage-gaps)
-7. [Gap Closure Build Order](#7-gap-closure-build-order)
-8. [CI Commands Reference](#8-ci-commands-reference)
-9. [Console Noise Audit](#9-console-noise-audit)
-10. [Non-Regression Rules](#10-non-regression-rules)
-11. [Version History](#11-version-history)
+**Version:** 2.0.0
+**Created:** 25 March 2026
+**Updated:** 6 April 2026
+**Owner:** Promagen
+**Status:** Authoritative — verified against `src.zip` 6 April 2026
+**Runner:** Jest 29.7.0 via `jest.config.cjs` (not in src.zip — config lives in repo root)
+**Command:** `pnpm run test:util`
 
 ---
 
 ## 1. Summary Dashboard
 
-| Metric               | Value                                                                               |
-| -------------------- | ----------------------------------------------------------------------------------- |
-| Test files (on disk) | **161**                                                                             |
-| Test files (running) | **136** (25 orphaned — see §3)                                                      |
-| Test cases (runtime) | **2,452** (from actual test run — includes `it.each` parametric expansion)          |
-| Skipped tests        | 3                                                                                   |
-| Failed tests         | **0** (5 harmony failures fixed 25 Mar — P3 `fixT4SelfCorrection` + fixture fix)    |
-| Jest projects        | 8 (`data`, `learning`, `intelligence`, `hooks`, `components`, `api`, `util`, `app`) |
-| Lint errors          | 0                                                                                   |
-| TypeScript errors    | 0                                                                                   |
-| Snapshot files       | 8                                                                                   |
-| CI wall-clock time   | ~40 s                                                                               |
+| Metric                          | Count   |
+| ------------------------------- | ------- |
+| Test files                      | 158     |
+| Test cases (`it`/`test` blocks) | ~2,658  |
+| Describe blocks                 | ~729    |
+| Total test lines                | ~40,471 |
 
-### Growth Journey
+### Test files by location
 
-| Date        | Files | Cases  | Key Change                                                       |
-| ----------- | ----- | ------ | ---------------------------------------------------------------- |
-| 27 Feb 2026 | 105   | ~1,413 | Phase A — Jest config reorganised into 8 projects                |
-| 28 Feb 2026 | 108   | ~1,427 | Rounds 1–14 fixes                                                |
-| 1 Mar 2026  | 131   | ~2,034 | Phases 7.8–7.11: Temporal, Compression, Feedback, Admin suites   |
-| 4 Mar 2026  | 149   | ~2,439 | Unified Brain + 3-Stage Pipeline + 42-Platform Parity + upgrades |
-| 25 Mar 2026 | 161   | ~2,452 | Harmony lockdown (115 tests), conversion tests, Stripe webhook   |
-
----
-
-## 2. Jest Project Overview
-
-| #   | Project        | Env   | Files (running) | Script                       |
-| --- | -------------- | ----- | --------------- | ---------------------------- |
-| 1   | `data`         | node  | ~30             | `pnpm run test:data`         |
-| 2   | `learning`     | node  | 30              | `pnpm run test:learning`     |
-| 3   | `intelligence` | node  | 6               | `pnpm run test:intelligence` |
-| 4   | `hooks`        | jsdom | 11              | `pnpm run test:hooks`        |
-| 5   | `components`   | jsdom | 13              | `pnpm run test:components`   |
-| 6   | `api`          | node  | 10              | `pnpm run test:api`          |
-| 7   | `util`         | node  | 15              | `pnpm run test:util`         |
-| 8   | `app`          | jsdom | ~21             | `pnpm run test:app`          |
-|     | **Running**    |       | **~136**        | `pnpm run test:ci`           |
-|     | **Orphaned**   |       | **25**          | See §3                       |
-|     | **On disk**    |       | **161**         |                              |
-
-### Group → Environment Mapping
-
-Node-only groups skip jsdom loading (~200ms saved per file).
-
-| Group        | Environment | Why                              |
-| ------------ | ----------- | -------------------------------- |
-| data         | `node`      | Pure JSON/Zod validation, no DOM |
-| learning     | `node`      | Pure TS computation              |
-| intelligence | `node`      | Pure TS scoring engines          |
-| hooks        | `jsdom`     | `renderHook()` needs React DOM   |
-| components   | `jsdom`     | `render()` / `screen` needs DOM  |
-| api          | `node`      | Mock NextRequest/NextResponse    |
-| util         | `node`      | Pure functions                   |
-| app          | `jsdom`     | Mixed .tsx files need DOM        |
+| Location                                                            | Files | Coverage Focus                                            |
+| ------------------------------------------------------------------- | ----- | --------------------------------------------------------- |
+| `src/__tests__/` (root)                                             | 43    | Integration, parity, schemas, conversions, upgrades       |
+| `src/__tests__/admin/`                                              | 11    | Admin panel components, scoring health                    |
+| `src/lib/learning/__tests__/`                                       | 30    | Learning pipeline (largest single group)                  |
+| `src/lib/prompt-intelligence/engines/tests/`                        | 6     | Suggestion, conflict, market mood, scoring engines        |
+| `src/lib/__tests__/`                                                | 7     | Prompt builder, weather mapper, adaptive weights, synergy |
+| `src/data/` (various `tests/` and `__tests__/`)                     | 21    | Data shape validation, SSOT contracts                     |
+| `src/hooks/__tests__/` + `src/hooks/prompt-intelligence/__tests__/` | 11    | Hook behaviour tests                                      |
+| `src/components/` (various `__tests__/`)                            | 14    | Exchange cards, providers, pro-promagen, UI, UX           |
+| `src/app/api/` (various `tests/` and `__tests__/`)                  | 9     | API route contracts, snapshots                            |
+| `src/lib/` (other: fx, feedback, ribbon, tests)                     | 6     | FX providers, feedback, ribbon, time/flags                |
 
 ---
 
-## 3. Orphaned Test Files — CRITICAL
+## 2. What's Tested (by system)
 
-**25 test files exist on disk but are NOT matched by any Jest project pattern.** They never run in CI. This was discovered during the 25 Mar codebase audit by cross-referencing `jest.config.cjs` patterns against the actual file tree.
+### 2.1 Learning Pipeline — 30 files, ~808 cases
 
-### 12 orphaned `__tests__/` files (not matched by `app` group patterns)
+The most thoroughly tested subsystem. All in `src/lib/learning/__tests__/`:
 
-The `app` group only matches: `a11y.*`, `compression.*`, `conversion-*`, `finance-ribbon.*`, `holiday-detector.*`, `plans.matrix.*`, `promagen-users.*`. These files don't match any pattern:
+ab-testing, ab-assignment, aggregate-phase6, anti-pattern-detection, category-value-discovery, collision-matrix, combo-integration, combo-lookup, compression-intelligence, compression-lookup, compression-overrides, confidence-multiplier, feedback-credibility, feedback-streaks, iteration-integration, iteration-tracking, magic-combo-mining, negative-pattern-integration, outcome-score, platform-co-occurrence, platform-co-occurrence-lookup, platform-term-quality, platform-term-quality-lookup, redundancy-detection, redundancy-integration, scorer-health, temporal-intelligence, term-quality-scoring, threshold-discovery, weight-recalibration.
 
-| File                                                  | Cases | What It Tests                     |
-| ----------------------------------------------------- | ----- | --------------------------------- |
-| `src/__tests__/extra-5-6-composition-synergy.test.ts` | ~25   | Composition + synergy scoring     |
-| `src/__tests__/improvements-1-5.test.ts`              | ~19   | Improvements batch 1–5 regression |
-| `src/__tests__/parity-all-42-platforms.test.ts`       | ~31   | 42-platform parity                |
-| `src/__tests__/parity-homepage-builder.test.ts`       | ~10   | Homepage→builder consistency      |
-| `src/__tests__/phase-c-unified-brain.test.ts`         | ~10   | Unified Brain Phase C contract    |
-| `src/__tests__/phase-d-try-in-integration.test.ts`    | ~20   | Phase D try-in integration        |
-| `src/__tests__/quality-95-fixes.test.ts`              | ~17   | 95% quality ceiling fixes         |
-| `src/__tests__/scene-starters-homepage.test.ts`       | NEW   | Scene starters homepage           |
-| `src/__tests__/upgrade-2-clip-sanitiser.test.ts`      | ~16   | CLIP weight sanitisation          |
-| `src/__tests__/upgrade-3-canonical-assembly.test.ts`  | ~12   | Canonical assembly                |
-| `src/__tests__/upgrade-4-venue-singularity.test.ts`   | ~8    | Venue singularity                 |
-| `src/__tests__/upgrade-5-prompt-fingerprint.test.ts`  | ~18   | Prompt DNA fingerprint            |
+### 2.2 Prompt Intelligence Engines — 6 files, ~176 cases
 
-### 11 orphaned `__tests__/admin/` files (no group matches this path)
+`src/lib/prompt-intelligence/engines/tests/` + `engines/__tests__/`:
 
-The `data` group pattern `src/__tests__/*.integrity.test.*` uses a single `*` glob which only matches files directly in `__tests__/`, not in subdirectories. The `admin/` subfolder is invisible to all 8 groups:
+suggestion-engine, integration, platform-optimization, market-mood-engine, conflict-detection, integration-scoring.
 
-| File                                                   | Cases | What It Tests              |
-| ------------------------------------------------------ | ----- | -------------------------- |
-| `src/__tests__/admin/anomaly-thresholds.test.ts`       | ~30   | Anomaly detection          |
-| `src/__tests__/admin/code-evolution-radar.test.ts`     | ~52   | Code evolution radar       |
-| `src/__tests__/admin/pipeline-dependencies.test.ts`    | ~25   | Pipeline dependency graph  |
-| `src/__tests__/admin/scoring-health-7-11d.test.ts`     | ~24   | Undo stack, scoring health |
-| `src/__tests__/admin/scoring-health-7-11e.test.ts`     | ~20   | Temporal/feedback panel    |
-| `src/__tests__/admin/scoring-health-overview.test.ts`  | ~19   | Sparkline, trend helpers   |
-| `src/__tests__/admin/scoring-profiles.test.ts`         | ~29   | Scoring profile creation   |
-| `src/__tests__/admin/skill-distribution.test.ts`       | ~14   | Skill distribution         |
-| `src/__tests__/admin/term-quality-leaderboard.test.ts` | ~27   | Sort, filter, summary      |
-| `src/__tests__/admin/weight-drift-chart.test.ts`       | ~16   | Drift/heatmap helpers      |
-| `src/__tests__/admin/weight-simulator.test.ts`         | ~22   | Weight simulation engine   |
+### 2.3 Data Shape Contracts — 21 files
 
-### 2 orphaned by deletion
+SSOT validation ensuring JSON data files match expected shapes:
 
-| File                                 | Status                                                                               |
-| ------------------------------------ | ------------------------------------------------------------------------------------ |
-| `src/__tests__/plans.matrix.test.ts` | **Deleted** from codebase (was in app group pattern). Pattern still matches nothing. |
+commodities (5 files), emoji (3 files), exchanges (3 files), fx (1 file), prompt-intelligence (2 files), providers (3 files), general (4 files: catalogs, cosmic, contracts snapshot, display-country-codes).
 
-### Fix required
+### 2.4 Hooks — 11 files
 
-Add patterns to `jest.config.cjs` to capture all 23 orphaned files. Recommended approach — add to `app` group:
+use-ab-test, use-conflict-detection, use-feedback-memory, use-learning-data, use-market-mood, use-platform-learning, use-prompt-analysis, use-sentence-conversion, use-smart-reorder, use-smart-suggestions, use-sync-computation.
 
-```js
-// In app group testMatch, ADD:
-'<rootDir>/src/__tests__/improvements-*.test.{ts,tsx}',
-'<rootDir>/src/__tests__/parity-*.test.{ts,tsx}',
-'<rootDir>/src/__tests__/phase-*.test.{ts,tsx}',
-'<rootDir>/src/__tests__/quality-*.test.{ts,tsx}',
-'<rootDir>/src/__tests__/upgrade-*.test.{ts,tsx}',
-'<rootDir>/src/__tests__/extra-*.test.{ts,tsx}',
-'<rootDir>/src/__tests__/scene-starters-homepage.test.{ts,tsx}',
-'<rootDir>/src/__tests__/admin/**/*.test.{ts,tsx}',
-```
+### 2.5 Components — 14 files
 
-After fix: 161 files running, ~2,700+ cases. **Do not implement until Martin approves.**
+exchange-card (1), exchange-clock (1), nav/tab-list (2), pro-promagen/exchange-picker (1), providers (4: phase-4-evolution, prompt-builder.analytics, launch-panel.smoke, provider-detail.smoke), ui/tabs (2: keyboard, live), ux (3: feedback-invitation, feedback-memory-banner, return-to-last.smoke).
+
+### 2.6 API Routes — 9 files
+
+auth (1), feedback (1), parse-sentence (1), stripe/webhook (1), general contracts (5: api-contracts.snapshot, exchanges.api, fx.api, providers.api).
+
+### 2.7 Integration / Parity / Upgrade — 43 files (root `__tests__/`)
+
+Conversions (7: costs, scorer, assembly-integration, budget, affinities, learning, telemetry), parity (2: all-42-platforms, homepage-builder), upgrades (4: clip-sanitiser, canonical-assembly, venue-singularity, prompt-fingerprint), schema validation (4), integrity (5: vocab-submission, scene-starters, roman-numerals, vocabulary-merge, vocabulary-weather-expansion, currency, country-currency), weather API (1), go outbound (1), exchange-order (1), finance-ribbon (1), and misc.
+
+### 2.8 Admin — 11 files (root `__tests__/admin/`)
+
+code-evolution-radar, anomaly-thresholds, scoring-profiles, scoring-health (3 files), term-quality-leaderboard, weight-simulator, pipeline-dependencies, weight-drift-chart, skill-distribution.
 
 ---
 
-## 4. Full File Inventory by Project
+## 3. Harmony Lockdown Suite — MISSING
 
-### 4.1 — `data` (~30 files)
+The architecture doc and `righthand-rail.md` reference "115 tests across `harmony-post-processing.test.ts` (72) + `harmony-compliance.test.ts` (43)". **These test files do not exist in the codebase.**
 
-Data integrity, schema validation, JSON shape checks. All node environment, zero DOM.
+Source files exist:
 
-**Matched by:** `src/data/**/*.test.*` + specific `__tests__/*.integrity.test.*` + `schemas.*` + `providers.schema.*` + `fx-pairs.*` + `phase-4-evolution.*`
+- `src/lib/harmony-post-processing.ts` (272 lines)
+- `src/lib/harmony-compliance.ts` (833 lines)
+- `src/lib/optimise-prompts/harmony-post-processing.ts` (439 lines)
 
-Includes: commodity catalog schemas (4 files), emoji integrity (3), exchange catalog shapes (3), FX SSOT (1), prompt intelligence data (2), provider helpers/shapes (4), data contracts (4), integrity tests (~8 from `__tests__/`), phase-4-evolution (1).
+But zero test files for any of them. The 115-test lockdown suite was either never created, or was deleted. This is a **critical gap** — these files enforce post-processing and compliance rules for Call 2 output. Any regression here silently corrupts all generated prompts.
 
-### 4.2 — `learning` (30 files, ~808 cases)
+**Recommended fix:** Create `src/lib/__tests__/harmony-post-processing.test.ts` and `src/lib/__tests__/harmony-compliance.test.ts` with:
 
-ML pipeline: scoring, A/B testing, co-occurrence, compression, feedback loops. All node environment.
-
-**Matched by:** `src/lib/learning/**/*.test.*`
-
-All 30 files: ab-assignment, ab-testing, aggregate-phase6, anti-pattern-detection, category-value-discovery, collision-matrix, combo-integration, combo-lookup, compression-intelligence, compression-lookup, compression-overrides, confidence-multiplier, feedback-credibility, feedback-streaks, iteration-integration, iteration-tracking, magic-combo-mining, negative-pattern-integration, outcome-score, platform-co-occurrence (2), platform-term-quality (2), redundancy-detection, redundancy-integration, scorer-health, temporal-intelligence, term-quality-scoring, threshold-discovery, weight-recalibration.
-
-### 4.3 — `intelligence` (6 files, ~176 cases)
-
-Prompt intelligence engines. Node environment.
-
-**Matched by:** `src/lib/prompt-intelligence/**/*.test.*`
-
-All 6 files: conflict-detection, integration, market-mood-engine, platform-optimization, suggestion-engine, integration-scoring.
-
-### 4.4 — `hooks` (11 files, ~140 cases)
-
-React hooks with jsdom. Includes sentence conversion hook added post-4-Mar.
-
-**Matched by:** `src/hooks/**/*.test.*`
-
-All 11 files: use-ab-test, use-feedback-memory, use-learning-data, use-platform-learning, use-sentence-conversion (NEW), use-sync-computation, use-conflict-detection, use-market-mood, use-prompt-analysis, use-smart-reorder, use-smart-suggestions.
-
-### 4.5 — `components` (13 files)
-
-React component rendering. jsdom environment. `phase-4-evolution.test.ts` excluded (runs in `data` group).
-
-**Matched by:** `src/components/**/*.test.*` (excluding `phase-4-evolution`)
-
-All 13 files: exchange-card, exchange-clock, tab-list.active, tab-list.order, exchange-picker, launch-panel.smoke, prompt-builder.analytics, provider-detail.smoke, tabs.keyboard, tabs.live, feedback-invitation, feedback-memory-banner, return-to-last.smoke.
-
-### 4.6 — `api` (10 files)
-
-API route contracts. Node environment. Includes parse-sentence and Stripe webhook tests added post-4-Mar.
-
-**Matched by:** `src/app/api/**/*.test.*` + `src/__tests__/api.*` + `src/__tests__/go.*`
-
-All 10 files: api.weather.route, go.outbound.route, auth.api, feedback-route, parse-sentence (NEW), webhook (NEW), api-contracts.snapshot, exchanges.api, fx.api, providers.api.
-
-### 4.7 — `util` (15 files)
-
-Pure library/utility functions. Node environment. **Includes the 115-test harmony lockdown suite.**
-
-**Matched by:** `src/lib/__tests__/**/*.test.*` + `src/lib/fx/**/*.test.*` + `src/lib/ribbon/**/*.test.*` + `src/lib/tests/**/*.test.*` + specific `__tests__/format.*` + `fx.*` + `exchange-order.*`
-
-All 15 files: adaptive-weights, category-synergy, clock, **harmony-compliance (NEW, 43 tests)**, **harmony-post-processing (NEW, 72 tests)**, prompt-builder-3-stage, prompt-builder-rich-phrases, prompt-dna, weather-category-mapper, providers.normalisesymbol, providers.summary, providers.test, selection, flags, time.
-
-### 4.8 — `app` (~21 running files, 12 orphaned)
-
-App-scoped integration. jsdom environment. **12 files orphaned — see §3.**
-
-**Matched by:** `src/__tests__/a11y.*` + `compression.*` + `conversion-*` + `finance-ribbon.*` + `holiday-detector.*` + `plans.matrix.*` + `promagen-users.*`
-
-Running (21): a11y.live-region, compression, conversion-affinities (NEW), conversion-assembly-integration (NEW), conversion-budget (NEW), conversion-costs (NEW), conversion-learning (NEW), conversion-scorer (NEW), conversion-telemetry (NEW), finance-ribbon.contracts, holiday-detector, promagen-users.aggregation, and ~9 others matching existing patterns.
-
-Orphaned (12): See §3 for full list.
+- Snapshot tests for each post-processing function (P1–P12) against known input/output pairs
+- Rule count drift detection (assert exact count of rules in compliance gate)
+- MJ negative deduplication test cases
+- CLIP adjective stripping test cases
+- Banned phrase detection test cases
 
 ---
 
-## 5. Harmony Lockdown Suite (v4.0.0)
+## 4. BQI Test Infrastructure (Non-Jest)
 
-**Added 25 March 2026.** Two test files in the `util` group form the harmony lockdown suite — 115 tests that must pass before shipping any changes to the AI tier generation post-processing pipeline.
+The Builder Quality Intelligence system provides regression testing for Call 3 builders, but via CLI tools rather than Jest:
 
-| File                                                | Tests | What it covers                                                                                                                                                                                                     |
-| --------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `src/lib/__tests__/harmony-post-processing.test.ts` | 72    | All P1–P12 functions: deduplicateMjParams, stripTrailingPunctuation, fixT4SelfCorrection, fixT4MetaOpeners, mergeT4ShortSentences, fixT3MetaOpeners, stripClipQualitativeAdjectives, postProcessTiers orchestrator |
-| `src/lib/__tests__/harmony-compliance.test.ts`      | 43    | enforceT1Syntax, enforceMjParameters, detectT4MetaLanguage, detectT4ShortSentences, rule ceiling assertion (RULE_CEILING=30)                                                                                       |
+| Tool               | File                                        | Purpose                                                                             |
+| ------------------ | ------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Validation harness | `src/lib/validation/validate-builder.ts`    | 4-gate check (anchor preservation, banned content, char count, length preservation) |
+| Batch runner       | `scripts/builder-quality-run.ts`            | Full Call 3 → Score pipeline for all 40 platforms                                   |
+| Claude scorer      | `src/lib/builder-quality/claude-scorer.ts`  | Dual-model scoring (Anthropic API)                                                  |
+| Aggregation        | `src/lib/builder-quality/aggregation.ts`    | 3-layer result aggregation + decision logic                                         |
+| Scoring prompt     | `src/lib/builder-quality/scoring-prompt.ts` | Shared rubric for GPT + Claude scorers                                              |
 
-### Drift detection tests
-
-The lockdown suite includes drift detection assertions that verify lookup set sizes:
-
-| Lookup set                  | Expected size | Test assertion        |
-| --------------------------- | ------------- | --------------------- |
-| T4 abstract nouns           | 23            | Exact count enforced  |
-| T4 meta verbs               | 21            | Exact count enforced  |
-| T3 abstract nouns           | 20            | Exact count enforced  |
-| T3 perception verbs         | 18            | Exact count enforced  |
-| CLIP qualitative adjectives | 10            | Exact count enforced  |
-| Rule ceiling                | 30            | `RULE_CEILING === 30` |
-
-### Test fixtures
-
-Real GPT outputs from all 6 harmony rounds + 3 stress tests (lighthouse, cellist, deep-sea diver) are used as fixtures. This means the tests validate against actual production data, not synthetic inputs.
-
-### Non-regression rule
-
-Any red test in the harmony lockdown suite = post-processing drift. **Fix the code, not the test.** The only exception is adding new lookup set entries (which requires updating both the code and the drift detection count).
+**These are not Jest tests.** They run as CLI scripts (`tsx scripts/builder-quality-run.ts`) and store results in Postgres. They test the production Call 3 pipeline end-to-end but provide zero CI protection — a broken build ships without these catching it.
 
 ---
 
-## 6. Coverage Gaps
+## 5. Orphaned Test Files — CRITICAL
 
-Cross-referenced from `test-gap-analysis.md` (28 Feb) against current codebase state (25 Mar). Updated status:
+**54 files** in `src/__tests__/` (43) and `src/__tests__/admin/` (11) are in the codebase but **may not be matched by any Jest project pattern** in `jest.config.cjs`. The Jest config is not in `src.zip` so this cannot be verified from the zip alone.
 
-| Gap                        | Source Lines | Tests (28 Feb)  | Tests (25 Mar)                                   | Status                              |
-| -------------------------- | ------------ | --------------- | ------------------------------------------------ | ----------------------------------- |
-| **Weather Engine**         | 7,859        | 0               | 0                                                | 🔴 STILL OPEN                       |
-| **Prompt Optimizer**       | 1,789        | 0               | 0                                                | 🔴 STILL OPEN                       |
-| **Vocabulary System**      | 1,778        | 0               | 0                                                | 🟡 STILL OPEN                       |
-| **Telemetry Client**       | 407          | 0               | 0                                                | 🟡 STILL OPEN                       |
-| **Untested Hooks**         | 9,281        | 0 (35 hooks)    | +1 (use-sentence-conversion)                     | 🟡 STILL OPEN (34 hooks)            |
-| **API Routes**             | ~8,000+      | 6 routes tested | 10 routes tested (+parse-sentence, +webhook, +2) | 🟠 PARTIAL                          |
-| **Untested Components**    | 17,633       | 12 dirs         | 13 dirs (+1)                                     | 🟠 STILL OPEN                       |
-| **Orphaned tests (NEW)**   | —            | Not known       | 25 files not running                             | 🔴 NEW — jest.config.cjs fix needed |
-| **Harmony pipeline (NEW)** | 828 lines    | 0               | **115 tests**                                    | ✅ CLOSED                           |
+**Impact if orphaned:** ~2,658 test cases providing zero CI protection. Tests pass locally only if you run them directly — `pnpm run test:util` may silently skip them.
 
-### What was closed since 28 Feb
-
-The **harmony post-processing pipeline** (828 lines across `harmony-post-processing.ts` + `harmony-compliance.ts`) went from 0 to 115 tests. This is the most tested subsystem in the codebase relative to its line count.
-
-### What remains open
-
-The weather engine (7,859 lines, 0 tests) is still the single biggest risk. The prompt optimizer (1,789 lines, 0 tests) is second. Both handle every user interaction — a regression in either breaks the entire product.
+**Fix:** Inspect `jest.config.cjs` in the repo root. Verify that every test file in `src/__tests__/` is matched by at least one project's `testMatch` pattern. If not, add patterns or move files to locations that are matched.
 
 ---
 
-## 7. Gap Closure Build Order
+## 6. Critical Coverage Gaps
 
-Carried forward from `test-gap-analysis.md`, updated with current status. Phases are ordered by risk-to-effort ratio.
+Ranked by risk — what breaks silently if these areas regress.
 
-| Phase   | Priority             | Target                   | New Files | New Cases              | Effort | Status      |
-| ------- | -------------------- | ------------------------ | --------- | ---------------------- | ------ | ----------- |
-| **FIX** | 🔴 Orphans           | jest.config.cjs patterns | 0         | ~290 (already written) | 30 min | NOT STARTED |
-| B       | 🔴 Weather Engine    | 9 new test files         | 9         | ~90                    | 2d     | NOT STARTED |
-| C       | 🔴 Prompt Optimizer  | 4 new test files         | 4         | ~43                    | 1d     | NOT STARTED |
-| D       | 🟡 Vocab + Telemetry | 5 new test files         | 5         | ~42                    | 1d     | NOT STARTED |
-| E       | 🟡 Critical Hooks    | 8 new test files         | 8         | ~56                    | 1.5d   | NOT STARTED |
-| F       | 🟠 API Routes        | 8 new test files         | 8         | ~37                    | 1.5d   | NOT STARTED |
-| G       | 🟠 Components        | 6 new test files         | 6         | ~42                    | 2d     | NOT STARTED |
+### 6.1 Harmony Compliance + Post-Processing (CRITICAL)
 
-**After all phases: ~161 running files, ~3,000+ cases.** The orphan fix alone adds ~290 existing test cases to CI at zero writing cost.
+**Risk: All generated prompts silently corrupted.**
+
+- 0 tests for `harmony-compliance.ts` (833 lines, deterministic syntax validation)
+- 0 tests for `harmony-post-processing.ts` (272 lines, GPT artefact removal)
+- 0 tests for `optimise-prompts/harmony-post-processing.ts` (439 lines, Call 3 specific)
+
+**Recommended:** Unit tests with fixture inputs. Test each post-processing function independently. Drift detection asserting the exact number of rules and banned phrases.
+
+### 6.2 Call 3 Builders (CRITICAL)
+
+**Risk: Platform-specific optimisation silently wrong for any of 40 platforms.**
+
+- 0 Jest tests for 50 files in `src/lib/optimise-prompts/`
+- BQI batch runner provides end-to-end coverage but not CI-integrated
+- `validate-builder.ts` provides 4-gate checks but is CLI-only
+
+**Recommended:** For each builder group, a Jest test that passes a known Call 2 snapshot through `resolveGroupPrompt()` and asserts: correct system prompt selection, correct temperature, correct compliance rules applied. Does NOT require GPT calls — tests the routing and config, not the model output.
+
+### 6.3 Platform Config SSOT (HIGH)
+
+**Risk: Silent misrouting — wrong tier, wrong builder, wrong temperature.**
+
+- 0 tests for `platform-config.json` (40 platforms) or `platform-config.ts` (adapter)
+- Missing/wrong config entries cause silent fallbacks that look like GPT failures
+
+**Recommended:** Shape test asserting every platform has required fields (tier, maxChars, idealMin, idealMax, negativePromptMode, call3Group). Assert 40 platforms. Assert no duplicate IDs. Assert tier values are 1–4.
+
+### 6.4 Index Rating Calculations (HIGH)
+
+**Risk: All provider ratings silently wrong.**
+
+- 0 tests for `lib/index-rating/calculations.ts` (500 lines, all the Elo/MPI/decay/seeding math)
+- 0 tests for `lib/index-rating/database.ts` (SQL queries including the 6/12 event type filter)
+
+**Recommended:** Unit tests for `calculateMPI()`, `calculateEffectivePoints()`, `calculateEloGain()`, `calculateSeedRating()`, `applyDailyRegression()`, `calculateTimeDecay()`. These are pure functions — easy to test with known inputs and expected outputs.
+
+### 6.5 Cron Routes (HIGH)
+
+**Risk: Crons fail silently in production (already happened — auth bug).**
+
+- 0 tests for `/api/index-rating/cron`, `/api/promagen-users/cron`, `/api/cron/rankings`
+- The cron auth mismatch (custom headers vs Vercel Bearer) was only caught by manual inspection
+
+**Recommended:** At minimum, auth validation tests: assert Bearer token accepted, assert custom headers accepted, assert missing secret returns 404, assert wrong secret returns 404. Mock the database layer.
+
+### 6.6 Builder Quality Lib (MEDIUM)
+
+**Risk: BQI scoring/aggregation silently wrong — bad quality data drives bad decisions.**
+
+- 0 tests for 7 files in `lib/builder-quality/`
+- `aggregation.ts` has complex decision logic (thresholds, instability detection, confidence tiers)
+
+**Recommended:** Unit tests for aggregation decision logic. Given platform scores X, Y, Z: assert correct decision (pass/investigate/fail). Test instability detection (stddev >8). Test comparison confidence tiers.
+
+### 6.7 Voting System (MEDIUM)
+
+**Risk: Rankings silently wrong, vote manipulation undetected.**
+
+- 0 tests for 8 files in `lib/voting/` (bayesian, security, storage, rate-limiter, validation)
+
+**Recommended:** Unit tests for `calculateRankings()`, `validateCronAuth()`, rate limiter logic.
+
+### 6.8 Prompt Lab Components (MEDIUM)
+
+**Risk: Right rail animations/display break silently.**
+
+- 0 tests for 13 components in `components/prompt-lab/`
+- Pipeline X-Ray, Decoder, Switchboard, Alignment — all untested
+
+**Recommended:** Smoke tests: component mounts without error. Snapshot tests for dormant state. Props contract tests (null data → dormant, valid data → active).
+
+### 6.9 Core Hooks (MEDIUM)
+
+**Risk: Prompt generation flow breaks silently.**
+
+- 0 tests for `use-ai-optimisation` (Call 3 hook)
+- 0 tests for `use-category-assessment` (Call 1 hook)
+- 0 tests for `use-tier-generation` (Call 2 hook)
+- 0 tests for `use-index-rating-events` (event tracking hook)
+
+**Recommended:** Mock-based tests: given API success/failure, assert correct state transitions. For `use-index-rating-events`: assert `sendTrackEvent` fires correct payload.
+
+### 6.10 Homepage Components (LOW)
+
+**Risk: Homepage layout breaks, but quickly caught visually.**
+
+- 0 tests for 11 components in `components/home/`
+
+**Recommended:** Smoke tests only — components mount without crashing given valid props.
+
+---
+
+## 7. Gap Closure Priority
+
+| Priority | Area                                       | Files                        | Effort   | Impact                                |
+| -------- | ------------------------------------------ | ---------------------------- | -------- | ------------------------------------- |
+| **P1**   | Harmony compliance + post-processing tests | 3 source files               | 2–3 days | Protects all prompt generation        |
+| **P1**   | Platform config shape test                 | 1 source file                | 2 hours  | Catches silent misrouting             |
+| **P2**   | Index rating calculation tests             | 1 source file                | 1 day    | Protects all provider ratings         |
+| **P2**   | Call 3 builder routing tests               | 1 test file covering routing | 1 day    | Catches wrong builder/temp/compliance |
+| **P2**   | Cron auth tests                            | 3 routes                     | Half day | Prevents repeat of auth bug           |
+| **P3**   | BQI aggregation tests                      | 1 source file                | 1 day    | Protects quality decisions            |
+| **P3**   | Voting system tests                        | 2–3 source files             | 1 day    | Protects rankings integrity           |
+| **P4**   | Prompt Lab component smoke tests           | 13 components                | 1 day    | Catches mount/render errors           |
+| **P4**   | Core hook mock tests                       | 4 hooks                      | 1 day    | Catches state transition bugs         |
+| **P5**   | Orphaned test file audit                   | jest.config.cjs              | 2 hours  | Ensures existing tests actually run   |
 
 ---
 
 ## 8. CI Commands Reference
 
 ```powershell
-# From: C:\Users\Proma\Projects\promagen\frontend
+# Run all tests (frontend folder)
+pnpm run test:util
 
-# Individual groups
-pnpm run test:data              # Data integrity only
-pnpm run test:learning          # ML engine only
-pnpm run test:intelligence      # Prompt scoring only
-pnpm run test:hooks             # React hooks only
-pnpm run test:components        # Components only
-pnpm run test:api               # API routes only
-pnpm run test:util              # Utilities only (includes harmony lockdown)
-pnpm run test:app               # App integration only
+# Run specific project group (if jest.config.cjs has named projects)
+pnpm run test:util -- --selectProjects data
+pnpm run test:util -- --selectProjects learning
 
-# Composite
-pnpm run test:ci                # All 8 projects, verbose, runInBand
-pnpm run test:ci:fast           # data + util + api only (~5s)
-pnpm run test:ci:ml             # learning + intelligence only (~8s)
-pnpm run test:ci:ui             # hooks + components + app only (~7s)
+# Run single file
+pnpm run test:util -- --testPathPattern="harmony-compliance"
 
-# Harmony lockdown (quick check)
-npx jest --testPathPattern="harmony" --verbose
+# Run with coverage
+pnpm run test:util -- --coverage
 
-# Verification
-pnpm run typecheck              # TypeScript compilation
-pnpm run lint                   # ESLint
-pnpm run check:all              # lint + typecheck + test:ci
-pnpm run verify:groups          # Confirms all files in exactly one group
+# Run BQI validation (CLI, not Jest)
+npx tsx src/lib/validation/validate-builder.ts
 ```
 
 ---
 
-## 9. Console Noise Audit
+## 9. Non-Regression Rules
 
-| Project        | Status | Notes                                                |
-| -------------- | ------ | ---------------------------------------------------- |
-| `data`         | Clean  | No console output                                    |
-| `learning`     | Clean  | aggregate-phase6 debug output silenced               |
-| `intelligence` | Clean  | No console output                                    |
-| `hooks`        | Clean  | All fetch hooks are mocked                           |
-| `components`   | Clean  | useLearningData mocked in prompt-builder.analytics   |
-| `api`          | Clean  | api-test-setup.ts silences console.debug/error       |
-| `util`         | Clean  | No console output (harmony tests are pure functions) |
-| `app`          | Clean  | No console output                                    |
-
----
-
-## 10. Non-Regression Rules
-
-1. **All 8 Jest projects must pass before shipping** — `pnpm run test:ci` is the gate.
-2. **115-test harmony lockdown suite must pass before shipping post-processing changes** — any red test = drift. Fix the code, not the test.
-3. **Rule ceiling test is enforced** — `RULE_CEILING === 30` in `harmony-compliance.test.ts`. Raising requires Martin approval.
-4. **Drift detection tests are enforced** — lookup set size assertions prevent silent modification of post-processing patterns.
-5. **No test quarantine** — orphaned tests must be fixed by updating jest.config.cjs patterns, not by deleting or skipping tests.
-6. **New source files get tests** — every new `lib/` module must have a co-located test file before merge. Minimum: 1 golden-path + 1 error-path test per exported function.
-7. **Post-processing test fixtures use real GPT output** — never synthetic. This validates against actual production artefacts.
-8. **Martin approves test deletions** — "Put it forward but don't implement it until I say so" applies to test removal.
-
----
-
-## 11. Version History
-
-### Consolidated from 4 predecessor documents
-
-| Document                | Date        | What it covered                                                             | Status                     |
-| ----------------------- | ----------- | --------------------------------------------------------------------------- | -------------------------- |
-| `test-strategy-plan.md` | 27 Feb 2026 | Original analysis (105 files), 8-group reorganisation plan, 6 coverage gaps | **SUPERSEDED** by this doc |
-| `test-groups.md`        | 27 Feb 2026 | Jest config reorganisation (Phase A), new scripts, verification             | **SUPERSEDED** by this doc |
-| `test-gap-analysis.md`  | 28 Feb 2026 | Prioritised gap closure plan (Phases B–G), build schedule                   | **SUPERSEDED** by this doc |
-| `test-in-place.md`      | 4 Mar 2026  | Full inventory at 149 files / ~2,439 cases, per-file case counts            | **SUPERSEDED** by this doc |
-
-### Key milestones
-
-| Date         | Change                                                                                                                              | Files             | Cases  |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------------------- | ----------------- | ------ |
-| 27 Feb 2026  | Phase A — Jest config reorganised into 8 projects. Fixed 28 orphaned files (testMatch blind spots).                                 | 105               | ~1,413 |
-| 28 Feb 2026  | Rounds 1–14 — 13 rounds of fixes and improvements.                                                                                  | 108               | ~1,427 |
-| 28 Feb–1 Mar | Phases 7.8–7.11 — Temporal, Compression, Feedback, Admin test suites.                                                               | 131               | ~2,034 |
-| 4 Mar 2026   | Unified Brain + 3-Stage + 42-Platform Parity + upgrades.                                                                            | 149               | ~2,439 |
-| 25 Mar 2026  | Harmony lockdown (115 tests), conversion tests (7), Stripe webhook, parse-sentence, use-sentence-conversion. 23 orphans discovered. | 161 (136 running) | ~2,452 |
+1. Never delete a test to fix a build failure. Fix the source code or mark the test as `.skip` with a TODO.
+2. Every new component, hook, or lib function should ship with at least a smoke test.
+3. Data shape tests must assert exact counts (e.g., 40 platforms, 12 categories) — changes to these counts are intentional and should require test updates.
+4. Harmony lockdown tests (when rebuilt) must run on every CI build — no skipping.
+5. Test files must be in locations matched by `jest.config.cjs` project patterns — verify after adding new test directories.
+6. BQI batch runner results supplement but do not replace Jest CI tests.
+7. `pnpm run test:util` is the test command. Not `npx jest --testPathPattern`.
 
 ---
 
 ## Changelog
 
-- **25 Mar 2026 (v1.0.0):** Consolidated 4 docs into master test.md. Updated all counts to match 161-file codebase. Added §3 (23 orphaned files — critical finding), §5 (harmony lockdown suite), updated §6 gaps (harmony pipeline closed, orphans added), updated §7 build order (orphan fix as Priority 0). File inventory updated with 13 new files since 4 Mar.
+- **6 Apr 2026 (v2.0.0):** Complete rewrite from src.zip SSoT. 158 test files verified by file inspection. ~2,658 test cases counted via `it`/`test` block grep. CRITICAL finding: harmony compliance + post-processing tests (claimed 115 in architecture doc) do not exist — 0 test files for 1,544 lines of compliance/post-processing source code. 10 coverage gaps identified and ranked by risk. BQI non-Jest test infrastructure documented. Orphaned test file count updated from ~25 to 54. Gap closure priority table added. Full test file inventory by location.
+- **25 Mar 2026 (v1.0.0):** Initial version consolidating 4 predecessor documents.
 
 ---
 
-_This document is the single authority for Promagen's test suite. The 4 predecessor documents (`test-in-place.md`, `test-strategy-plan.md`, `test-groups.md`, `test-gap-analysis.md`) are superseded and should be archived._
-
-_**Key principle:** 161 test files exist. Only 136 run. Fix the orphans first — it's free test coverage._
+_This document is the authority for Promagen's test landscape. `src.zip` is the SSoT — every file count and location verified by direct inspection. Jest config (`jest.config.cjs`) is NOT in src.zip and must be checked in the repo root._

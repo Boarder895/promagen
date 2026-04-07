@@ -1,14 +1,14 @@
 # Promagen Code Standard (API-free edition)
 
-**Last updated:** 18 March 2026  
-**Version:** 4.0 (Debounced Intent · Shared Hook Sync · SSOT Colours · Auto-Scroll)  
+**Last updated:** 6 April 2026  
+**Version:** 5.0 (No Grey Text · AI Disguise · Co-located Styles · Pipeline X-Ray patterns)  
 **Scope:** Frontend code inside the `frontend/` workspace only.
 
 ---
 
-## Quick Reference (12 Golden Rules)
+## Quick Reference (14 Golden Rules)
 
-Before diving into details, here are the 12 most important rules. If you remember nothing else, remember these:
+Before diving into details, here are the 14 most important rules. If you remember nothing else, remember these:
 
 1. **SSOT-first** — Data lives in JSON, not components. One file to edit, everywhere updates.
 2. **One schema per data file** — Every JSON SSOT has exactly ONE Zod schema adjacent to it.
@@ -21,7 +21,9 @@ Before diving into details, here are the 12 most important rules. If you remembe
 9. **Zero-dependency preference** — Use `Intl`, native fetch, built-in APIs first.
 10. **Never delete to fix** — Don't remove, stub, or simplify away working code to satisfy tooling.
 11. **Universal `clamp()` — every dimension scales** — All text, icons, buttons, gaps, padding, margins, and container dimensions must use CSS `clamp()` for fluid viewport-relative sizing. No fixed `px`, `rem`, or Tailwind size classes for anything that should scale.
-12. **Grid is the single source of truth** — One unified CSS grid defines column structure and gaps. Panels (Engine Bay, Mission Control, Hero Window, exchanges) sit inside grid cells. Neither panel is master or slave — the grid owns positioning. Content never escapes its window; only tooltips may overlay.
+12. **Grid is the single source of truth** — One unified CSS grid defines column structure and gaps. Panels sit inside grid cells. Content never escapes its window; only tooltips may overlay.
+13. **No grey text — ever** — No `text-slate-400`, `text-slate-500`, `text-slate-600`, `#94A3B8`, `#64748b`, `#475569`, `text-white/30`, `text-white/40`, or any muted grey on any user-facing UI. Use white, brand colours (tier colours, amber, emerald, cyan, pink), or at minimum `text-slate-200` (`#E2E8F0`) / `text-white/70`.
+14. **AI Disguise** — No user-facing string references "AI", "GPT", "OpenAI", "LLM", or "model". All API calls are server-side. Users see "algorithms" and "Prompt Intelligence Engine". See `ai-disguise.md`.
 
 ---
 
@@ -198,7 +200,7 @@ Use named types and interfaces for all component props.
 Prefer:
 
 ```typescript
-type ProviderMode = 'live' | 'cached' | 'unavailable';
+type ProviderMode = "live" | "cached" | "unavailable";
 ```
 
 over: `string`
@@ -231,13 +233,13 @@ For major domain types, create a singular entry-point file that re-exports:
 
 ```typescript
 // ✅ Correct
-import type { Provider } from '@/types/provider';
+import type { Provider } from "@/types/provider";
 
 // ❌ Wrong — uses plural, may break
-import type { Provider } from '@/types/providers';
+import type { Provider } from "@/types/providers";
 
 // ❌ Wrong — imports from internal file
-import type { Provider } from '@/data/providers/providers.schema';
+import type { Provider } from "@/data/providers/providers.schema";
 ```
 
 ### Zod schema rules
@@ -311,13 +313,29 @@ No text in Promagen may render below **10px** at any viewport width. This means:
 
 **Reference:** "6 categories" text in `scene-starters-preview.tsx` line 247 — this is the smallest readable text in Promagen.
 
-**§ 6.0.2 Banned Text Colours (Hard Rule)**
+**§ 6.0.2 No Grey Text — Anywhere (Hard Rule)**
 
-`text-slate-500` (`#64748b`) and `text-slate-600` (`#475569`) are banned for all user-facing text. They are unreadable on dark backgrounds.
+**No grey text on any user-facing UI surface.** This is the single most enforced visual rule in Promagen.
 
-- Use `text-white`, `text-slate-100`, `text-slate-200`, `text-slate-300`, or `text-slate-400` only
-- `text-slate-400` (`#94A3B8`) is the dimmest permitted text colour
-- If text needs to be de-emphasised, reduce opacity on white (`text-white/60`) rather than using dark slate classes
+**Banned (all of these):**
+
+- `text-slate-400` (`#94A3B8`) — previously listed as "dimmest permitted". **Now banned.**
+- `text-slate-500` (`#64748b`) — banned since v1.0
+- `text-slate-600` (`#475569`) — banned since v1.0
+- `text-white/30`, `text-white/40` — too dim on dark backgrounds
+- Any hex colour that renders as grey on the dark UI (if you have to ask, it's grey)
+- `#6b7280` (gray-500) — used in some index-rating fallback states, should be replaced
+
+**What to use instead:**
+
+- `text-white` / `#FFFFFF` — primary text
+- `text-slate-200` (`#E2E8F0`) / `text-white/70` — de-emphasised text (the new floor)
+- Brand colours — tier colours (blue `#60a5fa`, purple `#c084fc`, emerald `#34d399`, orange `#fb923c`), cyan (`#22d3ee`), amber (`#FCD34D`), pink
+- Category colours from `prompt-colours.ts`
+
+**Why this changed:** The previous rule (v4.0) permitted `text-slate-400` and recommended `text-white/60`. In practice, both are unreadable on Promagen's dark backgrounds. The 6 April 2026 audit found grey text violations in `leaderboard-rail.tsx`, `provider-detail.tsx`, `prompt-builder.tsx`, and `aspect-ratio-selector.tsx` — all traced to the permissive old rule. The standard is now zero-tolerance.
+
+**Compliance check:** `grep -rn "text-slate-4\|text-slate-5\|text-slate-6\|#94A3B8\|#64748b\|#475569\|#6b7280" src/components/ --include="*.tsx"` — result must be empty (comments excepted).
 
 ### § 6.0.3 No Opacity Dimming (Hard Rule)
 
@@ -558,28 +576,43 @@ Only deviate from this style if the user explicitly requests a different style. 
 
 **Implementation patterns:**
 
-**1. Tailwind animation utilities (preferred):**
+**1. `<style dangerouslySetInnerHTML>` (preferred for complex keyframes):**
+
+This is the standard pattern used across all Pipeline X-Ray / Prompt Lab components (`pipeline-xray.tsx`, `xray-decoder.tsx`, `xray-switchboard.tsx`, `xray-alignment.tsx`, `xray-split-flap.tsx`, `xray-teletype.tsx`, `algorithm-cycling.tsx`, `drift-indicator.tsx`, `tier-generation-cycling.tsx`, `leaderboard-rail.tsx`):
 
 ```tsx
-// Pulse effect using Tailwind
-<button className="animate-pulse hover:animate-none">Launch</button>
+const COMPONENT_STYLES = `
+  @keyframes xray-bar-shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+  .xray-bar-generating {
+    background-size: 200% 100%;
+    animation: xray-bar-shimmer 1.5s linear infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .xray-bar-generating {
+      animation: none !important;
+    }
+  }
+`;
+
+export function MyComponent() {
+  return (
+    <>
+      <style dangerouslySetInnerHTML={{ __html: COMPONENT_STYLES }} />
+      <div className="xray-bar-generating">...</div>
+    </>
+  );
+}
 ```
 
-**2. Inline keyframes (for component-specific effects):**
+**Why `dangerouslySetInnerHTML` over `<style jsx>`:** Next.js App Router with `'use client'` does not support `<style jsx>`. The `dangerouslySetInnerHTML` approach works in all contexts, keeps styles co-located in the same file, and the string is a constant (not user input) so there is no XSS risk.
+
+**2. Tailwind animation utilities (for simple effects):**
 
 ```tsx
-// Component-local animation
-<style jsx>{`
-  @keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-  }
-  .shimmer-effect {
-    animation: shimmer 1.5s ease-in-out infinite;
-  }
-`}</style>
-
-<div className="shimmer-effect">...</div>
+<button className="animate-pulse hover:animate-none">Launch</button>
 ```
 
 **3. Inline style with CSS variables:**
@@ -587,13 +620,15 @@ Only deviate from this style if the user explicitly requests a different style. 
 ```tsx
 <div
   style={{
-    animation: 'pulse 2s ease-in-out infinite',
-    boxShadow: '0 0 20px rgba(56, 189, 248, 0.3)',
+    animation: "pulse 2s ease-in-out infinite",
+    boxShadow: "0 0 20px rgba(56, 189, 248, 0.3)",
   }}
 >
   ...
 </div>
 ```
+
+**Reduced motion:** Every `@keyframes` block in a `<style dangerouslySetInnerHTML>` must include a `@media (prefers-reduced-motion: reduce)` rule that disables the animation. This is verified in all 11 prompt-lab component files.
 
 **Compliance check:** When adding an animation, ask: "Is this used anywhere else?" If no, keep it in the file.
 
@@ -616,7 +651,7 @@ A fixed pixel threshold like `MIN_HEIGHT_PX = 55` breaks when content changes (l
 const BREATHING_ROOM_PX = 8; // 4px top + 4px bottom
 
 for (const fontSize of candidates) {
-  measurer.style.setProperty('--font', `${fontSize}px`);
+  measurer.style.setProperty("--font", `${fontSize}px`);
   measurer.offsetHeight; // force reflow
 
   const contentH = measurer.scrollHeight;
@@ -624,7 +659,7 @@ for (const fontSize of candidates) {
 
   if (contentW <= cellWidth && contentH + BREATHING_ROOM_PX <= cellHeight) {
     // Content fits with breathing room — use this layout
-    return { fontSize, layout: 'current' };
+    return { fontSize, layout: "current" };
   }
 }
 // Fallback: minimum font, reduced layout
@@ -771,12 +806,13 @@ for (const fontSize of candidates) {
 
 ```tsx
 // ✅ Correct — single source of truth for all grid spacing
-const GRID_GAP = 'clamp(6px, 0.5vw, 10px)';
+const GRID_GAP = "clamp(6px, 0.5vw, 10px)";
 
 <div
   className="grid"
   style={{
-    gridTemplateColumns: 'clamp(180px, 15vw, 260px) 1fr clamp(180px, 15vw, 260px)',
+    gridTemplateColumns:
+      "clamp(180px, 15vw, 260px) 1fr clamp(180px, 15vw, 260px)",
     gap: GRID_GAP,
   }}
 >
@@ -794,7 +830,8 @@ const GRID_GAP = 'clamp(6px, 0.5vw, 10px)';
 // Each column is a vertical flex stack
 <div className="flex min-h-0 flex-1 flex-col" style={{ gap: GRID_GAP }}>
   <EngineBay /> {/* shrink-0 — takes its natural height */}
-  <ExchangeRailEast /> {/* flex-1 — fills remaining space, scrolls internally */}
+  <ExchangeRailEast />{" "}
+  {/* flex-1 — fills remaining space, scrolls internally */}
 </div>
 ```
 
@@ -936,14 +973,14 @@ When multiple hoverable elements (cards, tabs, menu items) trigger panel switche
 
 **Pattern:**
 
-| State | Hover behaviour | Why |
-| --- | --- | --- |
-| No panel active | First card hover → switch immediately (0ms) | Instant feedback for first interaction |
-| Same card re-hovered | No action | Already showing correct panel |
-| Different card hovered | 150ms debounce → switch if cursor stays | Filters pass-throughs during diagonal movement toward preview |
-| Card leave (no other card entered) | 2-second linger timer → close if cursor doesn't enter preview | Forgiveness for accidental departure |
-| Cursor enters preview panel | Cancel all timers | Safe zone — user arrived at destination |
-| Cursor leaves preview panel | Close immediately | Clear intent to leave |
+| State                              | Hover behaviour                                               | Why                                                           |
+| ---------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------- |
+| No panel active                    | First card hover → switch immediately (0ms)                   | Instant feedback for first interaction                        |
+| Same card re-hovered               | No action                                                     | Already showing correct panel                                 |
+| Different card hovered             | 150ms debounce → switch if cursor stays                       | Filters pass-throughs during diagonal movement toward preview |
+| Card leave (no other card entered) | 2-second linger timer → close if cursor doesn't enter preview | Forgiveness for accidental departure                          |
+| Cursor enters preview panel        | Cancel all timers                                             | Safe zone — user arrived at destination                       |
+| Cursor leaves preview panel        | Close immediately                                             | Clear intent to leave                                         |
 
 **Why 150ms:** Fast enough to feel instant for deliberate hovers. Long enough to filter diagonal cursor movement across a 3×3 card grid where cards are small and closely spaced. Tested against the Pro page Feature Control Panel.
 
@@ -984,15 +1021,28 @@ When content overflows a fixed-height container and needs to be showcased withou
 
 ```css
 @keyframes dailyScroll {
-  0%, 1.8% { transform: translateY(0); }
-  47% { transform: translateY(var(--scroll-dist, 0px)); }
-  48.8%, 51.2% { transform: translateY(var(--scroll-dist, 0px)); }
-  98.2% { transform: translateY(0); }
-  100% { transform: translateY(0); }
+  0%,
+  1.8% {
+    transform: translateY(0);
+  }
+  47% {
+    transform: translateY(var(--scroll-dist, 0px));
+  }
+  48.8%,
+  51.2% {
+    transform: translateY(var(--scroll-dist, 0px));
+  }
+  98.2% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(0);
+  }
 }
 ```
 
 **Rules:**
+
 - Animation defined in `<style dangerouslySetInnerHTML>` (co-located, not globals.css)
 - `@media (prefers-reduced-motion: reduce)` disables the animation
 - Container uses `overflow: hidden` (not `auto` — no scrollbar visible)
@@ -1015,7 +1065,7 @@ When multiple instances of the same hook need to stay in sync across the same pa
 ```typescript
 localStorage.setItem(STORAGE_KEY, JSON.stringify(newValue));
 window.dispatchEvent(
-  new StorageEvent('storage', {
+  new StorageEvent("storage", {
     key: STORAGE_KEY,
     newValue: JSON.stringify(newValue),
   }),
@@ -1025,6 +1075,7 @@ window.dispatchEvent(
 Every hook instance listening via `window.addEventListener('storage', ...)` picks it up — same tab and other tabs.
 
 **Rules:**
+
 - The hook that writes the value owns the dispatch — not the caller
 - The hook's `useEffect` cleanup must remove the storage listener
 - Never use local `useState` for state that needs cross-component sync — always use the shared hook
@@ -1044,15 +1095,16 @@ All prompt category colours are defined once in `src/lib/prompt-colours.ts` and 
 
 **Exports:**
 
-| Export | Purpose |
-| --- | --- |
-| `CATEGORY_COLOURS` | Record of 13 category → hex colour mappings |
-| `CATEGORY_LABELS` | Record of category → display label |
-| `CATEGORY_EMOJIS` | Record of category → emoji |
+| Export                           | Purpose                                                   |
+| -------------------------------- | --------------------------------------------------------- |
+| `CATEGORY_COLOURS`               | Record of 13 category → hex colour mappings               |
+| `CATEGORY_LABELS`                | Record of category → display label                        |
+| `CATEGORY_EMOJIS`                | Record of category → emoji                                |
 | `buildTermIndexFromSelections()` | Builds `Map<string, PromptCategory>` from user selections |
-| `parsePromptIntoSegments()` | Splits prompt text into `{ text, category }[]` segments |
+| `parsePromptIntoSegments()`      | Splits prompt text into `{ text, category }[]` segments   |
 
 **Consumers (must import, never duplicate):**
+
 - `prompt-builder.tsx` (standard builder)
 - `enhanced-educational-preview.tsx` (Prompt Lab)
 - `four-tier-prompt-preview.tsx` (4-tier preview cards)
@@ -1073,6 +1125,7 @@ CSS `filter: blur()` animation for showcasing AI-generated images. Simulates rea
 **Keyframes:** `imagegenReveal` — 15s cycle. `blur(18px)` → resolves over 10s → `blur(0)` for 3s → resets. Paired with `imagegenProgressBar` — fuchsia gradient bar synced to same 15s cycle.
 
 **Rules:**
+
 - Co-located in `<style dangerouslySetInnerHTML>` (same as § 6.12)
 - `@media (prefers-reduced-motion: reduce)` must disable animation AND remove all filters (not just `animation: none` — the blur itself must be cleared)
 - Image element: `position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover`
@@ -1128,7 +1181,7 @@ When there is dynamic status (loading, errors, changes), use:
 **Canonical component:** `@/components/ui/tooltip`
 
 ```tsx
-import Tooltip from '@/components/ui/tooltip';
+import Tooltip from "@/components/ui/tooltip";
 
 <Tooltip text="Support: 24/7">
   <span className="flag">🇺🇸</span>
@@ -1596,9 +1649,9 @@ No "temporary" code without a removal plan.
 **Prefix convention:** Always prefix with `[module-name]` for easy filtering:
 
 ```typescript
-console.debug('[fx-selection] Pairs loaded:', pairs.length);
-console.warn('[clerk-sync] Resolution conflict, clerk wins');
-console.error('[gateway] API request failed:', error.message);
+console.debug("[fx-selection] Pairs loaded:", pairs.length);
+console.warn("[clerk-sync] Resolution conflict, clerk wins");
+console.error("[gateway] API request failed:", error.message);
 ```
 
 **Server-side (API routes, gateway):** Use structured logging where appropriate (see §19.4 Observability hooks).
@@ -1876,7 +1929,7 @@ setSettled(true);
 <div
   style={{
     opacity: settled ? 1 : 0,
-    transition: 'opacity 150ms ease-in',
+    transition: "opacity 150ms ease-in",
   }}
 >
   {/* content that measures/reflowsitself */}
@@ -1895,10 +1948,10 @@ setSettled(true);
 
 ```tsx
 // ✅ Correct — only animate visual properties
-className = 'transition-colors';
+className = "transition-colors";
 
 // ❌ Wrong — animates layout shifts
-className = 'transition-all';
+className = "transition-all";
 ```
 
 **Allowed transition targets:** `transition-colors`, `transition-opacity`, `transition-shadow`. Never use `transition-all` on any element that might change position or size.
@@ -1923,7 +1976,9 @@ useEffect(() => {
     .finally(() => clearTimeout(timeout));
 }, []);
 
-<div style={{ opacity: dataLoaded ? 1 : 0, transition: 'opacity 150ms ease-in' }}>
+<div
+  style={{ opacity: dataLoaded ? 1 : 0, transition: "opacity 150ms ease-in" }}
+>
   <SortableTable data={data} />
 </div>;
 ```
@@ -1962,6 +2017,7 @@ Before shipping any component that uses `ResizeObserver`, `requestAnimationFrame
 
 ## Changelog
 
+- **6 April 2026 (v5.0):** Major update — 3 critical changes. (1) **§6.0.2 rewritten: No Grey Text — Anywhere.** `text-slate-400` (`#94A3B8`) is now BANNED (was previously "dimmest permitted"). `text-white/60` recommendation removed. New floor: `text-slate-200` (`#E2E8F0`) / `text-white/70`. All grey variants banned including `text-white/30`, `text-white/40`, `#6b7280`. Compliance check grep command added. Triggered by 6 Apr audit finding grey text in `leaderboard-rail.tsx`, `provider-detail.tsx`, `prompt-builder.tsx`, `aspect-ratio-selector.tsx`. (2) **Golden Rules expanded from 12 to 14:** #13 No Grey Text (zero tolerance), #14 AI Disguise (no user-facing AI/GPT/OpenAI references). (3) **§6.2 Animation Placement rewritten:** `<style dangerouslySetInnerHTML>` is now the documented preferred pattern (used in all 11 prompt-lab component files). `<style jsx>` removed (not supported in Next.js App Router `'use client'`). Reduced-motion requirement explicit: every `@keyframes` block must include `@media (prefers-reduced-motion: reduce)`.
 - **19 March 2026 (v4.1):** Added § 6.15 Blur-to-Sharp Image Reveal Animation (`imagegenReveal` + `imagegenProgressBar` keyframes, 15s cycle, `prefers-reduced-motion` must clear filters). Added § 6.16 Static Image Asset Convention (`/public/images/pro/`, naming pattern `{feature}-{platformId}.{ext}`, lazy loading, onError handlers). Updated § 6.14: added exception for `IG_C` local alias pattern in static data arrays (acceptable when hex values match SSOT exactly). Cross-references: `paid_tier.md` §5.10 v6.0.0, `best-working-practice.md` blur-to-sharp + crossfade rotation patterns.
 - **18 March 2026 (v4.0):** Major update — 6 new hard rules and 4 new patterns. Added § 6.0.4 cursor-pointer on ALL clickable elements (arrow cursor = broken UX). Added § 6.0.5 no question mark icons on tooltips. Added § 6.11 Debounced Intent Pattern (150ms hover panel switching, replaces failed intent triangle). Added § 6.12 Auto-Scroll Animation Pattern (17s cycle with ResizeObserver-computed distance, co-located `@keyframes`). Added § 6.13 Shared Hook State Sync (synthetic StorageEvent for same-tab cross-hook sync). Added § 6.14 SSOT Colour Constants (`prompt-colours.ts` is the sole source of truth for all 13 category colours — no local duplicates). Updated § 7.1 Tooltip Standards: added rules 6–8 (400ms close delay, sign-in as plain `<a>` not `SignInButton mode="modal"`, no question marks cross-ref to § 6.0.5). Updated § 8.4 prompt builder data locations (added `prompt-colours.ts` 210 lines, `lifetime-counter.ts` 33 lines, updated `prompt-builder.ts` 1,738 lines). Cross-references: `paid_tier.md` §5.14 (colour anatomy), §5.15 (gem badge), §5.16 (tier sync).
 - **15 March 2026**: Added § 6.10 Equal-Gap Card Layout (anti-stacking rule). One vertical spacing system per card, `paddingInline` only, `align-content: space-evenly`, responsive row hiding via `max-height` media query. Cross-ref best-working-practice.md.
@@ -2044,31 +2100,34 @@ When two containers must scroll in sync (e.g., exchange rails on homepage):
 **Implementation**
 
 ```tsx
-'use client';
+"use client";
 
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback } from "react";
 
 export function SyncedScrollContainers() {
   const leftRef = useRef<HTMLDivElement>(null);
   const rightRef = useRef<HTMLDivElement>(null);
   const isSyncing = useRef(false);
 
-  const syncScroll = useCallback((source: HTMLDivElement, target: HTMLDivElement) => {
-    if (isSyncing.current) return;
-    isSyncing.current = true;
+  const syncScroll = useCallback(
+    (source: HTMLDivElement, target: HTMLDivElement) => {
+      if (isSyncing.current) return;
+      isSyncing.current = true;
 
-    // Calculate scroll percentage (handles different content heights)
-    const maxScroll = source.scrollHeight - source.clientHeight;
-    const scrollPercent = maxScroll > 0 ? source.scrollTop / maxScroll : 0;
+      // Calculate scroll percentage (handles different content heights)
+      const maxScroll = source.scrollHeight - source.clientHeight;
+      const scrollPercent = maxScroll > 0 ? source.scrollTop / maxScroll : 0;
 
-    // Apply to target
-    const targetMaxScroll = target.scrollHeight - target.clientHeight;
-    target.scrollTop = scrollPercent * targetMaxScroll;
+      // Apply to target
+      const targetMaxScroll = target.scrollHeight - target.clientHeight;
+      target.scrollTop = scrollPercent * targetMaxScroll;
 
-    requestAnimationFrame(() => {
-      isSyncing.current = false;
-    });
-  }, []);
+      requestAnimationFrame(() => {
+        isSyncing.current = false;
+      });
+    },
+    [],
+  );
 
   const handleLeftScroll = useCallback(() => {
     if (leftRef.current && rightRef.current) {
@@ -2084,10 +2143,18 @@ export function SyncedScrollContainers() {
 
   return (
     <>
-      <div ref={leftRef} onScroll={handleLeftScroll} className="overflow-y-auto">
+      <div
+        ref={leftRef}
+        onScroll={handleLeftScroll}
+        className="overflow-y-auto"
+      >
         {/* Left content */}
       </div>
-      <div ref={rightRef} onScroll={handleRightScroll} className="overflow-y-auto">
+      <div
+        ref={rightRef}
+        onScroll={handleRightScroll}
+        className="overflow-y-auto"
+      >
         {/* Right content */}
       </div>
     </>
@@ -2179,18 +2246,18 @@ The prompt builder uses a 9-category dropdown system with platform-specific opti
 
 ```typescript
 type PromptCategory =
-  | 'subject' // Subject (identity + key attributes) - limit 1
-  | 'action' // Action / Pose - limit 1
-  | 'style' // Style / Rendering / References - limit 1
-  | 'environment' // Environment (location + time + background) - limit 1
-  | 'composition' // Composition / Framing - limit 1
-  | 'camera' // Camera (angle + lens + DoF) - limit 1
-  | 'lighting' // Lighting (type + direction + intensity) - limit 1
-  | 'colour' // Colour / Grade - limit 1
-  | 'atmosphere' // Atmosphere (fog, haze, rain, particles) - limit 1
-  | 'materials' // Materials / Texture - limit 1
-  | 'fidelity' // Quality boosters (8K, masterpiece, sharp focus) - limit 1
-  | 'negative'; // Constraints / Negative prompt - limit 5
+  | "subject" // Subject (identity + key attributes) - limit 1
+  | "action" // Action / Pose - limit 1
+  | "style" // Style / Rendering / References - limit 1
+  | "environment" // Environment (location + time + background) - limit 1
+  | "composition" // Composition / Framing - limit 1
+  | "camera" // Camera (angle + lens + DoF) - limit 1
+  | "lighting" // Lighting (type + direction + intensity) - limit 1
+  | "colour" // Colour / Grade - limit 1
+  | "atmosphere" // Atmosphere (fog, haze, rain, particles) - limit 1
+  | "materials" // Materials / Texture - limit 1
+  | "fidelity" // Quality boosters (8K, masterpiece, sharp focus) - limit 1
+  | "negative"; // Constraints / Negative prompt - limit 5
 ```
 
 > CategoryConfig interface removed — category metadata is now accessed via `getCategoryConfig(category)` which reads from prompt-options.json.
@@ -2303,7 +2370,7 @@ All prompt builder scroll areas MUST use identical scrollbar styling to exchange
 
 ```tsx
 className =
-  'overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30';
+  "overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30";
 ```
 
 **Never use:**
