@@ -90,8 +90,7 @@ export function getProviders(limit = 0): Provider[] {
 type UsageRow = {
   providerId: string;
   countryCode: string;
-  /** BIGINT from Postgres — the driver returns this as a string, not a number */
-  count: number | string;
+  count: number;
 };
 
 type UsageSnapshot = {
@@ -160,7 +159,7 @@ async function loadUsageSnapshot(providerIds: string[]): Promise<UsageSnapshot> 
       select
         provider_id as "providerId",
         country_code as "countryCode",
-        users_count::integer as "count"
+        users_count as "count"
       from provider_country_usage_30d
       where provider_id = any(${uniqueProviderIds})
     `;
@@ -173,12 +172,8 @@ async function loadUsageSnapshot(providerIds: string[]): Promise<UsageSnapshot> 
   for (const r of usageRows) {
     const cc = (r.countryCode ?? '').trim().toUpperCase();
     if (!/^[A-Z]{2}$/.test(cc)) continue;
-    // Reject placeholder codes (ZZ = cron fallback for null, XX = Vercel "unknown")
-    if (cc === 'ZZ' || cc === 'XX') continue;
 
-    // BIGINT columns return as strings from postgres driver — coerce before checking
-    const rawCount = Number(r.count);
-    const count = Number.isFinite(rawCount) ? Math.floor(rawCount) : 0;
+    const count = Number.isFinite(r.count) ? Math.floor(r.count) : 0;
     if (count <= 0) continue;
 
     const list = byProvider.get(r.providerId) ?? [];
@@ -254,8 +249,6 @@ export async function getProvidersWithPromagenUsers(
 //
 // Dates are serialized to ISO strings for the RSC boundary.
 // =============================================================================
-
-// SerializableProviderRating imported from @/types/index-rating
 
 /**
  * Fetch Index Ratings server-side and return as a JSON-serializable Record.
