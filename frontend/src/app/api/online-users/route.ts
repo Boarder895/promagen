@@ -11,7 +11,7 @@
 // Cache: 30-second stale-while-revalidate (lightweight, not hammering KV).
 //
 // If KV is unavailable, returns { total: 0, countries: [] }
-// — the client-side threshold gate (≥50) hides the component.
+// — the client hides the component when total === 0.
 //
 // Authority: docs/authority/homepage.md §8.4, §8.5
 // Existing features preserved: Yes (additive route only)

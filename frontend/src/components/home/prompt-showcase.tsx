@@ -1310,13 +1310,10 @@ function ShowcaseSkeleton() {
 // ============================================================================
 // ONLINE USERS BAR — Country flags with counts (Phase 6, §8.5)
 // ============================================================================
-// Only renders when total ≥ ONLINE_THRESHOLD (50).
+// Renders when total > 0. Hidden only when literally zero users online.
 // Collapsed: top 3 countries + expand indicator.
 // Expanded: all countries inline.
 // ============================================================================
-
-/** Threshold: component hidden below this count (§8.2). */
-const ONLINE_THRESHOLD = 50;
 
 /** Max countries in collapsed view. */
 const COLLAPSED_MAX = 3;
@@ -1324,8 +1321,8 @@ const COLLAPSED_MAX = 3;
 function OnlineUsersBar({ total, countries }: { total: number; countries: OnlineCountryEntry[] }) {
   const [expanded, setExpanded] = useState(false);
 
-  // ── Threshold gate (§8.2) ─────────────────────────────────────────────
-  if (total < ONLINE_THRESHOLD) return null;
+  // Hide only when zero users (no fake "0 online" display)
+  if (total === 0) return null;
 
   const visibleCountries = expanded ? countries : countries.slice(0, COLLAPSED_MAX);
   const remainingCount = countries.length - COLLAPSED_MAX;
@@ -1343,7 +1340,7 @@ function OnlineUsersBar({ total, countries }: { total: number; countries: Online
     >
       {/* Online dot + total */}
       <span
-        className="shrink-0 text-slate-500"
+        className="shrink-0 text-emerald-400"
         style={{ fontSize: 'clamp(0.4rem, 0.5vw, 0.6rem)' }}
       >
         <span
@@ -1361,7 +1358,7 @@ function OnlineUsersBar({ total, countries }: { total: number; countries: Online
 
       {/* Separator */}
       <span
-        className="text-slate-700"
+        className="text-white/20"
         style={{ fontSize: 'clamp(0.35rem, 0.4vw, 0.5rem)' }}
         aria-hidden="true"
       >
@@ -1377,7 +1374,7 @@ function OnlineUsersBar({ total, countries }: { total: number; countries: Online
         {visibleCountries.map((entry) => (
           <span
             key={entry.countryCode}
-            className="inline-flex items-center text-slate-400"
+            className="inline-flex items-center text-white/70"
             style={{
               gap: 'clamp(1px, 0.1vw, 2px)',
               fontSize: 'clamp(0.42rem, 0.52vw, 0.62rem)',
@@ -1393,7 +1390,7 @@ function OnlineUsersBar({ total, countries }: { total: number; countries: Online
           <button
             type="button"
             onClick={() => setExpanded((prev) => !prev)}
-            className="text-slate-500 transition-colors hover:text-slate-300"
+            className="cursor-pointer text-white/50 transition-colors hover:text-white"
             style={{ fontSize: 'clamp(0.4rem, 0.48vw, 0.58rem)' }}
             aria-expanded={expanded}
             aria-label={expanded ? 'Show fewer countries' : `Show ${remainingCount} more countries`}
@@ -1515,7 +1512,7 @@ export default function PromptShowcase({
         </div>
       </div>
 
-      {/* Online users by country (Phase 6 — threshold gated ≥50) */}
+      {/* Online users by country (Phase 6 — visible when total > 0) */}
       {/* ★ Deferred: flag rendering + fetch results don't need to be on first paint */}
       {mainHydrated && <OnlineUsersBar total={onlineTotal} countries={onlineCountries} />}
 
