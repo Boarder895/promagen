@@ -292,11 +292,11 @@ function sanitiseFolderName(name: string): string {
 async function cloudFetchPrompts(): Promise<SavedPrompt[]> {
   const res = await fetch('/api/saved-prompts', { credentials: 'include' });
   if (!res.ok) {
-    console.error('[SavedPrompts:cloud] GET failed:', res.status);
+    const body = await res.text().catch(() => '(no body)');
+    console.error(`[SavedPrompts:cloud] GET /api/saved-prompts failed: ${res.status} ${res.statusText}`, body);
     return [];
   }
   const data = await res.json() as { prompts?: unknown[] };
-  // The API returns DbSavedPrompt[] which is structurally compatible with SavedPrompt
   return (data.prompts ?? []) as SavedPrompt[];
 }
 
@@ -308,6 +308,10 @@ async function cloudSavePrompt(prompt: SavedPrompt): Promise<boolean> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(prompt),
   });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '(no body)');
+    console.error(`[SavedPrompts:cloud] POST save failed: ${res.status}`, body);
+  }
   return res.ok;
 }
 
@@ -322,6 +326,10 @@ async function cloudUpdatePrompt(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(updates),
   });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '(no body)');
+    console.error(`[SavedPrompts:cloud] PATCH failed: ${res.status}`, body);
+  }
   return res.ok;
 }
 
@@ -331,6 +339,10 @@ async function cloudDeletePrompt(id: string): Promise<boolean> {
     method: 'DELETE',
     credentials: 'include',
   });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '(no body)');
+    console.error(`[SavedPrompts:cloud] DELETE failed: ${res.status}`, body);
+  }
   return res.ok;
 }
 
@@ -342,6 +354,10 @@ async function cloudSyncFromLocal(prompts: SavedPrompt[]): Promise<boolean> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ prompts }),
   });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '(no body)');
+    console.error(`[SavedPrompts:cloud] POST /api/saved-prompts/sync failed: ${res.status} ${res.statusText}`, body);
+  }
   return res.ok;
 }
 

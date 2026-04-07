@@ -584,8 +584,15 @@ export default function CommunityPulse() {
     return () => clearInterval(id);
   }, []);
 
-  // Real user entries take top slots, demo fills the rest
+  // Real user entries take top slots, demo fills the rest (when demo is enabled)
+  const demoEnabled = process.env.NEXT_PUBLIC_DEMO_JITTER === 'true';
+
   const displayCards = useMemo(() => {
+    // Demo off → real entries only, show fewer cards if needed
+    if (!demoEnabled) {
+      return userCards.slice(0, USER_CARD_COUNT);
+    }
+
     const all = (demoPrompts as Array<Omit<DemoEntry, 'isLive'>>).map(
       (e) => ({ ...e, isLive: false }) as DemoEntry,
     );
@@ -611,7 +618,7 @@ export default function CommunityPulse() {
     }
 
     return [...userCards, ...demoPicks];
-  }, [userCards, rotationSlot]);
+  }, [userCards, rotationSlot, demoEnabled]);
 
   // ══════════════════════════════════════════════════════════════════════
   // RENDER
