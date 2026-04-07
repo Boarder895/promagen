@@ -1,20 +1,22 @@
 // src/hooks/use-saved-prompts.ts
 // ============================================================================
-// SAVED PROMPTS HOOK (v2.0.0)
+// SAVED PROMPTS HOOK (v3.0.0)
 // ============================================================================
-// Manages saved prompts in localStorage with filtering, sorting, and folders.
+// Dual-mode: localStorage (free) or Postgres cloud (Pro Promagen).
 //
-// UPDATED v2.0.0 (9 March 2026): Saved Prompts page redesign
-// - Storage version bumped from 1.0.0 → 1.1.0
-// - Auto-migration: existing prompts get source:'builder', folder:undefined
-// - New folder operations: createFolder, renameFolder, deleteFolder, moveToFolder
-// - getFolders() derives folder list from prompt data (no separate storage)
-// - Folder-aware filtering (filters.folder)
-// - Folder-aware export (exports current folder or all)
-// - Duplicate detection on import (by positivePrompt hash)
-// - folderBreakdown added to stats
-// - quickSave() for one-click saves with auto-naming
-// - All existing hook API preserved — new methods are additive
+// v3.0.0 (7 Apr 2026): Cloud storage for paid users
+// - Detects paid status via Clerk useAuth + useUser (publicMetadata.tier)
+// - Cloud mode: reads/writes via /api/saved-prompts endpoints
+// - Optimistic writes: UI updates instantly, API syncs in background
+// - On API failure: reverts state, exposes syncError for UI toast
+// - One-time sync: localStorage → DB on first cloud-mode mount
+// - proSyncBanner: data for "Go Pro to sync" conversion trigger
+// - storageMode exposed: 'local' | 'cloud' | 'loading'
+//
+// v2.0.0 (9 Mar 2026): Saved Prompts page redesign — folders, quick save, etc.
+//
+// Return interface: 100% backward compatible (new fields are additive).
+// All existing consumers continue to work without any changes.
 //
 // Authority: docs/authority/saved-page.md §9, §11, §12, §13
 // Existing features preserved: Yes
@@ -22,7 +24,8 @@
 
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useAuth, useUser } from '@clerk/nextjs';
 import type {
   SavedPrompt,
   LibraryFilters,
@@ -43,6 +46,12 @@ const MAX_FOLDERS = 20;
 const MAX_FOLDER_NAME_LENGTH = 30;
 /** Key used in folderBreakdown for prompts with no folder */
 const UNSORTED_KEY = '__unsorted__';
+/** localStorage flag to prevent re-syncing every mount */
+const SYNC_FLAG_KEY = 'promagen_cloud_synced';
+/** Minimum prompts before showing Pro conversion banner */
+const PRO_BANNER_THRESHOLD = 10;
+
+type StorageMode = 'local' | 'cloud' | 'loading';
 
 interface StorageData {
   version: string;
@@ -50,12 +59,9 @@ interface StorageData {
 }
 
 // ============================================================================
-// HELPERS
+// HELPERS (unchanged from v2.0.0)
 // ============================================================================
 
-/**
- * Generate a UUID v4.
- */
 function generateId(): string {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
     const r = (Math.random() * 16) | 0;
@@ -64,10 +70,6 @@ function generateId(): string {
   });
 }
 
-/**
- * Simple hash of prompt text for duplicate detection.
- * Uses djb2 algorithm — fast and sufficient for client-side dedup.
- */
 function hashPromptText(text: string): number {
   let hash = 5381;
   for (let i = 0; i < text.length; i++) {
@@ -76,22 +78,13 @@ function hashPromptText(text: string): number {
   return hash;
 }
 
-/**
- * Migrate prompts from v1.0.0 → v1.1.0.
- * Existing prompts all came from the builder, so they get source:'builder'.
- * folder and tier are left undefined (spec §12.2).
- */
 function migrateV1ToV1_1(prompts: SavedPrompt[]): SavedPrompt[] {
   return prompts.map((p) => ({
     ...p,
     source: p.source ?? 'builder',
-    // folder and tier remain undefined if not present
   }));
 }
 
-/**
- * Load prompts from localStorage with auto-migration.
- */
 function loadFromStorage(): SavedPrompt[] {
   if (typeof window === 'undefined') return [];
 
@@ -102,16 +95,10 @@ function loadFromStorage(): SavedPrompt[] {
     const data: StorageData = JSON.parse(raw);
     let prompts = data.prompts || [];
 
-    // Migrate from 1.0.0 → 1.1.0
     if (data.version === PREVIOUS_VERSION) {
       console.debug('[SavedPrompts] Migrating storage from v1.0.0 → v1.1.0');
       prompts = migrateV1ToV1_1(prompts);
-
-      // Persist migrated data immediately
-      const migrated: StorageData = {
-        version: STORAGE_VERSION,
-        prompts,
-      };
+      const migrated: StorageData = { version: STORAGE_VERSION, prompts };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
       console.debug(`[SavedPrompts] Migration complete — ${prompts.length} prompts updated`);
     } else if (data.version !== STORAGE_VERSION) {
@@ -127,17 +114,11 @@ function loadFromStorage(): SavedPrompt[] {
   }
 }
 
-/**
- * Save prompts to localStorage.
- */
 function saveToStorage(prompts: SavedPrompt[]): boolean {
   if (typeof window === 'undefined') return false;
 
   try {
-    const data: StorageData = {
-      version: STORAGE_VERSION,
-      prompts,
-    };
+    const data: StorageData = { version: STORAGE_VERSION, prompts };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     return true;
   } catch (error) {
@@ -146,21 +127,15 @@ function saveToStorage(prompts: SavedPrompt[]): boolean {
   }
 }
 
-/**
- * Filter prompts based on criteria (including folder filter).
- */
 function filterPrompts(
   prompts: SavedPrompt[],
   filters: LibraryFilters
 ): SavedPrompt[] {
   return prompts.filter((prompt) => {
-    // Folder filter
     if (filters.folder !== undefined) {
       if (filters.folder === UNSORTED_KEY) {
-        // "Unsorted" = no folder assigned
         if (prompt.folder) return false;
       } else {
-        // Specific folder
         if (prompt.folder !== filters.folder) return false;
       }
     }
@@ -206,9 +181,6 @@ function filterPrompts(
   });
 }
 
-/**
- * Sort prompts based on criteria.
- */
 function sortPrompts(
   prompts: SavedPrompt[],
   sortBy: LibraryFilters['sortBy'],
@@ -241,9 +213,6 @@ function sortPrompts(
   return sorted;
 }
 
-/**
- * Calculate library statistics (including folder breakdown).
- */
 function calculateStats(prompts: SavedPrompt[]): LibraryStats {
   const stats: LibraryStats = {
     totalPrompts: prompts.length,
@@ -275,7 +244,6 @@ function calculateStats(prompts: SavedPrompt[]): LibraryStats {
 
     stats.moodBreakdown[prompt.mood]++;
 
-    // Folder breakdown
     const folderKey = prompt.folder || UNSORTED_KEY;
     stats.folderBreakdown[folderKey] =
       (stats.folderBreakdown[folderKey] || 0) + 1;
@@ -286,16 +254,11 @@ function calculateStats(prompts: SavedPrompt[]): LibraryStats {
   return stats;
 }
 
-/**
- * Extract subject from prompt data for auto-naming.
- * Spec §8.1: "{subject} — {platformName}" or "Untitled — {platformName}"
- */
 function extractSubject(prompt: {
   selections?: SavedPrompt['selections'];
   customValues?: SavedPrompt['customValues'];
   positivePrompt: string;
 }): string {
-  // Builder saves: try selections.subject first, then customValues.subject
   if (prompt.selections) {
     const subjectSelections = prompt.selections['subject' as keyof typeof prompt.selections];
     if (Array.isArray(subjectSelections) && subjectSelections.length > 0) {
@@ -310,7 +273,6 @@ function extractSubject(prompt: {
     }
   }
 
-  // Fallback: first 30 chars of positivePrompt
   if (prompt.positivePrompt) {
     return prompt.positivePrompt.slice(0, 30);
   }
@@ -318,11 +280,87 @@ function extractSubject(prompt: {
   return 'Untitled';
 }
 
-/**
- * Sanitise a folder name (trim, clamp length).
- */
 function sanitiseFolderName(name: string): string {
   return name.trim().slice(0, MAX_FOLDER_NAME_LENGTH);
+}
+
+// ============================================================================
+// CLOUD API HELPERS (v3.0.0)
+// ============================================================================
+
+/** Fetch all prompts from the cloud API. */
+async function cloudFetchPrompts(): Promise<SavedPrompt[]> {
+  const res = await fetch('/api/saved-prompts', { credentials: 'include' });
+  if (!res.ok) {
+    console.error('[SavedPrompts:cloud] GET failed:', res.status);
+    return [];
+  }
+  const data = await res.json() as { prompts?: unknown[] };
+  // The API returns DbSavedPrompt[] which is structurally compatible with SavedPrompt
+  return (data.prompts ?? []) as SavedPrompt[];
+}
+
+/** Save a prompt to the cloud (POST). */
+async function cloudSavePrompt(prompt: SavedPrompt): Promise<boolean> {
+  const res = await fetch('/api/saved-prompts', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(prompt),
+  });
+  return res.ok;
+}
+
+/** Update a prompt in the cloud (PATCH). */
+async function cloudUpdatePrompt(
+  id: string,
+  updates: Record<string, unknown>,
+): Promise<boolean> {
+  const res = await fetch(`/api/saved-prompts/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updates),
+  });
+  return res.ok;
+}
+
+/** Delete a prompt from the cloud (DELETE). */
+async function cloudDeletePrompt(id: string): Promise<boolean> {
+  const res = await fetch(`/api/saved-prompts/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    credentials: 'include',
+  });
+  return res.ok;
+}
+
+/** One-time sync: push localStorage prompts to the cloud. */
+async function cloudSyncFromLocal(prompts: SavedPrompt[]): Promise<boolean> {
+  const res = await fetch('/api/saved-prompts/sync', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompts }),
+  });
+  return res.ok;
+}
+
+/** Check if the one-time sync has already run (localStorage flag). */
+function hasSyncCompleted(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return localStorage.getItem(SYNC_FLAG_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+/** Mark the one-time sync as complete. */
+function markSyncComplete(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(SYNC_FLAG_KEY, 'true');
+  } catch { /* non-critical */ }
 }
 
 // ============================================================================
@@ -338,28 +376,18 @@ export interface UseSavedPromptsReturn {
   filters: LibraryFilters;
   /** Computed statistics across all prompts */
   stats: LibraryStats;
-  /** True while loading from localStorage */
+  /** True while loading from localStorage or cloud */
   isLoading: boolean;
 
   // ── Prompt CRUD ──
 
-  /**
-   * Save a prompt (builder flow — full structured data).
-   * `source` is optional in the input — defaults to 'builder' if not provided.
-   * This preserves backward compatibility with existing prompt builder callers.
-   */
   savePrompt: (prompt: Omit<SavedPrompt, 'id' | 'createdAt' | 'updatedAt' | 'source'> & { source?: 'builder' | 'tooltip' }) => SavedPrompt | null;
-  /**
-   * Quick save a prompt (tooltip flow — one-click, auto-named).
-   * Returns the saved prompt with auto-generated name.
-   */
   quickSave: (data: {
     positivePrompt: string;
     negativePrompt?: string;
     platformId: string;
     platformName: string;
     source: 'builder' | 'tooltip';
-    /** Full selections if available (builder origin) */
     selections?: SavedPrompt['selections'];
     customValues?: SavedPrompt['customValues'];
     families?: string[];
@@ -367,46 +395,26 @@ export interface UseSavedPromptsReturn {
     coherenceScore?: number;
     tier?: number;
   }) => SavedPrompt | null;
-  /** Update specific fields on a prompt */
   updatePrompt: (id: string, updates: Partial<SavedPrompt>) => boolean;
-  /** Delete a prompt by ID */
   deletePrompt: (id: string) => boolean;
-  /** Get a single prompt by ID */
   getPrompt: (id: string) => SavedPrompt | undefined;
 
   // ── Filters ──
 
-  /** Merge partial filter changes into current state */
   setFilters: (filters: Partial<LibraryFilters>) => void;
-  /** Reset all filters to defaults */
   resetFilters: () => void;
 
   // ── Folders ──
 
-  /** Derived list of user-created folder names (sorted alphabetically) */
   folders: string[];
-  /** Create a new folder. Returns false if at max limit or name exists. */
   createFolder: (name: string) => boolean;
-  /** Rename a folder. All prompts in that folder are updated. */
   renameFolder: (oldName: string, newName: string) => boolean;
-  /** Delete a folder. Prompts inside move to Unsorted (folder=undefined). */
   deleteFolder: (name: string) => boolean;
-  /** Move a prompt to a folder. Pass undefined to move to Unsorted. */
   moveToFolder: (promptId: string, folder: string | undefined) => boolean;
 
   // ── Import / Export ──
 
-  /**
-   * Export prompts as JSON string.
-   * If a folder filter is active, exports only that folder.
-   * Otherwise exports all prompts.
-   */
   exportPrompts: (folderName?: string) => string;
-  /**
-   * Import prompts from JSON.
-   * Duplicate detection by positivePrompt hash — identical text is skipped.
-   * Imported prompts go into the specified folder (or Unsorted if undefined).
-   */
   importPrompts: (json: string, targetFolder?: string) => {
     imported: number;
     duplicates: number;
@@ -415,34 +423,152 @@ export interface UseSavedPromptsReturn {
 
   /** Delete ALL prompts (nuclear option) */
   clearAll: () => void;
+
+  // ── v3.0.0: Cloud storage ──
+
+  /** Current storage backend: 'local' (free), 'cloud' (Pro), 'loading' (detecting) */
+  storageMode: StorageMode;
+  /** Non-null when the last cloud write failed. Cleared on next successful write. */
+  syncError: string | null;
+  /** Data for the Pro conversion banner (show when free user has 10+ local prompts) */
+  proSyncBanner: {
+    show: boolean;
+    promptCount: number;
+  };
 }
 
 export function useSavedPrompts(): UseSavedPromptsReturn {
   const [prompts, setPrompts] = useState<SavedPrompt[]>([]);
   const [filters, setFiltersState] = useState<LibraryFilters>(DEFAULT_LIBRARY_FILTERS);
   const [isLoading, setIsLoading] = useState(true);
-  /** React state mirror of the empty folder registry (localStorage) */
   const [emptyFolderNames, setEmptyFolderNames] = useState<string[]>([]);
+  const [storageMode, setStorageMode] = useState<StorageMode>('loading');
+  const [syncError, setSyncError] = useState<string | null>(null);
+
+  // Clerk auth state — always called (React hooks rules)
+  const { isLoaded: authLoaded, isSignedIn } = useAuth();
+  const { user } = useUser();
+
+  // Prevent duplicate cloud loads / syncs
+  const cloudLoadedRef = useRef(false);
+  const syncTriggeredRef = useRef(false);
+  // Ref mirror of storageMode for use inside callbacks (avoids stale closures)
+  const storageModeRef = useRef<StorageMode>('loading');
+  storageModeRef.current = storageMode;
 
   // ============================================================================
-  // LOAD + PERSIST
+  // MODE DETECTION
   // ============================================================================
 
+  const isPaid = useMemo(() => {
+    if (!authLoaded || !isSignedIn || !user) return false;
+    const meta = user.publicMetadata as { tier?: string } | undefined;
+    return meta?.tier === 'paid';
+  }, [authLoaded, isSignedIn, user]);
+
+  // Resolve storage mode once auth is loaded
   useEffect(() => {
+    if (!authLoaded) return;
+    setStorageMode(isPaid ? 'cloud' : 'local');
+  }, [authLoaded, isPaid]);
+
+  // ============================================================================
+  // INITIAL LOAD — localStorage (free) or cloud API (Pro)
+  // ============================================================================
+
+  // Local mode: load from localStorage (same as v2.0.0)
+  useEffect(() => {
+    if (storageMode !== 'local') return;
     const loaded = loadFromStorage();
     setPrompts(loaded);
     setEmptyFolderNames(loadEmptyFolders());
     setIsLoading(false);
-  }, []);
+  }, [storageMode]);
 
+  // Cloud mode: fetch from API
   useEffect(() => {
-    if (!isLoading) {
-      saveToStorage(prompts);
+    if (storageMode !== 'cloud') return;
+    if (cloudLoadedRef.current) return;
+    cloudLoadedRef.current = true;
+
+    let cancelled = false;
+
+    async function loadCloud() {
+      try {
+        const cloudPrompts = await cloudFetchPrompts();
+        if (!cancelled) {
+          setPrompts(cloudPrompts);
+          setEmptyFolderNames(loadEmptyFolders());
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error('[SavedPrompts:cloud] Initial load failed:', error);
+        if (!cancelled) {
+          // Fallback to localStorage so the user isn't left with nothing
+          const local = loadFromStorage();
+          setPrompts(local);
+          setIsLoading(false);
+          setSyncError('Could not reach the cloud. Showing local prompts.');
+        }
+      }
     }
-  }, [prompts, isLoading]);
+
+    void loadCloud();
+    return () => { cancelled = true; };
+  }, [storageMode]);
 
   // ============================================================================
-  // DERIVED DATA
+  // ONE-TIME SYNC: localStorage → Cloud (on first cloud-mode mount)
+  // ============================================================================
+
+  useEffect(() => {
+    if (storageMode !== 'cloud') return;
+    if (syncTriggeredRef.current) return;
+    if (hasSyncCompleted()) return;
+
+    // Check if localStorage has prompts worth syncing
+    const localPrompts = loadFromStorage();
+    if (localPrompts.length === 0) {
+      markSyncComplete();
+      return;
+    }
+
+    syncTriggeredRef.current = true;
+
+    async function runSync() {
+      try {
+        console.debug(`[SavedPrompts:cloud] Syncing ${localPrompts.length} local prompts to cloud…`);
+        const ok = await cloudSyncFromLocal(localPrompts);
+        if (ok) {
+          markSyncComplete();
+          // Re-fetch from cloud to get the canonical state
+          const cloudPrompts = await cloudFetchPrompts();
+          setPrompts(cloudPrompts);
+          console.debug('[SavedPrompts:cloud] Sync complete');
+        } else {
+          setSyncError('Failed to sync local prompts to cloud. Will retry next time.');
+        }
+      } catch (error) {
+        console.error('[SavedPrompts:cloud] Sync failed:', error);
+        setSyncError('Failed to sync local prompts to cloud. Will retry next time.');
+      }
+    }
+
+    void runSync();
+  }, [storageMode]);
+
+  // ============================================================================
+  // PERSIST — localStorage only in local mode
+  // ============================================================================
+
+  useEffect(() => {
+    if (storageMode !== 'local') return;
+    if (isLoading) return;
+    saveToStorage(prompts);
+  }, [prompts, isLoading, storageMode]);
+
+  // ============================================================================
+  // DERIVED DATA (unchanged from v2.0.0)
   // ============================================================================
 
   const filteredPrompts = useMemo(() => {
@@ -452,7 +578,6 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
 
   const stats = useMemo(() => calculateStats(prompts), [prompts]);
 
-  /** Derived folder list — unique folder names from all prompts, sorted A-Z */
   const folders = useMemo(() => {
     const folderSet = new Set<string>();
     for (const p of prompts) {
@@ -464,7 +589,59 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
   }, [prompts]);
 
   // ============================================================================
-  // PROMPT CRUD
+  // PRO SYNC BANNER (Extra #2)
+  // ============================================================================
+
+  const proSyncBanner = useMemo(() => {
+    // Show when: user is NOT paid AND has 10+ prompts in local storage
+    if (isPaid) return { show: false, promptCount: 0 };
+
+    // Read local count directly (don't use state — state may be cloud data)
+    const localPrompts = loadFromStorage();
+    const count = localPrompts.length;
+
+    return {
+      show: count >= PRO_BANNER_THRESHOLD,
+      promptCount: count,
+    };
+  }, [isPaid, prompts]); // eslint-disable-line react-hooks/exhaustive-deps
+  // prompts in dep array to re-check after saves (the lint warning is a false positive —
+  // we intentionally re-check localStorage count when prompts state changes in local mode)
+
+  // ============================================================================
+  // OPTIMISTIC WRITE HELPER
+  // ============================================================================
+
+  /**
+   * Fire a cloud API call in the background. On failure, revert state.
+   * Clears syncError on success. Uses ref to read current storageMode.
+   */
+  function fireAndForget(
+    apiCall: () => Promise<boolean>,
+    revert: () => void,
+    label: string,
+  ): void {
+    if (storageModeRef.current !== 'cloud') return;
+
+    apiCall()
+      .then((ok) => {
+        if (ok) {
+          setSyncError(null);
+        } else {
+          console.error(`[SavedPrompts:cloud] ${label} failed (non-ok)`);
+          revert();
+          setSyncError(`Failed to ${label}. Change reverted.`);
+        }
+      })
+      .catch((err) => {
+        console.error(`[SavedPrompts:cloud] ${label} error:`, err);
+        revert();
+        setSyncError(`Failed to ${label}. Change reverted.`);
+      });
+  }
+
+  // ============================================================================
+  // PROMPT CRUD (optimistic writes in cloud mode)
   // ============================================================================
 
   const savePrompt = useCallback(
@@ -474,16 +651,25 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
       const now = new Date().toISOString();
       const newPrompt: SavedPrompt = {
         ...promptData,
-        // Ensure v1.1.0 fields have defaults
         source: promptData.source ?? 'builder',
         id: generateId(),
         createdAt: now,
         updatedAt: now,
       };
 
+      // Optimistic: update state immediately
       setPrompts((prev) => [...prev, newPrompt]);
+
+      // Cloud: fire API in background
+      fireAndForget(
+        () => cloudSavePrompt(newPrompt),
+        () => setPrompts((prev) => prev.filter((p) => p.id !== newPrompt.id)),
+        'save prompt',
+      );
+
       return newPrompt;
     },
+     
     []
   );
 
@@ -527,54 +713,94 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
         updatedAt: now,
         source: data.source,
         tier: data.tier,
-        // folder: undefined → goes to "Unsorted"
       };
 
       setPrompts((prev) => [...prev, newPrompt]);
+
+      fireAndForget(
+        () => cloudSavePrompt(newPrompt),
+        () => setPrompts((prev) => prev.filter((p) => p.id !== newPrompt.id)),
+        'quick save',
+      );
+
       return newPrompt;
     },
+     
     []
   );
 
   const updatePrompt = useCallback(
     (id: string, updates: Partial<SavedPrompt>): boolean => {
       let found = false;
+      let snapshot: SavedPrompt | null = null;
 
       setPrompts((prev) =>
         prev.map((p) => {
           if (p.id === id) {
             found = true;
-            return {
-              ...p,
-              ...updates,
-              updatedAt: new Date().toISOString(),
-            };
+            snapshot = { ...p }; // snapshot for rollback
+            return { ...p, ...updates, updatedAt: new Date().toISOString() };
           }
           return p;
         })
       );
 
+      if (found) {
+        const capturedSnapshot = snapshot;
+        fireAndForget(
+          () => cloudUpdatePrompt(id, updates as Record<string, unknown>),
+          () => {
+            if (capturedSnapshot) {
+              setPrompts((prev) =>
+                prev.map((p) => (p.id === id ? capturedSnapshot : p))
+              );
+            }
+          },
+          'update prompt',
+        );
+      }
+
       return found;
     },
+     
     []
   );
 
-  const deletePrompt = useCallback((id: string): boolean => {
-    let found = false;
+  const deletePrompt = useCallback(
+    (id: string): boolean => {
+      let found = false;
+      let snapshot: SavedPrompt | null = null;
 
-    setPrompts((prev) => {
-      const filtered = prev.filter((p) => {
-        if (p.id === id) {
-          found = true;
-          return false;
-        }
-        return true;
+      setPrompts((prev) => {
+        const filtered = prev.filter((p) => {
+          if (p.id === id) {
+            found = true;
+            snapshot = { ...p };
+            return false;
+          }
+          return true;
+        });
+        return filtered;
       });
-      return filtered;
-    });
 
-    return found;
-  }, []);
+      if (found) {
+        const capturedSnapshot = snapshot;
+        fireAndForget(
+          () => cloudDeletePrompt(id),
+          () => {
+            if (capturedSnapshot) {
+              setPrompts((prev) => [...prev, capturedSnapshot]);
+            }
+          },
+          'delete prompt',
+        );
+      }
+
+      return found;
+    },
+     
+    []
+  );
 
   const getPrompt = useCallback(
     (id: string): SavedPrompt | undefined => {
@@ -584,7 +810,7 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
   );
 
   // ============================================================================
-  // FILTERS
+  // FILTERS (unchanged)
   // ============================================================================
 
   const setFilters = useCallback((newFilters: Partial<LibraryFilters>) => {
@@ -596,7 +822,7 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
   }, []);
 
   // ============================================================================
-  // FOLDER OPERATIONS
+  // FOLDER OPERATIONS (optimistic writes in cloud mode)
   // ============================================================================
 
   const createFolder = useCallback(
@@ -604,28 +830,17 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
       const sanitised = sanitiseFolderName(name);
       if (!sanitised) return false;
 
-      // Check max folder limit
       if (folders.length >= MAX_FOLDERS) {
         console.warn(`[SavedPrompts] Cannot create folder — max ${MAX_FOLDERS} reached`);
         return false;
       }
 
-      // Check for duplicate name (case-insensitive)
       if (folders.some((f) => f.toLowerCase() === sanitised.toLowerCase())) {
         console.warn(`[SavedPrompts] Folder "${sanitised}" already exists`);
         return false;
       }
 
-      // Creating a folder is implicit — we just need to assign a prompt to it.
-      // But we also want empty folders to persist. We achieve this by creating
-      // a "folder marker" — we don't store separate folder data (spec §9.1).
-      // The folder will appear once a prompt is moved into it.
-      //
-      // To support empty folder creation, we store folder names in a separate
-      // localStorage key. This is lightweight and avoids polluting prompt data.
       persistEmptyFolder(sanitised);
-
-      // Trigger allFolders re-derive
       setEmptyFolderNames(loadEmptyFolders());
       return true;
     },
@@ -637,7 +852,6 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
       const sanitisedNew = sanitiseFolderName(newName);
       if (!sanitisedNew || !oldName) return false;
 
-      // Check for duplicate name (case-insensitive, exclude the old name)
       if (
         folders.some(
           (f) =>
@@ -649,23 +863,35 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
         return false;
       }
 
-      // Update all prompts in the old folder
+      // Snapshot for rollback
+      const affectedIds: string[] = [];
+
       setPrompts((prev) =>
         prev.map((p) => {
           if (p.folder === oldName) {
+            affectedIds.push(p.id);
             return { ...p, folder: sanitisedNew, updatedAt: new Date().toISOString() };
           }
           return p;
         })
       );
 
-      // Update empty folder registry
       removeEmptyFolder(oldName);
       persistEmptyFolder(sanitisedNew);
       setEmptyFolderNames(loadEmptyFolders());
 
+      // Cloud: update each affected prompt's folder
+      if (storageModeRef.current === 'cloud') {
+        for (const id of affectedIds) {
+          void cloudUpdatePrompt(id, { folder: sanitisedNew }).catch((err) => {
+            console.error('[SavedPrompts:cloud] Folder rename sync error:', err);
+          });
+        }
+      }
+
       return true;
     },
+     
     [folders]
   );
 
@@ -673,51 +899,80 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
     (name: string): boolean => {
       if (!name) return false;
 
-      // Move all prompts in this folder to Unsorted (folder = undefined)
+      const affectedIds: string[] = [];
+
       setPrompts((prev) =>
         prev.map((p) => {
           if (p.folder === name) {
+            affectedIds.push(p.id);
             return { ...p, folder: undefined, updatedAt: new Date().toISOString() };
           }
           return p;
         })
       );
 
-      // Clean up empty folder registry
       removeEmptyFolder(name);
       setEmptyFolderNames(loadEmptyFolders());
 
+      if (storageModeRef.current === 'cloud') {
+        for (const id of affectedIds) {
+          void cloudUpdatePrompt(id, { folder: null }).catch((err) => {
+            console.error('[SavedPrompts:cloud] Folder delete sync error:', err);
+          });
+        }
+      }
+
       return true;
     },
+     
     []
   );
 
   const moveToFolder = useCallback(
     (promptId: string, folder: string | undefined): boolean => {
       let found = false;
+      let oldFolder: string | undefined;
 
       setPrompts((prev) =>
         prev.map((p) => {
           if (p.id === promptId) {
             found = true;
+            oldFolder = p.folder;
             return { ...p, folder, updatedAt: new Date().toISOString() };
           }
           return p;
         })
       );
 
+      if (found) {
+        const capturedOldFolder = oldFolder;
+        fireAndForget(
+          () => cloudUpdatePrompt(promptId, { folder: folder ?? null }),
+          () => {
+            setPrompts((prev) =>
+              prev.map((p) =>
+                p.id === promptId
+                  ? { ...p, folder: capturedOldFolder, updatedAt: new Date().toISOString() }
+                  : p
+              )
+            );
+          },
+          'move to folder',
+        );
+      }
+
       return found;
     },
+     
     []
   );
 
   // ============================================================================
-  // IMPORT / EXPORT
+  // IMPORT / EXPORT (unchanged — operates on in-memory state)
   // ============================================================================
 
   const exportPrompts = useCallback(
     (folderName?: string): string => {
-      // If folderName provided, export only that folder
       let toExport = prompts;
       if (folderName !== undefined) {
         if (folderName === UNSORTED_KEY) {
@@ -754,7 +1009,6 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
         const data = JSON.parse(json);
         const importedPrompts: SavedPrompt[] = data.prompts || [];
 
-        // Build hash set of existing prompt text for duplicate detection
         const existingHashes = new Set<number>();
         for (const p of prompts) {
           existingHashes.add(hashPromptText(p.positivePrompt));
@@ -765,30 +1019,27 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
 
         for (const prompt of importedPrompts) {
           try {
-            // Validate required fields
             if (!prompt.name || !prompt.platformId || !prompt.positivePrompt) {
               errors++;
               continue;
             }
 
-            // Duplicate detection by prompt text hash
             const hash = hashPromptText(prompt.positivePrompt);
             if (existingHashes.has(hash)) {
               duplicates++;
               continue;
             }
-            existingHashes.add(hash); // prevent import-to-import dupes too
+            existingHashes.add(hash);
 
-            newPrompts.push({
+            const newP: SavedPrompt = {
               ...prompt,
               id: generateId(),
               createdAt: prompt.createdAt || now,
               updatedAt: now,
-              // Ensure v1.1.0 fields
               source: prompt.source ?? 'builder',
-              // Place in target folder if specified
               folder: targetFolder,
-            });
+            };
+            newPrompts.push(newP);
             imported++;
           } catch {
             errors++;
@@ -797,6 +1048,15 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
 
         if (newPrompts.length > 0) {
           setPrompts((prev) => [...prev, ...newPrompts]);
+
+          // Cloud: save each imported prompt in background
+          if (storageModeRef.current === 'cloud') {
+            for (const p of newPrompts) {
+              void cloudSavePrompt(p).catch((err) => {
+                console.error('[SavedPrompts:cloud] Import sync error:', err);
+              });
+            }
+          }
         }
       } catch {
         errors = 1;
@@ -804,6 +1064,7 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
 
       return { imported, duplicates, errors };
     },
+     
     [prompts]
   );
 
@@ -811,13 +1072,17 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
     setPrompts([]);
     clearEmptyFolders();
     setEmptyFolderNames(loadEmptyFolders());
+
+    // Note: cloud clear is NOT done here — that would need a dedicated
+    // "delete all" API endpoint. For now clearAll only clears the UI state.
+    // The user would need to delete prompts individually in cloud mode.
+    // This matches the existing behaviour where clearAll is a dev/debug tool.
   }, []);
 
   // ============================================================================
   // RETURN
   // ============================================================================
 
-  // Merge prompt-derived folders with empty folder registry (React state)
   const allFolders = useMemo(() => {
     const merged = new Set([...folders, ...emptyFolderNames]);
     return [...merged].sort((a, b) => a.localeCompare(b));
@@ -844,17 +1109,18 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
     exportPrompts,
     importPrompts,
     clearAll,
+
+    // v3.0.0 additions
+    storageMode,
+    syncError,
+    proSyncBanner,
   };
 }
 
 export default useSavedPrompts;
 
 // ============================================================================
-// EMPTY FOLDER REGISTRY (localStorage)
-// ============================================================================
-// Folders are implicit (derived from prompt.folder values), but we need to
-// support creating empty folders before any prompt is moved into them.
-// This lightweight registry stores just the names.
+// EMPTY FOLDER REGISTRY (unchanged from v2.0.0)
 // ============================================================================
 
 const EMPTY_FOLDERS_KEY = 'promagen_empty_folders';

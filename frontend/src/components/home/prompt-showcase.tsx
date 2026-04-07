@@ -1481,54 +1481,7 @@ export default function PromptShowcase({
           </span>
         </div>
 
-        {/* Centre — "Write your own Prompt" button (Engine Bay gradient, no animation)
-            Operation: direct link to / — no auth gate, matches standard builder Prompt Lab button */}
-        <a
-          href="/"
-          className="group relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-xl border border-sky-400/[0.60] bg-gradient-to-r from-sky-400/[0.40] via-emerald-300/[0.40] to-indigo-400/[0.40] font-medium text-white shadow-sm no-underline cursor-pointer transition-all hover:from-sky-400/[0.50] hover:via-emerald-300/[0.50] hover:to-indigo-400/[0.50] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/[0.80]"
-          style={{
-            padding: 'clamp(0.4rem, 0.5vh, 0.7rem) clamp(0.4rem, 0.5vw, 0.7rem)',
-            gap: 'clamp(0.25rem, 0.5vw, 0.5rem)',
-            height: 'clamp(40px, 5vh, 60px)',
-          }}
-          aria-label="Write your own prompt in the Prompt Lab"
-        >
-          <div
-            className="relative z-10 flex flex-col items-center"
-            style={{ gap: 'clamp(0.2rem, 0.3vw, 0.4rem)' }}
-          >
-            <span
-              className="flex items-center font-semibold text-white"
-              style={{
-                gap: 'clamp(0.2rem, 0.4vw, 1rem)',
-                fontSize: 'clamp(0.5rem, 0.6vw, 0.8rem)',
-              }}
-            >
-              <span>✦</span>
-              <span>Write your own</span>
-            </span>
-            <span
-              className="font-semibold text-white"
-              style={{ fontSize: 'clamp(0.5rem, 0.6vw, 0.75rem)' }}
-            >
-              Prompt
-            </span>
-          </div>
-          <svg
-            className="relative z-10 shrink-0 text-white"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            style={{
-              width: 'clamp(14px, 1.2vw, 18px)',
-              height: 'clamp(14px, 1.2vw, 18px)',
-            }}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-          </svg>
-        </a>
-
-        {/* Right — Countdown (flex-1 + justify-end mirrors the left, keeps button centred) */}
+        {/* Right — Countdown (flex-1 + justify-end balances with POTM label) */}
         <div className="flex flex-1 items-center justify-end">
           <span
             className="italic text-amber-400/80 truncate"

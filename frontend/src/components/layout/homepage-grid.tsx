@@ -882,6 +882,29 @@ export default function HomepageGrid({
                 Arrow replicates ExpandHeader animation from providers-table.tsx
                 Hidden when table is expanded (ribbon is gone, no gap to fill)
                 ============================================================ */}
+            {/* ── Build Your Prompt CTA — World Context, above leaderboard heading ── */}
+            {!isTableExpanded && isWorldContext && (
+              <a
+                href="/"
+                className="group inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-sky-400/60 bg-gradient-to-r from-sky-400/40 via-emerald-300/40 to-indigo-400/40 font-semibold text-white shadow-sm no-underline cursor-pointer transition-all hover:from-sky-400/50 hover:via-emerald-300/50 hover:to-indigo-400/50 hover:border-sky-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/80"
+                style={{
+                  padding: 'clamp(12px, 1.2vw, 18px) clamp(16px, 2vw, 28px)',
+                  fontSize: 'clamp(0.85rem, 1vw, 1.1rem)',
+                }}
+              >
+                <span>✦</span>
+                <span>Build Your Prompt</span>
+                <svg
+                  className="shrink-0 transition-transform group-hover:translate-x-1"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  style={{ width: 'clamp(16px, 1.2vw, 20px)', height: 'clamp(16px, 1.2vw, 20px)' }}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </a>
+            )}
             {!isTableExpanded && isWorldContext && (
               <LeaderboardIntro isExpanded={isTableExpanded} onToggle={onExpandToggle} />
             )}

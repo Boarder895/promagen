@@ -1,11 +1,16 @@
 // src/components/prompts/library/library-left-rail.tsx
 // ============================================================================
-// LIBRARY LEFT RAIL (v2.0.0 — Commodity Window Style)
+// LIBRARY LEFT RAIL (v2.1.0 — Pro Sync Banner)
 // ============================================================================
 // Left rail for the /studio/library page.
 // Each section (Platforms, Sort, Folders) is its own commodity-style window
 // with a coloured 2px border and hover glow — same as commodity-mover-card.tsx.
 // Each user folder also gets its own mini commodity window.
+//
+// v2.1.0 (7 April 2026): Pro sync banner at bottom of rail
+//   - Amber-bordered conversion card when free user has 10+ local prompts
+//   - Links to /pro-promagen
+//   - Commodity-window hover glow pattern
 //
 // Authority: saved-page.md §4, commodity-mover-card.tsx (border/glow pattern)
 // Sizing: All clamp() with 9px (0.5625rem) floor
@@ -270,6 +275,10 @@ export interface LibraryLeftRailProps {
   onCreateFolder: (name: string) => boolean;
   onRenameFolder: (oldName: string, newName: string) => boolean;
   onDeleteFolder: (name: string) => void;
+  /** Data for the Pro conversion banner (show when free user has 10+ local prompts) */
+  proSyncBanner?: { show: boolean; promptCount: number };
+  /** Current storage backend */
+  storageMode?: 'local' | 'cloud' | 'loading';
 }
 
 // ============================================================================
@@ -306,6 +315,8 @@ export function LibraryLeftRail({
   onCreateFolder,
   onRenameFolder,
   onDeleteFolder,
+  proSyncBanner,
+  storageMode,
 }: LibraryLeftRailProps) {
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [renamingFolder, setRenamingFolder] = useState<string | null>(null);
@@ -666,6 +677,68 @@ export function LibraryLeftRail({
           </div>
         </SectionWindow>
       </div>
+
+      {/* ── Pro Sync Banner — conversion trigger for free users with 10+ prompts ── */}
+      {proSyncBanner?.show && storageMode === 'local' && (
+        <div className="shrink-0" style={{ marginTop: 'clamp(8px, 0.7vw, 12px)' }}>
+          <a
+            href="/pro-promagen"
+            className="group relative block cursor-pointer rounded-xl overflow-hidden no-underline"
+            style={{
+              border: '2px solid rgba(245, 158, 11, 0.40)',
+              background: 'rgba(245, 158, 11, 0.06)',
+              padding: 'clamp(8px, 0.7vw, 12px)',
+              transition: 'box-shadow 200ms ease-out, background 200ms ease-out',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(245, 158, 11, 0.12)';
+              e.currentTarget.style.boxShadow = '0 0 20px 4px rgba(245, 158, 11, 0.3), 0 0 40px 8px rgba(245, 158, 11, 0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(245, 158, 11, 0.06)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+          >
+            {/* Cloud icon */}
+            <div className="flex items-start" style={{ gap: 'clamp(6px, 0.5vw, 10px)' }}>
+              <svg
+                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}
+                className="shrink-0 text-amber-400"
+                style={{
+                  width: 'clamp(16px, 1.3vw, 22px)',
+                  height: 'clamp(16px, 1.3vw, 22px)',
+                  marginTop: 'clamp(1px, 0.1vw, 2px)',
+                }}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
+              </svg>
+              <div>
+                <p
+                  className="text-amber-300 font-medium"
+                  style={{
+                    fontSize: 'clamp(0.5625rem, 0.7vw, 0.85rem)',
+                    lineHeight: 1.3,
+                    margin: 0,
+                  }}
+                >
+                  Your {proSyncBanner.promptCount} prompt{proSyncBanner.promptCount !== 1 ? 's' : ''} live in this browser only
+                </p>
+                <p
+                  className="text-amber-400/70 group-hover:text-amber-300 transition-colors"
+                  style={{
+                    fontSize: 'clamp(0.5rem, 0.6vw, 0.75rem)',
+                    lineHeight: 1.3,
+                    margin: 0,
+                    marginTop: 'clamp(2px, 0.2vw, 4px)',
+                  }}
+                >
+                  Go Pro to sync across all your devices →
+                </p>
+              </div>
+            </div>
+          </a>
+        </div>
+      )}
     </nav>
   );
 }

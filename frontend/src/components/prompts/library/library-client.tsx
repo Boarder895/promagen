@@ -1,9 +1,14 @@
 // src/components/prompts/library/library-client.tsx
 // ============================================================================
-// LIBRARY CLIENT (v3.2.0 — Polish: Rail Memory + Keyboard Nav)
+// LIBRARY CLIENT (v3.3.0 — Cloud Storage + Sync Banner)
 // ============================================================================
 // Client component for the /studio/library page.
 // Three-rail layout: left (filters+folders) | centre (card grid) | right (preview).
+//
+// v3.3.0 (7 April 2026): Cloud storage UI wiring
+//   - storageMode indicator (cloud/local icon) next to "● Saved Prompts"
+//   - syncError toast (red banner) when cloud writes fail
+//   - proSyncBanner passed to left rail for Pro conversion trigger
 //
 // v3.0.0 (9 March 2026): Full redesign per saved-page.md.
 //   - Exchange rails REMOVED — replaced by library-specific left/right rails
@@ -62,6 +67,9 @@ export default function LibraryClient({ providers }: LibraryClientProps) {
     renameFolder,
     deleteFolder,
     moveToFolder,
+    storageMode,
+    syncError,
+    proSyncBanner,
   } = useSavedPrompts();
 
   // ── Selection state ──
@@ -179,6 +187,8 @@ export default function LibraryClient({ providers }: LibraryClientProps) {
       onCreateFolder={createFolder}
       onRenameFolder={renameFolder}
       onDeleteFolder={deleteFolder}
+      proSyncBanner={proSyncBanner}
+      storageMode={storageMode}
     />
   );
 
@@ -191,6 +201,29 @@ export default function LibraryClient({ providers }: LibraryClientProps) {
       className="flex h-full min-h-0 flex-col"
       data-testid="library-panel"
     >
+      {/* ── Build Your Prompt CTA — between page heading and ● Saved Prompts ── */}
+      <a
+        href="/"
+        className="group inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-sky-400/60 bg-gradient-to-r from-sky-400/40 via-emerald-300/40 to-indigo-400/40 font-semibold text-white shadow-sm no-underline cursor-pointer transition-all hover:from-sky-400/50 hover:via-emerald-300/50 hover:to-indigo-400/50 hover:border-sky-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/80"
+        style={{
+          padding: 'clamp(12px, 1.2vw, 18px) clamp(16px, 2vw, 28px)',
+          fontSize: 'clamp(0.85rem, 1vw, 1.1rem)',
+          marginBottom: 'clamp(8px, 0.7vw, 12px)',
+        }}
+      >
+        <span>✦</span>
+        <span>Build Your Prompt</span>
+        <svg
+          className="shrink-0 transition-transform group-hover:translate-x-1"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          style={{ width: 'clamp(16px, 1.2vw, 20px)', height: 'clamp(16px, 1.2vw, 20px)' }}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+        </svg>
+      </a>
+
       {/* Header */}
       <header className="shrink-0" style={{ marginBottom: 'clamp(8px, 0.7vw, 12px)', textAlign: 'center' }}>
         <h2
@@ -198,6 +231,37 @@ export default function LibraryClient({ providers }: LibraryClientProps) {
           style={{ fontSize: 'clamp(0.65rem, 0.9vw, 1.2rem)', marginBottom: 'clamp(2px, 0.2vw, 4px)' }}
         >
           ● Saved Prompts
+          {/* Storage mode indicator — cloud (Pro) or local (free) */}
+          {storageMode === 'cloud' && (
+            <span
+              title="Synced to cloud — your prompts are safe across all devices"
+              className="inline-flex items-center align-middle text-emerald-400"
+              style={{ marginLeft: 'clamp(6px, 0.5vw, 10px)', fontSize: 'clamp(0.55rem, 0.7vw, 0.85rem)' }}
+            >
+              <svg
+                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                style={{ width: 'clamp(12px, 1vw, 16px)', height: 'clamp(12px, 1vw, 16px)', marginRight: 'clamp(2px, 0.2vw, 4px)' }}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+              </svg>
+              Cloud
+            </span>
+          )}
+          {storageMode === 'local' && (
+            <span
+              title="Stored in this browser only"
+              className="inline-flex items-center align-middle text-amber-400"
+              style={{ marginLeft: 'clamp(6px, 0.5vw, 10px)', fontSize: 'clamp(0.55rem, 0.7vw, 0.85rem)' }}
+            >
+              <svg
+                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                style={{ width: 'clamp(12px, 1vw, 16px)', height: 'clamp(12px, 1vw, 16px)', marginRight: 'clamp(2px, 0.2vw, 4px)' }}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              Local
+            </span>
+          )}
         </h2>
         {stats.totalPrompts > 0 && (
           <p
@@ -286,6 +350,32 @@ export default function LibraryClient({ providers }: LibraryClientProps) {
           onSelect={handleSelect}
         />
       </div>
+
+      {/* ── Sync error toast (cloud mode) ── */}
+      {syncError && (
+        <div
+          className="shrink-0 flex items-center justify-center rounded-xl border border-red-500/30 bg-red-500/10"
+          style={{
+            padding: 'clamp(6px, 0.5vw, 10px) clamp(10px, 0.8vw, 16px)',
+            marginTop: 'clamp(6px, 0.5vw, 10px)',
+            gap: 'clamp(6px, 0.5vw, 10px)',
+          }}
+        >
+          <svg
+            fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+            className="shrink-0 text-red-400"
+            style={{ width: 'clamp(14px, 1.1vw, 18px)', height: 'clamp(14px, 1.1vw, 18px)' }}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+          </svg>
+          <span
+            className="text-red-300"
+            style={{ fontSize: 'clamp(0.5625rem, 0.7vw, 0.85rem)' }}
+          >
+            {syncError}
+          </span>
+        </div>
+      )}
     </section>
   );
 
