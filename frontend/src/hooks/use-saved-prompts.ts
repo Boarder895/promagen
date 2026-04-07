@@ -442,7 +442,7 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
   const [filters, setFiltersState] = useState<LibraryFilters>(DEFAULT_LIBRARY_FILTERS);
   const [isLoading, setIsLoading] = useState(true);
   const [emptyFolderNames, setEmptyFolderNames] = useState<string[]>([]);
-  const [storageMode, setStorageMode] = useState<StorageMode>('loading');
+  const [storageMode, setStorageMode] = useState<StorageMode>('local');
   const [syncError, setSyncError] = useState<string | null>(null);
 
   // Clerk auth state — always called (React hooks rules)
@@ -453,7 +453,7 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
   const cloudLoadedRef = useRef(false);
   const syncTriggeredRef = useRef(false);
   // Ref mirror of storageMode for use inside callbacks (avoids stale closures)
-  const storageModeRef = useRef<StorageMode>('loading');
+  const storageModeRef = useRef<StorageMode>('local');
   storageModeRef.current = storageMode;
 
   // ============================================================================
