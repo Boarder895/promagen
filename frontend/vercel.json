@@ -1,20 +1,21 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "skewProtection": "7d",
   "crons": [
     {
-      "path": "/api/promagen-users/cron",
-      "schedule": "*/30 * * * *"
+      "path": "/api/promagen-users/cron?secret=$PROMAGEN_CRON_SECRET",
+      "schedule": "10,40 * * * *"
     },
     {
-      "path": "/api/cron/rankings",
+      "path": "/api/cron/rankings?secret=$PROMAGEN_CRON_SECRET",
       "schedule": "0 * * * *"
     },
     {
-      "path": "/api/index-rating/cron",
+      "path": "/api/index-rating/cron?secret=$PROMAGEN_CRON_SECRET",
       "schedule": "5 0 * * *"
     },
     {
-      "path": "/api/learning/aggregate",
+      "path": "/api/learning/aggregate?secret=$PROMAGEN_CRON_SECRET",
       "schedule": "0 3 * * *"
     }
   ],
