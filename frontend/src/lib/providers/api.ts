@@ -1,15 +1,15 @@
 // C:\Users\Proma\Projects\promagen\frontend\src\lib\providers\api.ts
 
-import 'server-only';
+import "server-only";
 
-import { z } from 'zod';
+import { z } from "zod";
 
-import rawProviders from '@/data/providers/providers.json';
-import { db, hasDatabaseConfigured } from '@/lib/db';
-import { env } from '@/lib/env';
-import { getProviderRatings } from '@/lib/index-rating/database';
-import type { SerializableProviderRating } from '@/types/index-rating';
-import type { Provider } from '@/types/providers';
+import rawProviders from "@/data/providers/providers.json";
+import { db, hasDatabaseConfigured } from "@/lib/db";
+import { env } from "@/lib/env";
+import { getProviderRatings } from "@/lib/index-rating/database";
+import type { SerializableProviderRating } from "@/types/index-rating";
+import type { Provider } from "@/types/providers";
 
 export type ProvidersApiResponse = Provider[];
 
@@ -44,23 +44,21 @@ function parseProviders(): Provider[] {
   const parsed = ProvidersSchema.parse(rawProviders) as ParsedProvider[];
 
   // Filter out archived providers (removed multi-engine aggregators)
-  const active = parsed.filter(
-    (p) => !(p as Record<string, unknown>).archived,
-  );
+  const active = parsed.filter((p) => !(p as Record<string, unknown>).archived);
 
   // Sort: highest score first; stable tie-breakers.
   const sorted = [...active].sort((a, b) => {
-    const as = typeof a.score === 'number' ? a.score : -Infinity;
-    const bs = typeof b.score === 'number' ? b.score : -Infinity;
+    const as = typeof a.score === "number" ? a.score : -Infinity;
+    const bs = typeof b.score === "number" ? b.score : -Infinity;
 
     if (bs !== as) return bs - as;
 
     // Secondary: name
-    const n = a.name.localeCompare(b.name, 'en');
+    const n = a.name.localeCompare(b.name, "en");
     if (n !== 0) return n;
 
     // Final: id
-    return a.id.localeCompare(b.id, 'en');
+    return a.id.localeCompare(b.id, "en");
   });
 
   providersCache = sorted as unknown as Provider[];
@@ -117,7 +115,9 @@ function isUsageFresh(updatedAt: Date | null): boolean {
   return ageMs <= maxAgeMs;
 }
 
-async function loadUsageSnapshot(providerIds: string[]): Promise<UsageSnapshot> {
+async function loadUsageSnapshot(
+  providerIds: string[],
+): Promise<UsageSnapshot> {
   // If DB is not configured, treat as "no data" and keep UI truthful (blank).
   if (!hasDatabaseConfigured()) {
     return { updatedAt: null, byProvider: new Map() };
@@ -140,10 +140,10 @@ async function loadUsageSnapshot(providerIds: string[]): Promise<UsageSnapshot> 
   if (!isUsageFresh(updatedAt)) {
     // Self-disabling behaviour (per docs): show blank rather than lie.
     // Use warn so it shows up in Vercel logs.
-     
+
     console.warn(
       `[PromagenUsers] aggregates stale or missing (updatedAt=${
-        updatedAt?.toISOString() ?? 'null'
+        updatedAt?.toISOString() ?? "null"
       }). Rendering blank.`,
     );
     return { updatedAt, byProvider: new Map() };
@@ -151,7 +151,8 @@ async function loadUsageSnapshot(providerIds: string[]): Promise<UsageSnapshot> 
 
   // 2) Load rows for the providers shown on the page, in one query.
   const uniqueProviderIds = Array.from(new Set(providerIds)).filter(Boolean);
-  if (uniqueProviderIds.length === 0) return { updatedAt, byProvider: new Map() };
+  if (uniqueProviderIds.length === 0)
+    return { updatedAt, byProvider: new Map() };
 
   let usageRows: UsageRow[] = [];
   try {
@@ -159,7 +160,7 @@ async function loadUsageSnapshot(providerIds: string[]): Promise<UsageSnapshot> 
       select
         provider_id as "providerId",
         country_code as "countryCode",
-        users_count as "count"
+        users_count::integer as "count"
       from provider_country_usage_30d
       where provider_id = any(${uniqueProviderIds})
     `;
@@ -170,10 +171,12 @@ async function loadUsageSnapshot(providerIds: string[]): Promise<UsageSnapshot> 
   const byProvider = new Map<string, PromagenUsersCountryUsage[]>();
 
   for (const r of usageRows) {
-    const cc = (r.countryCode ?? '').trim().toUpperCase();
+    const cc = (r.countryCode ?? "").trim().toUpperCase();
     if (!/^[A-Z]{2}$/.test(cc)) continue;
+    if (cc === "ZZ" || cc === "XX") continue;
 
-    const count = Number.isFinite(r.count) ? Math.floor(r.count) : 0;
+    const rawCount = Number(r.count);
+    const count = Number.isFinite(rawCount) ? Math.floor(rawCount) : 0;
     if (count <= 0) continue;
 
     const list = byProvider.get(r.providerId) ?? [];
@@ -185,7 +188,7 @@ async function loadUsageSnapshot(providerIds: string[]): Promise<UsageSnapshot> 
   for (const [pid, list] of byProvider.entries()) {
     list.sort((a, b) => {
       if (b.count !== a.count) return b.count - a.count;
-      return a.countryCode.localeCompare(b.countryCode, 'en');
+      return a.countryCode.localeCompare(b.countryCode, "en");
     });
     byProvider.set(pid, list.slice(0, 6));
   }
@@ -283,7 +286,7 @@ export async function getIndexRatingsRecord(
 
     return record;
   } catch (error) {
-    console.error('[getIndexRatingsRecord] Error:', error);
+    console.error("[getIndexRatingsRecord] Error:", error);
     return {};
   }
 }
