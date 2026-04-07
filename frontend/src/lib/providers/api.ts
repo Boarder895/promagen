@@ -160,7 +160,7 @@ async function loadUsageSnapshot(providerIds: string[]): Promise<UsageSnapshot> 
       select
         provider_id as "providerId",
         country_code as "countryCode",
-        users_count as "count"
+        users_count::integer as "count"
       from provider_country_usage_30d
       where provider_id = any(${uniqueProviderIds})
     `;
@@ -173,6 +173,8 @@ async function loadUsageSnapshot(providerIds: string[]): Promise<UsageSnapshot> 
   for (const r of usageRows) {
     const cc = (r.countryCode ?? '').trim().toUpperCase();
     if (!/^[A-Z]{2}$/.test(cc)) continue;
+    // Reject placeholder codes (ZZ = cron fallback for null, XX = Vercel "unknown")
+    if (cc === 'ZZ' || cc === 'XX') continue;
 
     // BIGINT columns return as strings from postgres driver — coerce before checking
     const rawCount = Number(r.count);
