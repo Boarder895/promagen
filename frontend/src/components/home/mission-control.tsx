@@ -1,21 +1,20 @@
 // src/components/home/mission-control.tsx
 // ============================================================================
-// MISSION CONTROL - Smart Automated Prompts Panel (v6.0.0)
+// MISSION CONTROL - Smart Automated Prompts Panel (v7.0.0)
 // ============================================================================
 // Right-side panel with weather-driven prompt preview.
 //
-// v6.0.0 CHANGES:
-// - REMOVED: Studio button entirely (Studio hub no longer primary nav)
-// - ADDED: My Prompts button (links to /studio/library)
-// - ADDED: isMyPromptsPage prop (3-button: Home | World Context | Pro)
-// - Homepage: World Context | Pro | My Prompts (3 buttons)
-// - World Context: Home | Pro | My Prompts (3 buttons)
-// - Pro Promagen: World Context | Home | My Prompts (3 buttons)
-// - Provider pages: Home | World Context | Pro | My Prompts (4 buttons)
-// - Studio hub/sub-pages: Home | World Context | Pro | My Prompts (4 buttons)
-// - My Prompts page: Home | World Context | Pro (3 buttons - no self-link)
+// v7.0.0 CHANGES:
+// - ADDED: Inspire button (links to /inspire — Scene Starters, POTM, Community)
+// - ALL pages now use 4-col grid (5 possible buttons, always drop self-link)
+// - Homepage:      Inspire      | World Context | Pro  | My Prompts
+// - Inspire:       Home         | World Context | Pro  | My Prompts
+// - World Context: Home         | Inspire       | Pro  | My Prompts
+// - Pro Promagen:  Home         | Inspire       | World Context | My Prompts
+// - Provider/Studio pages: Home | Inspire       | Pro  | My Prompts
+// - My Prompts:    Home         | Inspire       | World Context  | Pro
 //
-// Previous: v5.0.0 World Context, v4.0.0 sign-in removal, v3.x context swaps
+// Previous: v6.0.0 My Prompts, v5.0.0 World Context
 // Authority: buttons.md, mission-control.md
 // Security: 10/10 - No user input handling, type-safe data flow
 // Existing features preserved: Yes
@@ -149,6 +148,8 @@ export interface MissionControlProps {
   isWorldContextPage?: boolean;
   /** When true, shows 3 buttons: Home | World Context | Pro (no My Prompts self-link) */
   isMyPromptsPage?: boolean;
+  /** When true, shows Home instead of Inspire button (for /inspire page) */
+  isInspirePage?: boolean;
 }
 
 // ============================================================================
@@ -195,6 +196,10 @@ const proIconPath =
 const worldContextIconPath =
   'M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 003 12c0-1.605.42-3.113 1.157-4.418';
 
+// Inspire / Lightbulb icon path (Heroicons light-bulb)
+const inspireIconPath =
+  'M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18';
+
 // ============================================================================
 // COMPONENT
 // ============================================================================
@@ -208,6 +213,7 @@ export default function MissionControl({
   isStudioSubPage = false,
   isWorldContextPage = false,
   isMyPromptsPage = false,
+  isInspirePage = false,
 }: MissionControlProps): React.ReactElement {
   const [copied, setCopied] = useState(false);
   const contentZoneRef = useRef<HTMLDivElement>(null);
@@ -461,36 +467,49 @@ export default function MissionControl({
   );
 
   // ══════════════════════════════════════════════════════════════════════════
-  // RENDER FIRST BUTTON — World Context or Home (swaps on /world-context)
+  // RENDER INSPIRE BUTTON — Always links to /inspire
   // ══════════════════════════════════════════════════════════════════════════
-  const renderFirstButton = () => {
-    if (isWorldContextPage) {
-      return renderHomeButton();
-    }
-    return renderWorldContextButton();
-  };
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // RENDER SECOND BUTTON — Pro or Home (swaps on /pro-promagen)
-  // ══════════════════════════════════════════════════════════════════════════
-  const renderSecondButton = () => {
-    if (isProPromagenPage) {
-      return renderHomeButton();
-    }
-    return renderProButton();
-  };
+  const renderInspireButton = () => (
+    <a
+      href="/inspire"
+      className={`${actionButtonBase} ${actionButtonActive}`}
+      aria-label="Browse Inspire — scenes, live prompts and community"
+      style={{
+        padding: 'clamp(0.4rem, 0.5vh, 0.7rem) clamp(0.4rem, 0.5vw, 0.7rem)',
+        gap: 'clamp(0.2rem, 0.3vw, 0.4rem)',
+        height: 'clamp(40px, 5vh, 60px)',
+      }}
+    >
+      <svg
+        className="text-purple-100"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        style={{
+          width: 'clamp(14px, 1vw, 18px)',
+          height: 'clamp(14px, 1vw, 18px)',
+        }}
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={inspireIconPath} />
+      </svg>
+      <span className="text-purple-100" style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.875rem)' }}>
+        Inspire
+      </span>
+    </a>
+  );
 
   // ══════════════════════════════════════════════════════════════════════════
   // DETERMINE GRID LAYOUT
-  // - isStudioSubPage: 4 columns (Home | World Context | Studio | Pro)
-  // - Default: 3 columns (First | World Context | Second)
-  // v5.0.0: +1 column for World Context button on all pages
+  // v7.0.0: Always 4-col. 5 possible buttons, each page drops its self-link.
+  // Homepage (/):         Inspire | World Context | Pro | My Prompts
+  // Inspire:              Home | World Context | Pro | My Prompts
+  // World Context:        Home | Inspire | Pro | My Prompts
+  // Pro Promagen:         Home | Inspire | World Context | My Prompts
+  // Provider/Studio:      Home | Inspire | Pro | My Prompts
+  // My Prompts:           Home | Inspire | World Context | Pro
   // ══════════════════════════════════════════════════════════════════════════
-  // v6.0.0: isMyPromptsPage → 3-col (no self-link)
-  // isStudioSubPage OR isStudioPage → 4-col (Home + World Context + Pro + My Prompts)
-  // Default → 3-col (World Context + Pro + My Prompts)
-  const use4Col = (isStudioSubPage || isStudioPage) && !isMyPromptsPage;
-  const gridCols = use4Col ? 'grid-cols-4' : 'grid-cols-3';
+  const gridCols = 'grid-cols-4';
 
   // ══════════════════════════════════════════════════════════════════════════
   // RENDER
@@ -673,38 +692,57 @@ export default function MissionControl({
         </div>
       </div>
 
-      {/* ACTION ZONE — Grid layout (3 or 4 columns)
-           v6.0.0: Studio button removed, My Prompts button added
-           3-col default: World Context | Pro | My Prompts
-           4-col (sub-pages): Home | World Context | Pro | My Prompts
-           My Prompts page: Home | World Context | Pro (3-col, no self-link)
+      {/* ACTION ZONE — 4-col grid (v7.0.0)
+           5 buttons total: Home, Inspire, World Context, Pro, My Prompts
+           Each page drops its own self-link, showing the other 4.
            Authority: docs/authority/homepage.md §9.1 */}
       <div className={`grid ${gridCols}`} style={{ gap: 'clamp(8px, 0.8vw, 12px)' }}>
         {isMyPromptsPage ? (
-          // My Prompts page: 3 buttons, no self-link
-          // Home | World Context | Pro
+          // My Prompts page: Home | Inspire | World Context | Pro
+          <>
+            {renderHomeButton()}
+            {renderInspireButton()}
+            {renderWorldContextButton()}
+            {renderProButton()}
+          </>
+        ) : isInspirePage ? (
+          // Inspire page: Home | World Context | Pro | My Prompts
           <>
             {renderHomeButton()}
             {renderWorldContextButton()}
             {renderProButton()}
+            {renderMyPromptsButton()}
           </>
-        ) : use4Col ? (
-          // 4-button layout for Studio hub / sub-pages / Provider pages:
-          // Home | World Context | Pro | My Prompts
+        ) : isWorldContextPage ? (
+          // World Context: Home | Inspire | Pro | My Prompts
           <>
             {renderHomeButton()}
-            {isWorldContextPage ? renderHomeButton() : renderWorldContextButton()}
+            {renderInspireButton()}
+            {renderProButton()}
+            {renderMyPromptsButton()}
+          </>
+        ) : isProPromagenPage ? (
+          // Pro Promagen: Home | Inspire | World Context | My Prompts
+          <>
+            {renderHomeButton()}
+            {renderInspireButton()}
+            {renderWorldContextButton()}
+            {renderMyPromptsButton()}
+          </>
+        ) : (isStudioSubPage || isStudioPage) ? (
+          // Provider / Studio pages: Home | Inspire | Pro | My Prompts
+          <>
+            {renderHomeButton()}
+            {renderInspireButton()}
             {renderProButton()}
             {renderMyPromptsButton()}
           </>
         ) : (
-          // 3-button layout (default):
-          // Homepage:      World Context | Pro      | My Prompts
-          // World Context: Home          | Pro      | My Prompts
-          // Pro Promagen:  World Context | Home     | My Prompts
+          // Homepage (Prompt Lab, /): Inspire | World Context | Pro | My Prompts
           <>
-            {renderFirstButton()}
-            {renderSecondButton()}
+            {renderInspireButton()}
+            {renderWorldContextButton()}
+            {renderProButton()}
             {renderMyPromptsButton()}
           </>
         )}

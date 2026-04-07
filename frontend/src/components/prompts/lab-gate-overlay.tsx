@@ -87,7 +87,7 @@ export function LabGateOverlay({ requiresSignIn = false }: LabGateOverlayProps) 
         </div>
 
         <a
-          href="/sign-in?redirect_url=/studio/playground"
+          href="/sign-in?redirect_url=/"
           className="inline-flex items-center justify-center rounded-xl border border-sky-400/[0.60] bg-gradient-to-r from-sky-400/[0.40] via-emerald-300/[0.40] to-indigo-400/[0.40] font-medium shadow-sm no-underline cursor-pointer transition-all hover:from-sky-400/[0.50] hover:via-emerald-300/[0.50] hover:to-indigo-400/[0.50]"
           style={{
             padding: 'clamp(0.5rem, 0.6vw, 0.8rem) clamp(1.2rem, 1.5vw, 2rem)',

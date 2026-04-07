@@ -49,7 +49,7 @@
 
 'use client';
 
-import React, { useState, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import HomepageGrid from '@/components/layout/homepage-grid';
 import PlaygroundWorkspace from '@/components/prompts/playground-workspace';
 import type { Exchange } from '@/data/exchanges/types';
@@ -124,6 +124,23 @@ export default function PlaygroundPageClient({
   const [hasProvider, setHasProvider] = useState(false);
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
 
+  // ── Improvement 2: Returning user pre-select ──────────────────────────
+  // On mount, read the last-used provider from localStorage. If valid,
+  // pre-select it so the tool feels warm — like picking up where you left off.
+  // Key matches Engine Bay persistence in new-homepage-client.tsx.
+  useEffect(() => {
+    try {
+      const savedId = localStorage.getItem('promagen:homepage-provider');
+      if (savedId && providers.some((p) => p.id === savedId)) {
+        setSelectedProviderId(savedId);
+        setHasProvider(true);
+      }
+    } catch {
+      // localStorage unavailable (SSR, incognito) — silent fallback
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // mount-only — providers is stable from server props
+
   // ── Pipeline X-Ray state (Call 1 assessment data for Phase 1 Decoder)
   const [xrayAssessment, setXrayAssessment] = useState<CoverageAssessment | null>(null);
   const [xrayIsChecking, setXrayIsChecking] = useState(false);
@@ -166,12 +183,22 @@ export default function PlaygroundPageClient({
   const handleProviderIdChange = useCallback((providerId: string | null) => {
     setSelectedProviderId(providerId);
     setHasProvider(providerId !== null);
+    // Persist for returning user pre-select (Improvement 2)
+    try {
+      if (providerId) {
+        localStorage.setItem('promagen:homepage-provider', providerId);
+      } else {
+        localStorage.removeItem('promagen:homepage-provider');
+      }
+    } catch { /* localStorage unavailable */ }
   }, []);
 
   // Left rail navigator selects a platform
   const handleRailSelectProvider = useCallback((providerId: string) => {
     setSelectedProviderId(providerId);
     setHasProvider(true);
+    // Persist for returning user pre-select (Improvement 2)
+    try { localStorage.setItem('promagen:homepage-provider', providerId); } catch { /* */ }
   }, []);
 
   // Workspace reports assessment state changes → X-Ray Phase 1
@@ -324,7 +351,7 @@ export default function PlaygroundPageClient({
   return (
     <HomepageGrid
       mainLabel="Prompt Lab — Build and compare prompts across all platforms"
-      headingText="Promagen — Prompt Lab"
+      headingText="Promagen — Intelligent Prompt Builder"
       heroTextOverride={heroText}
       leftContent={leftContent}
       centre={centreContent}
@@ -336,7 +363,6 @@ export default function PlaygroundPageClient({
       showEngineBay
       showMissionControl
       weatherIndex={weatherIndex}
-      isStudioSubPage
       // Glass Case styling for right rail panel (replaces standard ring-white/10)
       rightRailClassName={GLASS_CASE_CLASS}
     />

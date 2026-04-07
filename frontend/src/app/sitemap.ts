@@ -50,9 +50,10 @@ const routes: SitemapEntry[] = [
   { path: '/providers/trends', priority: 0.8, changeFrequency: 'daily' },
   { path: '/providers/compare', priority: 0.8, changeFrequency: 'daily' },
 
-  // --- Tier 4: Studio sub-pages ---
-  { path: '/studio/playground', priority: 0.7, changeFrequency: 'weekly' },
+  // --- Tier 4: Engagement pages ---
+  { path: '/inspire', priority: 0.7, changeFrequency: 'daily' },
   { path: '/studio/library', priority: 0.7, changeFrequency: 'weekly' },
+  { path: '/world-context', priority: 0.7, changeFrequency: 'daily' },
 
   // --- Tier 5: Secondary public pages ---
   { path: '/macro', priority: 0.6, changeFrequency: 'daily' },

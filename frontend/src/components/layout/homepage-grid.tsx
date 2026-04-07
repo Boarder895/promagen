@@ -251,6 +251,8 @@ export type HomepageGridProps = {
   isStudioSubPage?: boolean;
   /** When true, Mission Control shows 3 buttons: Home | World Context | Pro (no My Prompts self-link) */
   isMyPromptsPage?: boolean;
+  /** When true, shows Home instead of Inspire (for /inspire page) */
+  isInspirePage?: boolean;
   /** Controlled provider selection from Engine Bay (lifted state) */
   selectedProvider?: import('@/types/providers').Provider | null;
   /** Callback when user selects/deselects a provider in Engine Bay */
@@ -487,6 +489,7 @@ export default function HomepageGrid({
   isProPromagenPage = false,
   isStudioSubPage = false,
   isMyPromptsPage = false,
+  isInspirePage = false,
   selectedProvider,
   onProviderChange,
   leftRailClassName,
@@ -839,6 +842,12 @@ export default function HomepageGrid({
                       Home
                     </a>
                   )}
+                  {!isInspirePage && (
+                    <a href="/inspire" className={navButtonStyles}>
+                      <GlobeIcon />
+                      Inspire
+                    </a>
+                  )}
                   {!isWorldContext && (
                     <a href="/world-context" className={navButtonStyles}>
                       <GlobeIcon />
@@ -900,6 +909,7 @@ export default function HomepageGrid({
                   isStudioSubPage={isStudioSubPage}
                   isMyPromptsPage={isMyPromptsPage}
                   isWorldContextPage={isWorldContext}
+                  isInspirePage={isInspirePage}
                 />
               </div>
             )}

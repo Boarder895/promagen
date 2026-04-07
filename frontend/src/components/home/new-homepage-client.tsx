@@ -61,6 +61,8 @@ export interface NewHomepageClientProps {
   initialShowcaseData?: PromptOfTheMoment | null;
   /** Server-prefetched Index Ratings — eliminates client-side fetch waterfall */
   initialRatings?: Record<string, SerializableProviderRating>;
+  /** When true, this is the /inspire page (not the homepage) */
+  isInspirePage?: boolean;
 }
 
 // ============================================================================
@@ -84,6 +86,7 @@ export default function NewHomepageClient({
   providers,
   initialShowcaseData,
   initialRatings,
+  isInspirePage = false,
 }: NewHomepageClientProps) {
   const { isAuthenticated, userTier, locationInfo, setReferenceFrame } = usePromagenAuth();
 
@@ -241,6 +244,32 @@ export default function NewHomepageClient({
         />
       )}
 
+      {/* ── Build Your Prompt CTA — Inspire page only (Improvement 1) ──
+          Creates the funnel: Inspire (browse) → Home (build) → Pro (pay).
+          Gradient matches Engine Bay launch button for visual consistency. */}
+      {isInspirePage && !isTableExpanded && (
+        <a
+          href="/"
+          className="group inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-sky-400/60 bg-gradient-to-r from-sky-400/40 via-emerald-300/40 to-indigo-400/40 font-semibold text-white shadow-sm no-underline cursor-pointer transition-all hover:from-sky-400/50 hover:via-emerald-300/50 hover:to-indigo-400/50 hover:border-sky-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/80"
+          style={{
+            padding: 'clamp(12px, 1.2vw, 18px) clamp(16px, 2vw, 28px)',
+            fontSize: 'clamp(0.85rem, 1vw, 1.1rem)',
+          }}
+        >
+          <span>✦</span>
+          <span>Build Your Prompt</span>
+          <svg
+            className="shrink-0 transition-transform group-hover:translate-x-1"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            style={{ width: 'clamp(16px, 1.2vw, 20px)', height: 'clamp(16px, 1.2vw, 20px)' }}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+          </svg>
+        </a>
+      )}
+
       {/* ── Mobile Conversion Bridge — <768px only ────────────────────
           Sits between the showcase and leaderboard. Two paths:
           Path A: Pro page (conversion). Path B: Copy link to revisit on desktop.
@@ -357,7 +386,8 @@ export default function NewHomepageClient({
 
   return (
     <HomepageGrid
-      mainLabel="Promagen home"
+      mainLabel={isInspirePage ? 'Promagen — Inspire' : 'Promagen home'}
+      headingText={isInspirePage ? 'Promagen — Inspire' : undefined}
       leftContent={leftContent}
       centre={centreRail}
       rightContent={rightContent}
@@ -379,6 +409,7 @@ export default function NewHomepageClient({
       weatherIndex={effectiveWeatherIndex}
       selectedProvider={selectedProvider}
       onProviderChange={handleProviderChange}
+      isInspirePage={isInspirePage}
     />
   );
 }

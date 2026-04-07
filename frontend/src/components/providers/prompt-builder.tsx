@@ -3592,7 +3592,7 @@ export function PromptBuilder({
           {/* TODO: Gate behind userTier === 'paid' for production launch */}
           {!providerSelector && (
             <a
-              href="/studio/playground"
+              href="/"
               className="inline-flex items-center justify-center gap-2 rounded-full border border-amber-500/70 bg-gradient-to-r from-amber-600/20 to-orange-600/20 px-4 py-2 text-sm font-medium text-amber-100 hover:from-amber-600/30 hover:to-orange-600/30 hover:border-amber-400 focus-visible:outline-none focus-visible:ring focus-visible:ring-amber-400/80 cursor-pointer"
             >
               <svg

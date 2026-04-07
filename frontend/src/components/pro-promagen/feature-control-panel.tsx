@@ -423,7 +423,7 @@ export function FeatureControlPanel({
           freeValue="Pro exclusive"
           proValue="Full access"
           actionLabel={isPaidUser ? 'Open lab' : 'Pro only'}
-          onAction={isPaidUser ? () => nav('/studio/playground') : undefined}
+          onAction={isPaidUser ? () => nav('/') : undefined}
           isPro={isPaidUser}
           onHoverChange={onLabHover}
           actionAlwaysColored={true}

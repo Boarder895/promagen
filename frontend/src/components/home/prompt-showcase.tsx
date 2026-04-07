@@ -74,7 +74,6 @@
 
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import Image from 'next/image';
-import { useAuth } from '@clerk/nextjs';
 import { usePromptShowcase } from '@/hooks/use-prompt-showcase';
 import FeedbackWidget from '@/components/ux/feedback-widget';
 import { useOnlineUsers } from '@/hooks/use-online-users';
@@ -1423,9 +1422,6 @@ export default function PromptShowcase({
 }) {
   const { data, previousData, isLoading, isTransitioning, error } = usePromptShowcase(initialData);
 
-  // ★ Auth state for "Write your own Prompt" button routing
-  const { isSignedIn } = useAuth();
-
   // ★ Hydration gate for deferred sub-components (OnlineUsersBar)
   const [mainHydrated, setMainHydrated] = useState(false);
   useEffect(() => { setMainHydrated(true); }, []);
@@ -1485,9 +1481,10 @@ export default function PromptShowcase({
           </span>
         </div>
 
-        {/* Centre — "Write your own Prompt" button (Engine Bay gradient, no animation) */}
+        {/* Centre — "Write your own Prompt" button (Engine Bay gradient, no animation)
+            Operation: direct link to / — no auth gate, matches standard builder Prompt Lab button */}
         <a
-          href={isSignedIn ? '/studio/playground' : '/sign-in?redirect_url=/studio/playground'}
+          href="/"
           className="group relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-xl border border-sky-400/[0.60] bg-gradient-to-r from-sky-400/[0.40] via-emerald-300/[0.40] to-indigo-400/[0.40] font-medium text-white shadow-sm no-underline cursor-pointer transition-all hover:from-sky-400/[0.50] hover:via-emerald-300/[0.50] hover:to-indigo-400/[0.50] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/[0.80]"
           style={{
             padding: 'clamp(0.4rem, 0.5vh, 0.7rem) clamp(0.4rem, 0.5vw, 0.7rem)',
