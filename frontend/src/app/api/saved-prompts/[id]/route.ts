@@ -19,7 +19,8 @@
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { auth, clerkClient } from '@clerk/nextjs/server';
+import { clerkClient } from '@clerk/nextjs/server';
+import { getSessionFromCookie } from '@/lib/stripe/clerk-session';
 import { rateLimit } from '@/lib/rate-limit';
 import { env } from '@/lib/env';
 import {
@@ -53,11 +54,12 @@ interface ClerkPublicMetadata {
   [key: string]: unknown;
 }
 
-async function authenticate(): Promise<
+async function authenticate(request: NextRequest): Promise<
   | { ok: true; userId: string }
   | { ok: false; response: NextResponse }
 > {
-  const { userId } = await auth();
+  const session = getSessionFromCookie(request);
+  const userId = session?.userId ?? null;
 
   if (!userId) {
     return {
@@ -143,7 +145,7 @@ export async function PATCH(
       );
     }
 
-    const authResult = await authenticate();
+    const authResult = await authenticate(request);
     if (!authResult.ok) return authResult.response;
     const { userId } = authResult;
 
@@ -263,7 +265,7 @@ export async function DELETE(
       );
     }
 
-    const authResult = await authenticate();
+    const authResult = await authenticate(request);
     if (!authResult.ok) return authResult.response;
     const { userId } = authResult;
 

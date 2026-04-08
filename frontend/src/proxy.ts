@@ -24,8 +24,6 @@ const REPORT_TO = JSON.stringify({
 });
 
 // Protect only "private" surfaces (public site stays public)
-// Every API namespace that calls auth() and returns 401 on null userId MUST be listed here.
-// Without auth.protect(), Clerk does not wire the server-side auth context for the route.
 const isProtectedRoute = createRouteMatcher([
   '/admin(.*)',
   '/settings(.*)',
@@ -34,10 +32,6 @@ const isProtectedRoute = createRouteMatcher([
   '/api/admin(.*)',
   '/api/tests(.*)',
   '/api/saved-prompts(.*)',
-  '/api/user(.*)',
-  '/api/fx(.*)',
-  '/api/commodities(.*)',
-  '/api/usage(.*)',
 ]);
 
 // Admin-only gates (subset of protected routes — requires ADMIN_USER_IDS membership)

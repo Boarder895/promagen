@@ -19,7 +19,8 @@
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { auth, clerkClient } from '@clerk/nextjs/server';
+import { clerkClient } from '@clerk/nextjs/server';
+import { getSessionFromCookie } from '@/lib/stripe/clerk-session';
 import { rateLimit } from '@/lib/rate-limit';
 import { env } from '@/lib/env';
 import {
@@ -65,11 +66,12 @@ interface ClerkPublicMetadata {
  * Uses clerkClient().users.getUser() — same pattern as fx/selection, user/preferences.
  * Does NOT use sessionClaims (requires Clerk token template configuration).
  */
-async function authenticate(): Promise<
+async function authenticate(request: NextRequest): Promise<
   | { ok: true; data: AuthResult }
   | { ok: false; response: NextResponse }
 > {
-  const { userId } = await auth();
+  const session = getSessionFromCookie(request);
+  const userId = session?.userId ?? null;
 
   if (!userId) {
     return {
@@ -107,9 +109,9 @@ async function authenticate(): Promise<
 // GET — List all saved prompts
 // ============================================================================
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
-    const authResult = await authenticate();
+    const authResult = await authenticate(request);
     if (!authResult.ok) return authResult.response;
     const { userId } = authResult.data;
 
@@ -153,7 +155,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const authResult = await authenticate();
+    const authResult = await authenticate(request);
     if (!authResult.ok) return authResult.response;
     const { userId } = authResult.data;
 
