@@ -22,6 +22,7 @@
 'use client';
 
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import Image from 'next/image';
 import type { LibraryFilters, LibraryStats } from '@/types/saved-prompt';
 import type { SavedPrompt } from '@/types/saved-prompt';
 
@@ -166,11 +167,14 @@ function NavItem({
   count,
   isActive,
   onClick,
+  iconPath,
 }: {
   label: string;
   count?: number;
   isActive: boolean;
   onClick: () => void;
+  /** Optional provider icon path (e.g. /icons/providers/midjourney.png) */
+  iconPath?: string;
 }) {
   return (
     <button
@@ -186,7 +190,24 @@ function NavItem({
         fontSize: 'clamp(0.5625rem, 0.7vw, 0.85rem)',
       }}
     >
-      <span className="truncate">{label}</span>
+      <span className="flex items-center min-w-0 truncate" style={{ gap: 'clamp(4px, 0.3vw, 6px)' }}>
+        {iconPath && (
+          <span
+            className="relative shrink-0 overflow-hidden rounded-sm"
+            style={{ width: 'clamp(14px, 1.1vw, 18px)', height: 'clamp(14px, 1.1vw, 18px)' }}
+          >
+            <Image
+              src={iconPath}
+              alt={label}
+              fill
+              sizes="18px"
+              className="object-contain"
+              style={{ filter: 'drop-shadow(0 0 3px rgba(255,255,255,0.4))' }}
+            />
+          </span>
+        )}
+        <span className="truncate">{label}</span>
+      </span>
       {count !== undefined && (
         <span
           className="shrink-0 text-white/70"
@@ -531,6 +552,7 @@ export function LibraryLeftRail({
                 count={count}
                 isActive={filters.platformId === id}
                 onClick={() => handlePlatformClick(id)}
+                iconPath={`/icons/providers/${id}.png`}
               />
             ))}
           </div>

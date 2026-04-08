@@ -7,7 +7,7 @@ import { z } from "zod";
 import rawProviders from "@/data/providers/providers.json";
 import { db, hasDatabaseConfigured } from "@/lib/db";
 import { env } from "@/lib/env";
-import { getProviderRatings } from "@/lib/index-rating/database";
+import { getProviderRatings, ensureProviderRatingsTable } from "@/lib/index-rating/database";
 import type { SerializableProviderRating } from "@/types/index-rating";
 import type { Provider } from "@/types/providers";
 
@@ -267,6 +267,9 @@ export async function getIndexRatingsRecord(
   if (!hasDatabaseConfigured()) return {};
 
   try {
+    // Ensure table exists (idempotent) — cron may not have run yet
+    await ensureProviderRatingsTable();
+
     const ratingsMap = await getProviderRatings(providerIds);
     const record: Record<string, SerializableProviderRating> = {};
 

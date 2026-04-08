@@ -304,17 +304,6 @@ function OverviewPanel({
         </div>
         <div className="flex items-center justify-between">
           <span className="text-white/80" style={{ fontSize: 'clamp(0.625rem, 0.7vw, 0.85rem)' }}>
-            Avg score
-          </span>
-          <span
-            className="bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent font-bold"
-            style={{ fontSize: 'clamp(0.75rem, 0.9vw, 1.1rem)' }}
-          >
-            {stats.averageCoherence}%
-          </span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-white/80" style={{ fontSize: 'clamp(0.625rem, 0.7vw, 0.85rem)' }}>
             Platforms
           </span>
           <span
@@ -350,9 +339,9 @@ function OverviewPanel({
                       width: `${widthPct}%`,
                       minWidth: 'clamp(40px, 3vw, 60px)',
                       height: 'clamp(20px, 1.5vw, 26px)',
-                      background: `${color}25`,
-                      border: `1px solid ${color}50`,
-                      boxShadow: `0 0 10px ${color}20`,
+                      background: `${color}45`,
+                      border: `1px solid ${color}80`,
+                      boxShadow: `0 0 12px ${color}40, inset 0 0 8px ${color}25`,
                     }}
                   >
                     <span
@@ -366,12 +355,28 @@ function OverviewPanel({
                       {count}
                     </span>
                   </div>
-                  <span
-                    className="text-white/80 truncate"
-                    style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.85rem)' }}
-                  >
-                    {name}
-                  </span>
+                  {/* Provider icon + name */}
+                  <div className="flex items-center min-w-0" style={{ gap: 'clamp(4px, 0.3vw, 6px)' }}>
+                    <span
+                      className="relative shrink-0 overflow-hidden rounded-sm"
+                      style={{ width: 'clamp(14px, 1.1vw, 18px)', height: 'clamp(14px, 1.1vw, 18px)' }}
+                    >
+                      <Image
+                        src={`/icons/providers/${id}.png`}
+                        alt={name}
+                        fill
+                        sizes="18px"
+                        className="object-contain"
+                        style={{ filter: 'drop-shadow(0 0 3px rgba(255,255,255,0.4))' }}
+                      />
+                    </span>
+                    <span
+                      className="text-white truncate"
+                      style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.85rem)' }}
+                    >
+                      {name}
+                    </span>
+                  </div>
                 </div>
               );
             })}
