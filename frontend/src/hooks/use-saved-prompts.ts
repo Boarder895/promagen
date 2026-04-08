@@ -1,8 +1,21 @@
 // src/hooks/use-saved-prompts.ts
 // ============================================================================
-// SAVED PROMPTS HOOK (v3.1.0)
+// SAVED PROMPTS HOOK (v3.2.1)
 // ============================================================================
 // Dual-mode: localStorage (free) or Postgres cloud (Pro Promagen).
+//
+// v3.2.1 (8 Apr 2026): Lint hardening
+// - Wrapped fireAndForget in useCallback
+// - Added fireAndForget to dependent callback dependency arrays
+// - No behaviour change; fixes react-hooks/exhaustive-deps warnings
+//
+// v3.2.0 (8 Apr 2026): Final polish pass
+// - Debounced authoritative cloud refreshes so repeated writes do not trigger
+//   a full GET every time
+// - Import writes now use the same hardened queue path as normal CRUD
+// - Final contract clarified: resetLoadedPromptsState() is the real local/UI
+//   reset operation; clearAll() is retained only as a backward-compatible alias
+//   and does NOT delete cloud data
 //
 // v3.1.0 (8 Apr 2026): Cloud hardening pass
 // - Cloud mode now writes a durable local shadow cache so prompts survive reloads
@@ -57,6 +70,8 @@ const PREVIOUS_VERSION = "1.0.0";
 const CLOUD_SHADOW_KEY = "promagen_saved_prompts_cloud_shadow";
 /** Same-tab event for multi-consumer hook sync */
 const SAVED_PROMPTS_SYNC_EVENT = "promagen:saved-prompts-sync";
+/** Debounce window before authoritative cloud re-fetch */
+const CLOUD_REFRESH_DEBOUNCE_MS = 350;
 /** Maximum user-created folders */
 const MAX_FOLDERS = 20;
 /** Maximum characters per folder name */
@@ -94,7 +109,7 @@ interface CloudOperation {
 const EMPTY_FOLDERS_KEY = "promagen_empty_folders";
 
 // ============================================================================
-// HELPERS (unchanged from v2.0.0 where possible)
+// HELPERS
 // ============================================================================
 
 function generateId(): string {
@@ -473,6 +488,55 @@ function markSyncComplete(): void {
 }
 
 // ============================================================================
+// EMPTY FOLDER REGISTRY
+// ============================================================================
+
+function loadEmptyFolders(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(EMPTY_FOLDERS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function persistEmptyFolder(name: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    const existing = loadEmptyFolders();
+    if (!existing.includes(name)) {
+      existing.push(name);
+      localStorage.setItem(EMPTY_FOLDERS_KEY, JSON.stringify(existing));
+    }
+  } catch {
+    // Silent fail — non-critical
+  }
+}
+
+function removeEmptyFolder(name: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    const existing = loadEmptyFolders();
+    const filtered = existing.filter((f) => f !== name);
+    localStorage.setItem(EMPTY_FOLDERS_KEY, JSON.stringify(filtered));
+  } catch {
+    // Silent fail — non-critical
+  }
+}
+
+function clearEmptyFolders(): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(EMPTY_FOLDERS_KEY);
+  } catch {
+    // Silent fail — non-critical
+  }
+}
+
+// ============================================================================
 // HOOK
 // ============================================================================
 
@@ -524,6 +588,16 @@ export interface UseSavedPromptsReturn {
     errors: number;
   };
 
+  /**
+   * Reset only the client-loaded prompt state for this hook instance.
+   * This does NOT delete prompts from the cloud database.
+   */
+  resetLoadedPromptsState: () => void;
+
+  /**
+   * Backward-compatible alias for resetLoadedPromptsState().
+   * NOTE: This does NOT delete prompts from the cloud database.
+   */
   clearAll: () => void;
 
   storageMode: StorageMode;
@@ -549,6 +623,8 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
 
   const cloudLoadedRef = useRef(false);
   const refreshInFlightRef = useRef(false);
+  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingRefreshReasonRef = useRef<string | null>(null);
   const cloudQueueRef = useRef<CloudOperation[]>([]);
   const instanceIdRef = useRef<string>(generateId());
 
@@ -624,6 +700,36 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
     },
     [broadcastSync],
   );
+
+  const scheduleCloudRefresh = useCallback(
+    (reason: string): void => {
+      if (storageModeRef.current !== "cloud") return;
+
+      pendingRefreshReasonRef.current = reason;
+
+      if (refreshTimerRef.current) {
+        clearTimeout(refreshTimerRef.current);
+      }
+
+      refreshTimerRef.current = setTimeout(() => {
+        const finalReason =
+          pendingRefreshReasonRef.current ?? "debounced cloud refresh";
+        pendingRefreshReasonRef.current = null;
+        refreshTimerRef.current = null;
+        void refreshFromCloud(finalReason);
+      }, CLOUD_REFRESH_DEBOUNCE_MS);
+    },
+    [refreshFromCloud],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (refreshTimerRef.current) {
+        clearTimeout(refreshTimerRef.current);
+        refreshTimerRef.current = null;
+      }
+    };
+  }, []);
 
   // ============================================================================
   // MODE DETECTION
@@ -806,12 +912,15 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
     const queue = [...cloudQueueRef.current];
     cloudQueueRef.current = [];
 
-    for (const op of queue) {
-      op.run()
-        .then((ok) => {
+    let sawSuccess = false;
+
+    const runQueue = async (): Promise<void> => {
+      for (const op of queue) {
+        try {
+          const ok = await op.run();
           if (ok) {
+            sawSuccess = true;
             setSyncError(null);
-            void refreshFromCloud(op.label);
           } else {
             console.error(
               `[SavedPrompts:cloud] Queued ${op.label} failed (non-ok)`,
@@ -819,14 +928,20 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
             op.revert();
             setSyncError(`Failed to ${op.label}. Change reverted.`);
           }
-        })
-        .catch((err) => {
+        } catch (err) {
           console.error(`[SavedPrompts:cloud] Queued ${op.label} error:`, err);
           op.revert();
           setSyncError(`Failed to ${op.label}. Change reverted.`);
-        });
-    }
-  }, [storageMode, refreshFromCloud]);
+        }
+      }
+
+      if (sawSuccess) {
+        scheduleCloudRefresh("flush queued cloud operations");
+      }
+    };
+
+    void runQueue();
+  }, [storageMode, scheduleCloudRefresh]);
 
   // ============================================================================
   // SAME-TAB LISTENER
@@ -853,7 +968,7 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
           setPrompts((prev) => mergePromptsById(prev, shadow));
         }
         if (detail.reason === "cloud-refresh") {
-          void refreshFromCloud("same-tab sync event");
+          scheduleCloudRefresh("same-tab sync event");
         }
       }
     }
@@ -866,7 +981,7 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
         onSync as EventListener,
       );
     };
-  }, [refreshFromCloud]);
+  }, [scheduleCloudRefresh]);
 
   // ============================================================================
   // DERIVED DATA
@@ -903,47 +1018,50 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
   // OPTIMISTIC WRITE HELPER (HARDENED)
   // ============================================================================
 
-  function fireAndForget(
-    apiCall: () => Promise<boolean>,
-    revert: () => void,
-    label: string,
-  ): void {
-    const op: CloudOperation = {
-      run: apiCall,
-      revert,
-      label,
-    };
+  const fireAndForget = useCallback(
+    (
+      apiCall: () => Promise<boolean>,
+      revert: () => void,
+      label: string,
+    ): void => {
+      const op: CloudOperation = {
+        run: apiCall,
+        revert,
+        label,
+      };
 
-    // Cloud ready — send now
-    if (storageModeRef.current === "cloud") {
-      apiCall()
-        .then((ok) => {
-          if (ok) {
-            setSyncError(null);
-            void refreshFromCloud(label);
-          } else {
-            console.error(`[SavedPrompts:cloud] ${label} failed (non-ok)`);
+      // Cloud ready — send now
+      if (storageModeRef.current === "cloud") {
+        apiCall()
+          .then((ok) => {
+            if (ok) {
+              setSyncError(null);
+              scheduleCloudRefresh(label);
+            } else {
+              console.error(`[SavedPrompts:cloud] ${label} failed (non-ok)`);
+              revert();
+              setSyncError(`Failed to ${label}. Change reverted.`);
+            }
+          })
+          .catch((err) => {
+            console.error(`[SavedPrompts:cloud] ${label} error:`, err);
             revert();
             setSyncError(`Failed to ${label}. Change reverted.`);
-          }
-        })
-        .catch((err) => {
-          console.error(`[SavedPrompts:cloud] ${label} error:`, err);
-          revert();
-          setSyncError(`Failed to ${label}. Change reverted.`);
-        });
-      return;
-    }
+          });
+        return;
+      }
 
-    // Auth/storage transition — queue instead of silently dropping
-    if (!authLoadedRef.current || isPaidRef.current) {
-      cloudQueueRef.current.push(op);
-      broadcastSync("cloud-write-queued");
-      return;
-    }
+      // Auth/storage transition — queue instead of silently dropping
+      if (!authLoadedRef.current || isPaidRef.current) {
+        cloudQueueRef.current.push(op);
+        broadcastSync("cloud-write-queued");
+        return;
+      }
 
-    // Free/local mode — do nothing here because local persistence effect handles it
-  }
+      // Free/local mode — do nothing here because local persistence effect handles it
+    },
+    [broadcastSync, scheduleCloudRefresh],
+  );
 
   // ============================================================================
   // PROMPT CRUD
@@ -977,7 +1095,7 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
 
       return newPrompt;
     },
-    [],
+    [fireAndForget],
   );
 
   const quickSave = useCallback(
@@ -1032,7 +1150,7 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
 
       return newPrompt;
     },
-    [],
+    [fireAndForget],
   );
 
   const updatePrompt = useCallback(
@@ -1068,40 +1186,43 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
 
       return found;
     },
-    [],
+    [fireAndForget],
   );
 
-  const deletePrompt = useCallback((id: string): boolean => {
-    let found = false;
-    let snapshot: SavedPrompt | null = null;
+  const deletePrompt = useCallback(
+    (id: string): boolean => {
+      let found = false;
+      let snapshot: SavedPrompt | null = null;
 
-    setPrompts((prev) => {
-      const filtered = prev.filter((p) => {
-        if (p.id === id) {
-          found = true;
-          snapshot = { ...p };
-          return false;
-        }
-        return true;
-      });
-      return filtered;
-    });
-
-    if (found) {
-      const capturedSnapshot = snapshot;
-      fireAndForget(
-        () => cloudDeletePrompt(id),
-        () => {
-          if (capturedSnapshot) {
-            setPrompts((prev) => [...prev, capturedSnapshot]);
+      setPrompts((prev) => {
+        const filtered = prev.filter((p) => {
+          if (p.id === id) {
+            found = true;
+            snapshot = { ...p };
+            return false;
           }
-        },
-        "delete prompt",
-      );
-    }
+          return true;
+        });
+        return filtered;
+      });
 
-    return found;
-  }, []);
+      if (found) {
+        const capturedSnapshot = snapshot;
+        fireAndForget(
+          () => cloudDeletePrompt(id),
+          () => {
+            if (capturedSnapshot) {
+              setPrompts((prev) => [...prev, capturedSnapshot]);
+            }
+          },
+          "delete prompt",
+        );
+      }
+
+      return found;
+    },
+    [fireAndForget],
+  );
 
   const getPrompt = useCallback(
     (id: string): SavedPrompt | undefined => {
@@ -1187,53 +1308,93 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
       setEmptyFolderNames(loadEmptyFolders());
 
       if (storageModeRef.current === "cloud") {
+        let queuedAny = false;
         for (const id of affectedIds) {
-          void cloudUpdatePrompt(id, { folder: sanitisedNew }).catch((err) => {
-            console.error(
-              "[SavedPrompts:cloud] Folder rename sync error:",
-              err,
-            );
-          });
+          fireAndForget(
+            () => cloudUpdatePrompt(id, { folder: sanitisedNew }),
+            () => {
+              setPrompts((prev) =>
+                prev.map((p) =>
+                  p.id === id
+                    ? {
+                        ...p,
+                        folder: oldName,
+                        updatedAt: new Date().toISOString(),
+                      }
+                    : p,
+                ),
+              );
+            },
+            "rename folder",
+          );
+          queuedAny = true;
+        }
+
+        if (queuedAny) {
+          scheduleCloudRefresh("rename folder");
         }
       }
 
       return true;
     },
-    [folders],
+    [folders, fireAndForget, scheduleCloudRefresh],
   );
 
-  const deleteFolder = useCallback((name: string): boolean => {
-    if (!name) return false;
+  const deleteFolder = useCallback(
+    (name: string): boolean => {
+      if (!name) return false;
 
-    const affectedIds: string[] = [];
+      const affectedIds: string[] = [];
 
-    setPrompts((prev) =>
-      prev.map((p) => {
-        if (p.folder === name) {
-          affectedIds.push(p.id);
-          return {
-            ...p,
-            folder: undefined,
-            updatedAt: new Date().toISOString(),
-          };
+      setPrompts((prev) =>
+        prev.map((p) => {
+          if (p.folder === name) {
+            affectedIds.push(p.id);
+            return {
+              ...p,
+              folder: undefined,
+              updatedAt: new Date().toISOString(),
+            };
+          }
+          return p;
+        }),
+      );
+
+      removeEmptyFolder(name);
+      setEmptyFolderNames(loadEmptyFolders());
+
+      if (storageModeRef.current === "cloud") {
+        let queuedAny = false;
+        for (const id of affectedIds) {
+          fireAndForget(
+            () => cloudUpdatePrompt(id, { folder: null }),
+            () => {
+              setPrompts((prev) =>
+                prev.map((p) =>
+                  p.id === id
+                    ? {
+                        ...p,
+                        folder: name,
+                        updatedAt: new Date().toISOString(),
+                      }
+                    : p,
+                ),
+              );
+            },
+            "delete folder",
+          );
+          queuedAny = true;
         }
-        return p;
-      }),
-    );
 
-    removeEmptyFolder(name);
-    setEmptyFolderNames(loadEmptyFolders());
-
-    if (storageModeRef.current === "cloud") {
-      for (const id of affectedIds) {
-        void cloudUpdatePrompt(id, { folder: null }).catch((err) => {
-          console.error("[SavedPrompts:cloud] Folder delete sync error:", err);
-        });
+        if (queuedAny) {
+          scheduleCloudRefresh("delete folder");
+        }
       }
-    }
 
-    return true;
-  }, []);
+      return true;
+    },
+    [fireAndForget, scheduleCloudRefresh],
+  );
 
   const moveToFolder = useCallback(
     (promptId: string, folder: string | undefined): boolean => {
@@ -1274,7 +1435,7 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
 
       return found;
     },
-    [],
+    [fireAndForget],
   );
 
   // ============================================================================
@@ -1341,7 +1502,7 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
             }
             existingHashes.add(hash);
 
-            const newP: SavedPrompt = {
+            const newPrompt: SavedPrompt = {
               ...prompt,
               id: generateId(),
               createdAt: prompt.createdAt || now,
@@ -1349,7 +1510,8 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
               source: prompt.source ?? "builder",
               folder: targetFolder,
             };
-            newPrompts.push(newP);
+
+            newPrompts.push(newPrompt);
             imported++;
           } catch {
             errors++;
@@ -1360,12 +1522,15 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
           setPrompts((prev) => [...prev, ...newPrompts]);
 
           if (storageModeRef.current === "cloud") {
-            for (const p of newPrompts) {
-              void cloudSavePrompt(p).catch((err) => {
-                console.error("[SavedPrompts:cloud] Import sync error:", err);
-              });
+            for (const prompt of newPrompts) {
+              fireAndForget(
+                () => cloudSavePrompt(prompt),
+                () => {
+                  setPrompts((prev) => prev.filter((p) => p.id !== prompt.id));
+                },
+                "import prompt",
+              );
             }
-            void refreshFromCloud("import prompts");
           }
         }
       } catch {
@@ -1374,14 +1539,35 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
 
       return { imported, duplicates, errors };
     },
-    [prompts, refreshFromCloud],
+    [prompts, fireAndForget],
   );
 
-  const clearAll = useCallback(() => {
+  // ============================================================================
+  // RESET / CLEAR CONTRACT
+  // ============================================================================
+
+  const resetLoadedPromptsState = useCallback(() => {
     setPrompts([]);
     clearEmptyFolders();
     setEmptyFolderNames(loadEmptyFolders());
+
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem(CLOUD_SHADOW_KEY);
+      } catch {
+        // non-critical
+      }
+    }
+
+    // NOTE:
+    // This is intentionally a client/UI reset only.
+    // It does NOT delete prompts from the cloud database.
   }, []);
+
+  const clearAll = useCallback(() => {
+    // Backward-compatible alias only.
+    resetLoadedPromptsState();
+  }, [resetLoadedPromptsState]);
 
   // ============================================================================
   // RETURN
@@ -1412,6 +1598,7 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
     moveToFolder,
     exportPrompts,
     importPrompts,
+    resetLoadedPromptsState,
     clearAll,
     storageMode,
     syncError,
@@ -1420,52 +1607,3 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
 }
 
 export default useSavedPrompts;
-
-// ============================================================================
-// EMPTY FOLDER REGISTRY
-// ============================================================================
-
-function loadEmptyFolders(): string[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(EMPTY_FOLDERS_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function persistEmptyFolder(name: string): void {
-  if (typeof window === "undefined") return;
-  try {
-    const existing = loadEmptyFolders();
-    if (!existing.includes(name)) {
-      existing.push(name);
-      localStorage.setItem(EMPTY_FOLDERS_KEY, JSON.stringify(existing));
-    }
-  } catch {
-    // Silent fail — non-critical
-  }
-}
-
-function removeEmptyFolder(name: string): void {
-  if (typeof window === "undefined") return;
-  try {
-    const existing = loadEmptyFolders();
-    const filtered = existing.filter((f) => f !== name);
-    localStorage.setItem(EMPTY_FOLDERS_KEY, JSON.stringify(filtered));
-  } catch {
-    // Silent fail — non-critical
-  }
-}
-
-function clearEmptyFolders(): void {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.removeItem(EMPTY_FOLDERS_KEY);
-  } catch {
-    // Silent fail — non-critical
-  }
-}
