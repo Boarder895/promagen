@@ -1,8 +1,16 @@
 // src/hooks/use-saved-prompts.ts
 // ============================================================================
-// SAVED PROMPTS HOOK (v3.0.1)
+// SAVED PROMPTS HOOK (v3.1.0)
 // ============================================================================
 // Dual-mode: localStorage (free) or Postgres cloud (Pro Promagen).
+//
+// v3.1.0 (8 Apr 2026): Cloud hardening pass
+// - Cloud mode now writes a durable local shadow cache so prompts survive reloads
+//   even if a cloud write is still in flight
+// - fireAndForget no longer silently no-ops during auth/storage transition;
+//   cloud writes are queued and flushed once cloud mode is ready
+// - Successful cloud writes trigger an authoritative re-fetch from the server
+// - Same-tab sync event added for multi-consumer safety
 //
 // v3.0.1 (8 Apr 2026): Cloud-load merge fix
 // - Fixes optimistic save disappearing after initial cloud fetch
@@ -45,6 +53,10 @@ import { DEFAULT_LIBRARY_FILTERS } from "@/types/saved-prompt";
 const STORAGE_KEY = "promagen_saved_prompts";
 const STORAGE_VERSION = "1.1.0";
 const PREVIOUS_VERSION = "1.0.0";
+/** Durable local shadow cache for cloud mode */
+const CLOUD_SHADOW_KEY = "promagen_saved_prompts_cloud_shadow";
+/** Same-tab event for multi-consumer hook sync */
+const SAVED_PROMPTS_SYNC_EVENT = "promagen:saved-prompts-sync";
 /** Maximum user-created folders */
 const MAX_FOLDERS = 20;
 /** Maximum characters per folder name */
@@ -63,8 +75,26 @@ interface StorageData {
   prompts: SavedPrompt[];
 }
 
+interface SyncEventDetail {
+  originId: string;
+  mode: StorageMode;
+  reason:
+    | "local-persist"
+    | "cloud-shadow-persist"
+    | "cloud-refresh"
+    | "cloud-write-queued";
+}
+
+interface CloudOperation {
+  run: () => Promise<boolean>;
+  revert: () => void;
+  label: string;
+}
+
+const EMPTY_FOLDERS_KEY = "promagen_empty_folders";
+
 // ============================================================================
-// HELPERS (unchanged from v2.0.0)
+// HELPERS (unchanged from v2.0.0 where possible)
 // ============================================================================
 
 function generateId(): string {
@@ -90,24 +120,20 @@ function migrateV1ToV1_1(prompts: SavedPrompt[]): SavedPrompt[] {
   }));
 }
 
-function loadFromStorage(): SavedPrompt[] {
+function loadStorageData(key: string): SavedPrompt[] {
   if (typeof window === "undefined") return [];
 
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(key);
     if (!raw) return [];
 
     const data: StorageData = JSON.parse(raw);
     let prompts = data.prompts || [];
 
     if (data.version === PREVIOUS_VERSION) {
-      console.debug("[SavedPrompts] Migrating storage from v1.0.0 → v1.1.0");
       prompts = migrateV1ToV1_1(prompts);
       const migrated: StorageData = { version: STORAGE_VERSION, prompts };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
-      console.debug(
-        `[SavedPrompts] Migration complete — ${prompts.length} prompts updated`,
-      );
+      localStorage.setItem(key, JSON.stringify(migrated));
     } else if (data.version !== STORAGE_VERSION) {
       console.warn(
         `[SavedPrompts] Unknown storage version "${data.version}", expected "${STORAGE_VERSION}"`,
@@ -116,22 +142,38 @@ function loadFromStorage(): SavedPrompt[] {
 
     return prompts;
   } catch (error) {
-    console.error("[SavedPrompts] Failed to load from storage:", error);
+    console.error(`[SavedPrompts] Failed to load storage key "${key}":`, error);
     return [];
   }
 }
 
-function saveToStorage(prompts: SavedPrompt[]): boolean {
+function saveStorageData(key: string, prompts: SavedPrompt[]): boolean {
   if (typeof window === "undefined") return false;
 
   try {
     const data: StorageData = { version: STORAGE_VERSION, prompts };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    localStorage.setItem(key, JSON.stringify(data));
     return true;
   } catch (error) {
-    console.error("[SavedPrompts] Failed to save to storage:", error);
+    console.error(`[SavedPrompts] Failed to save storage key "${key}":`, error);
     return false;
   }
+}
+
+function loadFromStorage(): SavedPrompt[] {
+  return loadStorageData(STORAGE_KEY);
+}
+
+function saveToStorage(prompts: SavedPrompt[]): boolean {
+  return saveStorageData(STORAGE_KEY, prompts);
+}
+
+function loadCloudShadow(): SavedPrompt[] {
+  return loadStorageData(CLOUD_SHADOW_KEY);
+}
+
+function saveCloudShadow(prompts: SavedPrompt[]): boolean {
+  return saveStorageData(CLOUD_SHADOW_KEY, prompts);
 }
 
 function filterPrompts(
@@ -142,8 +184,8 @@ function filterPrompts(
     if (filters.folder !== undefined) {
       if (filters.folder === UNSORTED_KEY) {
         if (prompt.folder) return false;
-      } else {
-        if (prompt.folder !== filters.folder) return false;
+      } else if (prompt.folder !== filters.folder) {
+        return false;
       }
     }
 
@@ -183,9 +225,7 @@ function filterPrompts(
         .join(" ")
         .toLowerCase();
 
-      if (!searchable.includes(query)) {
-        return false;
-      }
+      if (!searchable.includes(query)) return false;
     }
 
     return true;
@@ -298,7 +338,7 @@ function sanitiseFolderName(name: string): string {
 }
 
 // ============================================================================
-// CLOUD MERGE HELPERS (v3.0.1)
+// CLOUD MERGE HELPERS
 // ============================================================================
 
 function promptTimestamp(prompt: SavedPrompt): number {
@@ -337,10 +377,9 @@ function mergePromptsById(
 }
 
 // ============================================================================
-// CLOUD API HELPERS (v3.0.0)
+// CLOUD API HELPERS
 // ============================================================================
 
-/** Fetch all prompts from the cloud API. Returns null on failure so callers never wipe state. */
 async function cloudFetchPrompts(): Promise<SavedPrompt[] | null> {
   const res = await fetch("/api/saved-prompts", { credentials: "include" });
   if (!res.ok) {
@@ -355,7 +394,6 @@ async function cloudFetchPrompts(): Promise<SavedPrompt[] | null> {
   return (data.prompts ?? []) as SavedPrompt[];
 }
 
-/** Save a prompt to the cloud (POST). */
 async function cloudSavePrompt(prompt: SavedPrompt): Promise<boolean> {
   const res = await fetch("/api/saved-prompts", {
     method: "POST",
@@ -370,7 +408,6 @@ async function cloudSavePrompt(prompt: SavedPrompt): Promise<boolean> {
   return res.ok;
 }
 
-/** Update a prompt in the cloud (PATCH). */
 async function cloudUpdatePrompt(
   id: string,
   updates: Record<string, unknown>,
@@ -388,7 +425,6 @@ async function cloudUpdatePrompt(
   return res.ok;
 }
 
-/** Delete a prompt from the cloud (DELETE). */
 async function cloudDeletePrompt(id: string): Promise<boolean> {
   const res = await fetch(`/api/saved-prompts/${encodeURIComponent(id)}`, {
     method: "DELETE",
@@ -401,7 +437,6 @@ async function cloudDeletePrompt(id: string): Promise<boolean> {
   return res.ok;
 }
 
-/** One-time sync: push localStorage prompts to the cloud. */
 async function cloudSyncFromLocal(prompts: SavedPrompt[]): Promise<boolean> {
   const res = await fetch("/api/saved-prompts/sync", {
     method: "POST",
@@ -419,7 +454,6 @@ async function cloudSyncFromLocal(prompts: SavedPrompt[]): Promise<boolean> {
   return res.ok;
 }
 
-/** Check if the one-time sync has already run (localStorage flag). */
 function hasSyncCompleted(): boolean {
   if (typeof window === "undefined") return false;
   try {
@@ -429,7 +463,6 @@ function hasSyncCompleted(): boolean {
   }
 }
 
-/** Mark the one-time sync as complete. */
 function markSyncComplete(): void {
   if (typeof window === "undefined") return;
   try {
@@ -444,18 +477,11 @@ function markSyncComplete(): void {
 // ============================================================================
 
 export interface UseSavedPromptsReturn {
-  /** All prompts (unfiltered) */
   allPrompts: SavedPrompt[];
-  /** Prompts after applying current filters + sort */
   filteredPrompts: SavedPrompt[];
-  /** Current filter state */
   filters: LibraryFilters;
-  /** Computed statistics across all prompts */
   stats: LibraryStats;
-  /** True while loading from localStorage or cloud */
   isLoading: boolean;
-
-  // ── Prompt CRUD ──
 
   savePrompt: (
     prompt: Omit<SavedPrompt, "id" | "createdAt" | "updatedAt" | "source"> & {
@@ -479,20 +505,14 @@ export interface UseSavedPromptsReturn {
   deletePrompt: (id: string) => boolean;
   getPrompt: (id: string) => SavedPrompt | undefined;
 
-  // ── Filters ──
-
   setFilters: (filters: Partial<LibraryFilters>) => void;
   resetFilters: () => void;
-
-  // ── Folders ──
 
   folders: string[];
   createFolder: (name: string) => boolean;
   renameFolder: (oldName: string, newName: string) => boolean;
   deleteFolder: (name: string) => boolean;
   moveToFolder: (promptId: string, folder: string | undefined) => boolean;
-
-  // ── Import / Export ──
 
   exportPrompts: (folderName?: string) => string;
   importPrompts: (
@@ -504,16 +524,10 @@ export interface UseSavedPromptsReturn {
     errors: number;
   };
 
-  /** Delete ALL prompts (nuclear option) */
   clearAll: () => void;
 
-  // ── v3.0.0: Cloud storage ──
-
-  /** Current storage backend: 'local' (free), 'cloud' (Pro), 'loading' (detecting) */
   storageMode: StorageMode;
-  /** Non-null when the last cloud write failed. Cleared on next successful write. */
   syncError: string | null;
-  /** Data for the Pro conversion banner (show when free user has 10+ local prompts) */
   proSyncBanner: {
     show: boolean;
     promptCount: number;
@@ -527,23 +541,22 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
   );
   const [isLoading, setIsLoading] = useState(true);
   const [emptyFolderNames, setEmptyFolderNames] = useState<string[]>([]);
-  const [storageMode, setStorageMode] = useState<StorageMode>("local");
+  const [storageMode, setStorageMode] = useState<StorageMode>("loading");
   const [syncError, setSyncError] = useState<string | null>(null);
 
-  // Clerk auth state — always called (React hooks rules)
   const { isLoaded: authLoaded, isSignedIn } = useAuth();
   const { user } = useUser();
 
-  // Prevent duplicate cloud loads / syncs
   const cloudLoadedRef = useRef(false);
-  const syncTriggeredRef = useRef(false);
-  // Ref mirror of storageMode for use inside callbacks (avoids stale closures)
-  const storageModeRef = useRef<StorageMode>("local");
+  const refreshInFlightRef = useRef(false);
+  const cloudQueueRef = useRef<CloudOperation[]>([]);
+  const instanceIdRef = useRef<string>(generateId());
+
+  const storageModeRef = useRef<StorageMode>("loading");
   storageModeRef.current = storageMode;
 
-  // ============================================================================
-  // MODE DETECTION
-  // ============================================================================
+  const authLoadedRef = useRef(false);
+  authLoadedRef.current = authLoaded;
 
   const isPaid = useMemo(() => {
     if (!authLoaded || !isSignedIn || !user) return false;
@@ -551,17 +564,97 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
     return meta?.tier === "paid";
   }, [authLoaded, isSignedIn, user]);
 
-  // Resolve storage mode once auth is loaded
+  const isPaidRef = useRef(false);
+  isPaidRef.current = isPaid;
+
+  // ============================================================================
+  // SAME-TAB SYNC BROADCAST
+  // ============================================================================
+
+  const broadcastSync = useCallback((detail: SyncEventDetail["reason"]) => {
+    if (typeof window === "undefined") return;
+
+    window.dispatchEvent(
+      new CustomEvent<SyncEventDetail>(SAVED_PROMPTS_SYNC_EVENT, {
+        detail: {
+          originId: instanceIdRef.current,
+          mode: storageModeRef.current,
+          reason: detail,
+        },
+      }),
+    );
+  }, []);
+
+  // ============================================================================
+  // AUTHORITATIVE CLOUD REFRESH
+  // ============================================================================
+
+  const refreshFromCloud = useCallback(
+    async (reason: string): Promise<boolean> => {
+      if (refreshInFlightRef.current) return false;
+      if (storageModeRef.current !== "cloud") return false;
+
+      refreshInFlightRef.current = true;
+      try {
+        const cloudPrompts = await cloudFetchPrompts();
+        if (cloudPrompts === null) {
+          console.error(
+            `[SavedPrompts:cloud] Authoritative refresh failed after ${reason}`,
+          );
+          return false;
+        }
+
+        setPrompts((prev) => {
+          const merged = mergePromptsById(prev, cloudPrompts);
+          saveCloudShadow(merged);
+          return merged;
+        });
+        setSyncError(null);
+        broadcastSync("cloud-refresh");
+        return true;
+      } catch (error) {
+        console.error(
+          `[SavedPrompts:cloud] Authoritative refresh threw after ${reason}:`,
+          error,
+        );
+        return false;
+      } finally {
+        refreshInFlightRef.current = false;
+      }
+    },
+    [broadcastSync],
+  );
+
+  // ============================================================================
+  // MODE DETECTION
+  // ============================================================================
+
   useEffect(() => {
     if (!authLoaded) return;
     setStorageMode(isPaid ? "cloud" : "local");
   }, [authLoaded, isPaid]);
 
   // ============================================================================
-  // INITIAL LOAD — localStorage (free) or cloud API (Pro)
+  // INITIAL LOAD — HYDRATE EARLY
   // ============================================================================
 
-  // Local mode: load from localStorage (same as v2.0.0)
+  useEffect(() => {
+    if (storageMode === "loading") {
+      const shadow = loadCloudShadow();
+      if (shadow.length > 0) {
+        setPrompts(shadow);
+      } else {
+        const local = loadFromStorage();
+        if (local.length > 0) {
+          setPrompts(local);
+        }
+      }
+      setEmptyFolderNames(loadEmptyFolders());
+      setIsLoading(false);
+    }
+  }, [storageMode]);
+
+  // Local mode: load from localStorage
   useEffect(() => {
     if (storageMode !== "local") return;
     const loaded = loadFromStorage();
@@ -570,16 +663,7 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
     setIsLoading(false);
   }, [storageMode]);
 
-  // ============================================================================
-  // CLOUD MODE: Sync-then-load (single sequenced effect)
-  // ============================================================================
-  // When storageMode switches to 'cloud':
-  //   1. If localStorage has un-synced prompts → sync them to DB first
-  //   2. THEN fetch from cloud (which now includes the synced data)
-  //   3. If sync fails → keep localStorage data, show error, do NOT wipe
-  //   4. If cloud fetch fails → keep current UI state, show error
-  // ============================================================================
-
+  // Cloud mode: sync then load
   useEffect(() => {
     if (storageMode !== "cloud") return;
     if (cloudLoadedRef.current) return;
@@ -588,13 +672,15 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
     let cancelled = false;
 
     async function initCloud() {
-      // Step 1: Check if one-time sync is needed
       const needsSync = !hasSyncCompleted();
       const localPrompts = loadFromStorage();
+      const shadowPrompts = loadCloudShadow();
+
+      if (shadowPrompts.length > 0) {
+        setPrompts((prev) => mergePromptsById(prev, shadowPrompts));
+      }
 
       if (needsSync && localPrompts.length > 0) {
-        // Sync localStorage → cloud FIRST
-        syncTriggeredRef.current = true;
         try {
           console.debug(
             `[SavedPrompts:cloud] Syncing ${localPrompts.length} local prompts to cloud…`,
@@ -606,15 +692,20 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
             markSyncComplete();
             console.debug("[SavedPrompts:cloud] Sync complete");
           } else {
-            // Sync failed — keep localStorage data, do NOT overwrite with empty cloud
             console.error("[SavedPrompts:cloud] Sync returned non-ok");
             setSyncError(
               "Failed to sync local prompts to cloud. Will retry next time.",
             );
-            setPrompts(localPrompts);
+            setPrompts((prev) =>
+              prev.length > 0
+                ? prev
+                : shadowPrompts.length > 0
+                  ? shadowPrompts
+                  : localPrompts,
+            );
             setEmptyFolderNames(loadEmptyFolders());
             setIsLoading(false);
-            return; // STOP — don't fetch from empty cloud
+            return;
           }
         } catch (error) {
           if (cancelled) return;
@@ -622,28 +713,33 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
           setSyncError(
             "Failed to sync local prompts to cloud. Will retry next time.",
           );
-          setPrompts(localPrompts);
+          setPrompts((prev) =>
+            prev.length > 0
+              ? prev
+              : shadowPrompts.length > 0
+                ? shadowPrompts
+                : localPrompts,
+          );
           setEmptyFolderNames(loadEmptyFolders());
           setIsLoading(false);
-          return; // STOP — keep localStorage data
+          return;
         }
       } else if (needsSync && localPrompts.length === 0) {
-        // No local data to sync — mark complete
         markSyncComplete();
       }
 
-      // Step 2: Fetch from cloud.
-      // IMPORTANT: merge into current state instead of replacing it.
-      // This prevents an in-flight initial cloud fetch from wiping an optimistic save
-      // that was added a moment earlier.
       try {
         const cloudPrompts = await cloudFetchPrompts();
         if (cancelled) return;
 
         if (cloudPrompts === null) {
           console.error("[SavedPrompts:cloud] Cloud load returned null");
-          if (localPrompts.length > 0) {
-            setPrompts((prev) => (prev.length > 0 ? prev : localPrompts));
+          const fallback =
+            shadowPrompts.length > 0 ? shadowPrompts : localPrompts;
+          if (fallback.length > 0) {
+            setPrompts((prev) =>
+              prev.length > 0 ? prev : mergePromptsById(prev, fallback),
+            );
           }
           setSyncError("Could not reach the cloud. Showing current prompts.");
           setEmptyFolderNames(loadEmptyFolders());
@@ -651,14 +747,22 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
           return;
         }
 
-        setPrompts((prev) => mergePromptsById(prev, cloudPrompts));
+        setPrompts((prev) => {
+          const merged = mergePromptsById(prev, cloudPrompts);
+          saveCloudShadow(merged);
+          return merged;
+        });
         setEmptyFolderNames(loadEmptyFolders());
         setIsLoading(false);
       } catch (error) {
         if (cancelled) return;
         console.error("[SavedPrompts:cloud] Cloud load failed:", error);
-        if (localPrompts.length > 0) {
-          setPrompts((prev) => (prev.length > 0 ? prev : localPrompts));
+        const fallback =
+          shadowPrompts.length > 0 ? shadowPrompts : localPrompts;
+        if (fallback.length > 0) {
+          setPrompts((prev) =>
+            prev.length > 0 ? prev : mergePromptsById(prev, fallback),
+          );
         }
         setSyncError("Could not reach the cloud. Showing current prompts.");
         setEmptyFolderNames(loadEmptyFolders());
@@ -673,17 +777,99 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
   }, [storageMode]);
 
   // ============================================================================
-  // PERSIST — localStorage only in local mode
+  // PERSISTENCE LAYER
   // ============================================================================
 
   useEffect(() => {
-    if (storageMode !== "local") return;
     if (isLoading) return;
-    saveToStorage(prompts);
-  }, [prompts, isLoading, storageMode]);
+
+    if (storageMode === "local") {
+      saveToStorage(prompts);
+      broadcastSync("local-persist");
+      return;
+    }
+
+    if (storageMode === "cloud") {
+      saveCloudShadow(prompts);
+      broadcastSync("cloud-shadow-persist");
+    }
+  }, [prompts, isLoading, storageMode, broadcastSync]);
 
   // ============================================================================
-  // DERIVED DATA (unchanged from v2.0.0)
+  // FLUSH QUEUED CLOUD OPS
+  // ============================================================================
+
+  useEffect(() => {
+    if (storageMode !== "cloud") return;
+    if (cloudQueueRef.current.length === 0) return;
+
+    const queue = [...cloudQueueRef.current];
+    cloudQueueRef.current = [];
+
+    for (const op of queue) {
+      op.run()
+        .then((ok) => {
+          if (ok) {
+            setSyncError(null);
+            void refreshFromCloud(op.label);
+          } else {
+            console.error(
+              `[SavedPrompts:cloud] Queued ${op.label} failed (non-ok)`,
+            );
+            op.revert();
+            setSyncError(`Failed to ${op.label}. Change reverted.`);
+          }
+        })
+        .catch((err) => {
+          console.error(`[SavedPrompts:cloud] Queued ${op.label} error:`, err);
+          op.revert();
+          setSyncError(`Failed to ${op.label}. Change reverted.`);
+        });
+    }
+  }, [storageMode, refreshFromCloud]);
+
+  // ============================================================================
+  // SAME-TAB LISTENER
+  // ============================================================================
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    function onSync(event: Event): void {
+      const custom = event as CustomEvent<SyncEventDetail>;
+      const detail = custom.detail;
+      if (!detail || detail.originId === instanceIdRef.current) return;
+
+      if (detail.mode === "local") {
+        const local = loadFromStorage();
+        setPrompts(local);
+        setEmptyFolderNames(loadEmptyFolders());
+        return;
+      }
+
+      if (detail.mode === "cloud") {
+        const shadow = loadCloudShadow();
+        if (shadow.length > 0) {
+          setPrompts((prev) => mergePromptsById(prev, shadow));
+        }
+        if (detail.reason === "cloud-refresh") {
+          void refreshFromCloud("same-tab sync event");
+        }
+      }
+    }
+
+    window.addEventListener(SAVED_PROMPTS_SYNC_EVENT, onSync as EventListener);
+
+    return () => {
+      window.removeEventListener(
+        SAVED_PROMPTS_SYNC_EVENT,
+        onSync as EventListener,
+      );
+    };
+  }, [refreshFromCloud]);
+
+  // ============================================================================
+  // DERIVED DATA
   // ============================================================================
 
   const filteredPrompts = useMemo(() => {
@@ -696,22 +882,14 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
   const folders = useMemo(() => {
     const folderSet = new Set<string>();
     for (const p of prompts) {
-      if (p.folder) {
-        folderSet.add(p.folder);
-      }
+      if (p.folder) folderSet.add(p.folder);
     }
     return [...folderSet].sort((a, b) => a.localeCompare(b));
   }, [prompts]);
 
-  // ============================================================================
-  // PRO SYNC BANNER (Extra #2)
-  // ============================================================================
-
   const proSyncBanner = useMemo(() => {
-    // Show when: user is NOT paid AND has 10+ prompts in local storage
     if (isPaid) return { show: false, promptCount: 0 };
 
-    // Read local count directly (don't use state — state may be cloud data)
     const localPrompts = loadFromStorage();
     const count = localPrompts.length;
 
@@ -722,39 +900,53 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
   }, [isPaid, prompts]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ============================================================================
-  // OPTIMISTIC WRITE HELPER
+  // OPTIMISTIC WRITE HELPER (HARDENED)
   // ============================================================================
 
-  /**
-   * Fire a cloud API call in the background. On failure, revert state.
-   * Clears syncError on success. Uses ref to read current storageMode.
-   */
   function fireAndForget(
     apiCall: () => Promise<boolean>,
     revert: () => void,
     label: string,
   ): void {
-    if (storageModeRef.current !== "cloud") return;
+    const op: CloudOperation = {
+      run: apiCall,
+      revert,
+      label,
+    };
 
-    apiCall()
-      .then((ok) => {
-        if (ok) {
-          setSyncError(null);
-        } else {
-          console.error(`[SavedPrompts:cloud] ${label} failed (non-ok)`);
+    // Cloud ready — send now
+    if (storageModeRef.current === "cloud") {
+      apiCall()
+        .then((ok) => {
+          if (ok) {
+            setSyncError(null);
+            void refreshFromCloud(label);
+          } else {
+            console.error(`[SavedPrompts:cloud] ${label} failed (non-ok)`);
+            revert();
+            setSyncError(`Failed to ${label}. Change reverted.`);
+          }
+        })
+        .catch((err) => {
+          console.error(`[SavedPrompts:cloud] ${label} error:`, err);
           revert();
           setSyncError(`Failed to ${label}. Change reverted.`);
-        }
-      })
-      .catch((err) => {
-        console.error(`[SavedPrompts:cloud] ${label} error:`, err);
-        revert();
-        setSyncError(`Failed to ${label}. Change reverted.`);
-      });
+        });
+      return;
+    }
+
+    // Auth/storage transition — queue instead of silently dropping
+    if (!authLoadedRef.current || isPaidRef.current) {
+      cloudQueueRef.current.push(op);
+      broadcastSync("cloud-write-queued");
+      return;
+    }
+
+    // Free/local mode — do nothing here because local persistence effect handles it
   }
 
   // ============================================================================
-  // PROMPT CRUD (optimistic writes in cloud mode)
+  // PROMPT CRUD
   // ============================================================================
 
   const savePrompt = useCallback(
@@ -775,10 +967,8 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
         updatedAt: now,
       };
 
-      // Optimistic: update state immediately
       setPrompts((prev) => [...prev, newPrompt]);
 
-      // Cloud: fire API in background
       fireAndForget(
         () => cloudSavePrompt(newPrompt),
         () => setPrompts((prev) => prev.filter((p) => p.id !== newPrompt.id)),
@@ -921,7 +1111,7 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
   );
 
   // ============================================================================
-  // FILTERS (unchanged)
+  // FILTERS
   // ============================================================================
 
   const setFilters = useCallback((newFilters: Partial<LibraryFilters>) => {
@@ -933,7 +1123,7 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
   }, []);
 
   // ============================================================================
-  // FOLDER OPERATIONS (optimistic writes in cloud mode)
+  // FOLDER OPERATIONS
   // ============================================================================
 
   const createFolder = useCallback(
@@ -1088,7 +1278,7 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
   );
 
   // ============================================================================
-  // IMPORT / EXPORT (unchanged — operates on in-memory state)
+  // IMPORT / EXPORT
   // ============================================================================
 
   const exportPrompts = useCallback(
@@ -1175,6 +1365,7 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
                 console.error("[SavedPrompts:cloud] Import sync error:", err);
               });
             }
+            void refreshFromCloud("import prompts");
           }
         }
       } catch {
@@ -1183,18 +1374,13 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
 
       return { imported, duplicates, errors };
     },
-    [prompts],
+    [prompts, refreshFromCloud],
   );
 
   const clearAll = useCallback(() => {
     setPrompts([]);
     clearEmptyFolders();
     setEmptyFolderNames(loadEmptyFolders());
-
-    // Note: cloud clear is NOT done here — that would need a dedicated
-    // "delete all" API endpoint. For now clearAll only clears the UI state.
-    // The user would need to delete prompts individually in cloud mode.
-    // This matches the existing behaviour where clearAll is a dev/debug tool.
   }, []);
 
   // ============================================================================
@@ -1227,8 +1413,6 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
     exportPrompts,
     importPrompts,
     clearAll,
-
-    // v3.0.0 additions
     storageMode,
     syncError,
     proSyncBanner,
@@ -1238,10 +1422,8 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
 export default useSavedPrompts;
 
 // ============================================================================
-// EMPTY FOLDER REGISTRY (unchanged from v2.0.0)
+// EMPTY FOLDER REGISTRY
 // ============================================================================
-
-const EMPTY_FOLDERS_KEY = "promagen_empty_folders";
 
 function loadEmptyFolders(): string[] {
   if (typeof window === "undefined") return [];
