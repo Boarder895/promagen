@@ -63,6 +63,8 @@ export interface HomepageClientProps {
   headingText?: string;
   /** Server-prefetched Index Ratings */
   initialRatings?: Record<string, SerializableProviderRating>;
+  /** Server-resolved demo toggle for provider leaderboard UI */
+  demoEnabled?: boolean;
 }
 
 // ============================================================================
@@ -159,6 +161,7 @@ export default function HomepageClient({
   providers,
   headingText,
   initialRatings,
+  demoEnabled = false,
 }: HomepageClientProps) {
   const { isAuthenticated, userTier, locationInfo, setReferenceFrame } = usePromagenAuth();
 
@@ -458,6 +461,7 @@ export default function HomepageClient({
         onExpandToggle={handleExpandToggle}
         weatherMap={providerWeatherMap}
         initialRatings={initialRatings}
+        demoEnabled={demoEnabled}
       />
     </section>
   );

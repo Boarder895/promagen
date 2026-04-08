@@ -108,6 +108,8 @@ export interface PlaygroundPageClientProps {
   weatherIndex: Map<string, ExchangeWeatherData>;
   /** Server-prefetched Index Ratings */
   initialRatings?: Record<string, SerializableProviderRating>;
+  /** Server-resolved demo toggle for the left rail */
+  demoEnabled?: boolean;
 }
 
 // ============================================================================
@@ -119,6 +121,7 @@ export default function PlaygroundPageClient({
   exchanges,
   weatherIndex,
   initialRatings,
+  demoEnabled = false,
 }: PlaygroundPageClientProps) {
   // ── Provider selection state (lifted — shared between left rail + workspace)
   const [hasProvider, setHasProvider] = useState(false);
@@ -301,6 +304,7 @@ export default function PlaygroundPageClient({
       selectedProviderId={selectedProviderId}
       onSelectProvider={handleRailSelectProvider}
       initialRatings={initialRatings}
+      demoEnabled={demoEnabled}
     />
   );
 

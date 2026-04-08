@@ -3,6 +3,7 @@
 import React from 'react';
 
 import ProvidersTable from '@/components/providers/providers-table';
+import { env } from '@/lib/env';
 import { getProvidersWithPromagenUsers, type ProvidersApiResponse } from '@/lib/providers/api';
 
 /** Simple admin surface with strict props and no `any`. */
@@ -16,7 +17,7 @@ export default async function AdminProvidersPage(): Promise<JSX.Element> {
   return (
     <main aria-label="providers admin" className="p-6">
       <section className="mt-6">
-        <ProvidersTable providers={data} title="All Providers (admin)" caption="Full list" />
+        <ProvidersTable providers={data} title="All Providers (admin)" caption="Full list" demoEnabled={env.publicFlags.demoJitterEnabled} />
       </section>
     </main>
   );

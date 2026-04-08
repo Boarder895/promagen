@@ -93,6 +93,8 @@ export interface LeaderboardRailProps {
   onSelectProvider: (providerId: string) => void;
   /** Server-prefetched Index Ratings */
   initialRatings?: Record<string, SerializableProviderRating>;
+  /** Server-resolved demo toggle — avoids stale client-bundled NEXT_PUBLIC values */
+  demoEnabled?: boolean;
 }
 
 type SortColumn = 'indexRating';
@@ -674,6 +676,7 @@ export function LeaderboardRail({
   selectedProviderId,
   onSelectProvider,
   initialRatings,
+  demoEnabled = false,
 }: LeaderboardRailProps) {
   const [indexRatings, setIndexRatings] = useState<Map<string, ProviderRating>>(
     () => {
@@ -711,7 +714,6 @@ export function LeaderboardRail({
   }, [providers, initialRatings]);
 
   // ── Demo jitter & user tick timers ──────────────────────────────────
-  const demoEnabled = process.env.NEXT_PUBLIC_DEMO_JITTER === 'true';
 
   useEffect(() => {
     if (!demoEnabled) return;
@@ -941,7 +943,7 @@ export function LeaderboardRail({
             padding: 'clamp(0.6rem, 0.8vw, 0.75rem) clamp(0.75rem, 1vw, 1rem)',
             borderRight: '1px solid rgba(255, 255, 255, 0.05)',
           }}>
-            Users
+            Users (Last Hour)
           </div>
           <div style={{
             width: '33.33%',

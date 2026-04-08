@@ -61,6 +61,8 @@ export interface NewHomepageClientProps {
   initialShowcaseData?: PromptOfTheMoment | null;
   /** Server-prefetched Index Ratings — eliminates client-side fetch waterfall */
   initialRatings?: Record<string, SerializableProviderRating>;
+  /** Server-resolved demo toggle for provider leaderboard UI */
+  demoEnabled?: boolean;
   /** When true, this is the /inspire page (not the homepage) */
   isInspirePage?: boolean;
 }
@@ -86,6 +88,7 @@ export default function NewHomepageClient({
   providers,
   initialShowcaseData,
   initialRatings,
+  demoEnabled = false,
   isInspirePage = false,
 }: NewHomepageClientProps) {
   const { isAuthenticated, userTier, locationInfo, setReferenceFrame } = usePromagenAuth();
@@ -360,6 +363,7 @@ export default function NewHomepageClient({
           highlightTierId={showcaseTierId}
           tierFilter={tierFilter}
           initialRatings={initialRatings}
+          demoEnabled={demoEnabled}
         />
       </section>
     </div>

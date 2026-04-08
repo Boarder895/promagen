@@ -26,6 +26,7 @@ import {
   isStale,
   STALE_THRESHOLD_HOURS,
   MAX_COUNTRIES_PER_PROVIDER,
+  normalizeCountryCode,
 } from '@/lib/promagen-users';
 
 export const runtime = 'nodejs';
@@ -114,13 +115,26 @@ async function getSampleProviderData(limit: number = 5): Promise<
 
       const updatedAt = countries[0]?.updated_at ?? null;
 
+      const normalizedCountries = countries
+        .map((c) => {
+          const countryCode = normalizeCountryCode(c.country_code);
+          const usersCount = parseInt(c.users_count, 10);
+
+          if (!countryCode || !Number.isFinite(usersCount) || usersCount <= 0) {
+            return null;
+          }
+
+          return { countryCode, usersCount };
+        })
+        .filter(
+          (country): country is { countryCode: string; usersCount: number } =>
+            country !== null,
+        );
+
       results.push({
         providerId: provider.provider_id,
-        countries: countries.map((c) => ({
-          countryCode: c.country_code,
-          usersCount: parseInt(c.users_count, 10),
-        })),
-        totalUsers: parseInt(provider.total_users, 10),
+        countries: normalizedCountries,
+        totalUsers: normalizedCountries.reduce((sum, country) => sum + country.usersCount, 0),
         updatedAt: updatedAt?.toISOString() ?? null,
         isStale: isStale(updatedAt),
       });
@@ -228,7 +242,7 @@ export async function GET(request: NextRequest): Promise<Response> {
         databaseConfigured: dbConfigured,
         databaseReachable: dbReachable,
         staleThresholdHours: env.analytics.staleAfterHours ?? STALE_THRESHOLD_HOURS,
-        windowDays: env.analytics.usersWindowDays,
+        windowMinutes: env.analytics.usersWindowMinutes,
         maxCountriesPerProvider: MAX_COUNTRIES_PER_PROVIDER,
         safeMode: env.safeMode.enabled,
       },

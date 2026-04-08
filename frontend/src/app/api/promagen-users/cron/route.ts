@@ -148,13 +148,14 @@ async function ensureSchema(): Promise<void> {
 }
 
 /**
- * Aggregate provider activity events -> users by (provider_id, country_code) for last N days.
+ * Aggregate provider activity events -> users by (provider_id, country_code)
+ * for the recent activity window.
  *
  * FIXED: Now groups by both provider_id AND country_code (was missing provider_id).
  * This is required per spec: "Top up to 6 countries by Promagen usage for THAT PROVIDER"
  */
 async function runAggregation(opts: {
-  windowDays: number;
+  windowMinutes: number;
   dryRun: boolean;
   requestId: string;
 }): Promise<{
@@ -165,7 +166,7 @@ async function runAggregation(opts: {
   affected?: number;
   providersAffected?: number;
 }> {
-  const { windowDays, dryRun, requestId } = opts;
+  const { windowMinutes, dryRun, requestId } = opts;
 
   // Vercel cron may call multiple times; use advisory lock to avoid overlap.
   const lockKey = 42_4242; // stable project-specific key
@@ -188,7 +189,7 @@ async function runAggregation(opts: {
       const raw = await tx`
         select count(*)::bigint as c
         from provider_activity_events
-        where created_at >= now() - (${windowDays}::text || ' days')::interval
+        where created_at >= now() - (${windowMinutes}::text || ' minutes')::interval
       `;
       const rawRows = Number(raw[0]?.c ?? 0);
 
@@ -202,25 +203,28 @@ async function runAggregation(opts: {
         };
       }
 
-      // FIXED: Aggregate distinct users by (provider_id, country_code) in window.
-      // This gives per-provider breakdown required by the spec.
+      // Replace the aggregate table on each run so flags disappear automatically
+      // when no recent activity remains in the active window.
+      await tx`delete from provider_country_usage_30d`;
+
       const result = await tx`
         with agg as (
           select
             lower(trim(provider_id)) as provider_id,
-            coalesce(nullif(upper(trim(country_code)), ''), 'ZZ') as country_code,
+            upper(trim(country_code)) as country_code,
             count(distinct coalesce(user_id, click_id))::bigint as users_count
           from provider_activity_events
-          where created_at >= now() - (${windowDays}::text || ' days')::interval
+          where created_at >= now() - (${windowMinutes}::text || ' minutes')::interval
             and provider_id is not null
             and trim(provider_id) <> ''
+            and country_code is not null
+            and trim(country_code) <> ''
+            and upper(trim(country_code)) not in ('ZZ', 'XX')
           group by 1, 2
         )
         insert into provider_country_usage_30d (provider_id, country_code, users_count, updated_at)
         select provider_id, country_code, users_count, now()
         from agg
-        on conflict (provider_id, country_code)
-        do update set users_count = excluded.users_count, updated_at = excluded.updated_at
         returning provider_id
       `;
 
@@ -297,11 +301,18 @@ export async function GET(request: NextRequest): Promise<Response> {
     const url = new URL(request.url);
     const dryRun = url.searchParams.get('dryRun') === '1';
 
-    // Default to authority doc definition (30d). Can be tuned for experiments via env.
-    const windowDays = Number(url.searchParams.get('windowDays') ?? env.analytics.usersWindowDays);
+    // Default to recent-activity definition (60 minutes). Can be tuned for experiments via env.
+    const rawWindowMinutes = url.searchParams.get('windowMinutes');
+    const rawWindowDays = url.searchParams.get('windowDays');
+    const windowMinutes = Number(
+      rawWindowMinutes ??
+        (rawWindowDays ? Number(rawWindowDays) * 24 * 60 : env.analytics.usersWindowMinutes),
+    );
 
     const result = await runAggregation({
-      windowDays: Number.isFinite(windowDays) ? windowDays : env.analytics.usersWindowDays,
+      windowMinutes: Number.isFinite(windowMinutes)
+        ? windowMinutes
+        : env.analytics.usersWindowMinutes,
       dryRun,
       requestId,
     });
@@ -322,7 +333,7 @@ export async function GET(request: NextRequest): Promise<Response> {
         ok: result.ok,
         message: result.message,
         dryRun,
-        windowDays: Math.max(1, Math.min(365, Math.floor(windowDays))),
+        windowMinutes: Math.max(1, Math.min(1440, Math.floor(windowMinutes))),
         totalAggRows: aggCounts.rows,
         totalProviders: aggCounts.providers,
         affected: result.affected,
@@ -336,7 +347,7 @@ export async function GET(request: NextRequest): Promise<Response> {
       ok: result.ok,
       message: result.message,
       totalRows: result.totalRows,
-      windowDays: Math.max(1, Math.min(365, Math.floor(windowDays))),
+      windowMinutes: Math.max(1, Math.min(1440, Math.floor(windowMinutes))),
       dryRun,
       skipped: Boolean(result.skipped),
       affected: result.affected ?? 0,

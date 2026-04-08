@@ -76,6 +76,8 @@ export type ProvidersTableProps = {
   tierFilter?: PlatformTierId | null;
   /** Server-prefetched Index Ratings — eliminates client-side fetch waterfall */
   initialRatings?: Record<string, SerializableProviderRating>;
+  /** Server-resolved demo toggle — avoids stale client-bundled NEXT_PUBLIC values */
+  demoEnabled?: boolean;
 };
 
 type PromagenUsersCountryUsage = {
@@ -981,6 +983,7 @@ export function ProvidersTable({
   highlightTierId,
   tierFilter,
   initialRatings,
+  demoEnabled = false,
 }: ProvidersTableProps) {
   // Sort state: default to Index Rating descending (highest first)
   const [sortBy, setSortBy] = useState<SortColumn>("indexRating");
@@ -1044,7 +1047,6 @@ export function ProvidersTable({
   // ── Demo jitter — subtle simulated rating movement ──────────────────
   // Controlled by NEXT_PUBLIC_DEMO_JITTER env var (true = on, false = off).
   // jitterTick=0 on initial render → no jitter (hydration safe).
-  const demoEnabled = process.env.NEXT_PUBLIC_DEMO_JITTER === "true";
   const [jitterTick, setJitterTick] = useState(0);
 
   useEffect(() => {
@@ -1256,7 +1258,7 @@ export function ProvidersTable({
                 />
               </th>
               <th className="providers-table-th px-4 py-3 text-center w-[18%] border-r border-white/5">
-                Promagen Users
+                Users (Last Hour)
               </th>
               <th className="providers-table-th providers-table-th-sortable px-4 py-3 text-center w-[18%] border-r border-white/5">
                 <SortableHeader

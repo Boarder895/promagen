@@ -4,6 +4,7 @@ import React from 'react';
 import type { Metadata } from 'next';
 
 import ProvidersTable from '@/components/providers/providers-table';
+import { env } from '@/lib/env';
 import { getProvidersWithPromagenUsers, getIndexRatingsRecord } from '@/lib/providers/api';
 
 // Ensure the leaderboard can update after Cron runs (cheap + near-live).
@@ -20,6 +21,7 @@ export const metadata: Metadata = {
 export default async function ProvidersLeaderboardPage(): Promise<JSX.Element> {
   const providers = await getProvidersWithPromagenUsers();
   const initialRatings = await getIndexRatingsRecord(providers.map((p) => p.id));
+  const demoEnabled = env.publicFlags.demoJitterEnabled;
 
   return (
     <main role="main" className="p-6">
@@ -29,6 +31,7 @@ export default async function ProvidersLeaderboardPage(): Promise<JSX.Element> {
         caption="Score stays far right; other columns follow the display contract."
         showRank
         initialRatings={initialRatings}
+        demoEnabled={demoEnabled}
       />
     </main>
   );

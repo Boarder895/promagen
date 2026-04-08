@@ -37,6 +37,7 @@ const EnvSchema = z.object({
   NEXT_PUBLIC_SITE_URL: z.string().optional(),
   NEXT_PUBLIC_SITE_NAME: z.string().optional(),
   NEXT_PUBLIC_SITE_TAGLINE: z.string().optional(),
+  NEXT_PUBLIC_DEMO_JITTER: z.string().optional(),
 
   // Option A (Postgres + Cron)
   // DATABASE_URL is the canonical name; POSTGRES_URL is set by Vercel/Neon integration
@@ -45,6 +46,9 @@ const EnvSchema = z.object({
   PROMAGEN_CRON_SECRET: z.string().optional(),
 
   // Analytics tuning (server-only)
+  // New canonical setting is minutes for recent activity.
+  PROMAGEN_USERS_WINDOW_MINUTES: z.coerce.number().int().positive().max(1440).optional(),
+  // Legacy fallback retained for backwards compatibility with older env files.
   PROMAGEN_USERS_WINDOW_DAYS: z.coerce.number().int().positive().max(365).optional(),
   PROMAGEN_USERS_STALE_AFTER_HOURS: z.coerce.number().int().positive().max(168).optional(),
 
@@ -89,6 +93,9 @@ export const env = Object.freeze({
   siteUrl,
   siteName: raw.NEXT_PUBLIC_SITE_NAME ?? 'Promagen',
   siteTagline: raw.NEXT_PUBLIC_SITE_TAGLINE ?? 'AI Prompt Builder for 40 Image Generators',
+  publicFlags: {
+    demoJitterEnabled: parseBool(raw.NEXT_PUBLIC_DEMO_JITTER),
+  },
 
   nodeEnv: raw.NODE_ENV ?? 'development',
   isProd: (raw.NODE_ENV ?? 'development') === 'production',
@@ -102,9 +109,11 @@ export const env = Object.freeze({
     secret: raw.PROMAGEN_CRON_SECRET,
   },
 
-  // Promagen Users (30d by default) + freshness guard (48h by default)
+  // Promagen Users (last 60 minutes by default) + freshness guard (48h by default)
   analytics: {
-    usersWindowDays: raw.PROMAGEN_USERS_WINDOW_DAYS ?? 30,
+    usersWindowMinutes:
+      raw.PROMAGEN_USERS_WINDOW_MINUTES ??
+      (raw.PROMAGEN_USERS_WINDOW_DAYS ? raw.PROMAGEN_USERS_WINDOW_DAYS * 24 * 60 : 60),
     staleAfterHours: raw.PROMAGEN_USERS_STALE_AFTER_HOURS ?? 48,
   },
 

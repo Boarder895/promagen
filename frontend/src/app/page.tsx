@@ -26,6 +26,7 @@ export const dynamic = 'force-dynamic';
 
 import PlaygroundPageClient from '@/app/studio/playground/playground-page-client';
 import { getProvidersWithPromagenUsers, getIndexRatingsRecord } from '@/lib/providers/api';
+import { env } from '@/lib/env';
 import { getHomepageExchanges } from '@/lib/exchange-order';
 import { getWeatherIndex } from '@/lib/weather/fetch-weather';
 
@@ -64,6 +65,7 @@ export default async function HomePage() {
   ]);
 
   const initialRatings = await getIndexRatingsRecord(providers.map((p) => p.id));
+  const demoEnabled = env.publicFlags.demoJitterEnabled;
 
   return (
     <PlaygroundPageClient
@@ -71,6 +73,7 @@ export default async function HomePage() {
       exchanges={allExchanges}
       weatherIndex={weatherIndex}
       initialRatings={initialRatings}
+      demoEnabled={demoEnabled}
     />
   );
 }

@@ -26,6 +26,7 @@ export const revalidate = 60;
 
 import NewHomepageClient from '@/components/home/new-homepage-client';
 import { getProvidersWithPromagenUsers, getIndexRatingsRecord } from '@/lib/providers/api';
+import { env } from '@/lib/env';
 import { getHomepageExchanges } from '@/lib/exchange-order';
 import { getWeatherIndex } from '@/lib/weather/fetch-weather';
 import type { ExchangeWeatherData } from '@/components/exchanges/types';
@@ -82,6 +83,7 @@ export default async function InspirePage() {
   const providers = await getProvidersWithPromagenUsers();
   const allExchanges = getHomepageExchanges();
   const initialRatings = await getIndexRatingsRecord(providers.map((p) => p.id));
+  const demoEnabled = env.publicFlags.demoJitterEnabled;
 
   let weatherIndex: Map<string, ExchangeWeatherData>;
   try {
@@ -116,6 +118,7 @@ export default async function InspirePage() {
       providers={providers}
       initialShowcaseData={initialShowcaseData}
       initialRatings={initialRatings}
+      demoEnabled={demoEnabled}
       isInspirePage
     />
   );
