@@ -3,256 +3,256 @@
     "sceneId": "scene-01-minimal",
     "tier": 1,
     "call2Version": "v4.5",
-    "assembledPrompt": "masterpiece, best quality, highly detailed, (red ball:1.4), centered composition, (studio lighting:1.2), clean background, smooth surface, simple minimalism, sharp focus, 8K, intricate textures",
-    "snapshotHash": "c6be84f1a35d4244a04fd5fec2b57a9e",
-    "createdAt": "2026-04-03T22:50:04.666Z"
+    "assembledPrompt": "masterpiece, best quality, highly detailed, (red ball:1.4), centered composition, (clean studio background:1.2), (softbox lighting:1.2), simple minimalism, sharp focus, 8K, intricate textures",
+    "snapshotHash": "162b123a38c765f7695fff679608b7dc",
+    "createdAt": "2026-04-08T00:47:52.085Z"
   },
   {
     "sceneId": "scene-01-minimal",
     "tier": 2,
     "call2Version": "v4.5",
-    "assembledPrompt": "single red ball centered against a clean minimal background::2.0, soft studio lighting with a crisp shadow beneath it::1.4, product photography, simple modern composition with negative space::1.2 --ar 1:1 --v 7 --s 500 --no clutter, extra objects, text, watermark, blurry, low quality",
-    "snapshotHash": "1dbef21d0cfbd263a9110cf5406651b2",
-    "createdAt": "2026-04-03T22:50:04.666Z"
+    "assembledPrompt": "(red ball::2.0), centered on a clean studio backdrop::1.4, softbox lighting with a crisp highlight and smooth shadow::1.3, minimalist product photography::1.2, square framing with generous negative space::1.1 --ar 1:1 --v 7 --s 500 --no extra objects, cluttered background, cropped ball, text, watermark, blurry",
+    "snapshotHash": "ee34cc56e6a8858701a4fee35cf93ee5",
+    "createdAt": "2026-04-08T00:47:52.085Z"
   },
   {
     "sceneId": "scene-01-minimal",
     "tier": 3,
     "call2Version": "v4.5",
-    "assembledPrompt": "A single red ball sits dead center in a clean, minimal frame, isolated against a plain background with a crisp shadow anchoring it to the surface. Soft studio light gives it a polished, glossy presence, like a product still with graphic simplicity.",
-    "snapshotHash": "3be6e175332120bcb146a0db573d4d36",
-    "createdAt": "2026-04-03T22:50:04.666Z"
+    "assembledPrompt": "A single red ball sits centered against a clean studio backdrop, framed with generous negative space for a minimalist product shot. Softbox light creates a bright highlight and a smooth shadow, keeping the surface crisp, simple, and sharply defined.",
+    "snapshotHash": "00c61e2b2697ae0a477fa0f89afa2f70",
+    "createdAt": "2026-04-08T00:47:52.085Z"
   },
   {
     "sceneId": "scene-01-minimal",
     "tier": 4,
     "call2Version": "v4.5",
-    "assembledPrompt": "A single red ball sits centered on a plain background. Soft studio light gives it a clean shadow and a simple, polished look.",
-    "snapshotHash": "ced319edef008203340cb428e9539c80",
-    "createdAt": "2026-04-03T22:50:04.666Z"
+    "assembledPrompt": "A red ball sits centered on a clean studio background. Soft light gives it a bright highlight and a smooth shadow, with a simple, minimal look.",
+    "snapshotHash": "bfb37b653636bba6b7c2b69ce49a1c46",
+    "createdAt": "2026-04-08T00:47:52.085Z"
   },
   {
     "sceneId": "scene-02-cyberpunk-courier",
     "tier": 1,
     "call2Version": "v4.5",
-    "assembledPrompt": "masterpiece, best quality, highly detailed, (cyberpunk courier:1.4), (motorcycle:1.3), weaving through traffic, (neon-lit rain:1.3), (wet asphalt reflections:1.2), (night city street:1.2), motion blur, (low angle:1.2), (dynamic composition:1.2), (electric blue and magenta glow:1.2), sharp focus, 8K, intricate textures",
-    "snapshotHash": "8f9e80a6ca3582d43675b0a8fca05bcd",
-    "createdAt": "2026-04-03T22:50:08.865Z"
+    "assembledPrompt": "masterpiece, best quality, highly detailed, (cyberpunk courier:1.4), (motorcycle:1.3), (weaving through neon-lit rain:1.3), (rain-slick street:1.2), (glowing neon signs:1.2), (reflections on wet asphalt:1.2), motion blur, (low angle tracking shot:1.2), (dramatic rim light:1.2), urban night atmosphere, sharp focus, 8K, intricate textures",
+    "snapshotHash": "4ae0d61da97ca6e7a179d1816e4bb367",
+    "createdAt": "2026-04-08T00:47:56.874Z"
   },
   {
     "sceneId": "scene-02-cyberpunk-courier",
     "tier": 2,
     "call2Version": "v4.5",
-    "assembledPrompt": "cyberpunk courier riding a motorcycle through a rain-soaked neon city, leaning hard through the curve as reflections streak across wet asphalt and glowing signs blur past in electric blue and magenta::2.0, cinematic concept art with a sleek futuristic finish::1.2, low-angle tracking shot, dramatic perspective, rain-slick streets and towering storefronts framing the rider::1.3 --ar 16:9 --v 7 --s 500 --no extra riders, broken motorcycle, warped wheels, muddy reflections, unreadable signs, text, watermark, blurry",
-    "snapshotHash": "43dbc960305e6b435db4045d2ee2a385",
-    "createdAt": "2026-04-03T22:50:08.865Z"
+    "assembledPrompt": "cyberpunk courier racing a motorcycle through rain-slick streets::2.0, neon signs streaking across wet asphalt and glass towers looming through the downpour::1.4, cinematic concept art with high-contrast lighting and reflective surfaces::1.2, low-angle tracking shot, dynamic motion, electric colour palette, urban night atmosphere --ar 16:9 --v 7 --s 750 --no blurry, broken motorcycle, extra riders, floating bike, unreadable signs, text, watermark",
+    "snapshotHash": "809388fd2d5d4117d0009456d183a5c4",
+    "createdAt": "2026-04-08T00:47:56.874Z"
   },
   {
     "sceneId": "scene-02-cyberpunk-courier",
     "tier": 3,
     "call2Version": "v4.5",
-    "assembledPrompt": "From a low tracking angle, a cyberpunk courier leans their motorcycle through a rain-slick turn, the rider centered against a corridor of neon signs and spray. Wet pavement throws back electric blue and magenta highlights, while rain beads on the bike’s frame and the city recedes into streaked motion, like a futuristic film still.",
-    "snapshotHash": "b0a539ba833eeab970a01ed0dc1aa67a",
-    "createdAt": "2026-04-03T22:50:08.865Z"
+    "assembledPrompt": "From a low tracking angle, a cyberpunk courier leans hard into a motorcycle turn, cutting through rain-slick streets lined with neon signs. Wet asphalt throws back electric reflections, while the rider’s silhouette slices past glass towers under sharp rim light and a hard, rain-choked night, like a frame from a gritty sci-fi thriller.",
+    "snapshotHash": "537e5cd9cde0f0a710882513ebec4547",
+    "createdAt": "2026-04-08T00:47:56.874Z"
   },
   {
     "sceneId": "scene-02-cyberpunk-courier",
     "tier": 4,
     "call2Version": "v4.5",
-    "assembledPrompt": "At night in a neon city, a cyberpunk courier leans their motorcycle through rain, cutting a sharp line across the wet street. Bright signs reflect on the pavement, and the road stretches behind them in a blur of blue and pink light.",
-    "snapshotHash": "851b76ce427cdaaaacfd22b5b018faf2",
-    "createdAt": "2026-04-03T22:50:08.865Z"
+    "assembledPrompt": "At night in a neon-lit city, a cyberpunk courier leans into a motorcycle turn through heavy rain. Wet streets mirror pink and blue signs, and the bike leaves a bright streak of motion behind it. Tall buildings fade into the rain, making the road feel fast and dangerous.",
+    "snapshotHash": "1deac8e6836a90a4192eade0e0caaec3",
+    "createdAt": "2026-04-08T00:47:56.874Z"
   },
   {
     "sceneId": "scene-03-fox-shrine",
     "tier": 1,
     "call2Version": "v4.5",
-    "assembledPrompt": "masterpiece, best quality, highly detailed, (fox shrine:1.4), (red torii gates:1.3), (falling maple leaves:1.2), autumn forest path, stone lanterns, shrine steps, vermilion wood, mossy stone, (soft golden autumn light:1.2), (leaf-filled air:1.1), centered composition, leading lines, sharp focus, 8K, intricate textures",
-    "snapshotHash": "26737af17ff1a46503afbdb6a40d6e43",
-    "createdAt": "2026-04-03T22:50:12.856Z"
+    "assembledPrompt": "masterpiece, best quality, highly detailed, (fox shrine:1.4), (red torii gates:1.3), (falling maple leaves:1.2), (autumn forest:1.2), (stone path:1.1), (shrine lanterns:1.2), (golden afternoon light:1.2), (leaf-strewn steps:1.1), centered composition, sharp focus, 8K, intricate textures",
+    "snapshotHash": "2570d59f8ad2bdc66a19dc6eb9abf166",
+    "createdAt": "2026-04-08T00:48:00.748Z"
   },
   {
     "sceneId": "scene-03-fox-shrine",
     "tier": 2,
     "call2Version": "v4.5",
-    "assembledPrompt": "fox shrine nestled along an autumn forest path, red torii gates rising in a rhythmic line toward the sanctuary::2.0, maple leaves drifting through warm amber light over mossy stone steps and weathered lanterns::1.5, cinematic concept art with subtle Japanese ink painting influence::1.2, centered framing with leading lines pulling the eye inward, tranquil seasonal atmosphere and rich vermilion textures --ar 16:9 --v 7 --s 500 --no modern buildings, street signs, neon colors, cluttered background, cropped torii gates, text, watermark, blurry",
-    "snapshotHash": "2c520156abbd667a1ab458e062e0d025",
-    "createdAt": "2026-04-03T22:50:12.856Z"
+    "assembledPrompt": "fox shrine nestled among autumn trees, red torii gates leading up a stone path as maple leaves drift through warm amber air::2.0, shrine lanterns glowing softly beside weathered steps and mossy stone::1.4, cinematic concept art with subtle Japanese woodblock influence::1.2, centered framing, gentle depth of field, golden afternoon light filtering through branches::1.3 --ar 16:9 --v 7 --s 500 --no modern buildings, cars, neon signs, text, watermark, blurry, extra people",
+    "snapshotHash": "94e31f31adab6a1059498c2c9ad2e496",
+    "createdAt": "2026-04-08T00:48:00.748Z"
   },
   {
     "sceneId": "scene-03-fox-shrine",
     "tier": 3,
     "call2Version": "v4.5",
-    "assembledPrompt": "A centered view leads the eye up a forest path toward a fox shrine, where red torii gates recede in a clean line and maple leaves drift across the frame. Warm autumn light catches the vermilion wood, mossy stone steps, and weathered lanterns, giving the sanctuary a quiet, timeworn glow. The whole scene carries the calm precision of a finely composed travel photograph with painterly detail.",
-    "snapshotHash": "d3dbf4e549a1c2ab18e1bc1799228171",
-    "createdAt": "2026-04-03T22:50:12.856Z"
+    "assembledPrompt": "A low, centered view looks up a stone path toward a fox shrine framed by red torii gates, while maple leaves drift across the foreground. Warm autumn light filters through the trees, catching on shrine lanterns and mossy steps, with the quiet geometry of the gates giving the scene a calm, sacred stillness.",
+    "snapshotHash": "e49223313a04b6e11ad2d8f0805eac92",
+    "createdAt": "2026-04-08T00:48:00.748Z"
   },
   {
     "sceneId": "scene-03-fox-shrine",
     "tier": 4,
     "call2Version": "v4.5",
-    "assembledPrompt": "A fox shrine sits in an autumn forest, with red torii gates lining the path. Maple leaves fall through warm light, and mossy stone steps lead deeper toward the shrine. Calm and seasonal, with rich vermilion wood and soft golden tones.",
-    "snapshotHash": "b6cd1366a5c27fc6dc184b1284b78d38",
-    "createdAt": "2026-04-03T22:50:12.856Z"
+    "assembledPrompt": "At an autumn fox shrine, red torii gates line a stone path as maple leaves fall through the air. Warm light filters through the trees, and lanterns glow beside mossy steps, giving the place a calm, sacred feeling.",
+    "snapshotHash": "10f4bf9ff1232691675f341d75ff7cf2",
+    "createdAt": "2026-04-08T00:48:00.748Z"
   },
   {
     "sceneId": "scene-04-colour-saturation",
     "tier": 1,
     "call2Version": "v4.5",
-    "assembledPrompt": "masterpiece, best quality, highly detailed, (shiny purple sports car:1.4), (parked on glowing orange brick street:1.3), (bright pink palm trees:1.2), (turquoise buildings:1.2), (yellow graffiti:1.1), (emerald-green streetlights:1.2), (magenta cyan lime sky:1.3), (massive rainbow puddle reflections:1.4), wide-angle street view, low angle, neon glow, saturated colors, sharp focus, 8K, intricate textures",
-    "snapshotHash": "44de142ac2861649587e94fdefa8f989",
-    "createdAt": "2026-04-03T22:50:16.858Z"
+    "assembledPrompt": "masterpiece, best quality, highly detailed, (shiny purple sports car:1.4), (parked on glowing orange brick street:1.3), (bright pink palm trees:1.2), (turquoise buildings:1.2), (yellow graffiti:1.2), (emerald-green streetlights:1.2), (magenta cyan lime sky:1.3), (rainbow puddle reflections:1.3), wide-angle street view, low angle, neon glow, sharp focus, 8K, intricate textures",
+    "snapshotHash": "4368b465335c78e7a00355d322af04c8",
+    "createdAt": "2026-04-08T00:48:04.288Z"
   },
   {
     "sceneId": "scene-04-colour-saturation",
     "tier": 2,
     "call2Version": "v4.5",
-    "assembledPrompt": "shiny purple sports car parked on a street of glowing orange bricks::2.0, bright pink palm trees lining the sidewalk beside turquoise buildings covered in yellow graffiti::1.5, emerald-green streetlights under a sky swirling with magenta, cyan, and lime clouds::1.4, massive rainbow puddle reflecting the entire neon streetscape::1.6, vibrant retro-futurist concept art, low-angle wide street view, crisp cinematic lighting --ar 16:9 --v 7 --s 500 --no blurry, lowres, warped car, dull colors, muddy reflections, extra vehicles, text, watermark",
-    "snapshotHash": "cb458446baee29d3d090bd669c6700c0",
-    "createdAt": "2026-04-03T22:50:16.858Z"
+    "assembledPrompt": "shiny purple sports car parked on a street of glowing orange bricks::2.0, bright pink palm trees lining the sidewalk beside turquoise buildings covered in yellow graffiti::1.5, emerald-green streetlights and a sky swirling with magenta, cyan, and lime clouds reflected in a massive rainbow puddle::1.4, vibrant synthwave concept art with glossy reflections::1.2, low-angle wide street shot with strong leading lines::1.1 --ar 16:9 --v 7 --s 750 --no blurry, dull colors, muddy reflections, warped buildings, extra wheels, text, watermark",
+    "snapshotHash": "e4ff2511823b74f10b4ecfe92d25fd15",
+    "createdAt": "2026-04-08T00:48:04.288Z"
   },
   {
     "sceneId": "scene-04-colour-saturation",
     "tier": 3,
     "call2Version": "v4.5",
-    "assembledPrompt": "From a low wide-angle view, a shiny purple sports car sits parked on a street paved with glowing orange bricks, its curves catching hot neon highlights. Bright pink palm trees, turquoise buildings tagged with yellow graffiti, and emerald streetlights push the palette into electric saturation, while a massive rainbow puddle mirrors the magenta, cyan, and lime sky in glossy reflections.",
-    "snapshotHash": "2bef678b448879736433766a1447ad6e",
-    "createdAt": "2026-04-03T22:50:16.858Z"
+    "assembledPrompt": "From a low wide angle, a shiny purple sports car sits on a street of glowing orange bricks, framed by bright pink palm trees and turquoise buildings tagged with yellow graffiti. Emerald streetlights and a sky of magenta, cyan, and lime clouds pour color into a massive rainbow puddle, creating a glossy neon haze across the block.",
+    "snapshotHash": "a796ee3d725b62e171613d6425182717",
+    "createdAt": "2026-04-08T00:48:04.288Z"
   },
   {
     "sceneId": "scene-04-colour-saturation",
     "tier": 4,
     "call2Version": "v4.5",
-    "assembledPrompt": "From a low wide view, a shiny purple sports car sits parked on glowing orange bricks in a neon city street. Bright pink palm trees line the sidewalk, turquoise buildings wear yellow graffiti, and emerald streetlights glow overhead while a huge rainbow puddle mirrors the magenta, cyan, and lime sky.",
-    "snapshotHash": "5d5bb3ec9c4d089042d47d1df51e0987",
-    "createdAt": "2026-04-03T22:50:16.858Z"
+    "assembledPrompt": "At street level in a neon city, a shiny purple sports car sits on glowing orange bricks. Bright pink palm trees line the sidewalk, while turquoise buildings with yellow graffiti and emerald streetlights glow under a sky of magenta, cyan, and lime clouds. A massive rainbow puddle mirrors everything with a glossy shine.",
+    "snapshotHash": "5d15039f23d6d5fe081790750fb816b8",
+    "createdAt": "2026-04-08T00:48:04.288Z"
   },
   {
     "sceneId": "scene-05-spatial-relationships",
     "tier": 1,
     "call2Version": "v4.5",
-    "assembledPrompt": "masterpiece, best quality, highly detailed, (wooden desk:1.4), (center of room:1.3), (tall blue lamp:1.3), (small green notebook:1.2), (red coffee mug:1.2), (yellow clock:1.2), (clock hands pointing toward mug:1.2), (black chair:1.2), white window, interior room, frontal composition, balanced symmetry, soft ambient light, sharp focus, 8K, intricate textures",
-    "snapshotHash": "9cfb0da4da19e91856fd64bd83afc0cf",
-    "createdAt": "2026-04-03T22:50:21.051Z"
+    "assembledPrompt": "masterpiece, best quality, highly detailed, (wooden desk:1.4), (center of room:1.3), (tall blue lamp:1.3), small green notebook, red coffee mug, yellow clock, (clock hands pointing at mug:1.3), black chair, white window, (lamp left of notebook:1.2), (notebook in front of lamp:1.2), (mug behind notebook:1.2), mug slightly right, (clock above desk:1.2), interior room, balanced composition, frontal view, soft daylight, tidy workspace, sharp focus, 8K, intricate textures",
+    "snapshotHash": "36cc253d057ac567b4429e830ce14c2e",
+    "createdAt": "2026-04-08T00:48:08.247Z"
   },
   {
     "sceneId": "scene-05-spatial-relationships",
     "tier": 2,
     "call2Version": "v4.5",
-    "assembledPrompt": "wooden desk centered in the room::2.0, a tall blue lamp on the left side of the desk with a small green notebook directly in front of it and a red coffee mug behind the notebook slightly to the right::1.6, a yellow clock hanging above the entire desk with its hands pointing toward the mug::1.5, a black chair tucked under the desk and a white window on the wall behind the chair::1.3, clean interior still life, straight-on framing, minimalist product photography::1.2 --ar 16:9 --v 7 --s 500 --no crooked furniture, misplaced lamp, missing notebook, wrong clock hands, extra chairs, messy room, text, watermark, blurry",
-    "snapshotHash": "d0405e502517026f93288833963d6ce1",
-    "createdAt": "2026-04-03T22:50:21.051Z"
+    "assembledPrompt": "wooden desk centered in the room::2.1, a tall blue lamp on the left side of the desk with a small green notebook directly in front of it and a red coffee mug behind the notebook, slightly to the right::1.7, a yellow clock hanging above the desk with its hands pointing toward the mug::1.6, a black chair tucked under the desk and a white window on the wall behind it::1.3, clean interior layout, symmetrical editorial composition, crisp concept art::1.2 --ar 16:9 --v 7 --s 500 --no cluttered desk, misplaced lamp, notebook behind mug, clock not above desk, wrong hand direction, extra furniture, text, watermark, blurry",
+    "snapshotHash": "4e214654aeb34bb882d3026e7ab4edc4",
+    "createdAt": "2026-04-08T00:48:08.247Z"
   },
   {
     "sceneId": "scene-05-spatial-relationships",
     "tier": 3,
     "call2Version": "v4.5",
-    "assembledPrompt": "A straight-on, centered view turns the room into a tidy still life: a wooden desk anchors the middle, with a tall blue lamp on the left, a small green notebook in front of it, and a red coffee mug set just behind and slightly to the right. Above, a yellow clock hangs over the desk with its hands aimed toward the mug, while a black chair sits tucked underneath and a white window brightens the wall behind it.",
-    "snapshotHash": "1a31ba37404899d3252bd49617c572ff",
-    "createdAt": "2026-04-03T22:50:21.051Z"
+    "assembledPrompt": "From a straight-on, eye-level view, a wooden desk anchors the centre of the room, with a tall blue lamp on its left, a small green notebook set directly in front of it, and a red coffee mug tucked behind and slightly to the right. A yellow clock hangs above the desk, its hands aimed toward the mug, while a black chair sits beneath and a white window brightens the wall behind it, all rendered with crisp, tidy clarity and soft daylight.",
+    "snapshotHash": "adc6ff388a9a77e51e250d40319d53a7",
+    "createdAt": "2026-04-08T00:48:08.247Z"
   },
   {
     "sceneId": "scene-05-spatial-relationships",
     "tier": 4,
     "call2Version": "v4.5",
-    "assembledPrompt": "In a simple room, a wooden desk sits in the center with a tall blue lamp on the left. A small green notebook rests in front of the lamp, and a red coffee mug sits just behind it to the right. A yellow clock hangs above the desk, its hands pointing toward the mug, while a black chair sits underneath near a white window on the back wall.",
-    "snapshotHash": "2b74d6177e57c858afb0b322a2ed8556",
-    "createdAt": "2026-04-03T22:50:21.051Z"
+    "assembledPrompt": "In a bright room, a wooden desk sits in the center with a tall blue lamp on the left. A small green notebook rests in front of the lamp, and a red coffee mug sits just behind it, slightly to the right. A yellow clock hangs above the desk, its hands pointing toward the mug, while a black chair rests under the desk near a white window.",
+    "snapshotHash": "a55da1af7435dcb0fdbdfe291d56fbe2",
+    "createdAt": "2026-04-08T00:48:08.247Z"
   },
   {
     "sceneId": "scene-06-negative-trigger",
     "tier": 1,
     "call2Version": "v4.5",
-    "assembledPrompt": "masterpiece, best quality, highly detailed, (quiet mountain cabin:1.4), (warm interior lights:1.3), dusk, (dark chimney:1.2), (empty cabin grounds:1.2), isolated, (bare roof:1.1), (open mountain slope:1.1), (cloudy sky:1.2), low-angle view, centered composition, soft ambient glow, sharp focus, 8K, intricate textures",
-    "snapshotHash": "05afefebc7ec679fbe8a583ea4d8455d",
-    "createdAt": "2026-04-03T22:50:24.618Z"
+    "assembledPrompt": "masterpiece, best quality, highly detailed, (quiet mountain cabin:1.4), (dusk:1.3), (warm interior lights:1.3), (unlit chimney:1.2), (empty yard:1.2), (bare hillside:1.2), (starless twilight sky:1.2), wide shot, centered framing, soft ambient glow, sharp focus, 8K, intricate textures",
+    "snapshotHash": "7e576c41d8f52a1247e9d8b674a62eea",
+    "createdAt": "2026-04-08T00:48:11.583Z"
   },
   {
     "sceneId": "scene-06-negative-trigger",
     "tier": 2,
     "call2Version": "v4.5",
-    "assembledPrompt": "quiet mountain cabin at dusk with warm light glowing from the windows::2.0, a dark chimney with no smoke, empty ground around the cabin, bare roof, and a treeless mountain slope under a starless sky::1.4, cinematic concept art with a moody naturalistic palette::1.2, wide establishing shot from a low angle, soft window glow against the fading blue evening::1.1 --ar 16:9 --v 7 --s 500 --no smoke from chimney, people, animals, snow on roof, trees near cabin, stars, text, watermark, blurry",
-    "snapshotHash": "0ef36dd86d64488b06111bf4d24d9642",
-    "createdAt": "2026-04-03T22:50:24.618Z"
+    "assembledPrompt": "quiet mountain cabin at dusk with warm lights glowing from the windows::2.0, an empty yard and bare hillside surrounding the secluded house, the chimney standing cold with no smoke, a starless twilight sky above::1.4, cinematic concept art with a calm, minimalist mood::1.2, wide establishing shot with the cabin centered against open space --ar 16:9 --v 7 --s 500 --no smoke from chimney, snow on roof, people, animals, trees near cabin, stars in sky, text, watermark, blurry",
+    "snapshotHash": "e1e2d0457d422fdfc121f18178119cce",
+    "createdAt": "2026-04-08T00:48:11.583Z"
   },
   {
     "sceneId": "scene-06-negative-trigger",
     "tier": 3,
     "call2Version": "v4.5",
-    "assembledPrompt": "From a low vantage on the open slope, a quiet mountain cabin sits alone at dusk, its windows glowing warmly while the chimney stays dark and the roof remains bare. The surrounding ground is empty, with no trees nearby, and the sky above fades into a starless blue-grey hush, like a still cinematic landscape painting.",
-    "snapshotHash": "6362b55f464f8779f6498d30058db646",
-    "createdAt": "2026-04-03T22:50:24.618Z"
+    "assembledPrompt": "From a wide, centered view, a quiet mountain cabin sits alone at dusk with warm light glowing through its windows. The chimney stays cold and empty, the roof clear of snow, and the open hillside around it remains bare beneath a starless sky. The stillness reads like a hushed landscape painting.",
+    "snapshotHash": "3937431cbf880ab9c7f19c26eedaf28b",
+    "createdAt": "2026-04-08T00:48:11.583Z"
   },
   {
     "sceneId": "scene-06-negative-trigger",
     "tier": 4,
     "call2Version": "v4.5",
-    "assembledPrompt": "At dusk on a lonely mountain slope, a quiet cabin glows warmly from inside while the chimney stays dark. The roof is bare, the ground around it is empty, and no trees stand nearby — above, the sky fades into a starless blue-grey evening.",
-    "snapshotHash": "8f38d8388182a517c167141832ff1d8e",
-    "createdAt": "2026-04-03T22:50:24.618Z"
+    "assembledPrompt": "At dusk, a quiet mountain cabin glows warmly from inside on a bare hillside. The chimney stays cold with no smoke, and the roof is clear while the open sky above remains starless. No trees, people, or animals break the still, empty setting.",
+    "snapshotHash": "2795f5426de850bd091760e7d053560f",
+    "createdAt": "2026-04-08T00:48:11.583Z"
   },
   {
     "sceneId": "scene-07-compression-stress",
     "tier": 1,
     "call2Version": "v4.5",
-    "assembledPrompt": "masterpiece, best quality, highly detailed, (female cyber-samurai:1.4), (matte-black tactical trench coat:1.3), (glowing crimson circuitry:1.3), (katana hilt:1.3), weathered leather wrap, Tokyo alleyway, rain-slicked cobblestones, towering holographic billboards, animated kanji, electric magenta, cyan, acid-green, rusted vending machines, glowing energy drinks, half-eaten ramen bowls, (steam rising from grated manholes:1.2), (flickering orange sodium streetlamps:1.2), (flying delivery drones:1.2), pulsing blue underlights, dense overhead power lines, cherry-blossom petals in wind, (mirror-like puddle reflections:1.3), oil-slick rainbows, low-angle wide shot, vanishing alley perspective, neon reflections on wet stone, rain streaks, nocturnal atmosphere, sharp focus, 8K, intricate textures",
-    "snapshotHash": "b98d7354307610189a4a3688efd087ef",
-    "createdAt": "2026-04-03T22:50:29.553Z"
+    "assembledPrompt": "masterpiece, best quality, highly detailed, (female cyber-samurai:1.4), (matte-black tactical trench coat:1.3), (glowing crimson circuitry patterns:1.3), katana hilt, weathered leather wrap, (Tokyo alleyway:1.3), rain-slicked cobblestones, towering holographic billboards, animated kanji, electric magenta, cyan, acid-green, rusted vending machines, glowing energy drinks, half-eaten ramen bowls, (steam rising from grated manholes:1.2), (flickering orange sodium streetlamps:1.2), (flying delivery drones:1.2), pulsing blue underlights, dense overhead power lines, cherry-blossom petals, wind-driven rain, (mirror-like puddle reflections:1.3), oil-slick rainbows, low-angle wide shot, leading lines, neon reflections, atmospheric perspective, sharp focus, 8K, intricate textures",
+    "snapshotHash": "416a173ad9477fdeae4323eeffb72e0e",
+    "createdAt": "2026-04-08T00:48:17.068Z"
   },
   {
     "sceneId": "scene-07-compression-stress",
     "tier": 2,
     "call2Version": "v4.5",
-    "assembledPrompt": "solitary female cyber-samurai standing in a narrow Tokyo alley at 2 AM, wearing a form-fitting matte-black tactical trench coat with glowing crimson circuitry and a katana hilt wrapped in weathered leather::2.0, towering holographic billboards throwing animated kanji in electric magenta, cyan, and acid-green across rain-slicked cobblestones::1.5, rusted vending machines spilling glowing energy drinks beside half-eaten ramen bowls, steam curling from grated manholes under flickering orange sodium streetlamps::1.4, distant delivery drones with pulsing blue underlights threading through dense overhead power lines and cherry-blossom petals in the wind::1.2, cinematic cyberpunk concept art, low-angle wide shot with deep vanishing perspective, mirror-bright puddle reflections and oil-slick rainbows::1.3 --ar 16:9 --v 7 --s 750 --no blurry, text, watermark, low detail, duplicate figure, broken katana, unreadable signage, flat reflections",
-    "snapshotHash": "15c39b4194268d77fa52791127944f71",
-    "createdAt": "2026-04-03T22:50:29.553Z"
+    "assembledPrompt": "solitary female cyber-samurai standing in a neon-soaked Tokyo alley at 2 AM::2.0, matte-black tactical trench coat with glowing crimson circuitry, katana hilt wrapped in weathered leather, rain-slick cobblestones mirroring magenta, cyan, and acid-green holographic billboards with animated kanji::1.5, rusted vending machines spilling glowing energy drinks beside half-eaten ramen bowls, steam rising from grated manholes under flickering orange sodium lamps, flying delivery drones threading through tangled power lines and cherry-blossom petals in the wind::1.3, cinematic cyberpunk concept art, low-angle wide shot with strong leading lines and mirror-bright puddle reflections::1.2 --ar 16:9 --v 7 --s 750 --no blurry billboards, unreadable kanji, extra people, duplicate limbs, watermark, text, muddy reflections, flat lighting",
+    "snapshotHash": "050ee37d3a00bbdb767b15cc354d7b78",
+    "createdAt": "2026-04-08T00:48:17.068Z"
   },
   {
     "sceneId": "scene-07-compression-stress",
     "tier": 3,
     "call2Version": "v4.5",
-    "assembledPrompt": "From a low angle at the mouth of a narrow alley, a solitary female cyber-samurai stands centered on rain-slick cobblestones, her matte-black trench coat catching thin red lines of circuitry as she grips a katana with a weathered leather wrap. Towering holographic billboards flood the walls with magenta, cyan, and acid-green kanji while orange streetlamps cut through steam, and mirror-still puddles turn the whole street into a fractured neon double.",
-    "snapshotHash": "fb727cb4435aa77862cb3b40fd1c2cfa",
-    "createdAt": "2026-04-03T22:50:29.553Z"
+    "assembledPrompt": "A low-angle wide shot turns a Tokyo alley into a corridor of neon rain, with a solitary female cyber-samurai centred between towering holographic billboards and mirror-bright puddles. Her matte-black trench coat catches crimson circuitry glints as steam curls from manholes, drones thread the wires overhead, and orange sodium light cuts through the downpour like sparks on wet stone.",
+    "snapshotHash": "82601478f98b1d3c1f9e08715694e0de",
+    "createdAt": "2026-04-08T00:48:17.068Z"
   },
   {
     "sceneId": "scene-07-compression-stress",
     "tier": 4,
     "call2Version": "v4.5",
-    "assembledPrompt": "At 2 AM in a neon-soaked Tokyo alley, a solitary female cyber-samurai stands on rain-slick cobblestones with a katana at her side. Holographic billboards blaze above her, vending machines glow beside steaming manholes, and puddles mirror the magenta, cyan, and acid-green lights with oil-slick rainbows.",
-    "snapshotHash": "0437cf05e2dcdf896e2446b15d47912f",
-    "createdAt": "2026-04-03T22:50:29.553Z"
+    "assembledPrompt": "At 2 AM in a rain-soaked Tokyo alley, a solitary female cyber-samurai stands on wet cobblestones, her matte-black trench coat lit by glowing crimson circuitry. Towering holographic billboards blaze in magenta, cyan, and acid-green behind her, while puddles below reflect the scene with mirror-like clarity.",
+    "snapshotHash": "c9ae3d0e0ddf29b97dba7ad1bba9f439",
+    "createdAt": "2026-04-08T00:48:17.068Z"
   },
   {
     "sceneId": "scene-08-french-new-wave",
     "tier": 1,
     "call2Version": "v4.5",
-    "assembledPrompt": "masterpiece, best quality, highly detailed, (solitary woman:1.4), (faded red wool coat:1.3), rain-slicked Parisian bridge, (perfect reflection:1.3), Seine water, distant Eiffel Tower, atmospheric haze, wet cobblestones, (sodium streetlamps:1.2), (autumn leaves drifting in current:1.2), (shallow depth of field:1.2), (1970s French New Wave cinema:1.2), (Kodak Vision3 500T film grain:1.2), natural light leak left edge, faint sprocket marks, gentle vignetting, twilight, sharp focus, 8K, intricate textures",
-    "snapshotHash": "80d0ac605b3ad6d1ded930223da6e582",
-    "createdAt": "2026-04-03T22:50:33.808Z"
+    "assembledPrompt": "masterpiece, best quality, highly detailed, (solitary woman:1.4), (faded red wool coat:1.3), rain-slicked Parisian bridge, twilight, (perfect reflection in the Seine:1.3), distant Eiffel Tower, atmospheric haze, (wet cobblestones:1.2), (sodium streetlamps:1.2), autumn leaves drifting in the current, (35mm film still:1.2), (Kodak Vision3 500T:1.2), (Arriflex 35BL:1.2), shallow depth of field, subtle film grain, natural light leaks, faint sprocket marks, gentle vignetting, 1970s color grading, centered composition, sharp focus, 8K, intricate textures",
+    "snapshotHash": "72fc84635fc8eb01d5432af44bf16309",
+    "createdAt": "2026-04-08T00:48:21.334Z"
   },
   {
     "sceneId": "scene-08-french-new-wave",
     "tier": 2,
     "call2Version": "v4.5",
-    "assembledPrompt": "solitary woman in a faded red wool coat standing motionless on a rain-slicked Parisian bridge at twilight::2.0, her reflection perfectly mirrored in the Seine below while the distant Eiffel Tower glows softly through atmospheric haze::1.5, wet cobblestones catching warm amber sodium streetlamp light and scattered autumn leaves drifting in the current::1.3, pristine 35mm French New Wave drama still, Kodak Vision3 500T look, vintage Arriflex 35BL feel, shallow depth of field, left-edge light leak, faint sprocket marks, gentle vignetting, cinematic composition, wide establishing shot --ar 16:9 --v 7 --s 500 --no modern cars, neon signs, extra people, text, watermark, blurry, duplicate reflection",
-    "snapshotHash": "1f93938a17ff15262cd360883c99a34a",
-    "createdAt": "2026-04-03T22:50:33.808Z"
+    "assembledPrompt": "solitary woman in a faded red wool coat standing motionless on a rain-slicked Parisian bridge at twilight, her reflection perfectly mirrored in the Seine below, the distant Eiffel Tower glowing softly through atmospheric haze, wet cobblestones catching warm amber sodium streetlamp light, scattered autumn leaves drifting in the current, pristine 35mm French New Wave drama still, shallow depth of field, centered framing::2.0, authentic 1970s color grading and subtle analog film grain with gentle light leaks along the left edge::1.4, cinematic concept art with vintage Arriflex 35BL realism::1.2 --ar 16:9 --v 7 --s 500 --no modern cars, neon signs, extra people, warped reflection, duplicated woman, text, watermark, blurry",
+    "snapshotHash": "6087c2693c635126f69ac85b70029ba1",
+    "createdAt": "2026-04-08T00:48:21.334Z"
   },
   {
     "sceneId": "scene-08-french-new-wave",
     "tier": 3,
     "call2Version": "v4.5",
-    "assembledPrompt": "A wide, low-angle view places a solitary woman at the centre of a rain-slicked Parisian bridge, her faded red wool coat held still against the twilight. Below her, the Seine mirrors her figure with near-perfect clarity while the Eiffel Tower glows softly through haze. Warm sodium streetlamps wash the wet cobblestones, and a fine 35mm grain with faint edge light leaks gives the frame the hush of a recovered 1970s French New Wave print.",
-    "snapshotHash": "1b8f7ce5a1e1fa1db43d06069c7d3486",
-    "createdAt": "2026-04-03T22:50:33.808Z"
+    "assembledPrompt": "A low, centered frame holds a solitary woman in a faded red wool coat on a rain-slicked Parisian bridge at twilight, her stillness mirrored cleanly in the Seine. Warm sodium streetlamps wash the wet cobblestones, the Eiffel Tower glows softly through haze, and scattered autumn leaves drift downstream with the quiet weight of an analog film frame, grain and light leaks preserved in a 1970s French New Wave look.",
+    "snapshotHash": "ca3817503127213eb3fbc141a5eac34c",
+    "createdAt": "2026-04-08T00:48:21.334Z"
   },
   {
     "sceneId": "scene-08-french-new-wave",
     "tier": 4,
     "call2Version": "v4.5",
-    "assembledPrompt": "At twilight on a rain-slicked Parisian bridge, a solitary woman in a faded red wool coat stands motionless beside the railing. Her reflection lies perfectly in the Seine below, while the Eiffel Tower glows softly through haze and warm streetlamps bleach the wet cobblestones amber — autumn leaves drift downstream in the dim, quiet air.",
-    "snapshotHash": "1d67656b3c0ea332ce1583b951d96be7",
-    "createdAt": "2026-04-03T22:50:33.808Z"
+    "assembledPrompt": "At twilight on a rain-slicked Parisian bridge, a solitary woman in a faded red wool coat stands motionless beside her perfect reflection in the Seine. Wet cobblestones glow under warm sodium streetlamps, while the Eiffel Tower shines softly through haze and autumn leaves drift in the water.",
+    "snapshotHash": "4267e066a701cb5329562bd3d0207139",
+    "createdAt": "2026-04-08T00:48:21.334Z"
   }
 ]
