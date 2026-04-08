@@ -27,7 +27,6 @@
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { clerkClient } from '@clerk/nextjs/server';
 import { getSessionFromCookie } from '@/lib/stripe/clerk-session';
 import { rateLimit } from '@/lib/rate-limit';
 import { env } from '@/lib/env';
@@ -60,17 +59,13 @@ async function ensureTable(): Promise<void> {
 // AUTH + TIER CHECK
 // ============================================================================
 
-interface ClerkPublicMetadata {
-  tier?: 'free' | 'paid';
-  [key: string]: unknown;
-}
-
 async function authenticate(request: NextRequest): Promise<
   | { ok: true; userId: string }
   | { ok: false; response: NextResponse }
 > {
   const session = getSessionFromCookie(request);
   const userId = session?.userId ?? null;
+  const tier = session?.tier ?? 'free';
 
   if (!userId) {
     return {
@@ -82,12 +77,7 @@ async function authenticate(request: NextRequest): Promise<
     };
   }
 
-  const client = await clerkClient();
-  const user = await client.users.getUser(userId);
-  const meta = (user.publicMetadata ?? {}) as ClerkPublicMetadata;
-  const isPaid = meta.tier === 'paid';
-
-  if (!isPaid) {
+  if (tier !== 'paid') {
     return {
       ok: false,
       response: NextResponse.json(
