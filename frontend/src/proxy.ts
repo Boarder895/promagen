@@ -31,7 +31,6 @@ const isProtectedRoute = createRouteMatcher([
   '/test(.*)',
   '/api/admin(.*)',
   '/api/tests(.*)',
-  '/api/saved-prompts(.*)',
 ]);
 
 // Admin-only gates (subset of protected routes — requires ADMIN_USER_IDS membership)
