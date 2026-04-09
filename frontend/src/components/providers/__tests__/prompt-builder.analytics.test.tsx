@@ -18,13 +18,7 @@ import { render, act } from '@testing-library/react';
 
 import PromptBuilder from '../prompt-builder';
 import type { Provider } from '@/types/provider';
-import { trackPromptBuilderOpen } from '@/lib/analytics/providers';
-
-// ── Silence analytics module (test target — we spy on this) ─────────────────
-jest.mock('@/lib/analytics/providers', () => ({
-  trackPromptBuilderOpen: jest.fn(),
-  trackPromptCopy: jest.fn(),
-}));
+import { trackPromptBuilderOpen } from '@/lib/analytics/events';
 
 // ── Silence telemetry client (fires fetch on copy, not mount, but prevent) ──
 jest.mock('@/lib/telemetry/prompt-telemetry-client', () => ({
@@ -62,8 +56,16 @@ jest.mock('@/hooks/use-learning-data', () => ({
   }),
 }));
 
-// ── Silence analytics event tracker ─────────────────────────────────────────
+// ── Silence session journey (used by events.ts wrappers) ─────────────────────
+jest.mock('@/lib/analytics/session-journey', () => ({
+  recordEvent: jest.fn(),
+  getSnapshot: jest.fn(() => null),
+}));
+
+// ── Silence analytics module (test target — we spy on trackPromptBuilderOpen) ─
 jest.mock('@/lib/analytics/events', () => ({
+  trackPromptBuilderOpen: jest.fn(),
+  trackPromptCopy: jest.fn(),
   trackEvent: jest.fn(),
 }));
 

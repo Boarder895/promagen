@@ -43,6 +43,7 @@ import { Flag } from "@/components/ui/flag";
 import Tooltip from "@/components/ui/tooltip";
 import { getPlatformTierId, type PlatformTierId } from "@/data/platform-tiers";
 import type { WeatherData } from "@/hooks/use-weather";
+import { trackProviderClick } from "@/lib/analytics/events";
 
 // Market power data for MPI calculation
 import marketPowerData from "@/data/providers/market-power.json";
@@ -1471,7 +1472,14 @@ export function ProvidersTable({
                     href={`/providers/${encodeURIComponent(p.id)}`}
                     className="inline-flex items-center gap-1.5 font-semibold text-purple-300 transition-colors hover:text-purple-200 cursor-pointer"
                     style={{ fontSize: "clamp(0.73rem, 2.8vw, 0.85rem)" }}
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      trackProviderClick({
+                        providerId: p.id,
+                        providerName: p.name,
+                        surface: 'mobile_card',
+                      });
+                    }}
                   >
                     <span>Build prompts for {p.name}</span>
                     <svg

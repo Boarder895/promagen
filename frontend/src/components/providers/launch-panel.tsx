@@ -1,17 +1,30 @@
 // src/components/providers/launch-panel.tsx
+// ============================================================================
+// LAUNCH PANEL (v1.2.0)
+// ============================================================================
+// v1.2.0 (10 Apr 2026):
+// - FIX: Grey text violations corrected. text-slate-400 → text-slate-200,
+//   text-slate-500 → text-slate-300. Promagen code standard: minimum
+//   brightness #E2E8F0 (slate-200), no banned dim greys.
+// - FIX: Doc reference corrected to analytics-build-plan-v1.3-FINAL.md.
+// - NOTE: Prop 'src' retained temporarily for back-compat; maps to
+//   'surface' in the GA4 payload.
 //
-// LaunchPanel: the bottom half of the prompt workspace.
-// Displays a prominent CTA button to open the provider platform,
-// plus affiliate disclosure when required.
+// v1.1.0 (10 Apr 2026):
+// - trackProviderLaunch → trackProviderOutbound (analytics consolidation).
+// - Import path changed from deleted @/lib/analytics/providers.
 //
-// Authority: docs/authority/prompt-builder-page.md
+// Authority: docs/authority/prompt-builder-page.md,
+//            analytics-build-plan-v1.3-FINAL.md §5 Part 5
+// Existing features preserved: Yes
+// ============================================================================
 
 'use client';
 
 import React from 'react';
 
 import AffiliateBadge from '@/components/common/affiliate-badge';
-import { trackProviderLaunch } from '@/lib/analytics/providers';
+import { trackProviderOutbound } from '@/lib/analytics/events';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -30,7 +43,7 @@ export interface LaunchPanelProvider {
 
 export interface LaunchPanelProps {
   provider: LaunchPanelProvider;
-  /** Analytics source tag — defaults to 'prompt_builder' */
+  /** Analytics surface tag — defaults to 'prompt_builder'. Legacy prop name retained for back-compat. */
   src?: string;
 }
 
@@ -43,10 +56,11 @@ export function LaunchPanel({ provider, src = 'prompt_builder' }: LaunchPanelPro
   const launchHref = `/go/${encodeURIComponent(provider.id)}?src=${encodeURIComponent(src)}`;
 
   const handleLaunchClick = () => {
-    trackProviderLaunch({
+    trackProviderOutbound({
       providerId: provider.id,
       providerName: provider.name,
-      src,
+      href: launchHref,
+      surface: src,
     });
   };
 
@@ -57,7 +71,7 @@ export function LaunchPanel({ provider, src = 'prompt_builder' }: LaunchPanelPro
     >
       {/* Optional provider tagline */}
       {provider.tagline && (
-        <p className="max-w-md text-sm text-slate-400">{provider.tagline}</p>
+        <p className="max-w-md text-sm text-slate-200">{provider.tagline}</p>
       )}
 
       {/* Primary CTA — large, prominent button */}
@@ -67,10 +81,9 @@ export function LaunchPanel({ provider, src = 'prompt_builder' }: LaunchPanelPro
         rel="noopener noreferrer"
         onClick={handleLaunchClick}
         aria-label={`Open ${provider.name} in a new tab`}
-        className="inline-flex items-center justify-center gap-2 rounded-full bg-sky-600 px-8 py-3 text-base font-semibold text-white shadow-lg transition-colors hover:bg-sky-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+        className="inline-flex items-center justify-center gap-2 rounded-full bg-sky-600 px-8 py-3 text-base font-semibold text-white shadow-lg transition-colors hover:bg-sky-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 cursor-pointer"
       >
         <span>Open {provider.name}</span>
-        {/* External link indicator (↗) for accessibility */}
         <svg
           aria-hidden="true"
           className="h-4 w-4"
@@ -95,7 +108,7 @@ export function LaunchPanel({ provider, src = 'prompt_builder' }: LaunchPanelPro
       )}
 
       {/* Workflow hint */}
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-slate-300">
         Your prompt is ready — paste it into {provider.name} to generate.
       </p>
     </section>

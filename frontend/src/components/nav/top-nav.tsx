@@ -1,8 +1,23 @@
+// src/components/nav/top-nav.tsx
+// ============================================================================
+// TOP NAV (v1.1.0)
+// ============================================================================
+// v1.1.0 (10 Apr 2026):
+// - FIX: Import path changed from deleted @/lib/analytics/nav to events.ts.
+// - FIX: Broken className strings repaired (rounded-xl...-3 → proper classes).
+// - FIX: Routes updated to current Promagen routes (/studio/playground,
+//   /studio/library) — were stale (/designer, /saved).
+// - FIX: Text colours updated to comply with no-grey-text standard.
+//
+// Authority: analytics-build-plan-v1.3-FINAL.md §5 Part 3
+// Existing features preserved: Yes
+// ============================================================================
+
 'use client';
 
 import Link from 'next/link';
 import { BrainIcon, BookmarkIcon } from '@/components/ui/emoji';
-import { trackNavClick } from '@/lib/analytics/nav';
+import { trackNavClick } from '@/lib/analytics/events';
 
 export default function TopNav() {
   return (
@@ -14,19 +29,19 @@ export default function TopNav() {
 
         <div className="flex items-center gap-4 text-sm">
           <Link
-            href="/designer"
-            onClick={() => trackNavClick({ label: 'Prompt Designer', href: '/designer' })}
-            className="inline-flex items-center gap-2 rounded-xl...-3 py-1.5 text-zinc-200 hover:border-zinc-600 hover:bg-zinc-800"
-            title="Prompt Designer  idea builder"
+            href="/studio/playground"
+            onClick={() => trackNavClick({ label: 'Prompt Designer', href: '/studio/playground' })}
+            className="inline-flex items-center gap-2 rounded-xl border border-zinc-700 px-3 py-1.5 text-zinc-200 hover:border-zinc-600 hover:bg-zinc-800 cursor-pointer"
+            title="Prompt Designer — idea builder"
           >
             <BrainIcon /> Prompt Designer
           </Link>
 
           <Link
-            href="/saved"
-            onClick={() => trackNavClick({ label: 'My Prompts', href: '/saved' })}
-            className="inline-flex items-center gap-2 rounded-xl...-3 py-1.5 text-zinc-300 hover:border-zinc-700 hover:bg-zinc-900"
-            title="Saved prompts & builds (Stage 3)"
+            href="/studio/library"
+            onClick={() => trackNavClick({ label: 'My Prompts', href: '/studio/library' })}
+            className="inline-flex items-center gap-2 rounded-xl border border-zinc-700 px-3 py-1.5 text-zinc-200 hover:border-zinc-600 hover:bg-zinc-800 cursor-pointer"
+            title="Saved prompts library"
           >
             <BookmarkIcon /> My Prompts
           </Link>

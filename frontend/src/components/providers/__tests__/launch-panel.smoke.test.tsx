@@ -5,9 +5,10 @@ import { render, screen } from '@testing-library/react';
 
 import LaunchPanel from '../launch-panel';
 
-// Mock analytics to avoid side effects in tests
-jest.mock('@/lib/analytics/providers', () => ({
-  trackProviderLaunch: jest.fn(),
+// Mock analytics — now in centralised events.ts (was @/lib/analytics/providers)
+jest.mock('@/lib/analytics/events', () => ({
+  trackProviderOutbound: jest.fn(),
+  trackEvent: jest.fn(),
 }));
 
 const SAMPLE_PROVIDER = {

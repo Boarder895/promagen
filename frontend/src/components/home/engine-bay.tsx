@@ -31,6 +31,7 @@ import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import Image from 'next/image';
 import { Combobox } from '@/components/ui/combobox';
 import type { Provider } from '@/types/providers';
+import { trackProviderClick } from '@/lib/analytics/events';
 
 // ============================================================================
 // TYPES
@@ -373,7 +374,12 @@ export default function EngineBay({
         <a
           href={selected ? `/providers/${encodeURIComponent(selected.id)}` : '#'}
           onClick={(e) => {
-            if (!selected) e.preventDefault();
+            if (!selected) { e.preventDefault(); return; }
+            trackProviderClick({
+              providerId: selected.id,
+              providerName: selected.name,
+              surface: 'engine_bay',
+            });
           }}
           aria-disabled={!selected}
           aria-label={

@@ -16,7 +16,7 @@
 'use client';
 
 import React, { useState, useCallback, useMemo } from 'react';
-import { trackPromptCopy } from '@/lib/analytics/providers';
+import { trackPromptCopy } from '@/lib/analytics/events';
 import {
   getEnhancedCategoryConfig,
   getAllCategories,
@@ -75,62 +75,6 @@ export interface PromptBuilderProvider {
 // ============================================================================
 // Constants
 // ============================================================================
-
-const _MIDJOURNEY_FAMILY = ['midjourney', 'bluewillow', 'nijijourney'];
-
-// Platform tier mapping
-const PLATFORM_TIER_MAP: Record<string, PlatformTier> = {
-  // Tier 1: CLIP-based
-  stability: 1,
-  leonardo: 1,
-  clipdrop: 1,
-  dreamstudio: 1,
-  lexica: 1,
-  novelai: 1,
-  dreamlike: 1,
-  playground: 1,
-  artguru: 1,
-  'jasper-art': 3,
-  // Tier 2: Midjourney family
-  midjourney: 2,
-  bluewillow: 2,
-  nijijourney: 2,
-  // Tier 3: Natural language
-  openai: 3,
-  'adobe-firefly': 3,
-  ideogram: 3,
-  runway: 3,
-  'microsoft-designer': 3,
-  bing: 3,
-  flux: 3,
-  'google-imagen': 3,
-  'imagine-meta': 3,
-  hotpot: 3,
-  // Tier 4: Plain language
-  canva: 4,
-  craiyon: 4,
-  deepai: 4,
-  pixlr: 4,
-  picwish: 4,
-  fotor: 4,
-  visme: 4,
-  vistacreate: 4,
-  myedit: 4,
-  simplified: 4,
-  picsart: 4,
-  photoleap: 4,
-  artbreeder: 4,
-  '123rf': 4,
-  artistly: 4,
-  // New platforms
-  recraft: 3,
-  kling: 3,
-  'luma-ai': 3,
-};
-
-const getTierForPlatform = (platformId: string): PlatformTier => {
-  return PLATFORM_TIER_MAP[platformId.toLowerCase()] ?? 1;
-};
 
 // Tier visual configs
 const TIER_VISUAL_CONFIGS = {
@@ -262,7 +206,7 @@ function DNABar({ selections, coherenceScore }: DNABarProps) {
           >
             {coherenceScore}%
           </span>
-          <span className="text-white/50 text-xs">coherence</span>
+          <span className="text-slate-200 text-xs">coherence</span>
         </div>
       </div>
 
@@ -287,7 +231,7 @@ function DNABar({ selections, coherenceScore }: DNABarProps) {
         ))}
       </div>
 
-      <p className="text-xs text-white/40 mt-1">
+      <p className="text-xs text-slate-200 mt-1">
         {filledCount} of {categories.length} categories filled
       </p>
     </div>
@@ -364,7 +308,7 @@ function TierCard({ tier, prompt, negative, isActive, onSelect, onCopy, copied, 
         <div className="flex items-center gap-2">
           <span
             className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
-              isActive ? 'bg-white text-black' : 'bg-white/10 text-white/60'
+              isActive ? 'bg-white text-black' : 'bg-white/10 text-slate-200'
             }`}
           >
             {tier}
@@ -384,7 +328,7 @@ function TierCard({ tier, prompt, negative, isActive, onSelect, onCopy, copied, 
           <span
             key={i}
             className={`px-1.5 py-0.5 rounded text-xs font-mono ${
-              isActive ? 'bg-white/20 text-white/80' : 'bg-white/5 text-white/40'
+              isActive ? 'bg-white/20 text-white/80' : 'bg-white/5 text-slate-200'
             }`}
           >
             {feature}
@@ -400,7 +344,7 @@ function TierCard({ tier, prompt, negative, isActive, onSelect, onCopy, copied, 
       >
         <p
           className={`break-words leading-relaxed ${
-            isActive && !isPro ? 'text-white/90' : !isPro ? 'text-white/60' : ''
+            isActive && !isPro ? 'text-white/90' : !isPro ? 'text-slate-200' : ''
           } ${!displayPrompt && 'italic'}`}
         >
           {renderPromptText()}
@@ -419,7 +363,7 @@ function TierCard({ tier, prompt, negative, isActive, onSelect, onCopy, copied, 
             ? isActive
               ? 'bg-white text-black hover:bg-white/90'
               : 'bg-white/10 text-white hover:bg-white/20'
-            : 'bg-white/5 text-white/30 cursor-not-allowed'
+            : 'bg-white/5 text-slate-300 cursor-not-allowed'
         }`}
       >
         {copied ? '✓ Copied!' : `📋 Copy Tier ${tier}`}
@@ -459,7 +403,7 @@ function IntelligencePanel({
           <button
             onClick={onMarketToggle}
             className={`p-1 rounded transition-colors ${
-              marketMoodEnabled ? 'text-emerald-400' : 'text-white/30'
+              marketMoodEnabled ? 'text-emerald-400' : 'text-slate-300'
             }`}
             title="Toggle Market Mood"
           >
@@ -474,7 +418,7 @@ function IntelligencePanel({
             className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
               activeTab === 'conflicts'
                 ? 'bg-white/20 text-white'
-                : 'text-white/50 hover:text-white/70'
+                : 'text-slate-200 hover:text-white'
             }`}
           >
             ⚠️ Conflicts ({conflicts.length})
@@ -484,7 +428,7 @@ function IntelligencePanel({
             className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
               activeTab === 'suggestions'
                 ? 'bg-white/20 text-white'
-                : 'text-white/50 hover:text-white/70'
+                : 'text-slate-200 hover:text-white'
             }`}
           >
             ✨ Suggest
@@ -495,7 +439,7 @@ function IntelligencePanel({
               className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
                 activeTab === 'market'
                   ? 'bg-white/20 text-white'
-                  : 'text-white/50 hover:text-white/70'
+                  : 'text-slate-200 hover:text-white'
               }`}
             >
               📈 Market
@@ -530,13 +474,13 @@ function IntelligencePanel({
                         {conflict.term2}
                       </code>
                     </div>
-                    <p className="text-xs text-white/60 mt-1">{conflict.reason}</p>
+                    <p className="text-xs text-slate-200 mt-1">{conflict.reason}</p>
                   </div>
                 </div>
               </div>
             ))
           ) : (
-            <p className="text-xs text-white/50 text-center py-4">✅ No conflicts detected</p>
+            <p className="text-xs text-slate-200 text-center py-4">✅ No conflicts detected</p>
           ))}
 
         {/* Suggestions Tab */}
@@ -544,7 +488,7 @@ function IntelligencePanel({
           <div className="space-y-3">
             {suggestions.length > 0 ? (
               <>
-                <p className="text-xs text-white/60">Based on your selections:</p>
+                <p className="text-xs text-slate-200">Based on your selections:</p>
                 <div className="flex flex-wrap gap-1">
                   {suggestions.slice(0, 8).map((s, i) => (
                     <button
@@ -559,7 +503,7 @@ function IntelligencePanel({
                 </div>
               </>
             ) : (
-              <p className="text-xs text-white/50 text-center py-4">
+              <p className="text-xs text-slate-200 text-center py-4">
                 Add selections to get suggestions
               </p>
             )}
@@ -587,12 +531,12 @@ function IntelligencePanel({
                   </span>
                   <div>
                     <h4 className="font-semibold text-white text-sm capitalize">{mood} Market</h4>
-                    <p className="text-xs text-white/60">Mood-based suggestions</p>
+                    <p className="text-xs text-slate-200">Mood-based suggestions</p>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <div>
-                    <p className="text-xs text-white/50 mb-1">🎭 Atmosphere</p>
+                    <p className="text-xs text-slate-200 mb-1">🎭 Atmosphere</p>
                     <div className="flex flex-wrap gap-1">
                       {(mood === 'bullish'
                         ? ['triumphant', 'energetic', 'ascending']
@@ -611,7 +555,7 @@ function IntelligencePanel({
                     </div>
                   </div>
                   <div>
-                    <p className="text-xs text-white/50 mb-1">🎨 Colours</p>
+                    <p className="text-xs text-slate-200 mb-1">🎨 Colours</p>
                     <div className="flex flex-wrap gap-1">
                       {(mood === 'bullish'
                         ? ['vibrant greens', 'gold accents', 'warm tones']
@@ -667,16 +611,14 @@ export default function EnhancedPromptBuilder({
 
   const platformId = selectedProviderId ?? 'default';
   const { compositionMode } = useCompositionMode();
-  const { preferences: _preferences } = useIntelligencePreferences();
+  useIntelligencePreferences();
   const { marketState } = useMarketMoodLive(marketMoodEnabled);
   const { savePrompt } = useSavedPrompts();
 
   const {
-    isAuthenticated: _isAuthenticated,
     userTier,
     promptLockState,
     categoryLimits,
-    platformTier: _platformTier,
     trackPromptCopy: trackUsageCallback,
   } = usePromagenAuth({
     platformId,
@@ -690,13 +632,6 @@ export default function EnhancedPromptBuilder({
 
   const isLocked = promptLockState !== 'unlocked';
   const allowNegativeFreeText = supportsNativeNegative(platformId);
-  const isNeutralMode = selectedProviderId === null;
-
-  // Current tier based on selected provider (or default to 1 in neutral mode)
-  const _currentPlatformTier = useMemo<PlatformTier>(() => {
-    if (isNeutralMode) return activeTier;
-    return getTierForPlatform(selectedProviderId!);
-  }, [isNeutralMode, selectedProviderId, activeTier]);
 
   // Build selections object from category state
   const selections = useMemo<FullPromptSelections>(() => {
@@ -974,7 +909,7 @@ export default function EnhancedPromptBuilder({
               <span className="text-2xl">🧠</span>
               Enhanced Prompt Builder
             </h1>
-            <p className="text-white/60 text-sm mt-1">
+            <p className="text-slate-200 text-sm mt-1">
               4-Tier Prompt Generation + Intelligence Panel
             </p>
           </div>
@@ -985,7 +920,7 @@ export default function EnhancedPromptBuilder({
             className={`px-3 py-1.5 rounded-lg font-medium text-sm flex items-center gap-2 transition-all duration-300 ${
               marketMoodEnabled
                 ? 'bg-gradient-to-r from-emerald-500/30 to-teal-500/30 border border-emerald-500/50 text-emerald-300'
-                : 'bg-white/5 border border-white/10 text-white/50'
+                : 'bg-white/5 border border-white/10 text-slate-200'
             }`}
           >
             <span>{marketMoodEnabled ? '📈' : '📊'}</span>
@@ -1057,7 +992,7 @@ export default function EnhancedPromptBuilder({
                 <span className="text-xl">🎯</span>
                 4-Tier Prompt Variants
               </h3>
-              <p className="text-xs text-white/50">Same vision, different syntaxes</p>
+              <p className="text-xs text-slate-200">Same vision, different syntaxes</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

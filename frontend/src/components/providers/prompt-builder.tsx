@@ -94,7 +94,8 @@ import { SignInButton } from "@clerk/nextjs";
 import {
   trackPromptBuilderOpen,
   trackPromptCopy,
-} from "@/lib/analytics/providers";
+  trackEvent,
+} from "@/lib/analytics/events";
 import { sendPromptTelemetry } from "@/lib/telemetry/prompt-telemetry-client";
 import FeedbackInvitation from "@/components/ux/feedback-invitation";
 import FeedbackMemoryBanner from "@/components/ux/feedback-memory-banner";
@@ -190,7 +191,6 @@ import {
   type CascadeScoreMap,
 } from "@/components/providers/explore-drawer";
 import { getSceneById } from "@/data/scenes";
-import { trackEvent } from "@/lib/analytics/events";
 import { SaveIcon } from "@/components/prompts/library/save-icon";
 
 // ============================================================================

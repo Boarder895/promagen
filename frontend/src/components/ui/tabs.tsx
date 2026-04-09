@@ -2,7 +2,6 @@
 
 // src/components/ui/tabs.tsx
 import * as React from "react";
-import { track } from "@/lib/analytics";
 import { FOCUS_RING } from "@/lib/ui/provider-styles";
 
 // ---- Types -------------------------------------------------------------------
@@ -164,18 +163,13 @@ export function Tabs<T extends BaseTabItem>({
   // Live announcer (polite) text for SRs; visually hidden.
   const [announcement, setAnnouncement] = React.useState<string>("");
 
-  // Keep focus and emit analytics on visible selection changes
+  // Keep focus and notify on visible selection changes
   React.useEffect(() => {
     const btn = btnRefs.current[index];
     if (btn) btn.focus();
 
     const item = items[index];
     if (item) {
-      try {
-        track?.("ui.tab_select", { id: item.id, index });
-      } catch {
-        /* swallow analytics errors */
-      }
       onChange?.(item, index);
       if (announceChanges) {
         // Defer text mutation slightly so SRs always pick it up

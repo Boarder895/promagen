@@ -45,6 +45,7 @@
     "test:lh": "node ./scripts/run-lighthouse.cjs",
     "test:accept:all": "pnpm run test:accept && pnpm run test:lh",
     "verify:tests": "pwsh -nop -ep Bypass -f ./scripts/verify-test-layout.ps1",
+    "verify:analytics": "tsx scripts/verify-analytics-env.ts",
     "verify:groups": "pwsh -nop -ep Bypass -f ./scripts/verify-test-groups.ps1",
     "pretest:ci": "pwsh -nop -ep Bypass -f ./scripts/verify-test-layout.ps1",
     "validate:data": "jest --config jest.config.cjs --selectProjects data --verbose",
