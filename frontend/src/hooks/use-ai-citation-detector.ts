@@ -74,8 +74,11 @@ function getUtmParams(): {
  * }
  * ```
  */
-export function useAiCitationDetector(): void {
+export function useAiCitationDetector(options?: { enabled?: boolean }): void {
+  const enabled = options?.enabled ?? true;
+
   useEffect(() => {
+    if (!enabled) return;
     if (typeof window === 'undefined' || typeof document === 'undefined') return;
 
     try {
@@ -101,5 +104,5 @@ export function useAiCitationDetector(): void {
       landingPage,
       ...utmParams,
     });
-  }, []);
+  }, [enabled]);
 }

@@ -7,6 +7,7 @@ import { PauseProvider } from '@/state/pause';
 import ErrorBoundary from '@/components/error-boundary';
 import { ChunkErrorBoundary } from '@/components/chunk-error-boundary';
 import { GoogleAnalytics } from '@/components/analytics/google-analytics';
+import { AiCitationDetector } from '@/components/analytics/ai-citation-detector';
 import { QuickSaveToastGlobal } from '@/components/prompts/library/quick-save-toast-global';
 import { env } from '@/lib/env';
 import MobileBottomNav from '@/components/layout/mobile-bottom-nav';
@@ -112,6 +113,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
           {/* Global analytics for every page */}
           <GoogleAnalytics />
+
+          {/* AI citation referral detection — no UI, fires once per session.
+              Detects arrivals from ChatGPT/Perplexity/Claude/Gemini and logs
+              ai_citation_landing to GA4. Respects ANALYTICS_ENABLED gate. */}
+          <AiCitationDetector />
 
           {IS_VERCEL_PROD ? (
             <>
