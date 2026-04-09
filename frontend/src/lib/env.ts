@@ -8,6 +8,9 @@
 // - Prefer "safe mode" switches + provider kill-switches via env vars so you can react instantly from Vercel.
 // - Env parsing stays permissive (mostly optional) so local dev never explodes unless a required helper is called.
 //
+// v1.2.0 (9 Apr 2026): Added SENTINEL_ENABLED, RESEND_API_KEY, SENTINEL_EMAIL_TO
+//   for Sentinel AI Visibility Intelligence System (sentinel.md v2.0.0).
+//
 // v1.1.0 (3 Apr 2026): Added BUILDER_QUALITY_KEY for internal score-prompt route hardening.
 //   Authority: docs/authority/builder-quality-intelligence.md v2.5.0 §5.1
 //
@@ -68,6 +71,11 @@ const EnvSchema = z.object({
 
   // Builder Quality Intelligence — internal route protection (§5.1)
   BUILDER_QUALITY_KEY: z.string().optional(),
+
+  // Sentinel — AI Visibility Intelligence System (sentinel.md v2.0.0)
+  SENTINEL_ENABLED: z.string().optional(),
+  RESEND_API_KEY: z.string().optional(),
+  SENTINEL_EMAIL_TO: z.string().optional(),
 });
 
 type ParsedEnv = z.infer<typeof EnvSchema>;
@@ -137,6 +145,13 @@ export const env = Object.freeze({
 
   // Builder Quality Intelligence — internal route protection
   builderQualityKey: raw.BUILDER_QUALITY_KEY?.trim(),
+
+  // Sentinel — AI Visibility Intelligence System
+  sentinel: {
+    enabled: parseBool(raw.SENTINEL_ENABLED),
+    resendApiKey: raw.RESEND_API_KEY?.trim(),
+    emailTo: raw.SENTINEL_EMAIL_TO?.trim() ?? 'martin@promagen.com',
+  },
 });
 
 export function requireDatabaseUrl(): string {
