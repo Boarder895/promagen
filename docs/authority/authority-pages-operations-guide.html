@@ -1,0 +1,601 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Authority Pages — Operations Guide</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg-deep: #0a0a0f;
+        --bg-card: rgba(255, 255, 255, 0.04);
+        --bg-card-hover: rgba(255, 255, 255, 0.07);
+        --border: rgba(255, 255, 255, 0.08);
+        --border-hover: rgba(255, 255, 255, 0.15);
+        --text: #e2e2e8;
+        --text-dim: #8b8b9e;
+        --text-bright: #ffffff;
+        --accent-purple: #a78bfa;
+        --accent-emerald: #34d399;
+        --accent-amber: #fbbf24;
+        --accent-sky: #38bdf8;
+        --accent-teal: #2dd4bf;
+        --accent-red: #f87171;
+        --accent-pink: #f472b6;
+        --cmd-bg: rgba(139, 92, 246, 0.08);
+        --cmd-border: rgba(139, 92, 246, 0.25);
+        --cmd-hover-bg: rgba(139, 92, 246, 0.15);
+        --cmd-hover-border: rgba(139, 92, 246, 0.4);
+        --copied-bg: rgba(52, 211, 153, 0.15);
+        --copied-border: rgba(52, 211, 153, 0.4);
+        --link-bg: rgba(251, 191, 36, 0.08);
+        --link-border: rgba(251, 191, 36, 0.25);
+        --link-hover-bg: rgba(251, 191, 36, 0.15);
+        --link-hover-border: rgba(251, 191, 36, 0.4);
+      }
+
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+
+      body {
+        background: var(--bg-deep);
+        color: var(--text);
+        font-family: "DM Sans", sans-serif;
+        line-height: 1.6;
+        min-height: 100vh;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+        background-size: 60px 60px;
+      }
+
+      .container { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; padding: 40px 24px 80px; }
+
+      /* Header */
+      .header { text-align: center; margin-bottom: 48px; padding-bottom: 32px; border-bottom: 1px solid var(--border); }
+      .header-badge { display: inline-block; font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent-amber); background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.25); border-radius: 20px; padding: 4px 14px; margin-bottom: 16px; }
+      .header h1 { font-size: 32px; font-weight: 700; color: var(--text-bright); margin-bottom: 8px; letter-spacing: -0.02em; }
+      .header p { color: var(--text-dim); font-size: 15px; max-width: 600px; margin: 0 auto; }
+
+      /* Stats row */
+      .stats { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 20px; }
+      .stat { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 20px; text-align: center; min-width: 100px; }
+      .stat-num { font-family: "JetBrains Mono", monospace; font-size: 24px; font-weight: 700; color: var(--accent-amber); }
+      .stat-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; }
+
+      /* Navigation */
+      .nav { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 40px; padding: 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; }
+      .nav a { font-size: 12px; font-weight: 500; color: var(--text-dim); text-decoration: none; padding: 6px 12px; border-radius: 6px; transition: all 0.15s; white-space: nowrap; }
+      .nav a:hover { color: var(--text-bright); background: rgba(255, 255, 255, 0.06); }
+
+      /* Sections */
+      .section { margin-bottom: 40px; }
+      .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+      .section-number { font-family: "JetBrains Mono", monospace; font-size: 11px; font-weight: 600; color: var(--accent-amber); background: rgba(251, 191, 36, 0.12); border-radius: 4px; padding: 2px 8px; min-width: 28px; text-align: center; }
+      .section h2 { font-size: 20px; font-weight: 600; color: var(--text-bright); letter-spacing: -0.01em; }
+      .section p, .section li { font-size: 14px; color: var(--text); margin-bottom: 8px; }
+      .section ul { list-style: none; padding-left: 0; margin-bottom: 12px; }
+      .section li::before { content: "→"; color: var(--accent-amber); margin-right: 8px; font-weight: 600; }
+
+      /* Command blocks (copy to clipboard) */
+      .cmd-group { margin-bottom: 16px; }
+      .cmd-label { font-size: 12px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+      .cmd { display: flex; align-items: center; justify-content: space-between; font-family: "JetBrains Mono", monospace; font-size: 12.5px; color: var(--accent-purple); background: var(--cmd-bg); border: 1px solid var(--cmd-border); border-radius: 8px; padding: 10px 14px; margin-bottom: 6px; cursor: pointer; transition: all 0.15s; user-select: none; }
+      .cmd:hover { background: var(--cmd-hover-bg); border-color: var(--cmd-hover-border); color: var(--text-bright); transform: translateY(-1px); box-shadow: 0 2px 12px rgba(139, 92, 246, 0.12); }
+      .cmd.copied { background: var(--copied-bg) !important; border-color: var(--copied-border) !important; color: var(--accent-emerald) !important; }
+      .cmd-text { flex: 1; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
+      .cmd-text::-webkit-scrollbar { display: none; }
+      .cmd-icon { flex-shrink: 0; margin-left: 12px; font-size: 14px; opacity: 0.5; transition: opacity 0.15s; }
+      .cmd:hover .cmd-icon { opacity: 1; }
+      .cmd-desc { font-size: 12px; color: var(--text-dim); margin-bottom: 12px; padding-left: 4px; }
+
+      /* Link blocks (open in browser) */
+      .link { display: flex; align-items: center; justify-content: space-between; font-family: "JetBrains Mono", monospace; font-size: 12.5px; color: var(--accent-amber); background: var(--link-bg); border: 1px solid var(--link-border); border-radius: 8px; padding: 10px 14px; margin-bottom: 6px; cursor: pointer; transition: all 0.15s; user-select: none; text-decoration: none; }
+      .link:hover { background: var(--link-hover-bg); border-color: var(--link-hover-border); color: var(--text-bright); transform: translateY(-1px); box-shadow: 0 2px 12px rgba(251, 191, 36, 0.12); }
+
+      /* Cards */
+      .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 12px; transition: border-color 0.15s; }
+      .card:hover { border-color: var(--border-hover); }
+      .card h3 { font-size: 14px; font-weight: 600; color: var(--text-bright); margin-bottom: 8px; }
+      .card p { font-size: 13px; }
+      .card code { font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--accent-purple); background: rgba(139, 92, 246, 0.1); padding: 1px 5px; border-radius: 3px; }
+
+      /* Route grid */
+      .route-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 16px; }
+      @media (max-width: 640px) { .route-grid { grid-template-columns: 1fr; } }
+
+      /* File tree */
+      .file-tree { font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--text-dim); background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 16px; line-height: 1.8; }
+      .file-tree .dir { color: var(--accent-amber); }
+      .file-tree .file { color: var(--accent-sky); }
+      .file-tree .desc { color: var(--text-dim); font-style: italic; }
+
+      /* Parts table */
+      .parts-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+      .parts-table th { text-align: left; padding: 8px 12px; color: var(--accent-amber); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--border); }
+      .parts-table td { padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+      .parts-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+      /* Badge */
+      .badge { display: inline-block; font-family: "JetBrains Mono", monospace; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; border: 1px solid; vertical-align: middle; }
+      .badge-t1 { color: var(--accent-sky); background: rgba(56, 189, 248, 0.1); border-color: rgba(56, 189, 248, 0.25); }
+      .badge-t2 { color: var(--accent-purple); background: rgba(139, 92, 246, 0.1); border-color: rgba(139, 92, 246, 0.25); }
+      .badge-t3 { color: var(--accent-emerald); background: rgba(52, 211, 153, 0.1); border-color: rgba(52, 211, 153, 0.25); }
+      .badge-t4 { color: var(--accent-amber); background: rgba(251, 191, 36, 0.1); border-color: rgba(251, 191, 36, 0.25); }
+      .badge-live { color: var(--accent-emerald); background: rgba(52, 211, 153, 0.12); border-color: rgba(52, 211, 153, 0.3); }
+
+      /* Toast */
+      .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(60px); background: rgba(52, 211, 153, 0.15); border: 1px solid rgba(52, 211, 153, 0.3); color: var(--accent-emerald); font-family: "JetBrains Mono", monospace; font-size: 12px; padding: 8px 20px; border-radius: 8px; opacity: 0; transition: all 0.25s; pointer-events: none; z-index: 100; backdrop-filter: blur(8px); }
+      .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+      /* Filter controls */
+      .filter-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+      .filter-btn { font-size: 11px; font-weight: 500; color: var(--text-dim); background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 4px 12px; cursor: pointer; transition: all 0.15s; }
+      .filter-btn:hover, .filter-btn.active { color: var(--accent-amber); background: rgba(251, 191, 36, 0.1); border-color: rgba(251, 191, 36, 0.25); }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <div class="header">
+        <div class="header-badge">Authority Pages System</div>
+        <h1>Promagen — Authority Pages</h1>
+        <p>Operations guide for the 57-route authority content architecture. All pages, data modules, shared components, and deploy commands.</p>
+        <div class="stats">
+          <div class="stat"><div class="stat-num">57</div><div class="stat-label">Routes</div></div>
+          <div class="stat"><div class="stat-num">7</div><div class="stat-label">Priorities</div></div>
+          <div class="stat"><div class="stat-num">40</div><div class="stat-label">Platforms</div></div>
+          <div class="stat"><div class="stat-num">8</div><div class="stat-label">Comparisons</div></div>
+          <div class="stat"><div class="stat-num">96</div><div class="stat-label">ChatGPT Score</div></div>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div class="nav">
+        <a href="#routes">Routes</a>
+        <a href="#profiles">40 Profiles</a>
+        <a href="#comparisons">Comparisons</a>
+        <a href="#use-cases">Use Cases</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#data-layer">Data Layer</a>
+        <a href="#components">Components</a>
+        <a href="#deploy">Deploy</a>
+        <a href="#seo">SEO & Schema</a>
+        <a href="#scores">Score History</a>
+      </div>
+
+      <!-- 01: Core Routes -->
+      <div class="section" id="routes">
+        <div class="section-header">
+          <span class="section-number">01</span>
+          <h2>Core Authority Routes</h2>
+        </div>
+        <p>The 7 priority pages. Click to open in dev server.</p>
+
+        <div class="cmd-group">
+          <div class="cmd-label">Priority 1 — Platform Hub</div>
+          <a class="link" href="http://localhost:3000/platforms" target="_blank">
+            <span class="cmd-text">/platforms</span>
+            <span class="cmd-icon">↗</span>
+          </a>
+        </div>
+
+        <div class="cmd-group">
+          <div class="cmd-label">Priority 3 — Negative Prompt Guide</div>
+          <a class="link" href="http://localhost:3000/platforms/negative-prompts" target="_blank">
+            <span class="cmd-text">/platforms/negative-prompts</span>
+            <span class="cmd-icon">↗</span>
+          </a>
+        </div>
+
+        <div class="cmd-group">
+          <div class="cmd-label">Priority 5 — Prompt Format Guide</div>
+          <a class="link" href="http://localhost:3000/guides/prompt-formats" target="_blank">
+            <span class="cmd-text">/guides/prompt-formats</span>
+            <span class="cmd-icon">↗</span>
+          </a>
+        </div>
+
+        <div class="cmd-group">
+          <div class="cmd-label">Priority 6 — Methodology (BQI)</div>
+          <a class="link" href="http://localhost:3000/about/how-we-score" target="_blank">
+            <span class="cmd-text">/about/how-we-score</span>
+            <span class="cmd-icon">↗</span>
+          </a>
+        </div>
+
+        <div class="cmd-group">
+          <div class="cmd-label">Priority 7 — Use-Case Hub</div>
+          <a class="link" href="http://localhost:3000/guides/best-generator-for" target="_blank">
+            <span class="cmd-text">/guides/best-generator-for</span>
+            <span class="cmd-icon">↗</span>
+          </a>
+        </div>
+
+        <div class="cmd-group">
+          <div class="cmd-label">Sitemap</div>
+          <a class="link" href="http://localhost:3000/sitemap.xml" target="_blank">
+            <span class="cmd-text">/sitemap.xml</span>
+            <span class="cmd-icon">↗</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 02: 40 Platform Profiles -->
+      <div class="section" id="profiles">
+        <div class="section-header">
+          <span class="section-number">02</span>
+          <h2>40 Platform Profiles</h2>
+        </div>
+        <p>Priority 2 — one page per platform. Click to open.</p>
+
+        <div class="filter-bar">
+          <button class="filter-btn active" onclick="filterProfiles('all')">All (40)</button>
+          <button class="filter-btn" onclick="filterProfiles('t1')"><span class="badge badge-t1">T1</span> CLIP (7)</button>
+          <button class="filter-btn" onclick="filterProfiles('t2')"><span class="badge badge-t2">T2</span> Midjourney (1)</button>
+          <button class="filter-btn" onclick="filterProfiles('t3')"><span class="badge badge-t3">T3</span> Natural (21)</button>
+          <button class="filter-btn" onclick="filterProfiles('t4')"><span class="badge badge-t4">T4</span> Plain (11)</button>
+        </div>
+
+        <div class="route-grid" id="profile-grid">
+        </div>
+      </div>
+
+      <!-- 03: Comparison Pairs -->
+      <div class="section" id="comparisons">
+        <div class="section-header">
+          <span class="section-number">03</span>
+          <h2>8 Comparison Pairs</h2>
+        </div>
+        <p>Priority 4 — pre-rendered "X vs Y" pages for high-intent search queries.</p>
+
+        <div class="route-grid" id="comparison-grid">
+        </div>
+
+        <div class="card">
+          <h3>Reverse-Slug Redirects (next.config.ts)</h3>
+          <p>8 × 301 redirects capture reversed search orderings. Add to <code>async redirects()</code> in next.config.ts if not already live.</p>
+        </div>
+      </div>
+
+      <!-- 04: Use-Case Pages -->
+      <div class="section" id="use-cases">
+        <div class="section-header">
+          <span class="section-number">04</span>
+          <h2>4 Use-Case Recommendations</h2>
+        </div>
+        <p>Priority 7 — answers "best AI image generator for [use case]" directly.</p>
+
+        <div class="route-grid" id="usecase-grid">
+        </div>
+      </div>
+
+      <!-- 05: File Architecture -->
+      <div class="section" id="architecture">
+        <div class="section-header">
+          <span class="section-number">05</span>
+          <h2>File Architecture</h2>
+        </div>
+
+        <div class="file-tree">
+<span class="dir">src/app/platforms/</span>
+  <span class="file">layout.tsx</span> <span class="desc">— dark shell + AuthorityNav + Org JSON-LD</span>
+  <span class="file">page.tsx</span> <span class="desc">— hub (P1)</span>
+  <span class="dir">[platformId]/</span><span class="file">page.tsx</span> <span class="desc">— 40 profiles (P2)</span>
+  <span class="dir">negative-prompts/</span><span class="file">page.tsx</span> <span class="desc">— neg guide (P3)</span>
+  <span class="dir">compare/[slug]/</span><span class="file">page.tsx</span> <span class="desc">— 8 pairs (P4)</span>
+<span class="dir">src/app/guides/</span>
+  <span class="file">layout.tsx</span> <span class="desc">— dark shell + AuthorityNav</span>
+  <span class="dir">prompt-formats/</span><span class="file">page.tsx</span> <span class="desc">— format guide (P5)</span>
+  <span class="dir">best-generator-for/</span><span class="file">page.tsx</span> <span class="desc">— use-case hub (P7)</span>
+  <span class="dir">best-generator-for/[useCase]/</span><span class="file">page.tsx</span> <span class="desc">— 4 recommendations (P7)</span>
+<span class="dir">src/app/about/</span>
+  <span class="file">layout.tsx</span> <span class="desc">— dark shell + AuthorityNav</span>
+  <span class="dir">how-we-score/</span><span class="file">page.tsx</span> <span class="desc">— methodology (P6)</span>
+<span class="dir">src/lib/authority/</span>
+  <span class="file">platform-data.ts</span> <span class="desc">— SSOT merge layer (40 platforms)</span>
+  <span class="file">presentation.ts</span> <span class="desc">— shared colours, constants</span>
+  <span class="file">comparison-pairs.ts</span> <span class="desc">— 8 pairs editorial + validation</span>
+  <span class="file">use-case-recommendations.ts</span> <span class="desc">— 4 use cases editorial + validation</span>
+<span class="dir">src/components/authority/</span>
+  <span class="file">authority-nav.tsx</span> <span class="desc">— shared nav with active state</span>
+  <span class="file">breadcrumb.tsx</span> <span class="desc">— typed breadcrumb with aria-current</span>
+  <span class="file">shared.tsx</span> <span class="desc">— FaqItem, FactCard, Section</span>
+  <span class="file">platform-hub-table.tsx</span> <span class="desc">— filterable/sortable table</span>
+<span class="dir">src/data/authority/</span>
+  <span class="file">bqi-headline.json</span> <span class="desc">— BQI range { min: 62, max: 96 }</span>
+        </div>
+      </div>
+
+      <!-- 06: Data Layer -->
+      <div class="section" id="data-layer">
+        <div class="section-header">
+          <span class="section-number">06</span>
+          <h2>Data Layer</h2>
+        </div>
+
+        <div class="card">
+          <h3>platform-data.ts — Central SSOT</h3>
+          <p>Merges <code>platform-config.json</code> + <code>providers.json</code> into <code>AuthorityPlatform</code>. Exports: <code>getAuthorityPlatforms()</code>, <code>getAuthorityPlatformById()</code>, <code>getPlatformCounts()</code>, <code>getPlatformsByNegativeSupport()</code>, <code>getBqiHeadlineRange()</code>, <code>getLastUpdated()</code>, <code>getSSOTVersion()</code>.</p>
+        </div>
+
+        <div class="card">
+          <h3>comparison-pairs.ts — 8 Pairs</h3>
+          <p>Editorial layer: slug, platform IDs, keyDifference, chooseWhen, workflowGuidance, FAQ. Build-time ID validation. Exports: <code>getComparisonSlugs()</code>, <code>getComparisonPairBySlug()</code>, <code>getRelatedComparisons()</code>, <code>getReverseSlugs()</code>.</p>
+        </div>
+
+        <div class="card">
+          <h3>use-case-recommendations.ts — 4 Use Cases</h3>
+          <p>Editorial layer: slug, directAnswer, 5 recommended platforms with reasoning, formatConsiderations, FAQ. Build-time ID validation. Exports: <code>getUseCaseSlugs()</code>, <code>getUseCaseBySlug()</code>, <code>getRelatedUseCases()</code>.</p>
+        </div>
+
+        <div class="card">
+          <h3>presentation.ts — Shared Constants</h3>
+          <p>Tier badge colours, negative support colours, card backgrounds, table cell padding, divider styles. Single source — zero duplication across pages.</p>
+        </div>
+      </div>
+
+      <!-- 07: Shared Components -->
+      <div class="section" id="components">
+        <div class="section-header">
+          <span class="section-number">07</span>
+          <h2>Shared Components</h2>
+        </div>
+
+        <table class="parts-table">
+          <thead><tr><th>Component</th><th>File</th><th>Used by</th></tr></thead>
+          <tbody>
+            <tr><td style="color:var(--accent-amber)">AuthorityNav</td><td>authority-nav.tsx</td><td>All 3 layouts (automatic)</td></tr>
+            <tr><td style="color:var(--accent-amber)">Breadcrumb</td><td>breadcrumb.tsx</td><td>Every authority page</td></tr>
+            <tr><td style="color:var(--accent-amber)">FaqItem</td><td>shared.tsx</td><td>Hub, profiles, neg guide, comparisons, format guide, methodology, use cases</td></tr>
+            <tr><td style="color:var(--accent-amber)">FactCard</td><td>shared.tsx</td><td>Profiles</td></tr>
+            <tr><td style="color:var(--accent-amber)">Section</td><td>shared.tsx</td><td>Profiles, comparisons, format guide, methodology, use cases</td></tr>
+            <tr><td style="color:var(--accent-amber)">PlatformHubTable</td><td>platform-hub-table.tsx</td><td>Hub page (client component)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 08: Deploy -->
+      <div class="section" id="deploy">
+        <div class="section-header">
+          <span class="section-number">08</span>
+          <h2>Deploy & Verify</h2>
+        </div>
+
+        <div class="cmd-group">
+          <div class="cmd-label">Clear cache and restart dev server</div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text">Remove-Item -Recurse -Force .next; pnpm dev</span>
+            <span class="cmd-icon">📋</span>
+          </div>
+        </div>
+
+        <div class="cmd-group">
+          <div class="cmd-label">Lint (must be 0 errors)</div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text">pnpm run lint</span>
+            <span class="cmd-icon">📋</span>
+          </div>
+        </div>
+
+        <div class="cmd-group">
+          <div class="cmd-label">Type check</div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text">pnpm run typecheck</span>
+            <span class="cmd-icon">📋</span>
+          </div>
+        </div>
+
+        <div class="cmd-group">
+          <div class="cmd-label">Full verify</div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text">pnpm run lint && pnpm run typecheck</span>
+            <span class="cmd-icon">📋</span>
+          </div>
+        </div>
+
+        <div class="cmd-group">
+          <div class="cmd-label">Production build test</div>
+          <div class="cmd" onclick="copyCmd(this)">
+            <span class="cmd-text">pnpm run build</span>
+            <span class="cmd-icon">📋</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 09: SEO & Schema -->
+      <div class="section" id="seo">
+        <div class="section-header">
+          <span class="section-number">09</span>
+          <h2>SEO & Structured Data</h2>
+        </div>
+
+        <table class="parts-table">
+          <thead><tr><th>Schema Type</th><th>Pages</th></tr></thead>
+          <tbody>
+            <tr><td style="color:var(--accent-sky)">Organization</td><td>Platforms layout (site-wide)</td></tr>
+            <tr><td style="color:var(--accent-sky)">BreadcrumbList</td><td>Every authority page</td></tr>
+            <tr><td style="color:var(--accent-sky)">FAQPage</td><td>Hub, profiles, neg guide, comparisons, format guide, methodology, use cases</td></tr>
+            <tr><td style="color:var(--accent-sky)">ItemList</td><td>Hub, use-case hub, use-case pages</td></tr>
+            <tr><td style="color:var(--accent-sky)">SoftwareApplication</td><td>Profile pages</td></tr>
+            <tr><td style="color:var(--accent-sky)">HowTo</td><td>Neg guide, format guide</td></tr>
+            <tr><td style="color:var(--accent-sky)">AboutPage</td><td>Methodology</td></tr>
+          </tbody>
+        </table>
+
+        <div class="card">
+          <h3>Robots.txt</h3>
+          <p>Welcomes Googlebot, Bingbot, OAI-SearchBot, GPTBot, ClaudeBot, PerplexityBot, Perplexity-User, Google-Extended. Blocks <code>/admin</code>, <code>/api</code>, <code>/dev</code>, <code>/test</code>, <code>/bridge</code>.</p>
+        </div>
+
+        <div class="card">
+          <h3>Sitemap Strategy</h3>
+          <p>Authority pages use SSOT last-updated date for <code>lastModified</code>. Product pages use generation time. All routes derived dynamically — zero manual URL maintenance.</p>
+        </div>
+      </div>
+
+      <!-- 10: Score History -->
+      <div class="section" id="scores">
+        <div class="section-header">
+          <span class="section-number">10</span>
+          <h2>ChatGPT Assessment History</h2>
+        </div>
+        <p>Independent scoring by ChatGPT across all drops.</p>
+
+        <table class="parts-table">
+          <thead><tr><th>Drop</th><th>Content</th><th>Score</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>P1 Hub + P2 Profiles (initial)</td><td style="color:var(--accent-amber)">93/100</td></tr>
+            <tr><td>2</td><td>P3 Negative Prompt Guide + shared modules</td><td style="color:var(--accent-amber)">95/100</td></tr>
+            <tr><td>3</td><td>P4 Comparison Pairs (initial)</td><td style="color:var(--accent-amber)">92/100</td></tr>
+            <tr><td>4</td><td>P4 fixes + P5 Prompt Format Guide</td><td style="color:var(--accent-amber)">94/100</td></tr>
+            <tr><td>5</td><td>P6 Methodology + hub links + converter teaser</td><td style="color:var(--accent-amber)">95/100</td></tr>
+            <tr><td>6</td><td>P7 Use Cases + AuthorityNav + BQI JSON</td><td style="color:var(--accent-emerald)">96/100</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">✓ Copied to clipboard</div>
+
+    <script>
+      // Platform data for the profile grid
+      const PLATFORMS = [
+        { id: '123rf', name: '123RF AI Generator', tier: 3 },
+        { id: 'adobe-firefly', name: 'Adobe Firefly', tier: 3 },
+        { id: 'artbreeder', name: 'Artbreeder', tier: 3 },
+        { id: 'artguru', name: 'Artguru', tier: 4 },
+        { id: 'artistly', name: 'Artistly', tier: 4 },
+        { id: 'bing', name: 'Bing Image Creator', tier: 3 },
+        { id: 'bluewillow', name: 'BlueWillow', tier: 4 },
+        { id: 'canva', name: 'Canva Magic Media', tier: 3 },
+        { id: 'clipdrop', name: 'ClipDrop', tier: 4 },
+        { id: 'craiyon', name: 'Craiyon', tier: 4 },
+        { id: 'deepai', name: 'DeepAI', tier: 3 },
+        { id: 'dreamlike', name: 'Dreamlike.art', tier: 1 },
+        { id: 'dreamstudio', name: 'DreamStudio', tier: 1 },
+        { id: 'flux', name: 'Flux (BFL)', tier: 3 },
+        { id: 'fotor', name: 'Fotor', tier: 1 },
+        { id: 'google-imagen', name: 'Google Imagen', tier: 3 },
+        { id: 'hotpot', name: 'Hotpot.ai', tier: 4 },
+        { id: 'ideogram', name: 'Ideogram', tier: 3 },
+        { id: 'imagine-meta', name: 'Imagine (Meta)', tier: 3 },
+        { id: 'jasper-art', name: 'Jasper Art', tier: 4 },
+        { id: 'kling', name: 'Kling AI', tier: 3 },
+        { id: 'leonardo', name: 'Leonardo AI', tier: 1 },
+        { id: 'lexica', name: 'Lexica', tier: 1 },
+        { id: 'luma-ai', name: 'Luma AI', tier: 3 },
+        { id: 'microsoft-designer', name: 'Microsoft Designer', tier: 4 },
+        { id: 'midjourney', name: 'Midjourney', tier: 2 },
+        { id: 'myedit', name: 'MyEdit', tier: 3 },
+        { id: 'novelai', name: 'NovelAI', tier: 1 },
+        { id: 'openai', name: 'DALL·E 3', tier: 3 },
+        { id: 'photoleap', name: 'Photoleap', tier: 4 },
+        { id: 'picsart', name: 'Picsart', tier: 4 },
+        { id: 'picwish', name: 'PicWish', tier: 4 },
+        { id: 'pixlr', name: 'Pixlr', tier: 3 },
+        { id: 'playground', name: 'Playground AI', tier: 3 },
+        { id: 'recraft', name: 'Recraft', tier: 3 },
+        { id: 'runway', name: 'Runway ML', tier: 3 },
+        { id: 'simplified', name: 'Simplified', tier: 3 },
+        { id: 'stability', name: 'Stability AI / SD', tier: 1 },
+        { id: 'visme', name: 'Visme AI', tier: 3 },
+        { id: 'vistacreate', name: 'VistaCreate', tier: 3 },
+      ];
+
+      const COMPARISONS = [
+        { slug: 'midjourney-vs-dalle', label: 'Midjourney vs DALL·E 3' },
+        { slug: 'midjourney-vs-flux', label: 'Midjourney vs Flux' },
+        { slug: 'flux-vs-stable-diffusion', label: 'Flux vs Stable Diffusion' },
+        { slug: 'leonardo-vs-ideogram', label: 'Leonardo vs Ideogram' },
+        { slug: 'dalle-vs-adobe-firefly', label: 'DALL·E 3 vs Adobe Firefly' },
+        { slug: 'midjourney-vs-leonardo', label: 'Midjourney vs Leonardo' },
+        { slug: 'ideogram-vs-midjourney', label: 'Ideogram vs Midjourney' },
+        { slug: 'canva-vs-adobe-firefly', label: 'Canva vs Adobe Firefly' },
+      ];
+
+      const USE_CASES = [
+        { slug: 'photorealism', label: 'Photorealism' },
+        { slug: 'illustration', label: 'Illustration' },
+        { slug: 'product-mockups', label: 'Product Mockups' },
+        { slug: 'concept-art', label: 'Concept Art' },
+      ];
+
+      const TIER_CLASS = { 1: 'badge-t1', 2: 'badge-t2', 3: 'badge-t3', 4: 'badge-t4' };
+
+      function renderProfileGrid(filter) {
+        const grid = document.getElementById('profile-grid');
+        const filtered = filter === 'all' ? PLATFORMS : PLATFORMS.filter(p => 't'+p.tier === filter);
+        grid.innerHTML = filtered.map(p =>
+          `<a class="link" href="http://localhost:3000/platforms/${p.id}" target="_blank">` +
+          `<span class="cmd-text"><span class="badge ${TIER_CLASS[p.tier]}">T${p.tier}</span> ${p.name}</span>` +
+          `<span class="cmd-icon">↗</span></a>`
+        ).join('');
+      }
+
+      function filterProfiles(tier) {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        event.target.closest('.filter-btn').classList.add('active');
+        renderProfileGrid(tier);
+      }
+
+      function renderComparisonGrid() {
+        const grid = document.getElementById('comparison-grid');
+        grid.innerHTML = COMPARISONS.map(c =>
+          `<a class="link" href="http://localhost:3000/platforms/compare/${c.slug}" target="_blank">` +
+          `<span class="cmd-text">${c.label}</span>` +
+          `<span class="cmd-icon">↗</span></a>`
+        ).join('');
+      }
+
+      function renderUseCaseGrid() {
+        const grid = document.getElementById('usecase-grid');
+        grid.innerHTML = USE_CASES.map(u =>
+          `<a class="link" href="http://localhost:3000/guides/best-generator-for/${u.slug}" target="_blank">` +
+          `<span class="cmd-text">Best for ${u.label}</span>` +
+          `<span class="cmd-icon">↗</span></a>`
+        ).join('');
+      }
+
+      // Copy command to clipboard
+      function copyCmd(el) {
+        const text = el.querySelector('.cmd-text').textContent.trim();
+        navigator.clipboard.writeText(text).then(() => {
+          el.classList.add('copied');
+          el.querySelector('.cmd-icon').textContent = '✓';
+          setTimeout(() => { el.classList.remove('copied'); el.querySelector('.cmd-icon').textContent = '📋'; }, 1200);
+          const toast = document.getElementById('toast');
+          toast.textContent = '✓ Copied: ' + (text.length > 50 ? text.slice(0, 50) + '…' : text);
+          toast.classList.add('show');
+          setTimeout(() => toast.classList.remove('show'), 1800);
+        });
+      }
+
+      // Smooth scroll
+      document.querySelectorAll('.nav a').forEach(a => {
+        a.addEventListener('click', e => {
+          e.preventDefault();
+          const target = document.querySelector(a.getAttribute('href'));
+          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      });
+
+      // Init
+      renderProfileGrid('all');
+      renderComparisonGrid();
+      renderUseCaseGrid();
+    </script>
+  </body>
+</html>
