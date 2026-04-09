@@ -1,20 +1,20 @@
-# Optimal Prompt Stacking Limits — All 45 Platforms
+# Optimal Prompt Stacking Limits — All 40 Platforms
 
 > **Authority document** — Governs per-platform, per-category selection limits for both builders.
-> Version 3.0.0 — 20 Mar 2026
+> Version 4.0.0 — 9 Apr 2026
 > Replaces the flat "+1 on 7 categories" model with research-backed per-platform numbers.
 
 ---
 
 ## Executive Summary
 
-Every AI image platform has a point where adding more descriptors hurts rather than helps. After synthesising community testing, technical documentation, and architectural analysis across all 45 platforms, the dominant finding is that most categories should be limited to **1–2 selections on free tiers** and **2–3 on pro tiers**, with four categories that should almost universally stay at 1. The research reveals dramatic differences between CLIP-based models (where 75 usable tokens create a hard budget), T5-based models (which handle 512 tokens of natural language), LLM-based encoders (ChatGLM3 on Kling), proprietary transformers (Recraft, Luma Photon), and platforms with automatic prompt rewriting (where stacking is partially overridden).
+Every AI image platform has a point where adding more descriptors hurts rather than helps. After synthesising community testing, technical documentation, and architectural analysis across all 40 platforms, the dominant finding is that most categories should be limited to **1–2 selections on free tiers** and **2–3 on pro tiers**, with four categories that should almost universally stay at 1. The research reveals dramatic differences between CLIP-based models (where 75 usable tokens create a hard budget), T5-based models (which handle 512 tokens of natural language), LLM-based encoders (ChatGLM3 on Kling), proprietary transformers (Recraft, Luma Photon), and platforms with automatic prompt rewriting (where stacking is partially overridden).
 
 ---
 
 ## Four Categories That Should Never Exceed 1
 
-Across all 45 platforms, four prompt categories create contradictions rather than enhancement when stacked above 1:
+Across all 40 platforms, four prompt categories create contradictions rather than enhancement when stacked above 1:
 
 - **Action** — produces physically impossible hybrid poses.
 - **Composition** — terms directly conflict (close-up vs wide shot, centered vs rule-of-thirds).
@@ -133,7 +133,7 @@ Automatically expands all prompts before diffusion. User stacking has reduced im
 
 **OpenAI (DALL-E 3)** — GPT-4 rewrites everything. Optimal: 400–800 chars. Cannot process negation. API `style` and `quality` params replace fidelity stacking.
 
-**Flux** — **Highest stacking tolerance of all 45 platforms.** T5-XXL, 512 tokens. CLIP weight syntax ignored. Quality tags **0/0**. FLUX.2 uses 24B Mistral encoder.
+**Flux** — **Highest stacking tolerance of all 40 platforms.** T5-XXL, 512 tokens. CLIP weight syntax ignored. Quality tags **0/0**. FLUX.2 uses 24B Mistral encoder.
 
 **Google Imagen** — T5-XXL architecture. Quality modifiers DO work. Negation discouraged.
 
@@ -248,12 +248,12 @@ All Tier 1 CLIP platforms (Stability, Leonardo, NightCafe, etc.), Tensor.Art, Kl
 - Four tiers is correct (with Jasper Art reclassification)
 - `PAID_BONUS_CATEGORIES` concept is sound — bonus should be variable, not flat +1
 - `getCategoryLimitsForPlatformTier()` supports per-platform overrides
-- `NEGATIVE_TO_POSITIVE` conversion is a genuine differentiator across 45 platforms
+- `NEGATIVE_TO_POSITIVE` conversion is a genuine differentiator across 40 platforms
 - Assembler routing (`negativeSupport: 'separate' | 'inline' | 'none'`) handles all patterns
 
 ---
 
-## Consolidated Quick-Reference (all 45)
+## Consolidated Quick-Reference (all 40)
 
 Format: `category=free/pro`
 
@@ -318,7 +318,7 @@ Format: `category=free/pro`
 
 ## The Fundamental Insight
 
-Prompts navigate a learned latent space, not instruct a generator. Stacking compatible terms productively narrows to a coherent region. Stacking conflicting terms forces averaging and produces the generic "AI look." The most effective strategy across all 45 platforms: **maximise coherence, not term count.**
+Prompts navigate a learned latent space, not instruct a generator. Stacking compatible terms productively narrows to a coherent region. Stacking conflicting terms forces averaging and produces the generic "AI look." The most effective strategy across all 40 platforms: **maximise coherence, not term count.**
 
 ---
 
@@ -327,5 +327,7 @@ Prompts navigate a learned latent space, not instruct a generator. Stacking comp
 | Date        | Version | Change                                                                                                                                                                                                                                                                                                                                       |
 | ----------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 20 Mar 2026 | 3.0.0   | Quick-reference tables updated to match code (PLATFORM_SPECIFIC_LIMITS). 46 values changed: fidelity enabled on 5 conversion platforms (MJ, Flux, Recraft, BlueWillow, Luma), negatives enabled on 18 'none' platforms via conversion pool, Kling negatives reduced to 2/3. Doc now matches code exactly — 0 mismatches across 1,080 values. |
-| 19 Mar 2026 | 2.0.0   | Updated to 45 platforms. Added Recraft V3, Kling AI, Luma AI, Tensor.Art. Removed remove-bg. Added ChatGLM3 + proprietary encoder sections. Added Fidelity Conversion Rules (Option B). Updated all tier counts and quick-reference.                                                                                                         |
+| 19 Mar 2026 | 2.0.0   | Updated to 40 platforms. Added Recraft V3, Kling AI, Luma AI, Tensor.Art. Removed remove-bg. Added ChatGLM3 + proprietary encoder sections. Added Fidelity Conversion Rules (Option B). Updated all tier counts and quick-reference.                                                                                                         |
 | 19 Mar 2026 | 1.0.0   | Initial document. Full 42-platform research with per-platform, per-category limits.                                                                                                                                                                                                                                                          |
+
+| 9 Apr 2026  | 4.0.0   | Platform count 45→40. 5 multi-engine aggregators removed (NightCafe, OpenArt, Tensor.Art, GetImg, Freepik). All "45" references updated to "40". |

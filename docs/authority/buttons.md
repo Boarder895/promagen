@@ -1,6 +1,6 @@
 # Buttons Authority Document
 
-**Last updated:** 23 March 2026  
+**Last updated:** 9 April 2026  
 **Version:** 4.0.0  
 **Owner:** Promagen  
 **Authority:** This document defines ALL button behaviour, styling, wiring, and code locations across Promagen.
@@ -53,7 +53,6 @@ This document is the single source of truth for every interactive button in Prom
 | Fallback Nav         | Pro Promagen             | `/pro-promagen`        | `<a href>`         | Inherits           |
 | Studio Feature Cards | Library                  | `/studio/library`      | `<a href>`         | Inherits           |
 | Studio Feature Cards | Explore                  | `/studio/explore`      | `<a href>`         | Inherits           |
-| Studio Feature Cards | Learn                    | `/studio/learn`        | `<a href>`         | Inherits           |
 | Studio Feature Cards | Playground               | `/studio/playground`   | `<a href>`         | Inherits           |
 
 ---

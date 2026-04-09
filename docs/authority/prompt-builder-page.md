@@ -1,6 +1,6 @@
 # Prompt Builder Page
 
-**Last updated:** 18 March 2026
+**Last updated:** 9 April 2026
 **Owner:** Promagen
 **Authority:** This document defines the architecture and behaviour for the provider-specific prompt builder page (`/providers/[id]`).
 **Cross-reference:** For unified assembly engine architecture, see `unified-prompt-brain.md`. For optimizer engine architecture, see `prompt-optimizer.md`. For colour-coded prompt anatomy, see `paid_tier.md` §5.14. For composition mode definitions, see §3-Stage Assembly Pipeline below.
@@ -662,7 +662,7 @@ Categories are ordered for optimal AI token weighting — most important terms a
 
 ### Platform-Aware Selection Limits (v8.2.0)
 
-Selection limits are **platform-aware** — different AI platforms handle prompt complexity differently. Each of the 42 supported platforms is assigned to one of four tiers.
+Selection limits are **platform-aware** — different AI platforms handle prompt complexity differently. Each of the 40 supported platforms is assigned to one of four tiers.
 
 #### Platform Tier Philosophy
 
@@ -710,18 +710,18 @@ Selection limits are **platform-aware** — different AI platforms handle prompt
 **Stackable categories:** Style, Lighting, Colour, Atmosphere, Materials, Fidelity, Negative
 **Non-stackable categories (always 1):** Subject, Action, Environment, Composition, Camera
 
-#### Platform Tier Assignments (All 42 Platforms)
+#### Platform Tier Assignments (All 40 Platforms)
 
-**Tier 1 — CLIP-Based (13 platforms):**
+**Tier 1 — CLIP-Based (7 platforms):**
 `stability`, `leonardo`, `clipdrop`, `nightcafe`, `dreamstudio`, `lexica`, `novelai`, `dreamlike`, `getimg`, `openart`, `playground`, `artguru`, `jasper-art`
 
-**Tier 2 — Midjourney Family (2 platforms):**
+**Tier 2 — Midjourney Family (1 platform):**
 `midjourney`, `bluewillow`
 
-**Tier 3 — Natural Language (10 platforms):**
+**Tier 3 — Natural Language (17 platforms):**
 `openai`, `adobe-firefly`, `ideogram`, `runway`, `microsoft-designer`, `bing`, `flux`, `google-imagen`, `imagine-meta`, `hotpot`
 
-**Tier 4 — Plain Language (17 platforms):**
+**Tier 4 — Plain Language (15 platforms):**
 `canva`, `craiyon`, `deepai`, `pixlr`, `picwish`, `fotor`, `visme`, `vistacreate`, `myedit`, `simplified`, `freepik`, `picsart`, `photoleap`, `artbreeder`, `123rf`, `remove-bg`, `artistly`
 
 #### Auto-Trim Behaviour
@@ -874,10 +874,10 @@ frontend/src/
 ├── data/
 │   ├── providers/
 │   │   ├── prompt-options.json     # 12 categories (~2,100 options)
-│   │   └── platform-formats.json   # 42 platform configs (1,844 lines)
+│   │   └── platform-formats.json (1,624 lines))
 │   └── platform-tiers.ts          # Platform → tier mapping (199 lines)
 ├── lib/
-│   ├── prompt-builder.ts           # Unified assembly engine (1,738 lines)
+│   ├── prompt-builder.ts (2,190 lines))
 │   │   ├── assemblePrompt(platformId, selections, weightOverrides?)  # THE ONE BRAIN
 │   │   ├── assembleStatic(platformId, selections)  # Raw comma join (no intelligence)
 │   │   ├── selectionsFromMap()     # Convert WeatherCategoryMap → PromptSelections
@@ -930,7 +930,7 @@ The prompt builder integrates with the intelligence preference system via `useIn
 | `showDNABar` | Show prompt DNA composition bar |
 | `showWhyThisTooltips` | Show explanatory tooltips on DNA bar segments |
 
-**Market Mood toggle:** Removed from prompt builder scope (4 March 2026). The `useIntelligencePreferences` hook no longer includes `setIntelligencePref` in the prompt builder's destructuring. Market Mood may still exist in Gallery Mode — see `gallery-mode-master.md`.
+**Market Mood toggle:** Removed from prompt builder scope (4 March 2026). The `useIntelligencePreferences` hook no longer includes `setIntelligencePref` in the prompt builder's destructuring. Market Mood removed from prompt builder scope.
 
 ---
 
@@ -1079,7 +1079,7 @@ This feeds the learning pipeline for weight recalibration, co-occurrence analysi
 - Stage badge updates correctly: 📋 Static | ✨ Dynamic | ⚡ Optimized | ✓ Optimal
 - Visual diff highlights appear when switching Static → Dynamic (emerald background, 2s fade)
 - Inline copy icons work in both assembled and optimized preview boxes
-- Dynamic config guard: all 42 platforms produce correct output per their `platform-formats.json` config
+- Dynamic config guard: all 40 platforms produce correct output per their `platform-formats.json` config
 - Tooltip body text uses `text-slate-300` (NOT emerald-400)
 - Composition Mode Toggle shows tier-specific Dynamic tooltip content
 
@@ -1205,14 +1205,14 @@ These features were removed as they added no value:
 
 - **18 Mar 2026 (v11.0.0):** **COLOUR-CODED PROMPT ANATOMY + LIFETIME COUNTER + DYNAMIC LABEL** — Pro Promagen users see colour-coded prompt text in assembled and optimized preview boxes via `parsePromptIntoSegments()` from SSOT `src/lib/prompt-colours.ts` (210 lines, 13 colours). Category dropdown labels take on their category colour via Combobox `labelColour` prop (v7.3.0, 811 lines). CategoryColourLegend moved from assembled prompt row to header bar (between TextLengthOptimizer and intelligence badges). Restyled: solid `rgba(15,23,42,0.97)` bg, `rounded-xl`, ethereal glow overlay, `clamp(280px, 22vw, 340px)` width. Dynamic assembled prompt label: when `isOptimizerEnabled && selectedProviderId`, label → "Optimized prompt in [Provider] [icon]" (emerald), border → emerald, text → emerald. Condition intentionally excludes `wasOptimized` — switches on enable, not on trimming. Inline copy + SaveIcon added to assembled prompt box (float-right, matching optimized box). `incrementLifetimePrompts()` wired into all 3 copy handlers (`handleCopyPrompt`, `handleCopyAssembled`, `handleCopyOptimized`). New file: `src/lib/lifetime-counter.ts` (33 lines). New file: `src/lib/prompt-colours.ts` (210 lines). prompt-builder.tsx grew from 2,746 to 3,104 lines. Combobox grew from ~760 to 811 lines. See `paid_tier.md` §5.14 for full colour table, §5.15 for Pro Gem Badge integration.
 
-- **4 Mar 2026 (v10.1.0):** **3-STAGE PIPELINE + UI POLISH** — Added 3-stage assembly pipeline (Static/Dynamic/Optimize) with `assembleStatic()` for raw output. Composition Mode Toggle now accepts `platformId` prop for tier-specific Dynamic tooltips (T1 CLIP / T2 MJ / T3 NL / T4 Plain). Text Length Optimizer tooltip body text reverted from `text-emerald-400` to `text-slate-300` for readability. Instruction text changed "Press Done" → "Click Done". Stage indicator badge added (📋/✨/⚡/✓). Inline copy icons added to both assembled and optimized prompt preview boxes (float-right positioning). Visual diff highlighting on Static→Dynamic switch. Market Mood toggle removed from prompt builder scope (`setIntelligencePref` removed from destructuring). PotM ProviderIcon visibility fix: `bg-white/15` + `drop-shadow(0 0 3px rgba(255,255,255,0.4))`. All 42 platforms pushed to architectural ceiling. prompt-builder.tsx grew from ~2,431 to 2,746 lines. prompt-builder.ts grew from ~1,519 to 1,738 lines. New test: `prompt-builder-3-stage.test.ts` (653 lines, ~41 cases). Dynamic config guard tests cover all 42 platforms. See `unified-prompt-brain.md` for full architecture.
+- **4 Mar 2026 (v10.1.0):** **3-STAGE PIPELINE + UI POLISH** — Added 3-stage assembly pipeline (Static/Dynamic/Optimize) with `assembleStatic()` for raw output. Composition Mode Toggle now accepts `platformId` prop for tier-specific Dynamic tooltips (T1 CLIP / T2 MJ / T3 NL / T4 Plain). Text Length Optimizer tooltip body text reverted from `text-emerald-400` to `text-slate-300` for readability. Instruction text changed "Press Done" → "Click Done". Stage indicator badge added (📋/✨/⚡/✓). Inline copy icons added to both assembled and optimized prompt preview boxes (float-right positioning). Visual diff highlighting on Static→Dynamic switch. Market Mood toggle removed from prompt builder scope (`setIntelligencePref` removed from destructuring). PotM ProviderIcon visibility fix: `bg-white/15` + `drop-shadow(0 0 3px rgba(255,255,255,0.4))`. All 40 platforms pushed to architectural ceiling. prompt-builder.ts (2,190 lines). New test: `prompt-builder-3-stage.test.ts` (653 lines, ~41 cases). Dynamic config guard tests cover all 40 platforms. See `unified-prompt-brain.md` for full architecture.
 
 - **3 Mar 2026 (v10.0.0):** **UNIFIED BRAIN INTEGRATION** — `assemblePrompt()` signature updated from 2-arg `(platformId, selections)` to 3-arg `(platformId, selections, weightOverrides?)`. 7 family-specific assemblers replaced by single unified tier-aware assembler routing through `assembleKeywords()` (Tier 1+2), `assembleNaturalSentences()` (Tier 3), `assemblePlainLanguage()` (Tier 4). New internal functions: `assembleTierAware()`, `deduplicateWithinCategories()`, `deduplicateAcrossCategories()`, `estimateClipTokens()`, `getPlatformFormat()`, `getEffectiveOrder()`. New `weatherWeightOverrides` state variable for "Try in" preload. Phase D sessionStorage preload pathway with two-effect split. New types: `WeatherCategoryMap`, `WeatherCategoryMeta`, `PromptDNAFingerprint`. See `unified-prompt-brain.md` for full architecture.
 
 - **25 Feb 2026 (v9.0.0):** **PROMPT BUILDER EVOLUTION PHASES 0–4** — Vocabulary Merge: 9,058 terms. Cascading Intelligence: downstream reorder. Scene Starters: 200 scenes. Explore Drawer: expandable per-category panels. Phase 4 polish: flavour phrases, tier badges, cascade ordering, 5 GTM events. Fluid typography: 127 clamp() calls. See `prompt-builder-evolution-plan-v2.md`.
 
 - **8 Jan 2026 (v8.3.0):** **FREE TIER LIMIT REDUCED** — Standard Promagen 30/day → 10/day.
-- **5 Jan 2026 (v8.2.0):** **PLATFORM-AWARE CATEGORY LIMITS** — Tier-based selection limits for all 42 platforms. Pro +1 bonus. Auto-trim on switch. Dynamic tooltips. Combobox v6.3.0.
+- **5 Jan 2026 (v8.2.0):** **PLATFORM-AWARE CATEGORY LIMITS** — Tier-based selection limits for all 40 platforms. Pro +1 bonus. Auto-trim on switch. Dynamic tooltips. Combobox v6.3.0.
 - **4 Jan 2026 (v6.4.0):** **LOCK STATE UX CLEANUP** — Removed dropdown overlay text. Central overlay only.
 - **4 Jan 2026 (v2.0.0 anonymous-storage):** **ANONYMOUS DAILY RESET** — 5 prompts/day resets at midnight.
 - **3 Jan 2026 (v4.2):** **TERMINOLOGY UPDATE** — "paid" → "Pro Promagen", "free" → "Standard Promagen".

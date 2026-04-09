@@ -1,6 +1,6 @@
 # Promagen Code Standard (API-free edition)
 
-**Last updated:** 6 April 2026  
+**Last updated:** 9 April 2026  
 **Version:** 5.0 (No Grey Text · AI Disguise · Co-located Styles · Pipeline X-Ray patterns)  
 **Scope:** Frontend code inside the `frontend/` workspace only.
 
@@ -933,7 +933,7 @@ All 200 scenes in `scene-starters.json` must have **all 11 prefill categories fi
 
 **Tier 4 `reducedPrefills`** must include all 11 categories — Tier 4 platforms handle extra terms gracefully.
 
-**Scoring target:** 100% health score on all 42 platforms across all 4 tiers. Verified by:
+**Scoring target:** 100% health score on all 40 platforms across all 4 tiers. Verified by:
 
 - No term triggers a family opposition penalty (use untagged synonyms when necessary)
 - No term triggers a defined conflict or semantic tag conflict
@@ -2229,7 +2229,7 @@ body {
 
 ### § 8.4 Prompt Builder Patterns (Added Dec 31, 2025)
 
-The prompt builder uses a 9-category dropdown system with platform-specific optimization for 42 AI image generation providers.
+The prompt builder uses a 9-category dropdown system with platform-specific optimization for 40 AI image generation providers.
 
 #### Category Dropdown System
 
@@ -2301,14 +2301,14 @@ Routing logic inside `assembleTierAware()`:
 | `promptStyle === 'keywords'` | `assembleKeywords()`         | Tier 1 + 2     |
 | Everything else              | `assembleNaturalSentences()` | Tier 3         |
 
-**4 Platform Tiers (42 platforms):**
+**4 Platform Tiers (40 platforms):**
 
 | Tier | Name             | Platforms | Prompt Style                                  |
 | ---- | ---------------- | --------- | --------------------------------------------- |
-| 1    | CLIP-Based       | 13        | Weighted keywords `(term:1.2)` + separate neg |
-| 2    | Midjourney       | 2         | Keywords + `--no` params                      |
-| 3    | Natural Language | 10        | Conversational sentences                      |
-| 4    | Plain Language   | 17        | Short, focused prompts                        |
+| 1    | CLIP-Based       | 7         | Weighted keywords `(term:1.2)` + separate neg |
+| 2    | Midjourney       | 1         | Keywords + `--no` params                      |
+| 3    | Natural Language | 17        | Conversational sentences                      |
+| 4    | Plain Language   | 15        | Short, focused prompts                        |
 
 Platform config lives in `platform-formats.json` (31 entries + defaults). Tier assignments in `platform-tiers.ts` (199 lines). See `prompt-builder-page.md` for full platform lists.
 

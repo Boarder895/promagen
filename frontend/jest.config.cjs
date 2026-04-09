@@ -155,6 +155,7 @@ module.exports = {
         '<rootDir>/src/__tests__/format.*.test.{ts,tsx}',
         '<rootDir>/src/__tests__/fx.*.test.{ts,tsx}',
         '<rootDir>/src/__tests__/exchange-order.test.{ts,tsx}',
+        '<rootDir>/src/__tests__/sentinel/**/*.test.{ts,tsx}',
       ],
     },
 

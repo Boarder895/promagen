@@ -1,261 +1,218 @@
 # Index Rating System
 
-**Last updated:** 6 April 2026
+**Last updated:** 9 April 2026  
+**Owner:** Promagen  
+**Status:** Authority Document  
 **Version:** 2.0.0
-**Owner:** Promagen
-**Status:** Authority Document — verified against `src.zip` SSoT
 
 ---
 
 ## Purpose
 
-Promagen's Index Rating is a dynamic, Elo-style competitive ranking for 40 AI image generation providers. Ratings move daily based on user engagement events, handicapped by Market Power Index (MPI) so smaller platforms can outclimb giants through proportionally higher engagement.
+This document defines Promagen's **Index Rating** system — a dynamic, Elo-style competitive ranking for 40 AI image generation providers. The system replaces the previous static 0–100 score with a live, engagement-driven rating that moves like a stock exchange index.
 
-**Where it appears:**
-
-- Homepage (`/`) — ProvidersTable "Index Rating" column
-- Prompt Lab (`/studio/playground`) — LeaderboardRail left rail (mini leaderboard with demo jitter)
-- Provider pages (`/providers/[id]`) — ProvidersTable
+The Index Rating ensures fair competition between established giants and newcomers through a handicapping system that normalises engagement by provider market power.
 
 ---
 
-## Constants (from `src/types/index-rating.ts`)
+## Design Philosophy
 
-| Constant                        | Value  | Purpose                                                  |
-| ------------------------------- | ------ | -------------------------------------------------------- |
-| `INDEX_RATING_BASELINE`         | 1500   | Elo baseline for all providers                           |
-| `INDEX_RATING_DECAY_LAMBDA`     | 0.02   | Time decay rate (half-life ≈ 35 days)                    |
-| `INDEX_RATING_DAILY_REGRESSION` | 0.002  | Daily pull toward baseline (0.2%/day)                    |
-| `INDEX_RATING_MIN_FLOOR`        | 100    | Minimum rating floor                                     |
-| `INDEX_RATING_FLAT_THRESHOLD`   | 0.1    | ±0.1% = flat display state                               |
-| `INDEX_RATING_ADVISORY_LOCK_ID` | 424243 | Postgres advisory lock for cron                          |
-| `INDEX_RATING_STALE_HOURS`      | 48     | Staleness threshold                                      |
-| `DISPLAY_INFLATION_OFFSET`      | 200    | Added to all ratings for display only — NOT stored in DB |
+1. **Fair competition** — Smaller platforms climb faster; giants work harder for each point
+2. **No coasting** — Past engagement decays; providers must stay relevant
+3. **Positive reinforcement** — Celebrate climbers, don't shame fallers
+4. **Stock exchange aesthetic** — Numbers, arrows, percentages match the market ribbon
+5. **Transparency** — Users understand smaller tools can outrank giants through engagement
 
 ---
 
-## 12 Event Types (from `EVENT_CONFIG`)
+## Architecture
 
-All defined in `src/types/index-rating.ts`. Tracked via `POST /api/events/track`.
+### Deployment Model
 
-| Event Type            | Base Points | K-Factor | Source                          | Wired                              |
-| --------------------- | ----------- | -------- | ------------------------------- | ---------------------------------- |
-| `vote`                | 5           | 32       | Image quality vote              | ✅ `image-quality-vote-button.tsx` |
-| `prompt_submit`       | 5           | 24       | Copy in prompt builder          | ✅ `copy-open-button.tsx`          |
-| `prompt_builder_open` | 3           | 16       | Provider detail page load       | ✅ `provider-page-tracker.tsx`     |
-| `open`                | 2           | 16       | Outbound click via `/go/[id]`   | ✅ `/go/[id]/route.ts`             |
-| `click`               | 2           | 16       | Legacy alias for `open`         | ✅                                 |
-| `social_click`        | 1           | 8        | Social media icon click         | ✅ `support-icons-cell.tsx`        |
-| `prompt_lab_select`   | 4           | 20       | Select provider in Prompt Lab   | ✅ `playground-workspace.tsx`      |
-| `prompt_lab_generate` | 7           | 28       | Generate prompts in Prompt Lab  | ✅ `playground-workspace.tsx`      |
-| `prompt_lab_copy`     | 6           | 24       | Copy tier prompt in Prompt Lab  | Hook exists, wiring TBC            |
-| `prompt_lab_optimise` | 8           | 32       | Run Call 3 in Prompt Lab        | Hook exists, wiring TBC            |
-| `prompt_save`         | 4           | 20       | Save prompt to library          | ✅ `save-icon.tsx`                 |
-| `prompt_reformat`     | 3           | 16       | Reformat for different platform | ✅ `reformat-preview.tsx`          |
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   Git Repo      │     │     Vercel      │     │  Neon Postgres  │
+│                 │────▶│   (Stateless)   │────▶│  (Persistent)   │
+│ providers.json  │     │  Next.js App    │     │ Tables:         │
+│ (40 providers)  │     │  API Routes     │     │ - provider_     │
+│ market-power.   │     │  Cron Jobs      │     │   activity_     │
+│ json (handicap) │     │                 │     │   events        │
+│                 │     │                 │     │ - provider_     │
+│                 │     │                 │     │   ratings       │
+│                 │     │                 │     │ - index_rating_ │
+│                 │     │                 │     │   cron_runs     │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+```
 
-### ⚠️ Known Gap — Cron SQL Filter
+### What Lives Where
 
-The Index Rating cron only queries **6 of 12 event types** from the database:
+| Data | Location | Reason |
+|------|----------|--------|
+| Provider static info (name, website, tagline, icon) | `providers.json` (repo) | Rarely changes, version controlled |
+| Provider capabilities (API, affiliate, prefill flags) | `providers.json` (repo) | Rarely changes, version controlled |
+| Market Power data | `market-power.json` (repo) | Researched data, version controlled |
+| Raw engagement events | `provider_activity_events` (DB) | Accumulates, survives deploys |
+| Aggregated ratings | `provider_ratings` (DB) | Changes daily, survives deploys |
+| Cron run logs | `index_rating_cron_runs` (DB) | Observability, survives deploys |
+
+### Deploy Safety
+
+On every Vercel deploy: new code deployed, database untouched, ratings persist, events persist, nothing lost.
+
+### Shared Infrastructure
+
+| Component | Shared? | Notes |
+|-----------|---------|-------|
+| Neon Postgres instance | ✅ Yes | Same database, separate tables |
+| `provider_activity_events` table | ✅ Yes | Shared with Promagen Users cron |
+| `PROMAGEN_CRON_SECRET` | ✅ Yes | Same secret protects all crons |
+| Vercel Cron | ✅ Yes | 4 crons total |
+
+---
+
+## Event Types (12 Total)
+
+Event configuration lives in `src/types/index-rating.ts` as `EVENT_CONFIG`:
+
+| Event Type | Base Points | K-Factor | Source |
+|---|---|---|---|
+| `vote` | 5 | 32 | Image quality vote |
+| `prompt_submit` | 5 | 24 | Copy in prompt builder |
+| `prompt_builder_open` | 3 | 16 | Open provider detail page |
+| `open` | 2 | 16 | Provider page / outbound click |
+| `click` | 2 | 16 | Legacy alias for `open` |
+| `social_click` | 1 | 8 | Social media icon click |
+| `prompt_lab_select` | 4 | 20 | Select provider in Prompt Lab |
+| `prompt_lab_generate` | 7 | 28 | Generate prompts in Prompt Lab |
+| `prompt_lab_copy` | 6 | 24 | Copy tier prompt in Prompt Lab |
+| `prompt_lab_optimise` | 8 | 32 | Run Call 3 in Prompt Lab |
+| `prompt_save` | 4 | 20 | Save prompt to library |
+| `prompt_reformat` | 3 | 16 | Reformat for different platform |
+
+### ⚠️ SQL Filter Gap
+
+The Index Rating cron only queries **6 of 12** event types:
 
 ```sql
 AND event_type IN ('vote', 'open', 'click', 'prompt_builder_open', 'prompt_submit', 'social_click')
 ```
 
-The 6 Prompt Lab and Library events are tracked, stored in `provider_activity_events`, have weights in `EVENT_CONFIG`, but are **excluded by hardcoded SQL** in `src/lib/index-rating/database.ts` (two queries). These events do not influence Index Ratings despite being designed to.
+The 6 Prompt Lab events are tracked and stored but **not consumed by the cron**. Files affected: `src/lib/index-rating/database.ts` — two SQL queries with hardcoded `IN (...)` clauses. The Promagen Users cron counts ALL events (no filter).
 
 ---
 
-## Calculation Pipeline
+## Elo Calculation
 
-### Per-Event Effective Points
+### Effective Points
 
-```
-EffectivePoints = BasePoints × StaticBonus × TimeDecay × NewcomerBoost
-```
+`effectivePoints = basePoints × staticBonus × timeDecay × newcomerBoost`
 
-### Static Bonuses (multiplicative)
+### Static Bonuses (from `src/types/index-rating.ts`)
 
-| Factor              | Multiplier | Source                        |
-| ------------------- | ---------- | ----------------------------- |
-| API available       | ×1.10      | `provider.apiAvailable`       |
-| Affiliate programme | ×1.05      | `provider.affiliateProgramme` |
-| Supports prefill    | ×1.05      | `provider.supportsPrefill`    |
-
-### Time Decay
-
-```
-TimeDecay = e^(-0.02 × daysOld)
-```
-
-Half-life ≈ 35 days. Events from 70 days ago have ~25% weight.
+| Factor | Multiplier |
+|---|---|
+| API available | ×1.10 |
+| Affiliate programme | ×1.05 |
+| Supports prefill | ×1.05 |
 
 ### Newcomer Boost
 
-| Age        | Multiplier |
-| ---------- | ---------- |
-| 0–3 months | ×1.20      |
-| 3–6 months | ×1.10      |
-| 6+ months  | ×1.00      |
+Providers founded <3 months ago get ×1.20, tapering to ×1.0 over 6 months.
 
-### Market Power Index (MPI)
+### Elo Gain
 
-```
-MPI = 1 + SocialFactor + YearsFactor + UsersFactor
-```
+`gain = handicappedPoints × kFactor × (actual - expected)`
 
-Where:
+MPI (Market Power Index) handicaps high-power providers so newcomers gain more from the same engagement.
 
-- `SocialFactor = log₁₀(1 + avgSocialFollowers / 1000)` — average across available platforms (YouTube, X, Instagram, Facebook, Discord, LinkedIn, TikTok, Reddit, Pinterest)
-- `YearsFactor = yearsActive × 0.1`
-- `UsersFactor = log₁₀(1 + estimatedUsers / 100000)`
+### Daily Regression
 
-Clamped to range 1.0–10.0. Default 3.0 when no market power data exists.
+0.2% regression toward baseline (1500) per day. Providers with zero engagement slowly drift toward baseline.
 
-Higher MPI = bigger provider = fewer points per engagement (handicap). 37 of 40 providers have market power data in `src/data/providers/market-power.json` (last researched 27 Jan 2026).
+### Rating Floor
 
-### Elo Gain per Event
-
-```
-EloGain = (EffectivePoints / MPI) × K-Factor × (1 - 0.5)
-```
-
-Simplified Elo with Actual=1 (engagement received), Expected=0.5 (neutral baseline).
-
-### Daily Rating Update (Cron)
-
-1. Sum Elo gains from all events in 180-day lookback window
-2. Apply daily regression: `NewRating = Rating × 0.998 + Baseline × 0.002`
-3. Apply floor (minimum 100)
-4. Calculate ranks (sort by rating descending)
-5. Detect rank climbers (rank improved = `rankChangedAt` set to now)
-6. Upsert to `provider_ratings`
-
----
-
-## Seeding Formula (New Providers)
-
-```
-Seed = 1000 + (currentScore × 8) + bonuses - penalties
-```
-
-| Factor                       | Value         |
-| ---------------------------- | ------------- |
-| Base                         | 1000          |
-| Score scaling                | 0–100 → 0–800 |
-| API bonus                    | +50           |
-| Affiliate bonus              | +25           |
-| Incumbent penalty (MPI >5.0) | -30           |
-| Floor                        | 100           |
+Minimum rating of 100. Log anomaly if a provider approaches this.
 
 ---
 
 ## Display Layer
 
-### IndexRatingCell (`src/components/providers/index-rating-cell.tsx`)
+### Display Inflation
 
-Two-line display in the leaderboard table:
+The raw Elo rating is NOT shown directly to users. A `DISPLAY_INFLATION_OFFSET` of **+200** is added in the frontend (`src/types/index-rating.ts`). A raw rating of 1500 displays as **1700**.
+
+### Demo Jitter
+
+When `NEXT_PUBLIC_DEMO_JITTER=true`, cosmetic ±1–3 point jitter is applied client-side every 45 seconds. This is purely visual — no database changes. Sort-stable: jitter is applied after sorting so row order doesn't change.
+
+### Visual Format
 
 ```
-Line 1: 1,847         (white, animated ticker — 600ms ease-out cubic)
-Line 2: ▲ +23 (+1.26%)  (green for gain, red for loss, grey for flat)
+1,847        ← Inflated rating (raw 1647)
+▲ +23        ← Change from yesterday
+(+1.26%)     ← Change percentage
 ```
 
-**Rating ticker:** `useRatingTicker()` hook animates the number from old value to new over 600ms using `requestAnimationFrame`. Respects `prefers-reduced-motion`.
+| Element | Colour |
+|---------|--------|
+| Gain (positive change) | Green `#22c55e` |
+| Loss (negative change) | Red `#ef4444` |
+| Flat (< ±0.1%) | No arrow shown |
+| Rank climber | Green ▲ with glow animation |
 
-**Colours** (CSS classes with `!important` to override table rules):
+### UI Surfaces
 
-- `.index-rating-gain`: `#22c55e` (green)
-- `.index-rating-loss`: `#ef4444` (red)
-- `.index-rating-flat`: `#6b7280` (grey)
-
-**Mobile (<640px):** Percentage hidden via `.index-rating-percent { display: none }`.
-
-### +200 Display Inflation
-
-`DISPLAY_INFLATION_OFFSET = 200` is added to all raw Elo scores in the frontend. A raw rating of 1500 displays as 1700. This is cosmetic — the database stores the raw value. Applied in `leaderboard-rail.tsx` line 131 and `providers-table.tsx`.
-
-### Rank Change Indicator
-
-Green ⬆ arrow with pulsing glow animation when `rankChangedAt` is within 24 hours. CSS class `rank-up-arrow` with `@keyframes rank-up-glow` animation (2s, infinite). Row also gets `rank-climber-row` class for flash effect.
-
-**No down arrow.** Design philosophy: celebrate climbers, don't shame fallers.
-
-### Badges (Calculated, Not Rendered)
-
-`isUnderdog` (MPI <3.0) and `isNewcomer` (founded <12 months ago) are computed and available in `DisplayRating` but the `UnderdogBadge` and `NewcomerBadge` components are not rendered in the current table layout. Components exist in `index-rating-cell.tsx`.
+| Surface | File | Data Source |
+|---------|------|-------------|
+| AI Providers Leaderboard | `src/components/providers/providers-table.tsx` | `getProvidersWithPromagenUsers()` |
+| Prompt Lab left rail | `src/components/prompt-lab/leaderboard-rail.tsx` | Props from parent page |
 
 ---
 
-## Demo Jitter System
+## Market Power Data
 
-Controlled by `NEXT_PUBLIC_DEMO_JITTER` environment variable (`'true'` = on).
+**Location:** `src/data/providers/market-power.json`
 
-| Setting        | Value                                                    |
-| -------------- | -------------------------------------------------------- |
-| Interval       | 45 seconds                                               |
-| Range          | ±1 to ±3 points (random per provider per tick)           |
-| Application    | After sort — cosmetic only, never causes row reorder     |
-| Change arrows  | Jittered values produce green/red arrows                 |
-| Reduced motion | Timer does not start if `prefers-reduced-motion: reduce` |
-| Hydration      | `jitterTick` starts at 0 (no jitter on first render)     |
+Researched social reach, estimated users, and founding year for each provider. Used to calculate MPI handicapping.
 
-Same env var also controls Promagen Users demo and main homepage jitter. Turning it off kills all three.
-
-Implemented in `leaderboard-rail.tsx` (Prompt Lab left rail) and `providers-table.tsx` (main leaderboard).
-
----
-
-## LeaderboardRail (Prompt Lab Left Rail)
-
-`src/components/prompt-lab/leaderboard-rail.tsx` — mini leaderboard in the Prompt Lab.
-
-- Top 10 default, "Show all 40" expand
-- Columns: Provider (rank + icon + name), Support (hidden <1800px), Index Rating
-- Sort by Index Rating (toggle asc/desc)
-- Ranks computed from fixed descending sort (never flip with display sort)
-- Server-prefetched `initialRatings` eliminates client waterfall
-- Clicking provider name selects for optimisation in centre workspace
-- Clicking provider icon → homepage in new tab (`stopPropagation`)
-
-> **Full specification:** `lefthand-rail.md` v2.0.0
-
----
-
-## Client Hook (`src/hooks/use-index-rating-events.ts`)
-
-Provides 10 tracking functions, all fire-and-forget:
-
-```typescript
-(trackPromptBuilderOpen,
-  trackPromptSubmit,
-  trackSocialClick,
-  trackVote,
-  trackLabSelect,
-  trackLabGenerate,
-  trackLabCopy,
-  trackLabOptimise,
-  trackPromptSave,
-  trackPromptReformat);
+```json
+{
+  "$schema": "./market-power.schema.json",
+  "lastResearched": "2026-01-27",
+  "providers": {
+    "midjourney": {
+      "foundingYear": 2022,
+      "socialReach": { "youtube": 0, "x": 2500000, "instagram": 1200000, "facebook": 500000, "discord": 19000000 },
+      "estimatedUsers": 15000000,
+      "notes": "Discord-first platform, massive community"
+    }
+  }
+}
 ```
 
-Session ID stored in `sessionStorage` (persists across page loads, not across browser sessions). `sendTrackEvent()` exported separately for lightweight components that don't mount the full hook (used by `save-icon.tsx` and `reformat-preview.tsx`).
+---
+
+## Auto-Seeding New Providers
+
+When a new provider is added to `providers.json`:
+
+1. Add to `providers.json` (static fields)
+2. Add to `market-power.json` (or use defaults)
+3. Deploy to Vercel
+4. Daily cron detects missing provider in `provider_ratings`
+5. Auto-seed creates initial rating (incumbents with MPI >5.0 get higher seed)
 
 ---
 
-## API Endpoints
+## Cron Details
 
-| Endpoint                    | Method | Purpose                         | Auth                            |
-| --------------------------- | ------ | ------------------------------- | ------------------------------- |
-| `/api/events/track`         | POST   | Track engagement events         | None (rate limited per session) |
-| `/api/index-rating/ratings` | POST   | Batch fetch ratings for display | None (public, max 100 IDs)      |
-| `/api/index-rating/cron`    | GET    | Daily rating calculation        | `PROMAGEN_CRON_SECRET`          |
-| `/api/index-rating/debug`   | GET    | System health check             | `PROMAGEN_CRON_SECRET`          |
+The Index Rating cron runs daily at 00:05 UTC. Full documentation in `docs/authority/cron_jobs.md` §2.
 
 ---
 
 ## Database Schema
 
-### Table: `provider_ratings`
+**Table: `provider_ratings`**
 
 ```sql
 CREATE TABLE IF NOT EXISTS provider_ratings (
@@ -275,78 +232,111 @@ CREATE TABLE IF NOT EXISTS provider_ratings (
 );
 ```
 
-### Table: `index_rating_cron_runs`
-
-```sql
-CREATE TABLE IF NOT EXISTS index_rating_cron_runs (
-  id SERIAL PRIMARY KEY,
-  run_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  providers_updated INTEGER NOT NULL DEFAULT 0,
-  providers_seeded INTEGER NOT NULL DEFAULT 0,
-  duration_ms INTEGER,
-  success BOOLEAN NOT NULL DEFAULT TRUE,
-  error_message TEXT
-);
-```
-
-### Table: `provider_activity_events` (shared with Promagen Users)
-
-```sql
-CREATE TABLE IF NOT EXISTS provider_activity_events (
-  click_id      TEXT        NOT NULL PRIMARY KEY,
-  provider_id   TEXT        NOT NULL,
-  event_type    TEXT        NOT NULL DEFAULT 'open',
-  src           TEXT,
-  user_id       TEXT,
-  country_code  TEXT,
-  ip            TEXT,
-  user_agent    TEXT,
-  is_affiliate  BOOLEAN     DEFAULT FALSE,
-  destination   TEXT,
-  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-```
+**Table: `index_rating_cron_runs`** — See `cron_jobs.md` §2.5.
 
 ---
 
-## Environment Variables
+## Edge Cases
 
-| Variable                        | Required  | Default   | Description                                   |
-| ------------------------------- | --------- | --------- | --------------------------------------------- |
-| `DATABASE_URL` / `POSTGRES_URL` | Yes (one) | —         | Postgres connection string                    |
-| `PROMAGEN_CRON_SECRET`          | Yes       | —         | Min 16 chars, protects cron + debug endpoints |
-| `NEXT_PUBLIC_DEMO_JITTER`       | No        | `'false'` | `'true'` enables demo jitter in leaderboard   |
-| `INDEX_RATING_BASELINE`         | No        | 1500      | Elo baseline (override via env)               |
-| `INDEX_RATING_DECAY_LAMBDA`     | No        | 0.02      | Time decay rate                               |
-| `INDEX_RATING_STALE_HOURS`      | No        | 48        | Staleness threshold                           |
+| Scenario | Handling |
+|----------|----------|
+| Provider with zero engagement | Receives only daily decay; slowly drifts toward baseline |
+| Brand new provider (day 1) | Seeded rating, shows ● 0 (0.00%), no rank arrow |
+| Provider removed from catalogue | Rating preserved in DB but not displayed |
+| Negative rating | Floor at 100; log anomaly |
+| Rating exceeds 3000 | Allowed; no ceiling |
+| Stale Market Power data (> 90 days) | Log warning; use last known values |
+| Missing social data | Default SocialFactor to 1.0 |
+| Database unavailable | Fall back to `providers.json` score × 20 |
 
 ---
 
-## File Map
+## Testing
 
-| File                                             | Purpose                                              |
-| ------------------------------------------------ | ---------------------------------------------------- |
-| `src/types/index-rating.ts`                      | Constants, EVENT_CONFIG, all TypeScript types        |
-| `src/lib/index-rating/calculations.ts`           | MPI, Elo, decay, seeding, bonus calculations         |
-| `src/lib/index-rating/database.ts`               | Postgres queries (ratings, events, cron logs)        |
-| `src/lib/index-rating/index.ts`                  | Barrel exports                                       |
-| `src/app/api/index-rating/cron/route.ts`         | Daily cron handler                                   |
-| `src/app/api/index-rating/ratings/route.ts`      | Public batch ratings fetch                           |
-| `src/app/api/index-rating/debug/route.ts`        | Protected health check                               |
-| `src/app/api/events/track/route.ts`              | Event tracking endpoint (12 types)                   |
-| `src/hooks/use-index-rating-events.ts`           | Client hook (10 tracking functions + sendTrackEvent) |
-| `src/components/providers/index-rating-cell.tsx` | Display cell + ticker animation + badges             |
-| `src/components/prompt-lab/leaderboard-rail.tsx` | Prompt Lab left rail with demo jitter                |
-| `src/styles/index-rating.css`                    | Rank-up glow animation, colour classes, mobile       |
-| `src/data/providers/market-power.json`           | MPI data for 37 providers                            |
+### Unit Tests
+
+- [x] Elo calculation produces expected output for known inputs
+- [x] MPI calculation handles missing social data
+- [x] Time decay formula correct at 0, 30, 90 days
+- [x] Static bonuses multiply correctly
+- [x] Newcomer boost applies based on provider age
+- [x] Flat threshold triggers at ±0.1%
+- [x] Rank change detection works for climbs
+- [x] Rank change detection ignores falls (only shows ▲, never ▼)
+- [x] Fallback to JSON score works when DB unavailable
+
+### Integration Tests
+
+- [x] Daily cron updates all provider ratings (40 providers seeded)
+- [x] Seeding formula produces expected initial ratings
+- [x] UI displays correct colors for gain/loss/flat
+- [x] Event tracking: `prompt_builder_open` (ProviderPageTracker)
+- [x] Event tracking: `prompt_submit` (copy-open-button.tsx)
+- [x] Event tracking: `social_click` (support-icons-cell.tsx)
+- [x] Event tracking: Prompt Lab events (prompt_lab_select, prompt_lab_generate, prompt_lab_copy)
+- [x] Display inflation +200 applied correctly
+- [ ] Cron is idempotent (same result on re-run)
+- [ ] Events older than 180 days contribute negligibly
+
+---
+
+## UI Tooltip Content
+
+### Index Rating Header Tooltip
+
+> "Rankings use fair competition scoring. Engagement with smaller platforms counts more, giving newcomers a fighting chance against established giants. See raw popularity in the Promagen Users column."
+
+### 🌱 Badge Tooltip
+
+> "Rising platform — scores adjusted for fair competition"
+
+### ⬆ Arrow Tooltip
+
+> "Climbed in rankings in the last 24 hours"
+
+---
+
+## Sorting Behaviour
+
+**Default Sort:** Index Rating DESC (highest first)  
+**Tiebreaker:** `providerId` alphabetically  
+**User Sorting:** Click column header to toggle DESC → ASC → default
+
+---
+
+## Glossary
+
+| Term | Definition |
+|------|-----------|
+| **Index Rating** | Dynamic Elo-style score for providers |
+| **MPI** | Market Power Index — handicap based on size/age |
+| **K-Factor** | Elo volatility constant; how much a single event moves rating |
+| **Time Decay** | Exponential reduction of event value over time |
+| **Newcomer Boost** | Temporary K-Factor multiplier for providers < 6 months old |
+| **Baseline** | 1500 — the neutral Elo starting point |
+| **Display Inflation** | +200 offset applied in frontend (raw 1500 shows as 1700) |
+| **Demo Jitter** | ±1–3 cosmetic points every 45s (client-side, `NEXT_PUBLIC_DEMO_JITTER`) |
+
+---
+
+## Related Documents
+
+| Document | Scope |
+|----------|-------|
+| `cron_jobs.md` | Cron job details, schedule, auth, SQL gap |
+| `ai_providers_affiliate.md` | Provider catalogue, event tracking, `/go/` routing |
+| `ribbon-homepage.md` | Leaderboard table structure |
+| `paid_tier.md` | Paid feature boundaries |
 
 ---
 
 ## Changelog
 
-- **6 Apr 2026 (v2.0.0):** Complete rewrite from src.zip SSoT. Added: 12 event types (was 5), EVENT_CONFIG with basePoints/kFactor from actual code, all constants from `types/index-rating.ts`, +200 display inflation, demo jitter system (±1-3/45s, NEXT_PUBLIC_DEMO_JITTER), LeaderboardRail integration, rating ticker animation (600ms), rank-climber flash, server-prefetched initialRatings, hydration safety patterns. Documented: cron SQL filter gap (6/12 events consumed). Updated: MPI formula from actual `calculations.ts`, seeding formula, all database schemas, API endpoints, file map. Removed: speculative sections not matching deployed code.
-- **27 Jan 2026 (v1.0.0):** Initial specification.
+| Date | Change |
+|------|--------|
+| 9 Apr 2026 | v2.0.0: Updated provider count to 40. Added 12 event types (was 6). Documented SQL filter gap. Added display inflation (+200). Added demo jitter. Removed mobile section (desktop-only). Updated testing checkboxes. Consolidated cron details to reference `cron_jobs.md`. |
+| 27 Jan 2026 | v1.0.0: Initial document. Transition strategy, Market Power JSON, auto-seeding, event tracking. |
 
 ---
 
-_This document is the authority for the Index Rating system. `src.zip` is the Single Source of Truth — every constant, formula, and file path verified by code inspection._
+_This document is the authority for the Index Rating system. `src.zip` is the Single Source of Truth — if code and doc conflict, code wins._

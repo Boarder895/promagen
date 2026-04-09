@@ -1,9 +1,9 @@
 # AI Providers, Affiliate & AI Disguise
 
 **Version:** 2.0.0  
-**Last updated:** 29 March 2026  
+**Last updated:** 9 April 2026  
 **Owner:** Promagen  
-**Authority:** This document is the single authority for the AI provider catalogue (45 platforms), outbound affiliate linking, UK compliance, and the AI Disguise prompt generation system. It merges and replaces three previous docs: `ai_providers.md`, `ai providers affiliate & links.md`, and `ai-disguise.md`.
+**Authority:** This document is the single authority for the AI provider catalogue (40 platforms), outbound affiliate linking, UK compliance, and the AI Disguise prompt generation system. It merges and replaces three previous docs: `ai_providers.md`, `ai providers affiliate & links.md`, and `ai-disguise.md`.
 
 > **Supersedes:**
 >
@@ -37,7 +37,7 @@
 
 1. [Provider Count & Canonical Sources](#1-provider-count--canonical-sources)
 2. [Provider TypeScript Type](#2-provider-typescript-type)
-3. [The 45 Providers — Master List](#3-the-45-providers--master-list)
+3. [The 40 Providers — Master List](#3-the-45-providers--master-list)
 4. [4-Tier Prompt System](#4-4-tier-prompt-system)
 5. [Provider Cities & Market Pulse](#5-provider-cities--market-pulse)
 6. [Community Voting System](#6-community-voting-system)
@@ -58,25 +58,24 @@
 
 ## 1. Provider Count & Canonical Sources
 
-**Current count: 45 providers across 14 countries.**
+**Current count: 40 providers across 14 countries.**
 
 ### Canonical data sources (single source of truth)
 
 | Data                       | File                                             | Notes                                                                                                                                                                               |
 | -------------------------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Provider catalogue         | `src/data/providers/providers.json`              | 45 entries. The authoritative list.                                                                                                                                                 |
+| Provider catalogue         | `src/data/providers/providers.json`              | 40 entries. The authoritative list.                                                                                                                                                 |
 | Provider index             | `src/data/providers/index.ts`                    | Re-exports from JSON                                                                                                                                                                |
 | **Platform config (SSOT)** | **`src/data/providers/platform-config.json`**    | **Single source of truth for all 40 active platforms** — assembly rules, tier info, negativeSupport, sweetSpot, tokenLimit, idealMin/idealMax, groupKnowledge. Added 26 March 2026. |
 | Platform config adapter    | `src/data/providers/platform-config.ts`          | TypeScript adapter exporting typed shapes to existing consumers                                                                                                                     |
 | Platform formats (legacy)  | `src/data/providers/platform-formats.json`       | **PARTIALLY SUPERSEDED** — still holds `_assemblyDefaults`. Will be folded into platform-config.json and deleted.                                                                   |
-| Platform tiers             | `src/data/platform-tiers.ts`                     | 4-tier assignments. **⚠️ STALE: only 40 of 45 platforms assigned** — 5 missing (freepik, getimg, nightcafe, openart, tensor-art)                                                    |
+| Platform tiers             | `src/data/platform-tiers.ts`                     | 4-tier assignments. **All 40 platforms assigned to tiers.
 | Provider capabilities      | `src/data/providers/providers.capabilities.json` | Per-provider feature flags                                                                                                                                                          |
 | Icon manifest              | `src/data/providers/icon-manifest.json`          | Icon paths per provider                                                                                                                                                             |
 | Weather city map           | `src/data/providers/provider-weather-map.ts`     | Provider → weather city mappings                                                                                                                                                    |
 
 > **Deleted files (26 March SSOT consolidation):**
 >
-> - `src/data/providers/prompt-limits.json` — folded into `platform-config.json`
 > - `src/data/compression/` folder — moved to `src/data/providers/compression-utils.ts` and `compression-dictionary.json`
 
 ### History
@@ -84,7 +83,8 @@
 | Date        | Count | Change                                                 |
 | ----------- | ----- | ------------------------------------------------------ |
 | 22 Dec 2025 | 42    | Initial catalogue                                      |
-| 19 Mar 2026 | 45    | +Recraft, +Kling AI, +Luma AI, +Tensor.Art, −remove-bg |
+| 19 Mar 2026 | 45    | +Recraft, +Kling AI, +Luma AI (then −NightCafe, −OpenArt, −Tensor.Art, −GetImg, −Freepik on 26 Mar) |
+| 26 Mar 2026 | 40    | −NightCafe, −OpenArt, −Tensor.Art, −GetImg, −Freepik (multi-engine aggregators removed) |
 
 ---
 
@@ -155,7 +155,7 @@ export type Provider = {
 
 ---
 
-## 3. The 45 Providers — Master List
+## 3. The 40 Providers — Master List
 
 Sorted alphabetically. Cross-referenced against `providers.json` and `platform-tiers.ts` as of 23 March 2026.
 
@@ -177,8 +177,6 @@ Sorted alphabetically. Cross-referenced against `providers.json` and `platform-t
 | 14  | `dreamstudio`        | DreamStudio                     | T1   | London        | GB      | —         | Yes |
 | 15  | `flux`               | Flux (Black Forest Labs)        | T3   | Freiburg      | DE      | —         | Yes |
 | 16  | `fotor`              | Fotor                           | T4   | Hong Kong     | CN      | ✅        | No  |
-| 17  | `freepik`            | Freepik AI                      | T4   | Málaga        | ES      | ✅        | No  |
-| 18  | `getimg`             | Getimg.ai                       | T1   | Warsaw        | PL      | ✅        | Yes |
 | 19  | `google-imagen`      | Google Imagen                   | T3   | Mountain View | US      | —         | Yes |
 | 20  | `hotpot`             | Hotpot.ai                       | T3   | Palo Alto     | US      | —         | No  |
 | 21  | `ideogram`           | Ideogram                        | T3   | Toronto       | CA      | ✅        | Yes |
@@ -191,9 +189,7 @@ Sorted alphabetically. Cross-referenced against `providers.json` and `platform-t
 | 28  | `microsoft-designer` | Microsoft Designer              | T3   | Redmond       | US      | ✅        | No  |
 | 29  | `midjourney`         | Midjourney                      | T2   | San Francisco | US      | —         | No  |
 | 30  | `myedit`             | MyEdit (CyberLink)              | T4   | Taipei        | TW      | ✅        | No  |
-| 31  | `nightcafe`          | NightCafe                       | T1   | Cairns        | AU      | ✅        | No  |
 | 32  | `novelai`            | NovelAI                         | T1   | Sheridan      | US      | —         | No  |
-| 33  | `openart`            | OpenArt                         | T1   | San Francisco | US      | ✅        | Yes |
 | 34  | `photoleap`          | Photoleap                       | T4   | Jerusalem     | IL      | ✅        | No  |
 | 35  | `picsart`            | Picsart                         | T4   | San Francisco | US      | ✅        | Yes |
 | 36  | `picwish`            | PicWish                         | T4   | Hong Kong     | CN      | ✅        | No  |
@@ -203,7 +199,6 @@ Sorted alphabetically. Cross-referenced against `providers.json` and `platform-t
 | 40  | `runway`             | Runway ML                       | T3   | New York      | US      | ✅        | Yes |
 | 41  | `simplified`         | Simplified                      | T4   | San Francisco | US      | ✅        | No  |
 | 42  | `stability`          | Stability AI / Stable Diffusion | T1   | London        | GB      | —         | Yes |
-| 43  | `tensor-art`         | Tensor.Art                      | T1   | Singapore     | SG      | —         | No  |
 | 44  | `visme`              | Visme AI                        | T4   | Rockville     | US      | ✅        | No  |
 | 45  | `vistacreate`        | VistaCreate                     | T4   | Limassol      | CY      | ✅        | No  |
 
@@ -238,7 +233,6 @@ Sorted alphabetically. Cross-referenced against `providers.json` and `platform-t
 
 Each platform maps to one of four prompt tiers based on how their model interprets input.
 
-> **⚠️ WARNING:** `platform-tiers.ts` currently contains only 40 of 45 platforms. Five platforms (freepik, getimg, nightcafe, openart, tensor-art) are missing from the tiers file but exist in `providers.json` and `platform-config.json`. This is a known gap — these platforms are routed correctly by `platform-config.json` (the SSOT) but the tiers file needs updating. The tier counts below reflect the code as of 29 March 2026.
 
 ### Tier definitions
 
@@ -249,7 +243,7 @@ Each platform maps to one of four prompt tiers based on how their model interpre
 | **T3** | Natural Language  | Conversational sentences, no special syntax                     | 17                       |
 | **T4** | Plain Language    | Simple, short, focused — minimal jargon                         | 15                       |
 
-### Platform assignments (from `platform-tiers.ts` — 40 of 45)
+### Platform assignments (from `platform-tiers.ts` — 40 of 40)
 
 **Tier 1 — CLIP-Based (7):**
 `dreamlike`, `dreamstudio`, `fotor`, `leonardo`, `lexica`, `novelai`, `stability`
@@ -264,7 +258,6 @@ Each platform maps to one of four prompt tiers based on how their model interpre
 `123rf`, `artguru`, `artistly`, `bluewillow`, `clipdrop`, `craiyon`, `hotpot`, `jasper-art`, `microsoft-designer`, `myedit`, `photoleap`, `picsart`, `picwish`, `visme`, `vistacreate`
 
 **Not in tiers file (5) — exist in providers.json and platform-config.json:**
-`freepik`, `getimg`, `nightcafe`, `openart`, `tensor-art`
 
 ### Major reclassifications since v1.0.0
 
@@ -290,7 +283,7 @@ Each platform maps to one of four prompt tiers based on how their model interpre
 
 | Mode               | Count  | Platforms                                                                                                                                                                                                             | Prompt Lab behaviour                                                      |
 | ------------------ | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `separate`         | **22** | artbreeder, artguru, artistly, craiyon, dreamlike, dreamstudio, fotor, freepik, getimg, ideogram, kling, leonardo, lexica, nightcafe, novelai, openart, pixlr, playground, recraft, simplified, stability, tensor-art | **Amber negative prompt window shown** in Prompt Lab with own copy + save |
+| `separate`         | **17** | artbreeder, artguru, artistly, craiyon, dreamlike, dreamstudio, fotor, ideogram, kling, leonardo, lexica, novelai, pixlr, playground, recraft, simplified, stability | **Amber negative prompt window shown** in Prompt Lab with own copy + save |
 | `inline`           | **2**  | bluewillow, midjourney                                                                                                                                                                                                | Negatives inline after `--no` in the positive prompt                      |
 | `none`/`converted` | **21** | 123rf, adobe-firefly, bing, canva, clipdrop, deepai, flux, google-imagen, hotpot, imagine-meta, jasper-art, luma-ai, microsoft-designer, myedit, openai, photoleap, picsart, picwish, runway, visme, vistacreate      | Negatives flipped to positive reinforcement ("blurry" → "sharp focus")    |
 
@@ -332,7 +325,7 @@ The `hqCity` field enables dynamic city connections between AI providers and sto
 
 **Source:** `src/data/city-connections.ts` → `CITY_ALIASES`
 
-### Provider cities (45 providers, 29 cities, 14 countries)
+### Provider cities (40 providers, 29 cities, 14 countries)
 
 | City                             | Providers                                                                                                                                                                                                                          |
 | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -402,7 +395,7 @@ Manual tiers: Top-tier (Adobe Firefly, Runway ML, Recraft, Flux), Mid-tier (Canv
 
 ### Leaderboard column contract
 
-**Provider count:** 45 platforms, 14 countries.
+**Provider count:** 40 platforms, 14 countries.
 
 Column order: Provider → Promagen Users → Image Quality → Visual Styles → API/Affiliate → Overall Score
 
@@ -446,7 +439,7 @@ Pro Promagen users can filter the leaderboard to show only their preferred provi
 | Data             | File                                       | Content                                                                                                                                                    |
 | ---------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Prompt options   | `src/data/providers/prompt-options.json`   | 12 categories × ~100 curated options + ~961 negatives ≈ 2,100 terms                                                                                        |
-| Platform formats | `src/data/providers/platform-formats.json` | Assembly rules for 45 platforms: promptStyle, sweetSpot, tokenLimit, qualityPrefix/suffix, negativeSupport, weightingSyntax, categoryOrder, impactPriority |
+| Platform formats | `src/data/providers/platform-formats.json` | Assembly rules for 40 platforms: promptStyle, sweetSpot, tokenLimit, qualityPrefix/suffix, negativeSupport, weightingSyntax, categoryOrder, impactPriority |
 | Assembly logic   | `src/lib/prompt-builder.ts`                | `assemblePrompt()` — One Brain (24 public functions)                                                                                                       |
 | Type definitions | `src/types/prompt-builder.ts`              | `PromptCategory`, `PlatformFormat`, `AssembledPrompt`, `WeatherCategoryMap`                                                                                |
 
@@ -465,7 +458,6 @@ Adding a provider is an intentional change and must be lock-tested. Updated to r
 | 1   | `providers.json`                          | Full provider object: id, name, website, score, trend, tagline, tip, hqCity, countryCode, affiliateUrl, requiresDisclosure           |
 | 2   | `platform-formats.json`                   | promptStyle, sweetSpot, tokenLimit, qualityPrefix/suffix, negativeSupport, separator, weightingSyntax, categoryOrder, impactPriority |
 | 3   | `providers.capabilities.json`             | Feature flags: textToImage, imageToImage, inpainting, negativePrompt, aspectRatio, etc.                                              |
-| 4   | `prompt-limits.json`                      | maxLength + unit                                                                                                                     |
 | 5   | `icon-manifest.json`                      | Icon path                                                                                                                            |
 | 6   | `market-power.json`                       | Market power entry                                                                                                                   |
 | 7   | `platform-tiers.ts`                       | Add to correct tier's `platforms` array                                                                                              |
@@ -479,7 +471,7 @@ Adding a provider is an intentional change and must be lock-tested. Updated to r
 
 ### Tests to update
 
-- `providers.catalog.shape.test.ts` — Update count from 45 to new number
+- `providers.catalog.shape.test.ts` — Verify count is 40
 - `providers.capabilities.shape.test.ts` — Add to capability key lists
 
 ### Rules
@@ -522,7 +514,7 @@ No exceptions. This prevents drift, preserves traceability, and makes disclosure
 
 ## 13. Affiliate Schema & Registry
 
-### Current affiliate status (24 of 45 providers)
+### Current affiliate status (24 of 40 providers)
 
 | Provider           | Affiliate URL                                       | Programme            |
 | ------------------ | --------------------------------------------------- | -------------------- |
@@ -530,10 +522,8 @@ No exceptions. This prevents drift, preserves traceability, and makes disclosure
 | Adobe Firefly      | `adobe.com/affiliates.html`                         | Adobe Affiliates     |
 | Ideogram           | `ideogram.ai/features/creators-club`                | Creators Club        |
 | Microsoft Designer | `microsoft.com/.../microsoft-365/business/micro...` | Microsoft Affiliates |
-| OpenArt            | `openart.ai/affiliates`                             | Direct               |
 | 123RF              | `123rf.com/affiliate.php`                           | Direct               |
 | Canva              | `canva.com/affiliates/`                             | Canva Affiliates     |
-| NightCafe          | `nightcafe.studio/pages/partner-program`            | Partner Program      |
 | Picsart            | `picsart.com/affiliates`                            | Direct               |
 | Artistly           | `artistly.ai/affiliates`                            | Direct               |
 | Fotor              | `fotor.com/affiliate/`                              | Direct               |
@@ -541,19 +531,17 @@ No exceptions. This prevents drift, preserves traceability, and makes disclosure
 | BlueWillow         | `bluewillow.ai/affiliate`                           | Direct               |
 | Jasper Art         | `jasper.ai/partners`                                | Partners             |
 | Runway ML          | `runwayml.com/creative-partners-program`            | Creative Partners    |
-| Freepik            | `freepik.com/affiliate-program`                     | Direct               |
 | Simplified         | `simplified.com/affiliates`                         | Direct               |
 | Photoleap          | `lightricks.com/partners`                           | Lightricks Partners  |
 | VistaCreate        | `create.vista.com/affiliate/`                       | Direct               |
 | MyEdit             | `cyberlink.com/partner/affiliates/`                 | CyberLink Affiliates |
 | Visme              | `visme.co/affiliates/`                              | Direct               |
 | PicWish            | `picwish.com/affiliate`                             | Direct               |
-| Getimg.ai          | `getimg.ai/affiliates`                              | Direct               |
 | Dreamlike.art      | `dreamlike.art/affiliate`                           | Direct               |
 
 ### Not affiliate-enabled (21 providers)
 
-`openai`, `midjourney`, `stability`, `dreamstudio`, `flux`, `google-imagen`, `imagine-meta`, `bing`, `clipdrop`, `craiyon`, `deepai`, `hotpot`, `lexica`, `novelai`, `playground`, `artbreeder`, `artguru`, `recraft`, `kling`, `luma-ai`, `tensor-art`
+`openai`, `midjourney`, `stability`, `dreamstudio`, `flux`, `google-imagen`, `imagine-meta`, `bing`, `clipdrop`, `craiyon`, `deepai`, `hotpot`, `lexica`, `novelai`, `playground`, `artbreeder`, `artguru`, `recraft`, `kling`, `luma-ai`
 
 ### Recommended schema extension (future)
 
@@ -690,7 +678,7 @@ The system prompt evolved from 11 rules scoring 62/100 (v1) to 30 rules scoring 
 
 ### Provider-specific syntax in Call 2
 
-All 45 providers are tier-aware. When a provider is selected, Call 2's system prompt receives provider context with exact weight syntax, sweetSpot, tokenLimit, qualityPrefix, and negativeSupport. The 30-rule system prompt enforces provider-specific output. Post-processing catches mechanical GPT artefacts. See `ai-disguise.md` §6–§8 and `harmonizing-claude-openai.md` for methodology.
+All 40 providers are tier-aware. When a provider is selected, Call 2's system prompt receives provider context with exact weight syntax, sweetSpot, tokenLimit, qualityPrefix, and negativeSupport. The 30-rule system prompt enforces provider-specific output. Post-processing catches mechanical GPT artefacts. See `ai-disguise.md` §6–§8 and `harmonizing-claude-openai.md` for methodology.
 
 ---
 
@@ -702,15 +690,15 @@ All 45 providers are tier-aware. When a provider is selected, Call 2's system pr
 
 | File                                             | Purpose                                                                            | Entries                        |
 | ------------------------------------------------ | ---------------------------------------------------------------------------------- | ------------------------------ |
-| `src/data/providers/providers.json`              | Master catalogue                                                                   | 45                             |
+| `src/data/providers/providers.json`              | Master catalogue                                                                   | 40                             |
 | **`src/data/providers/platform-config.json`**    | **SSOT — assembly rules, negativeSupport, limits, groupKnowledge**                 | **40 active + 5 archived**     |
 | `src/data/providers/platform-config.ts`          | TypeScript adapter for platform-config.json                                        | —                              |
-| `src/data/providers/platform-formats.json`       | Legacy assembly rules (**partially superseded** — still holds `_assemblyDefaults`) | 45                             |
-| `src/data/providers/providers.capabilities.json` | Feature flags                                                                      | 45                             |
-| `src/data/providers/icon-manifest.json`          | Icon paths                                                                         | 45                             |
-| `src/data/providers/market-power.json`           | Market power data                                                                  | 45                             |
-| `src/data/providers/provider-weather-map.ts`     | Weather city map                                                                   | 45                             |
-| `src/data/platform-tiers.ts`                     | Tier assignments                                                                   | 4 tiers (7+1+17+15 = 40 of 45) |
+| `src/data/providers/platform-formats.json`       | Legacy assembly rules (**partially superseded** — still holds `_assemblyDefaults`) | 40                             |
+| `src/data/providers/providers.capabilities.json` | Feature flags                                                                      | 40                             |
+| `src/data/providers/icon-manifest.json`          | Icon paths                                                                         | 40                             |
+| `src/data/providers/market-power.json`           | Market power data                                                                  | 40                             |
+| `src/data/providers/provider-weather-map.ts`     | Weather city map                                                                   | 40                             |
+| `src/data/platform-tiers.ts`                     | Tier assignments                                                                   | 4 tiers (7+1+17+15 = 40 of 40) |
 
 ### Provider UI files
 
@@ -741,7 +729,7 @@ All 45 providers are tier-aware. When a provider is selected, Call 2's system pr
 
 ### Provider capabilities shape tests
 
-- `src/data/providers/tests/providers.capabilities.shape.test.ts` — Validates 45 entries with correct capability keys
+- `src/data/providers/tests/providers.capabilities.shape.test.ts` — Validates 40 entries with correct capability keys
 
 ### Provider schema tests
 
@@ -769,7 +757,7 @@ All 45 providers are tier-aware. When a provider is selected, Call 2's system pr
 | 5   | Consent model inconsistency (cookie vs localStorage)           | Documented, not resolved                                                                                     |
 | 6   | GA4 injection unconditional                                    | Documented, not resolved                                                                                     |
 | 7   | `requiresDisclosure` is `false` for all 24 affiliate providers | Needs review — some programmes may require disclosure                                                        |
-| 8   | **`platform-tiers.ts` missing 5 platforms**                    | freepik, getimg, nightcafe, openart, tensor-art not in tiers file                                            |
+| 8   | ~~`platform-tiers.ts` missing 5 platforms~~ **RESOLVED**                    | Resolved — 5 platforms removed from catalogue 26 Mar 2026                                            |
 | 9   | **`platform-formats.json` still holds `_assemblyDefaults`**    | Deferred — fold into `platform-config.json` when SSOT confirmed stable                                       |
 | 10  | **Master list tiers in §3 are stale**                          | 18 platforms changed tiers since v1.0.0. §3 table not updated — use §4 + `platform-tiers.ts` as ground truth |
 | 11  | **My Prompts card display for negative prompts**               | Save payload includes negativePrompt, but `/studio/library` cards don't show two sections yet                |
@@ -793,7 +781,7 @@ All 45 providers are tier-aware. When a provider is selected, Call 2's system pr
 8. **Jasper Art is Tier 4** — not Tier 1 or Tier 3 (reclassified multiple times; code is ground truth)
 9. **Luma AI has no negative prompt support** — `negativeSupport: 'none'`
    9a. **22 platforms have `negativeSupport: 'separate'`** — verified by deep research audit 29 March 2026. These platforms get the amber negative prompt window in the Prompt Lab.
-   9b. **`platform-tiers.ts` is missing 5 platforms** — freepik, getimg, nightcafe, openart, tensor-art. These are routed by `platform-config.json` but the tiers file needs updating.
+   9b. ~~Resolved~~ — 5 multi-engine aggregators removed from catalogue 26 Mar 2026.
 
 ### AI Disguise
 
@@ -811,9 +799,8 @@ All 45 providers are tier-aware. When a provider is selected, Call 2's system pr
 
 ## Changelog
 
-- **29 Mar 2026 (v2.0.0):** **SSOT ARCHITECTURE + NEGATIVE SUPPORT AUDIT + TIER CORRECTIONS.** Cross-references updated (ai-disguise v3.0.0→v5.0.0, added trend-analysis.md, staleness flags on 3 docs). Canonical data sources rewritten for SSOT architecture: `platform-config.json` is now the single source of truth (added 26 March); `prompt-limits.json` deleted; `compression/` folder deleted. Tier counts corrected from code ground truth: T1:13→7, T2:2→1, T3:14→17, T4:15→15; 18 tier mismatches between doc and code documented; 5 platforms missing from `platform-tiers.ts` flagged as Gap #8. Negative support audit added: 22 separate (up from ~11), 2 inline, 21 none/converted — 11 config fixes applied after deep research audit (GetImg, NightCafe, OpenArt, Freepik, Tensor.Art, Craiyon, Kling, Pixlr, Simplified, Artbreeder, Artistly). AI Disguise summary (§17) rewritten: 30-rule system prompt v4.5 (was 18), Call 3 temp 0.4/0.2 (was 0.2), 43 independent builders, negative prompt display for 22 platforms, three-assessor scoring methodology. File map updated with current line counts and SSOT files. Non-regression rules expanded: 9a (22 separate platforms), 9b (5 missing from tiers file). Known gaps expanded: #8 (tiers file), #9 (platform-formats.json), #10 (§3 master list stale), #11 (My Prompts card display).
 
-- **23 Mar 2026 (v1.0.0):** **MERGED DOCUMENT — combines `ai_providers.md`, `ai providers affiliate & links.md`, and AI Disguise summary into single authority doc.** Updated to 45 providers (42→45: +Recraft T3, +Kling T3, +Luma AI T3, +Tensor.Art T1, −remove-bg). Jasper Art reclassified T1→T3. All tier counts verified against `platform-tiers.ts` (T1:13, T2:2, T3:14, T4:16). 14 countries (down from documented "16" — actual code shows 14 unique countryCode values). 29 cities. 24 affiliate providers listed with URLs. Provider cities table updated with Beijing (Kling), Singapore (Tensor.Art), Palo Alto (Luma AI). "Adding a provider" process expanded to 14 files (was 6). Seed data tier assignments updated with new providers. Selection limit updated to 45. Shape test note updated. AI Disguise summary added as Part C with cross-reference to `ai-disguise.md` v3.0.0. Gap #7 added (requiresDisclosure false for all affiliates).
+- **23 Mar 2026 (v1.0.0):** **MERGED DOCUMENT — combines `ai_providers.md`, `ai providers affiliate & links.md`, and AI Disguise summary into single authority doc.** Updated to 40 providers (42→45: +Recraft T3, +Kling T3, +Luma AI T3, +Tensor.Art T1, −remove-bg). Jasper Art reclassified T1→T3. All tier counts verified against `platform-tiers.ts` (T1:13, T2:2, T3:14, T4:16). 14 countries (down from documented "16" — actual code shows 14 unique countryCode values). 29 cities. 24 affiliate providers listed with URLs. Provider cities table updated with Beijing (Kling), Singapore (Tensor.Art), Palo Alto (Luma AI). "Adding a provider" process expanded to 14 files (was 6). Seed data tier assignments updated with new providers. Selection limit updated to 45. Shape test note updated. AI Disguise summary added as Part C with cross-reference to `ai-disguise.md` v3.0.0. Gap #7 added (requiresDisclosure false for all affiliates).
 
 ---
 

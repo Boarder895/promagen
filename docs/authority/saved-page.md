@@ -1,7 +1,7 @@
 # Saved Prompts Page — Authority Document
 
-**Last updated:** 9 March 2026  
-**Version:** 1.0.0  
+**Last updated:** 9 April 2026  
+**Version:** 2.0.0  
 **Owner:** Promagen  
 **Status:** Specification (pre-build)  
 **Route:** `/studio/library` (existing route, full redesign)  
@@ -417,7 +417,7 @@ All actions for the selected prompt live here. Button styling matches the standa
 
 **Secondary actions (bottom):**
 
-- **Reformat for...:** Dropdown showing all 42 platforms. Selecting one re-assembles the prompt via `assemblePrompt()` and shows the result in a preview. Only enabled for structured saves (has `selections`). Disabled with tooltip "This prompt was saved as text only" for tooltip-origin saves.
+- **Reformat for...:** Dropdown showing all 40 platforms. Selecting one re-assembles the prompt via `assemblePrompt()` and shows the result in a preview. Only enabled for structured saves (has `selections`). Disabled with tooltip "This prompt was saved as text only" for tooltip-origin saves.
 - **Move to folder:** Dropdown of all folders. Selecting one moves the prompt.
 - **Delete:** Red. `text-red-400/60 hover:text-red-400`. Requires confirmation (inline "Are you sure?" → "Delete" / "Cancel", same as current card pattern).
 
@@ -541,7 +541,7 @@ Two methods:
 
 ## 10. Reformat Feature
 
-When a user selects "Reformat for..." in the preview panel, a dropdown shows all 42 platforms grouped by tier:
+When a user selects "Reformat for..." in the preview panel, a dropdown shows all 40 platforms grouped by tier:
 
 ```
 Tier 1 (CLIP)
@@ -629,20 +629,43 @@ Bump from `1.0.0` to `1.1.0`. Migration: existing prompts get `source: 'builder'
 
 ---
 
-## 13. Storage Architecture
+## 13. Storage Architecture (Updated 9 April 2026)
 
-### 13.1 Current (v1 — stays)
+### 13.1 Dual-Mode Storage (v3.2.1 — live)
 
-localStorage only. `promagen_saved_prompts` key. Zero cost.
+| User Type | Storage Mode | Mechanism |
+|-----------|-------------|-----------|
+| Anonymous / Free | `local` | localStorage (`promagen_saved_prompts` key). Zero cost. |
+| Pro Promagen | `cloud` | Postgres (Neon) via `getSessionFromCookie()` + localStorage shadow backup |
 
-### 13.2 Future (post sign-in)
+**Hook:** `src/hooks/use-saved-prompts.ts` v3.2.1. Storage modes: `'local' | 'cloud' | 'loading'`.
 
-- **Free users:** localStorage (current, zero cost)
-- **Signed-in users:** database (Vercel Postgres). On first sign-in, localStorage prompts sync up to database once, then database is source of truth.
-- **Cap:** 500 prompts per user (no TTL — prompts never expire)
-- **Cost at scale:** 100K users × 50 prompts × 2KB = 10GB. Within Vercel Postgres Pro ($20/mo, 100GB).
+### 13.2 Cloud Mode Features (Pro users)
 
-This is a natural Pro feature hook: "Sign in to save prompts across devices."
+- **Auth:** All API routes use `getSessionFromCookie()` (JWT decode from `__session` cookie). Clerk's `auth()` fails on Vercel production.
+- **Cloud shadow backup:** Every cloud write also persists to localStorage shadow key. Prompts survive reloads even if a cloud write is in flight.
+- **Operation queue:** Pending writes queue during `loading` → `cloud` transition, then flush.
+- **Merge-by-ID:** Successful cloud writes trigger debounced re-fetch. Merges by prompt ID (no duplicates).
+- **One-time sync:** First cloud-mode mount syncs localStorage → DB via `POST /api/saved-prompts/sync`.
+- **Cap:** 500 prompts per user (no TTL — prompts never expire).
+
+### 13.3 API Routes
+
+| Route | Method | Purpose |
+|-------|--------|---------|
+| `/api/saved-prompts` | GET | List all prompts for user |
+| `/api/saved-prompts` | POST | Create new prompt |
+| `/api/saved-prompts/[id]` | PATCH | Update prompt |
+| `/api/saved-prompts/[id]` | DELETE | Delete single prompt |
+| `/api/saved-prompts/sync` | POST | One-time localStorage → DB migration |
+
+### 13.4 clearAll() Contract (Option B — 8 Apr 2026)
+
+`clearAll()` is **client-state-only** — clears UI + localStorage, does NOT delete cloud data. A full cloud-aware "Delete my entire library" requires a future `DELETE /api/saved-prompts/all` route.
+
+### 13.5 Cost at Scale
+
+100K users × 50 prompts × 2KB = 10GB. Within Neon Postgres limits.
 
 ---
 
@@ -703,7 +726,7 @@ This is a natural Pro feature hook: "Sign in to save prompts across devices."
 - [ ] Selected state shows full prompt text (not truncated), metadata, actions
 - [ ] Copy button with emerald feedback (1.5s)
 - [ ] Load button navigates to builder with prompt pre-loaded
-- [ ] Reformat dropdown shows 42 platforms grouped by tier
+- [ ] Reformat dropdown shows 40 platforms grouped by tier
 - [ ] Reformat disabled for tooltip-origin saves
 - [ ] Move to folder dropdown
 - [ ] Delete with inline confirmation

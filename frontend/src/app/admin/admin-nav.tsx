@@ -25,6 +25,7 @@ const NAV_LINKS = [
   { href: '/admin/scene-candidates',  label: 'Scene Candidates' },
   { href: '/admin/providers',         label: 'Providers' },
   { href: '/admin/exchanges',         label: 'Exchanges' },
+  { href: '/admin/sentinel',          label: 'Sentinel' },
 ] as const;
 
 export function AdminNav() {

@@ -1,7 +1,9 @@
 # Dev & Prod Environment Setup
 
 > **Location:** `docs/authority/dev-prod-environment-setup.md`  
-> **Created:** Jan 20, 2026  
+> **Created:** 20 January 2026  
+> **Last Updated:** 9 April 2026  
+> **Version:** 2.0.0  
 > **Purpose:** Single source of truth for environment configuration across DEV and PROD.
 
 ---
@@ -10,10 +12,10 @@
 
 Promagen uses a **two-service architecture**:
 
-| Service                          | DEV URL                 | PROD URL                       |
-| -------------------------------- | ----------------------- | ------------------------------ |
-| **Frontend** (Next.js on Vercel) | `http://localhost:3000` | `https://promagen.com`         |
-| **Gateway** (Node.js on Fly.io)  | `http://localhost:8080` | `https://promagen-api.fly.dev` |
+| Service | DEV URL | PROD URL |
+|---------|---------|----------|
+| **Frontend** (Next.js 16 on Vercel) | `http://localhost:3000` | `https://promagen.com` |
+| **Gateway** (Node.js on Fly.io) | `http://localhost:8080` | `https://promagen-api.fly.dev` |
 
 **Data flow:**
 
@@ -21,12 +23,12 @@ Promagen uses a **two-service architecture**:
 ┌─────────────┐    SSOT Config    ┌─────────────┐
 │  Frontend   │ ◄──────────────── │   Gateway   │
 │  (Next.js)  │                   │  (Fly.io)   │
-│             │ ──────────────────► │             │
+│             │ ──────────────────►│             │
 └─────────────┘    API Data       └─────────────┘
 ```
 
-1. **Gateway → Frontend:** Gateway fetches SSOT configs (cities, FX pairs, etc.) from frontend on startup
-2. **Frontend → Gateway:** Frontend proxies API requests to gateway for live market/weather data
+1. Gateway → Frontend: Gateway fetches SSOT configs (cities, FX pairs, etc.) from frontend on startup
+2. Frontend → Gateway: Frontend proxies API requests to gateway for live market/weather data
 
 ---
 
@@ -43,76 +45,132 @@ If gateway starts before frontend, weather (and other feeds) will fail to initia
 
 ---
 
-## 1. DEV Environment Setup
+## 1. Frontend Environment Variables
 
-### 1.1 Frontend `.env.local`
+### 1.1 Complete Reference (All Environments)
 
-**File:** `C:\Users\Proma\Projects\promagen\frontend\.env.local`
+#### Gateway Connection
 
-**Required variables:**
+| Variable | DEV Value | PROD Value | Purpose |
+|----------|-----------|------------|---------|
+| `GATEWAY_URL` | `http://localhost:8080` | `https://promagen-api.fly.dev` | Server-side API routes |
+| `NEXT_PUBLIC_GATEWAY_URL` | `http://localhost:8080` | `https://promagen-api.fly.dev` | Client-side hooks |
 
-```env
-# =============================================================================
-# GATEWAY CONNECTION (Server-side routes use this)
-# =============================================================================
-GATEWAY_URL=http://localhost:8080
+#### Authentication (Clerk)
 
-# =============================================================================
-# GATEWAY CONNECTION (Client-side code uses this)
-# =============================================================================
-NEXT_PUBLIC_GATEWAY_URL=http://localhost:8080
-```
+| Variable | DEV Value | PROD Value | Purpose |
+|----------|-----------|------------|---------|
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | `pk_test_xxx` | `pk_live_xxx` | Clerk client SDK |
+| `CLERK_SECRET_KEY` | `sk_test_xxx` | `sk_live_xxx` | Clerk server SDK |
+| `NEXT_PUBLIC_CLERK_FAPI` | — | `clerk.promagen.com` | Clerk Frontend API domain |
+| `NEXT_PUBLIC_CLERK_SIGN_IN_URL` | `/sign-in` | `/sign-in` | Sign-in redirect |
+| `NEXT_PUBLIC_CLERK_SIGN_UP_URL` | `/sign-up` | `/sign-up` | Sign-up redirect |
+| `ADMIN_USER_IDS` | Your Clerk user ID | Comma-separated IDs | Admin gate in proxy.ts |
 
-**Rules:**
+#### Payments (Stripe)
 
-- `GATEWAY_URL` is used by server-side API routes (e.g., `/api/weather`, `/api/fx`)
-- `NEXT_PUBLIC_GATEWAY_URL` is used by client-side hooks and components
-- Both must point to the **local gateway** in DEV
-- Do NOT include `GATEWAY_URL=https://promagen-api.fly.dev` in this file (that's for Vercel)
+| Variable | DEV Value | PROD Value | Purpose |
+|----------|-----------|------------|---------|
+| `STRIPE_SECRET_KEY` | `sk_test_xxx` | `sk_live_xxx` | Stripe API |
+| `STRIPE_WEBHOOK_SECRET` | `whsec_xxx` | `whsec_xxx` | Webhook signature verification |
+| `STRIPE_PRICE_MONTHLY` | Price ID | Price ID | Monthly plan Stripe Price |
+| `STRIPE_PRICE_ANNUAL` | Price ID | Price ID | Annual plan Stripe Price |
 
-### 1.2 Gateway `.env.local`
+#### AI (OpenAI — Call 3 Optimisation)
 
-**File:** `C:\Users\Proma\Projects\promagen\gateway\.env.local`
+| Variable | DEV Value | PROD Value | Purpose |
+|----------|-----------|------------|---------|
+| `OPENAI_API_KEY` | `sk-xxx` | `sk-xxx` | gpt-5.4-mini for prompt optimisation |
 
-**Required variables:**
+#### Database (Neon Postgres)
 
-```env
-# =============================================================================
-# API KEYS (Required for live data)
-# =============================================================================
-TWELVEDATA_API_KEY=your_twelvedata_key_here
-MARKETSTACK_API_KEY=your_marketstack_key_here
-OPENWEATHERMAP_API_KEY=your_openweathermap_key_here
+| Variable | DEV Value | PROD Value | Purpose |
+|----------|-----------|------------|---------|
+| `DATABASE_URL` | Neon connection string | Neon connection string | Primary DB connection |
+| `POSTGRES_URL` | (fallback) | (fallback) | Neon/Vercel Postgres fallback |
 
-# =============================================================================
-# FRONTEND SSOT URLs (Point to local frontend in DEV)
-# =============================================================================
-FRONTEND_BASE_URL=http://localhost:3000
+#### Vercel KV (Redis)
 
-FX_CONFIG_URL=http://localhost:3000/api/fx/config
-CRYPTO_CONFIG_URL=http://localhost:3000/api/crypto/config
-INDICES_CONFIG_URL=http://localhost:3000/api/indices/config
-COMMODITIES_CONFIG_URL=http://localhost:3000/api/commodities/config
-WEATHER_CONFIG_URL=http://localhost:3000/api/weather/config
+| Variable | DEV Value | PROD Value | Purpose |
+|----------|-----------|------------|---------|
+| `VERCEL_KV_HTTP_BASE` | — | Auto-set by Vercel | KV store for voting/rankings |
+| `VERCEL_KV_TOKEN` | — | Auto-set by Vercel | KV auth token |
 
-# =============================================================================
-# BUDGET LIMITS (Optional - defaults are sensible)
-# =============================================================================
-OPENWEATHERMAP_BUDGET_DAILY=1000
-OPENWEATHERMAP_BUDGET_MINUTE=60
-```
+#### Cron Jobs
 
-**Rules:**
+| Variable | DEV Value | PROD Value | Purpose |
+|----------|-----------|------------|---------|
+| `PROMAGEN_CRON_SECRET` | Your secret (16+ chars) | Your secret (16+ chars) | All 4 cron endpoints |
 
-- All `*_CONFIG_URL` variables must point to `http://localhost:3000` in DEV
-- API keys must be real (no demo/synthetic data policy)
-- If any key is missing, that feed returns `null` prices (as designed)
+#### Analytics
+
+| Variable | DEV Value | PROD Value | Purpose |
+|----------|-----------|------------|---------|
+| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | — | `G-XXXXXXXXXX` | GA4 (disabled if empty) |
+| `NEXT_PUBLIC_GA_ENABLED` | `false` | `true` | GA4 kill switch |
+| `NEXT_PUBLIC_GA_SAMPLE_RATE` | — | `100` | GA4 sample rate |
+| `NEXT_PUBLIC_ANALYTICS_ENABLED` | `false` | `true` | Custom analytics |
+
+#### Feature Flags
+
+| Variable | DEV Value | PROD Value | Purpose |
+|----------|-----------|------------|---------|
+| `NEXT_PUBLIC_DEMO_JITTER` | `true` | `true` | Demo users + index jitter |
+| `NEXT_PUBLIC_DEMO_MODE` | `true` | — | Full demo mode |
+| `NEXT_PUBLIC_FX_LIVE` | `true` | `true` | Live FX data |
+| `NEXT_PUBLIC_FX_RIBBON_DEMO_MODE` | `true` | — | FX ribbon demo prices |
+| `PHASE_6_SCORING_ENABLED` | `true` | `true` | Learning Phase 6 |
+| `PHASE_7_LEARNING_ENABLED` | `true` | `true` | Learning Phase 7 |
+
+#### Build & Deployment
+
+| Variable | DEV Value | PROD Value | Purpose |
+|----------|-----------|------------|---------|
+| `NEXT_PUBLIC_CANONICAL_HOST` | — | `promagen.com` | Canonical URL enforcement |
+| `NEXT_PUBLIC_ENFORCE_CANONICAL` | — | `1` | 301 redirect non-canonical hosts |
+| `NEXT_PUBLIC_SITE_URL` | `http://localhost:3000` | `https://promagen.com` | OG images, sitemap |
+| `PROMAGEN_DEV_HEALTH_TOKEN` | Your token | Your token | Dev health endpoint auth |
 
 ---
 
-## 2. DEV Startup Commands
+## 2. Gateway Environment Variables
 
-### 2.1 Terminal 1 — Start Frontend (FIRST)
+### 2.1 Gateway `.env.local` (DEV)
+
+**File:** `C:\Users\Proma\Projects\promagen\gateway\.env.local`
+
+```env
+# API Keys
+TWELVEDATA_API_KEY=your_key
+MARKETSTACK_API_KEY=your_key
+OPENWEATHERMAP_API_KEY=your_key
+
+# Frontend SSOT
+FRONTEND_BASE_URL=http://localhost:3000
+
+# Derived automatically from FRONTEND_BASE_URL:
+# FX_CONFIG_URL=http://localhost:3000/api/fx/config
+# CRYPTO_CONFIG_URL=http://localhost:3000/api/crypto/config
+# INDICES_CONFIG_URL=http://localhost:3000/api/indices/config
+# COMMODITIES_CONFIG_URL=http://localhost:3000/api/commodities/config
+# WEATHER_CONFIG_URL=http://localhost:3000/api/weather/config
+```
+
+### 2.2 Gateway Fly.io Secrets (PROD)
+
+```powershell
+cd C:\Users\Proma\Projects\promagen\gateway
+flyctl secrets set TWELVEDATA_API_KEY="your_key"
+flyctl secrets set MARKETSTACK_API_KEY="your_key"
+flyctl secrets set OPENWEATHERMAP_API_KEY="your_key"
+flyctl secrets set FRONTEND_BASE_URL="https://promagen.com"
+```
+
+---
+
+## 3. DEV Startup Commands
+
+### Terminal 1 — Frontend (FIRST)
 
 ```powershell
 cd C:\Users\Proma\Projects\promagen\frontend
@@ -120,9 +178,9 @@ pnpm install
 pnpm dev
 ```
 
-**Wait until you see:** `✓ Ready in X.Xs`
+Wait for `✓ Ready in X.Xs`
 
-### 2.2 Terminal 2 — Start Gateway (SECOND)
+### Terminal 2 — Gateway (SECOND)
 
 ```powershell
 cd C:\Users\Proma\Projects\promagen\gateway
@@ -130,302 +188,135 @@ pnpm install
 pnpm dev
 ```
 
-**Wait until you see:** `Promagen Gateway listening on http://0.0.0.0:8080`
+Wait for `Promagen Gateway listening on http://0.0.0.0:8080`
 
 ---
 
-## 3. DEV Verification Checklist
+## 4. DEV Verification Checklist
 
-Run these commands **in order**. Each must pass before proceeding.
-
-### A) Frontend serves SSOT config correctly
+### A) Frontend SSOT config
 
 ```powershell
 Invoke-RestMethod "http://localhost:3000/api/weather/config" | ConvertTo-Json -Depth 6
 ```
 
-**Expected:**
+Expected: `cities` array with entries, `selectedExchangeIds` array, `generatedAt` timestamp.
 
-- `cities` array with 40+ entries
-- `selectedExchangeIds` array with 16 entries
-- `generatedAt` timestamp present
-
-### B) Gateway initializes from frontend config
+### B) Gateway initialized
 
 ```powershell
 Invoke-RestMethod "http://localhost:8080/trace" | ConvertTo-Json -Depth 8
 ```
 
-**Expected under `weather`:**
+Expected: `weather.initialized: true`, `totalCities` populated.
 
-- `initialized: true`
-- `totalCities: 48` (or similar)
-- `batchACount: 24`
-- `batchBCount: 24`
-
-### C) Gateway returns live weather data
+### C) Gateway returns live weather
 
 ```powershell
 Invoke-RestMethod "http://localhost:8080/weather" | ConvertTo-Json -Depth 4
 ```
 
-**Expected:**
+Expected: `meta.mode` = `"live"` or `"cached"` (NOT `"fallback"`).
 
-- `meta.mode` = `"live"` or `"cached"` (NOT `"fallback"`)
-- `data` array has objects with `temperatureC`, `city`, `emoji`, etc.
-- `meta.budget.dailyUsed` > 0 (proves API was called)
-
-### D) Frontend proxy returns gateway data (THE CRITICAL ONE)
+### D) Frontend proxy works
 
 ```powershell
 Invoke-RestMethod "http://localhost:3000/api/weather" | ConvertTo-Json -Depth 4
 ```
 
-**Expected:**
+Expected: Same data as step C.
 
-- Same data as step C
-- `meta.mode` = `"live"` or `"cached"`
-- `data` array NOT empty
+### E) Visual confirmation
 
-**If this returns empty `data: []`:** Your frontend is not reading `GATEWAY_URL` correctly. Check:
-
-1. `frontend/.env.local` has `GATEWAY_URL=http://localhost:8080`
-2. Restart the frontend dev server after editing `.env.local`
-
-### E) Homepage shows real weather (visual confirmation)
-
-1. Open: `http://localhost:3000/`
-2. Hard refresh: `Ctrl+F5`
-3. Check exchange cards show real temperatures (not "—" placeholders)
+Open `http://localhost:3000/`, hard refresh. Exchange cards show real temperatures.
 
 ---
 
-## 4. PROD Environment Setup
+## 5. PROD Deployment
 
-### 4.1 Vercel Environment Variables
+### Frontend → Vercel
 
-**Location:** Vercel Dashboard → Project → Settings → Environment Variables
+```powershell
+cd C:\Users\Proma\Projects\promagen\frontend
+Remove-Item -Recurse -Force .next    # Clear cache (critical on every deploy)
+git add -A
+git commit -m "description"
+git push                              # Vercel auto-deploys
+```
 
-| Variable                  | Value                          | Scope      |
-| ------------------------- | ------------------------------ | ---------- |
-| `GATEWAY_URL`             | `https://promagen-api.fly.dev` | Production |
-| `NEXT_PUBLIC_GATEWAY_URL` | `https://promagen-api.fly.dev` | Production |
-
-**Note:** Vercel reads these at build time and runtime. Changes require redeployment.
-
-### 4.2 Fly.io Secrets
-
-**Set via CLI:**
+### Gateway → Fly
 
 ```powershell
 cd C:\Users\Proma\Projects\promagen\gateway
-
-flyctl secrets set TWELVEDATA_API_KEY="your_key_here"
-flyctl secrets set MARKETSTACK_API_KEY="your_key_here"
-flyctl secrets set OPENWEATHERMAP_API_KEY="your_key_here"
-flyctl secrets set FRONTEND_BASE_URL="https://promagen.com"
+flyctl deploy
 ```
 
-**Note:** Fly auto-restarts when secrets change. For code changes, use `flyctl deploy`.
+### Test Command (Frontend)
 
-### 4.3 Fly.io Environment (fly.toml)
-
-The gateway derives SSOT URLs from `FRONTEND_BASE_URL` automatically:
-
-```toml
-[env]
-  PORT = "8080"
-  NODE_ENV = "production"
-  # FRONTEND_BASE_URL set via secrets → derives all *_CONFIG_URL values
+```powershell
+cd C:\Users\Proma\Projects\promagen\frontend
+pnpm run test:util
 ```
 
 ---
 
-## 5. PROD Verification Checklist
+## 6. PROD Verification Checklist
 
-Run after deploying to Vercel and Fly.
-
-### A) Gateway health check
+### A) Gateway health
 
 ```powershell
 Invoke-RestMethod "https://promagen-api.fly.dev/health"
 ```
 
-**Expected:** `{ status: "ok", ... }`
-
-### B) Gateway trace shows SSOT from promagen.com
+### B) Gateway SSOT
 
 ```powershell
 Invoke-RestMethod "https://promagen-api.fly.dev/trace" | ConvertTo-Json -Depth 8
 ```
 
-**Expected under `environment`:**
+Expected: `FRONTEND_BASE_URL: "https://promagen.com"`, `weather.initialized: true`.
 
-- `FRONTEND_BASE_URL: "https://promagen.com"`
-- `WEATHER_CONFIG_URL: "https://promagen.com/api/weather/config"`
-
-**Expected under `weather`:**
-
-- `initialized: true`
-- `totalCities: 48`
-- `cache.hasData: true`
-
-### C) Gateway returns live weather
-
-```powershell
-Invoke-RestMethod "https://promagen-api.fly.dev/weather" | ConvertTo-Json -Depth 4
-```
-
-**Expected:**
-
-- `meta.mode` = `"cached"` or `"live"`
-- `data` array has weather objects
-
-### D) Frontend proxy returns gateway data
+### C) Frontend proxy
 
 ```powershell
 Invoke-RestMethod "https://promagen.com/api/weather" | ConvertTo-Json -Depth 4
 ```
 
-**Expected:** Same data as step C.
-
-### E) Visual confirmation
-
-1. Open: `https://promagen.com/`
-2. Hard refresh: `Ctrl+Shift+R`
-3. Exchange cards show real temperatures
+### D) Visual: `https://promagen.com/` — exchange cards show real temperatures.
 
 ---
 
-## 6. Troubleshooting
+## 7. Troubleshooting
 
-### Problem: Frontend `/api/weather` returns empty data in DEV
+### Frontend `/api/weather` returns empty data in DEV
 
-**Cause:** `GATEWAY_URL` not set or wrong in `frontend/.env.local`
+Check `frontend/.env.local` has `GATEWAY_URL=http://localhost:8080`. Restart dev server after editing.
 
-**Fix:**
+### Gateway `weather.initialized: false`
 
-1. Open `C:\Users\Proma\Projects\promagen\frontend\.env.local`
-2. Ensure this line exists: `GATEWAY_URL=http://localhost:8080`
-3. Remove any line like: `GATEWAY_URL=https://promagen-api.fly.dev`
-4. Restart frontend: `Ctrl+C` then `pnpm dev`
+Start frontend before gateway. If already running, restart gateway.
 
-### Problem: Gateway `/trace` shows `weather.initialized: false`
+### `.env.local` changes not taking effect
 
-**Cause:** Gateway started before frontend, or frontend config endpoint is broken
+Next.js caches env vars. Stop server, optionally delete `.next`, run `pnpm dev` again.
 
-**Fix:**
+### Server-side `auth()` returns null on Vercel
 
-1. Stop both servers
-2. Start frontend first: `pnpm dev` in frontend folder
-3. Wait for "Ready" message
-4. Start gateway: `pnpm dev` in gateway folder
+Known issue with `@clerk/nextjs` v6.x on Next.js 16. Use `getSessionFromCookie()` pattern instead. See `clerk-auth.md` §2.2.
 
-### Problem: Gateway shows `OPENWEATHERMAP_API_KEY: MISSING`
+### Crons not running
 
-**Cause:** Key not in `gateway/.env.local`
-
-**Fix:**
-
-1. Add `OPENWEATHERMAP_API_KEY=your_real_key` to `gateway/.env.local`
-2. Restart gateway
-
-### Problem: PROD shows `weather.initialized: false`
-
-**Cause:** Fly gateway can't reach `https://promagen.com/api/weather/config`
-
-**Fix:**
-
-1. Check Vercel deployment is live: `curl https://promagen.com/api/weather/config`
-2. Redeploy gateway: `flyctl deploy`
-3. Check secrets: `flyctl secrets list`
-
-### Problem: `.env.local` changes not taking effect
-
-**Cause:** Next.js caches env vars; need full restart
-
-**Fix:**
-
-1. Stop dev server completely (`Ctrl+C`)
-2. Delete `.next` folder (optional but thorough)
-3. Run `pnpm dev` again
-
----
-
-## 7. Environment Variable Reference
-
-### Frontend Variables
-
-| Variable                  | DEV Value               | PROD Value                     | Used By            |
-| ------------------------- | ----------------------- | ------------------------------ | ------------------ |
-| `GATEWAY_URL`             | `http://localhost:8080` | `https://promagen-api.fly.dev` | Server-side routes |
-| `NEXT_PUBLIC_GATEWAY_URL` | `http://localhost:8080` | `https://promagen-api.fly.dev` | Client-side code   |
-
-### Gateway Variables
-
-| Variable                 | DEV Value               | PROD Value             | Notes                   |
-| ------------------------ | ----------------------- | ---------------------- | ----------------------- |
-| `TWELVEDATA_API_KEY`     | Your key                | Fly secret             | FX + Crypto             |
-| `MARKETSTACK_API_KEY`    | Your key                | Fly secret             | Indices                 |
-| `OPENWEATHERMAP_API_KEY` | Your key                | Fly secret             | Weather                 |
-| `FRONTEND_BASE_URL`      | `http://localhost:3000` | `https://promagen.com` | Derives all config URLs |
-| `WEATHER_CONFIG_URL`     | (derived)               | (derived)              | Auto-derived from base  |
-
----
-
-## 8. Quick Reference: Common Commands
-
-### DEV Startup (in order)
-
-```powershell
-# Terminal 1 - Frontend
-cd C:\Users\Proma\Projects\promagen\frontend
-pnpm dev
-
-# Terminal 2 - Gateway (after frontend is ready)
-cd C:\Users\Proma\Projects\promagen\gateway
-pnpm dev
-```
-
-### DEV Verification (quick)
-
-```powershell
-# Gateway has data?
-(Invoke-RestMethod "http://localhost:8080/weather").meta.mode
-
-# Frontend proxies correctly?
-(Invoke-RestMethod "http://localhost:3000/api/weather").meta.mode
-```
-
-### PROD Deployment
-
-```powershell
-# Frontend → Vercel
-cd C:\Users\Proma\Projects\promagen\frontend
-git push  # Vercel auto-deploys
-
-# Gateway → Fly
-cd C:\Users\Proma\Projects\promagen\gateway
-flyctl deploy
-```
-
-### PROD Verification (quick)
-
-```powershell
-(Invoke-RestMethod "https://promagen-api.fly.dev/weather").meta.mode
-(Invoke-RestMethod "https://promagen.com/api/weather").meta.mode
-```
+Check `frontend/vercel.json` has `?secret=$PROMAGEN_CRON_SECRET` on all cron paths. See `cron_jobs.md` §Cron Security.
 
 ---
 
 ## Changelog
 
-| Date       | Change                                       |
-| ---------- | -------------------------------------------- |
-| 2026-01-20 | Document created covering DEV and PROD setup |
+| Date | Change |
+|------|--------|
+| 9 Apr 2026 | v2.0.0: Added all frontend env vars (Clerk, Stripe, OpenAI, Neon, KV, GA4, cron, feature flags). Added deploy workflow with .next clearing. Added test command. Added troubleshooting for auth and crons. |
+| 20 Jan 2026 | v1.0.0: Document created covering DEV and PROD gateway/frontend setup. |
 
 ---
 
-_This document is the authority for environment configuration. All wiring decisions should reference this doc._
-
-_**Critical rules:** (1) DEV: start frontend before gateway. (2) DEV: both `.env.local` files must point to `localhost`. (3) PROD: Fly derives config URLs from `FRONTEND_BASE_URL`. (4) Always restart after env changes._
+_This document is the authority for environment configuration. `src.zip` is the Single Source of Truth. Critical rules: (1) DEV: start frontend before gateway. (2) Always clear `.next` cache on deploy. (3) Test with `pnpm run test:util`._

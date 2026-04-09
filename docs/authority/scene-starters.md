@@ -1,7 +1,7 @@
 # Scene Starters
 
-**Last updated:** 25 February 2026  
-**Version:** 1.0.0  
+**Last updated:** 9 April 2026  
+**Version:** 2.0.0  
 **Owner:** Promagen  
 **Authority:** This document defines the architecture and behaviour for the Scene Starters system (prompt-builder-evolution-plan-v2.md Phase 2).
 
@@ -255,4 +255,34 @@ When modifying Scene Starters or Explore Drawer:
 
 ## Changelog
 
-- **25 Feb 2026 (v1.0.0):** Initial release. Phase 0–4 complete. 200 scenes across 23 worlds (5 free worlds, 18 pro worlds). Scene Selector v1.3.0 with pro gate + upgrade prompts. Explore Drawer v2.0.0 with scene flavour tabs, all-tier badges, cascade ordering, analytics. 5 GTM events. Fluid typography audit passed.
+
+---
+
+## Learning Pipeline Integration (Phase 5 — Layer 3)
+
+The nightly learning aggregation cron (`/api/learning/aggregate`) includes a scene candidate generation layer. When enough user-created prompts share similar category selections and all score 90%+, the system proposes new Scene Starters.
+
+**Process:**
+
+1. Nightly cron clusters user prompt selection sets using Jaccard similarity
+2. Large clusters with high-scoring prompts generate scene candidates
+3. Candidates appear in admin review queue (`/admin/scene-candidates`)
+4. Admin can approve, reject, or reset each candidate
+5. Approved candidates are added to `scene-starters.json`
+
+**Key files:**
+
+| File | Purpose |
+|------|---------|
+| `src/lib/learning/scene-candidates.ts` | Pure computation — Jaccard clustering + consensus extraction |
+| `src/app/api/learning/scene-candidates/route.ts` | Public GET endpoint (5-min cache) |
+| `src/app/admin/scene-candidates/page.tsx` | Admin review queue UI |
+
+Candidates are never auto-added. Admin review is mandatory.
+
+---
+
+## Changelog
+
+- **9 Apr 2026 (v2.0.0):** Added Learning Pipeline Integration (Phase 5 Layer 3 — scene candidates from collective intelligence). Updated date.
+- **25 Feb 2026 (v1.0.0):** Initial release. Phase 0–4 complete. 200 scenes across 23 worlds.

@@ -1,6 +1,6 @@
 # Engine Bay (Ignition) Authority Document
 
-**Last updated:** 5 March 2026  
+**Last updated:** 9 April 2026  
 **Version:** 5.0.0  
 **Owner:** Promagen  
 **Authority:** This document defines the Engine Bay component behaviour, design, animations, and edit locations.
@@ -10,6 +10,8 @@
 ## Purpose
 
 Engine Bay is the primary CTA (Call-to-Action) for launching the Prompt Builder from the homepage. It provides quick access to top-ranked AI image generation platforms.
+
+**Surfaces:** Engine Bay appears on 3 routes: Homepage (`/` — Prompt Lab), Inspire (`/inspire`), and Pro Promagen (`/pro-promagen`). All via `HomepageGrid` with `showEngineBay={true}`.
 
 On the new homepage, Engine Bay also serves as the **shared provider selector** for Scene Starters (left rail). When a user selects a provider in Engine Bay, that selection flows down to Scene Starters so clicking a scene navigates to the correct provider's prompt builder.
 

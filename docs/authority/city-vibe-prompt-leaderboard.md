@@ -2,8 +2,8 @@
 
 > **Feature:** Weather-driven AI image prompts on every provider flag in the leaderboard table  
 > **Status:** Deployed — live on promagen.com  
-> **Date:** 21 February 2026  
-> **Scope:** 42 AI providers × 93 cities × 4 prompt tiers ≈ 49,000 unique combinations
+> **Date:** 9 April 2026 (updated)  
+> **Scope:** 40 AI providers × 93 cities × 4 prompt tiers ≈ 49,000 unique combinations
 
 ---
 
@@ -17,7 +17,7 @@ When a user hovers over any AI provider's country flag in the leaderboard table,
 - **Optical physics** (Magnus formula humidity optics, Beaufort wind scaling, VIIRS nighttime lighting)
 - **Prompt tier** matching the provider's AI model (CLIP, Midjourney, Natural Language, Plain Language)
 
-This mirrors the existing exchange card weather tooltips — same component, same physics engine, same prompt generator — but applied to the 42 AI providers instead of stock exchanges.
+This mirrors the existing exchange card weather tooltips — same component, same physics engine, same prompt generator — but applied to the 40 AI providers instead of stock exchanges.
 
 ---
 
@@ -74,7 +74,7 @@ This mirrors the existing exchange card weather tooltips — same component, sam
 
 **File:** `src/data/providers/provider-weather-map.ts` (167 lines)
 
-Maps all 42 AI providers to their weather data source. Each entry contains:
+Maps all 40 AI providers to their weather data source. Each entry contains:
 
 | Field         | Purpose                                                                    |
 | ------------- | -------------------------------------------------------------------------- |
@@ -375,7 +375,7 @@ Renders SVG flags from `/public/flags/` with emoji fallback. Updated for this fe
 
 **Root cause:** `vibesCity` values in `provider-weather-map.ts` were all lowercase. The value passes through to the prompt generator and appears as-is in tooltip text. The `getCityVenue()` function does its own `.toLowerCase()` for lookup, so Title Case input is safe.
 
-**Fix:** Capitalised all 42 `vibesCity` values (San Francisco, London, New York, Kuala Lumpur, Hong Kong, Washington DC, Málaga, etc.).
+**Fix:** Capitalised all 40 `vibesCity` values (San Francisco, London, New York, Kuala Lumpur, Hong Kong, Washington DC, Málaga, etc.).
 
 ### Bug 4: 23 Providers Missing Weather Data (Batch Rotation)
 
@@ -535,7 +535,7 @@ npm run dev                          # Dev server starts
 - [ ] City name in prompt is Title Case (San Francisco, not san francisco)
 - [ ] Tooltip appears immediately (no delay waiting for API)
 - [ ] Demo weather shows `(demo)` in description until live data arrives
-- [ ] All 42 providers have working tooltips (not just the 19 exchange-piggyback ones)
+- [ ] All 40 providers have working tooltips (not just the 19 exchange-piggyback ones)
 - [ ] Tooltip position is `left` (doesn't overflow right edge of table)
 - [ ] Flag size is 20px (matches exchange cards)
 - [ ] No native browser tooltip ("United States flag") appears

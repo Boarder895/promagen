@@ -11,7 +11,7 @@
 | ------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 1.0.0   | 2026-03-03 | Initial proposal — Status: Proposed                                                                                                                                                                                                                                                                          |
 | 2.0.0   | 2026-03-03 | Full rewrite — Status: Implemented. All 4 build phases shipped. 5 upgrades. 3 extras. Composition blueprint fixes. Quality parity. Cross-referenced against src.zip actual implementation.                                                                                                                   |
-| 3.0.0   | 2026-03-04 | Parity v3.3.0–v3.5.1 shipped. 42-platform coverage (was 31). Post-processing engine extracted. NEGATIVE_TO_POSITIVE map (45 entries). SENTENCE_CONNECTORS optimised. 42-platform parity test suite (660 lines). All line counts, function offsets, test paths, and exports cross-referenced against src.zip. |
+| 3.0.0   | 2026-03-04 | Parity v3.3.0–v3.5.1 shipped. 42-platform coverage (was 31). Post-processing engine extracted. NEGATIVE_TO_POSITIVE map (11 entries). SENTENCE_CONNECTORS optimised. 42-platform parity test suite (660 lines). All line counts, function offsets, test paths, and exports cross-referenced against src.zip. |
 
 ---
 
@@ -35,7 +35,7 @@ Promagen had two independent systems that both built prompt text. They shared ze
 
 ### System B — Prompt Builder
 
-`prompt-builder.ts` (1,562 lines) — the user-facing assembly engine with `assembleKeywords()`, `assembleNaturalSentences()`, `assemblePlainLanguage()`, routed by `assembleTierAware()`. Platform-format-driven with 42 platforms configured in `platform-formats.json` (v3.5.0, 1,539 lines) for token limits, sweet spots, weight syntax, impact priority, category ordering, and negative handling.
+`prompt-builder.ts` (1,562 lines) — the user-facing assembly engine with `assembleKeywords()`, `assembleNaturalSentences()`, `assemblePlainLanguage()`, routed by `assembleTierAware()`. Platform-format-driven with 40 platforms configured in `platform-formats.json (1,624 lines)) for token limits, sweet spots, weight syntax, impact priority, category ordering, and negative handling.
 
 **Vocabulary limitation (the problem):** Generic dropdown terms ("moonlight", "golden hour", "dramatic lighting") with no physics awareness, no camera intelligence, no surface/moisture/thermal phrases.
 
@@ -202,7 +202,7 @@ These changes closed the flux parity gap from 95.5% → 100% by eliminating sema
 
 ### 3.7 NEGATIVE_TO_POSITIVE Conversion Map
 
-For platforms that don't support negative prompts (Tier 3 `negativeSupport: 'none'` and Tier 4), the assembler converts negative terms to positive reinforcement using `NEGATIVE_TO_POSITIVE` (line 171, 45 entries):
+For platforms that don't support negative prompts (Tier 3 `negativeSupport: 'none'` and Tier 4), the assembler converts negative terms to positive reinforcement using `NEGATIVE_TO_POSITIVE` (line 171, 11 entries):
 
 | Negative Term          | Positive Conversion    | Category       |
 | ---------------------- | ---------------------- | -------------- |
@@ -441,13 +441,13 @@ Each platform's `impactPriority` array defines which categories appear in early 
 The generator's negative terms sometimes duplicated terms the assembler also injects from platform config `qualityNegative`. Cross-category dedup (Improvement 1) now catches these — same negative term from weather AND platform config → kept only once.
 
 **NEGATIVE_TO_POSITIVE map expansion (v3.4.0):**
-Added singular/plural variants (watermark/watermarks → unmarked, people/person/crowd → empty scene), style conversions (cartoon → realistic rendering, anime → photographic realism), and anatomy corrections. 45 entries total covering quality, exposure, unwanted elements, people control, style exclusions, composition issues, and anatomy.
+Added singular/plural variants (watermark/watermarks → unmarked, people/person/crowd → empty scene), style conversions (cartoon → realistic rendering, anime → photographic realism), and anatomy corrections. 11 entries covering quality, exposure, unwanted elements, people control, style exclusions, composition issues, and anatomy.
 
 **Materials connector removal (v3.4.0):**
 Removed `prefix: 'featuring '` from materials SENTENCE_CONNECTOR — "featuring rain-slicked asphalt" is unnatural; materials terms are self-describing.
 
 **Platform config fixes (v3.5.0, 42-platform expansion):**
-Expanded from 31 to 42 platforms. Fixed 5 misconfigured platforms:
+Expanded to 40 platforms. Fixed 5 misconfigured platforms:
 
 - `clipdrop`: was NL style → fixed to keywords with separate neg, 10 categories (was 54% parity)
 - `getimg`: added materials + composition categories (was 78% parity)
@@ -462,7 +462,7 @@ Removed " style" suffix and " atmosphere" suffix from connectors. These words we
 
 ### 8.3 Parity Achievement
 
-**v3.5.1 result:** 42/42 platforms at 100% Jaccard parity across 4 city fixtures (Amsterdam, Istanbul, Tokyo, Sydney). Zero gen-only words, zero bld-only words. Both paths produce identical semantic content for every supported platform.
+**v3.5.1 result:** 42/40 platforms at 100% Jaccard parity across 4 city fixtures (Amsterdam, Istanbul, Tokyo, Sydney). Zero gen-only words, zero bld-only words. Both paths produce identical semantic content for every supported platform.
 
 The tier generators produce hand-crafted sentence connectors ("A scene of...", "Shot on...") that the assembler's `assembleNaturalSentences()` approximates but doesn't replicate word-for-word. This is acceptable: the assembly is structurally equivalent and produces the same visual output from AI image generators. The exact prose framing differs but has zero impact on generated image quality. With v3.5.1, even this minor prose framing difference has been eliminated for keyword and comma-list platforms.
 
@@ -511,8 +511,8 @@ Original 4-tier × 4-city test suite. Tests the reference platform per tier (leo
 **`parity-all-42-platforms.test.ts` (660 lines):**
 Comprehensive audit covering every platform in every tier. Created in v3.5.1. Contains 8 test sections:
 
-1. **Platform config completeness** — all 42 tier platforms have explicit configs in `platformFormats.platforms` (no fallback to `_defaults`), minimum 5 categories each, all categories exist in tier reference superset.
-2. **Full 42-platform parity** — ≥95% Jaccard across all 42 platforms × 4 cities = 168 test cases.
+1. **Platform config completeness** — all 40 tier platforms have explicit configs in `platformFormats.platforms` (no fallback to `_defaults`), minimum 5 categories each, all categories exist in tier reference superset.
+2. **Full 42-platform parity** — ≥95% Jaccard across all 40 platforms × 4 cities = 168 test cases.
 3. **Containment metric** — ≥95% of gen content words survive in bld positive OR negative output.
 4. **Token limit enforcement** — builder output never exceeds platform `tokenLimit` (+10% margin).
 5. **Negative handling** — mode-specific correctness: separate (neg field populated), inline (--no syntax), none (positive reinforcement via NEGATIVE_TO_POSITIVE).
@@ -637,7 +637,7 @@ The rewriter is opt-in: callers invoke `rewriteWithSynergy()` before passing sel
 
 | File                                                 | Action                                                                                                                                    | Actual Lines |
 | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| `src/lib/prompt-builder.ts`                          | **ENHANCED** — 3-arg assemblePrompt, dedup, weight merge, token estimation, NEGATIVE_TO_POSITIVE (45 entries), SENTENCE_CONNECTORS v3.5.1 | 1,562 lines  |
+| `src/lib/prompt-builder.ts`                          | **ENHANCED** — 3-arg assemblePrompt, dedup, weight merge, token estimation, NEGATIVE_TO_POSITIVE (11 entries), SENTENCE_CONNECTORS v3.5.1 | 1,562 lines  |
 | `src/lib/prompt-post-process.ts`                     | **NEW** — Post-processing engine extracted from weather-prompt-generator. 6 exported functions (leak, grammar, phenomenon, synergy)       | 216 lines    |
 | `src/lib/weather/weather-category-mapper.ts`         | **NEW** — category mapping from weather intelligence                                                                                      | 581 lines    |
 | `src/lib/weather/composition-blueprint.ts`           | **NEW** — scene composition + dofPhrase + framing                                                                                         | 506 lines    |
@@ -648,8 +648,8 @@ The rewriter is opt-in: callers invoke `rewriteWithSynergy()` before passing sel
 | `src/lib/weather/tier-generators.ts`                 | **RETIRED** — Phase E deleted 5 generator functions; stub with shared enrichment helpers remains                                          | 95 lines     |
 | `src/lib/weather/prompt-types.ts`                    | **UPDATED** — venueSeed, venueOverride fields                                                                                             | 613 lines    |
 | `src/types/prompt-builder.ts`                        | **UPDATED** — WeatherCategoryMap, WeatherCategoryMeta, PromptDNAFingerprint, PromptDNAScore, 12 PromptCategories                          | 349 lines    |
-| `src/data/providers/platform-formats.json`           | **UPDATED** — v3.5.0, 42 platforms, quality prefix normalisation, impactPriority, connector fixes                                         | 1,539 lines  |
-| `src/data/platform-tiers.ts`                         | **UPDATED** — Tier definitions with 42 platforms (13 + 2 + 10 + 17)                                                                       | 199 lines    |
+| `src/data/providers/platform-formats.json (1,624 lines)  |
+| `src/data/platform-tiers.ts`                         | **UPDATED** — Tier definitions with 40 platforms (7 + 1 + 17 + 15)                                                                       | 199 lines    |
 | `src/app/api/homepage/prompt-of-the-moment/route.ts` | **UPDATED** — venueOverride, sharedCategoryMap, inspiredBy with hash                                                                      | 639 lines    |
 | `src/components/home/prompt-showcase.tsx`            | **UPDATED** — stores categoryMap, forwards inspiredBy + hash                                                                              | 857 lines    |
 | `src/components/providers/prompt-builder.tsx`        | **UPDATED** — Phase D preload, badge split, weatherWeightOverrides                                                                        | 2,476 lines  |
@@ -719,8 +719,8 @@ The learning engine can accumulate `PromptDNAScore` metrics per hash to discover
 
 | Risk                                                   | Original Severity | Status         | Resolution                                                                                                                                                                                                                             |
 | ------------------------------------------------------ | ----------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Assembler output quality drops below generators        | HIGH              | **Resolved**   | 42/42 platforms at 100% Jaccard parity (v3.5.1). Comprehensive test suite with 168 parity cases, regression guards, and post-processing integrity checks.                                                                              |
-| Long phrases break token budgets (MJ: 40 words)        | MEDIUM            | **Mitigated**  | `assemblePlainLanguage()` has intelligent truncation. `assembleKeywords()` skips weight-wrapping on long phrases. Token estimation (`estimateClipTokens`) warns users. Token limit enforcement tested for all 42 platforms × 4 cities. |
+| Assembler output quality drops below generators        | HIGH              | **Resolved**   | 42/40 platforms at 100% Jaccard parity (v3.5.1). Comprehensive test suite with 168 parity cases, regression guards, and post-processing integrity checks.                                                                              |
+| Long phrases break token budgets (MJ: 40 words)        | MEDIUM            | **Mitigated**  | `assemblePlainLanguage()` has intelligent truncation. `assembleKeywords()` skips weight-wrapping on long phrases. Token estimation (`estimateClipTokens`) warns users. Token limit enforcement tested for all 40 platforms × 4 cities. |
 | CLIP weight wrapping produces garbage for long phrases | MEDIUM            | **Mitigated**  | Rich phrases (>4 words) are inserted without parenthetical weight wrapping. Adaptive weights (Extra 4) calibrate weights by density. Tested against Stability/Leonardo.                                                                |
 | Breaking existing manual prompt builder behaviour      | HIGH              | **Mitigated**  | All existing tests pass. Rich phrase handling is additive — short-term code paths unchanged. Within-category dedup preserves original terms when no redundancy exists.                                                                 |
 | Venue desync                                           | LOW               | **Resolved**   | Venue Singularity (Upgrade 4) eliminates desync entirely. `venueOverride` bypasses `getCityVenue()`.                                                                                                                                   |
@@ -728,7 +728,7 @@ The learning engine can accumulate `PromptDNAScore` metrics per hash to discover
 | Synergy rewriter produces unexpected replacements      | NEW               | **Monitored**  | Rewriter is opt-in (`rewriteWithSynergy()` before assembly). Callers control whether to use it. Resolution rules are explicit and testable (394 test lines).                                                                           |
 | Adaptive weights over-dampen emphasis on dense prompts | NEW               | **Tested**     | Weight calibration maintains category hierarchy. 311 test lines verify density curves across 3–10 category fills.                                                                                                                      |
 | Platform config regression on new platforms            | NEW               | **Guarded**    | 42-platform test suite catches regressions across all platforms. 16 regression guards for specific previously-fixed bugs. Test threshold raised to 95%.                                                                                |
-| NEGATIVE_TO_POSITIVE map missing conversions           | NEW               | **Tested**     | 45 entries cover quality, exposure, unwanted, people, style, composition, and anatomy categories. Singular/plural variants handled. Parity tests verify conversion consistency between gen and bld paths.                              |
+| NEGATIVE_TO_POSITIVE map missing conversions           | NEW               | **Tested**     | 11 entries cover quality, exposure, unwanted, people, style, composition, and anatomy categories. Singular/plural variants handled. Parity tests verify conversion consistency between gen and bld paths.                              |
 
 ---
 
@@ -763,7 +763,7 @@ Canonical order is defined in `CATEGORY_ORDER` constant. Effective output order 
 | `prompt-builder-page.md`               | Authority doc for builder component. `assemblePrompt()` signature updated to 3-arg. `weatherWeightOverrides` state variable documented. Phase D data flow sessionStorage → builder pathway works end-to-end with weights.                                                                                          |
 | `code-standard.md`                     | `assemblePrompt()` signature updated. `PromptCategory` type shows 12 categories. `platform-formats.json` quality prefix and impactPriority changes noted.                                                                                                                                                          |
 | `prompt-optimizer.md`                  | §2.3 architecture diagram upstream of optimizer. Optimizer consumes output of assembler. Weight merge means weighted terms may carry weather-derived weights (e.g., `(LED lighting:1.3)` instead of platform-default 1.1). §12.1 references `getPlatformFormat()` — format now includes merged weightedCategories. |
-| `ai_providers.md`                      | Prompt builder data sources section. Exports now include `getPlatformFormat()` and `platformFormats`. Line count: prompt-builder.ts is 1,562 lines. platform-formats.json is 1,539 lines (42 platforms, v3.5.0).                                                                                                   |
+| `ai_providers.md`                      | Prompt builder data sources section. Exports now include `getPlatformFormat()` and `platformFormats`. Line count: prompt-builder.ts is 1,562 lines. platform-formats.json (1,624 lines) (40 platforms, v3.5.0).                                                                                                   |
 | `weather-prompt-generator-analysis.md` | Scored system 82/100. Several recommendations now implemented: camera metadata improvements (Upgrade 4, Extra 5), composition fixes (dofPhrase guard, vanishing-point), platform negatives (cross-category dedup). Post-analysis note estimates 90–93/100 after unified brain.                                     |
 | `prompt-builder-evolution-plan-v2.md`  | Evolution plan marked "ALL PHASES COMPLETE." The unified brain is a new initiative built on top of the evolution plan. Cross-reference to this document as the next phase.                                                                                                                                         |
 
