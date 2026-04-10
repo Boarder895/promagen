@@ -9,17 +9,23 @@
 // not another system prompt rule. Code catches it 100% of the time.
 //
 // Pipeline per tier:
-//   T1: P13 (weight cap 8) → P2 (strip punctuation)
+//   T1: P13 (weight cap 8) → P2 (strip punctuation) → P14 (weight wrap ≤4 words)
 //   T2: P1 (dedup MJ params)
-//   T3: pass-through (prompt handles meta-commentary prevention)
-//   T4: P3 (self-correction) → P8 (meta-openers) → P10 (short sentence merge)
+//   T3: P15 (over-length truncation 280–420)
+//   T4: P3 (self-correction) → P8 (meta-openers) → P10 (short sentence merge) → P16 (over-length truncation ≤325)
+//
+// v4.5.1 additions (10 Apr 2026):
+//   P14 — T1 weight-wrap enforcement (4-word limit, 2-word-tail heuristic)
+//   P15 — T3 over-length truncation (280–420 char range)
+//   P16 — T4 over-length truncation (≤325 chars)
 //
 // Removed (prompt now handles these — tested and confirmed no regression):
 //   P11 (T3 meta-commentary opener fixer) — removed 28 Mar 2026
 //   P12 (T1 CLIP qualitative adjective stripper) — removed 28 Mar 2026
 //
 // Authority: harmonizing-claude-openai.md §6, §10
-// Test file: src/lib/__tests__/harmony-post-processing.test.ts
+//            call-2-quality-architecture-v0_3_1_1.md §3 (Stage B)
+// Test file: src/lib/__tests__/call-2-post-processing-fixes.test.ts
 // ============================================================================
 
 import { enforceWeightCap } from '@/lib/harmony-compliance';
@@ -231,6 +237,308 @@ export function mergeT4ShortSentences(prompt: string): string {
 }
 
 // ============================================================================
+// P14: T1 Weight-Wrap Enforcement (≤4 words)
+// ============================================================================
+// Harness rule: T1.weight_wrap_4_words_max
+// Harness data: stage_d_fail_rate 0.2408 (REAL_FAILURE)
+//
+// Problem: GPT weight-wraps phrases longer than 4 words despite being told not to.
+//   WRONG: (small girl in a yellow raincoat:1.3)
+//   RIGHT: (small girl:1.3), yellow raincoat
+//
+// Fix: Regex-scan T1 positive for (phrase:weight) where phrase exceeds 4 words
+// (hyphenated compounds count as 1 word). Auto-split using conservative 2-word-tail
+// heuristic: keep last 2 words inside the wrapper (noun head), eject prefix words
+// as unweighted comma-separated terms. Skip malformed/nested parens — just log.
+// ============================================================================
+
+/** Regex matching parenthetical weights: (phrase:1.3) */
+const PAREN_WEIGHT_RE_GLOBAL = /\(([^):]+):([\d.]+)\)/g;
+
+/**
+ * Count words in a phrase. Hyphenated compounds count as ONE word.
+ * "frost-encrusted orange survival suit" → 4 words (frost-encrusted=1, orange=1, survival=1, suit=1)
+ * "small girl in a yellow raincoat" → 6 words
+ */
+function countWeightWords(phrase: string): number {
+  return phrase.trim().split(/\s+/).filter(Boolean).length;
+}
+
+export interface WeightWrapResult {
+  text: string;
+  fixes: string[];
+  skipped: string[];
+}
+
+/**
+ * P14: Enforce T1 weight-wrap 4-word limit.
+ *
+ * For each (phrase:weight) where phrase exceeds 4 words:
+ * - Keep the last 2 words inside the wrapper (noun head)
+ * - Eject prefix words as unweighted comma-separated terms before the wrapper
+ *
+ * Skips malformed or nested parentheses — logs them but doesn't try to fix.
+ */
+export function enforceT1WeightWrap(text: string): WeightWrapResult {
+  const fixes: string[] = [];
+  const skipped: string[] = [];
+
+  // Check for nested parens — we skip these entirely
+  const hasNestedParens = /\([^)]*\([^)]*\)/.test(text);
+  if (hasNestedParens) {
+    skipped.push('Nested parentheses detected — skipping weight-wrap enforcement');
+    return { text, fixes, skipped };
+  }
+
+  const result = text.replace(PAREN_WEIGHT_RE_GLOBAL, (fullMatch, phrase: string, weight: string) => {
+    const trimmedPhrase = phrase.trim();
+    const wordCount = countWeightWords(trimmedPhrase);
+
+    // 4 words or fewer — no fix needed
+    if (wordCount <= 4) return fullMatch;
+
+    const words = trimmedPhrase.split(/\s+/);
+
+    // Sanity guard: if we somehow have fewer than 3 words after split, skip
+    if (words.length < 3) {
+      skipped.push(`Unexpected word split for "${trimmedPhrase}" — skipping`);
+      return fullMatch;
+    }
+
+    // 2-word-tail heuristic: keep last 2 words as the noun head inside wrapper
+    const tail = words.slice(-2).join(' ');
+    const prefix = words.slice(0, -2).join(', ');
+
+    const fixed = `${prefix}, (${tail}:${weight})`;
+    fixes.push(`"(${trimmedPhrase}:${weight})" → "${fixed}"`);
+    return fixed;
+  });
+
+  return { text: result, fixes, skipped };
+}
+
+// ============================================================================
+// P15: T3 Over-Length Truncation (280–420 chars)
+// ============================================================================
+// Harness rule: T3.char_count_in_range
+// Harness data: stage_d_fail_rate 0.1728 (REAL_FAILURE)
+//
+// Problem: GPT produces T3 positive text exceeding 420 chars ~17% of the time.
+// Under-length (below 280) is NOT addressed mechanically — that's a prompt
+// quality issue, not a post-processing fix.
+//
+// Truncation cascade:
+//   1. Last sentence boundary (". " or "." at end) under 420
+//   2. Clause boundary ("; " or " — " or ", ") under 420
+//   3. Nearest whitespace under 420
+//   After truncation: verify ≥280 chars. If not, fall back to comma truncation.
+// ============================================================================
+
+const T3_MAX = 420;
+const T3_MIN = 280;
+
+export interface TruncationResult {
+  text: string;
+  truncated: boolean;
+  method?: 'sentence' | 'clause' | 'whitespace' | 'comma-fallback';
+  originalLength?: number;
+}
+
+/**
+ * P15: Truncate T3 positive to ≤420 characters while preserving ≥280 minimum.
+ */
+export function enforceT3MaxLength(text: string): TruncationResult {
+  if (text.length <= T3_MAX) {
+    return { text, truncated: false };
+  }
+
+  const originalLength = text.length;
+
+  // Strategy 1: Last sentence boundary under limit
+  // Look for ". " or "." at end of a sentence within the allowed window
+  const sentenceResult = truncateAtBoundary(text, T3_MAX, /\.\s/g, 1);
+  if (sentenceResult && sentenceResult.length >= T3_MIN) {
+    return {
+      text: sentenceResult.trimEnd(),
+      truncated: true,
+      method: 'sentence',
+      originalLength,
+    };
+  }
+
+  // Strategy 2: Clause boundary (; or — or ,)
+  const clauseResult = truncateAtBoundary(text, T3_MAX, /[;]\s|(?:\s—\s)/g, 0);
+  if (clauseResult && clauseResult.length >= T3_MIN) {
+    return {
+      text: clauseResult.trimEnd() + '.',
+      truncated: true,
+      method: 'clause',
+      originalLength,
+    };
+  }
+
+  // Strategy 3: Comma — tried as a separate step because commas are very common
+  // and may produce a result when semicolons/dashes don't exist
+  const commaResult = truncateAtBoundary(text, T3_MAX, /,\s/g, 0);
+  if (commaResult && commaResult.length >= T3_MIN) {
+    return {
+      text: commaResult.trimEnd() + '.',
+      truncated: true,
+      method: 'comma-fallback',
+      originalLength,
+    };
+  }
+
+  // Strategy 4: Nearest whitespace under limit
+  const whitespaceResult = truncateAtWhitespace(text, T3_MAX);
+  if (whitespaceResult && whitespaceResult.length >= T3_MIN) {
+    return {
+      text: whitespaceResult.trimEnd() + '.',
+      truncated: true,
+      method: 'whitespace',
+      originalLength,
+    };
+  }
+
+  // Last resort: if all strategies produce sub-280 results, try comma truncation
+  // without the minimum floor check — better to be slightly short than way over
+  if (commaResult) {
+    return {
+      text: commaResult.trimEnd() + '.',
+      truncated: true,
+      method: 'comma-fallback',
+      originalLength,
+    };
+  }
+
+  // Hard fallback: just slice at whitespace under limit
+  if (whitespaceResult) {
+    return {
+      text: whitespaceResult.trimEnd() + '.',
+      truncated: true,
+      method: 'whitespace',
+      originalLength,
+    };
+  }
+
+  // Nuclear fallback: hard slice (should never happen with real text)
+  return {
+    text: text.slice(0, T3_MAX).trimEnd() + '.',
+    truncated: true,
+    method: 'whitespace',
+    originalLength,
+  };
+}
+
+// ============================================================================
+// P16: T4 Over-Length Truncation (≤325 chars)
+// ============================================================================
+// Harness rule: T4.char_count_under_325
+// Harness data: stage_d_fail_rate 0.0524 (BORDERLINE)
+//
+// Problem: GPT produces T4 positive text exceeding 325 chars ~5% of the time.
+// No minimum floor needed for T4.
+//
+// Truncation cascade:
+//   1. Last sentence boundary under 325
+//   2. Comma boundary under 325
+//   3. Nearest whitespace under 325
+// ============================================================================
+
+const T4_MAX = 325;
+
+/**
+ * P16: Truncate T4 positive to ≤325 characters.
+ */
+export function enforceT4MaxLength(text: string): TruncationResult {
+  if (text.length <= T4_MAX) {
+    return { text, truncated: false };
+  }
+
+  const originalLength = text.length;
+
+  // Strategy 1: Last sentence boundary
+  const sentenceResult = truncateAtBoundary(text, T4_MAX, /\.\s/g, 1);
+  if (sentenceResult) {
+    return {
+      text: sentenceResult.trimEnd(),
+      truncated: true,
+      method: 'sentence',
+      originalLength,
+    };
+  }
+
+  // Strategy 2: Comma
+  const commaResult = truncateAtBoundary(text, T4_MAX, /,\s/g, 0);
+  if (commaResult) {
+    return {
+      text: commaResult.trimEnd() + '.',
+      truncated: true,
+      method: 'comma-fallback',
+      originalLength,
+    };
+  }
+
+  // Strategy 3: Nearest whitespace
+  const whitespaceResult = truncateAtWhitespace(text, T4_MAX);
+  if (whitespaceResult) {
+    return {
+      text: whitespaceResult.trimEnd() + '.',
+      truncated: true,
+      method: 'whitespace',
+      originalLength,
+    };
+  }
+
+  // Nuclear fallback
+  return {
+    text: text.slice(0, T4_MAX).trimEnd() + '.',
+    truncated: true,
+    method: 'whitespace',
+    originalLength,
+  };
+}
+
+// ============================================================================
+// SHARED TRUNCATION HELPERS
+// ============================================================================
+
+/**
+ * Find the last match of `pattern` that ends at or before `maxLen` in `text`.
+ * Returns the text up to and including the match (+ offset chars after match start).
+ * Returns null if no match found within the limit.
+ */
+function truncateAtBoundary(
+  text: string,
+  maxLen: number,
+  pattern: RegExp,
+  offset: number,
+): string | null {
+  let lastGoodPos = -1;
+
+  for (const m of text.matchAll(pattern)) {
+    const cutPos = (m.index ?? 0) + (m[0]?.length ?? 0) - offset;
+    if (cutPos > 0 && cutPos <= maxLen) {
+      lastGoodPos = cutPos;
+    }
+  }
+
+  if (lastGoodPos <= 0) return null;
+  return text.slice(0, lastGoodPos);
+}
+
+/**
+ * Find the last whitespace position at or before `maxLen`.
+ * Returns text up to that position, or null if no whitespace found.
+ */
+function truncateAtWhitespace(text: string, maxLen: number): string | null {
+  const window = text.slice(0, maxLen);
+  const lastSpace = window.lastIndexOf(' ');
+  if (lastSpace <= 0) return null;
+  return text.slice(0, lastSpace);
+}
+
+// ============================================================================
 // FULL PIPELINE ORCHESTRATOR
 // ============================================================================
 
@@ -250,9 +558,30 @@ export function postProcessTiers(tiers: TierPrompts): TierPrompts {
     tier1: {
       positive: (() => {
         let text = tiers.tier1.positive;
+        // P13: weight cap
         const capResult = enforceWeightCap(text, 8);
         if (capResult.wasFixed) text = capResult.text;
-        return stripTrailingPunctuation(text);
+        // P2: strip trailing punctuation
+        text = stripTrailingPunctuation(text);
+        // P14: weight-wrap 4-word enforcement
+        const wrapResult = enforceT1WeightWrap(text);
+        if (wrapResult.fixes.length > 0) {
+          text = wrapResult.text;
+          // Log fixes for observability (dev endpoint captures Stage B vs A diff)
+          if (typeof console !== 'undefined') {
+            console.debug(
+              '[harmony-post-processing] P14 T1 weight-wrap fixes:',
+              wrapResult.fixes.join('; '),
+            );
+          }
+        }
+        if (wrapResult.skipped.length > 0 && typeof console !== 'undefined') {
+          console.debug(
+            '[harmony-post-processing] P14 T1 weight-wrap skipped:',
+            wrapResult.skipped.join('; '),
+          );
+        }
+        return text;
       })(),
       negative: stripTrailingPunctuation(tiers.tier1.negative),
     },
@@ -261,11 +590,34 @@ export function postProcessTiers(tiers: TierPrompts): TierPrompts {
       negative: tiers.tier2.negative,
     },
     tier3: {
-      positive: tiers.tier3.positive,
+      positive: (() => {
+        // P15: over-length truncation
+        const result = enforceT3MaxLength(tiers.tier3.positive);
+        if (result.truncated && typeof console !== 'undefined') {
+          console.debug(
+            `[harmony-post-processing] P15 T3 truncated: ${result.originalLength} → ${result.text.length} (${result.method})`,
+          );
+        }
+        return result.text;
+      })(),
       negative: tiers.tier3.negative,
     },
     tier4: {
-      positive: mergeT4ShortSentences(fixT4MetaOpeners(fixT4SelfCorrection(tiers.tier4.positive))),
+      positive: (() => {
+        // Existing: P3 → P8 → P10
+        let text = mergeT4ShortSentences(fixT4MetaOpeners(fixT4SelfCorrection(tiers.tier4.positive)));
+        // P16: over-length truncation (runs AFTER existing fixes which may change length)
+        const result = enforceT4MaxLength(text);
+        if (result.truncated) {
+          text = result.text;
+          if (typeof console !== 'undefined') {
+            console.debug(
+              `[harmony-post-processing] P16 T4 truncated: ${result.originalLength} → ${text.length} (${result.method})`,
+            );
+          }
+        }
+        return text;
+      })(),
       negative: tiers.tier4.negative,
     },
   };

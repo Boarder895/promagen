@@ -173,6 +173,7 @@
         <a href="#deploy">Deploy</a>
         <a href="#seo">SEO & Schema</a>
         <a href="#scores">Score History</a>
+        <a href="#indexing">Indexing Tracker</a>
       </div>
 
       <!-- 01: Core Routes -->
@@ -412,14 +413,6 @@
             <span class="cmd-icon">📋</span>
           </div>
         </div>
-
-        <div class="cmd-group">
-          <div class="cmd-label">Verify analytics env vars (GA4 + AI citation detection)</div>
-          <div class="cmd" onclick="copyCmd(this)">
-            <span class="cmd-text">pnpm run verify:analytics</span>
-            <span class="cmd-icon">📋</span>
-          </div>
-        </div>
       </div>
 
       <!-- 09: SEO & Schema -->
@@ -604,6 +597,496 @@
       renderProfileGrid('all');
       renderComparisonGrid();
       renderUseCaseGrid();
+    </script>
+
+    <!-- ============================================================ -->
+    <!-- 11: INDEXING TRACKER — added by crawl-hardening build         -->
+    <!-- ============================================================ -->
+    <style>
+      /* === Indexing Tracker === */
+      .tracker-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin: 20px 0 24px; }
+      .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; text-align: center; }
+      .stat-num { font-family: "JetBrains Mono", monospace; font-size: 28px; font-weight: 600; color: var(--text-bright); line-height: 1; }
+      .stat-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 6px; }
+      .stat-indexed .stat-num { color: var(--accent-emerald); }
+      .stat-submitted .stat-num { color: var(--accent-amber); }
+      .stat-pending .stat-num { color: var(--text-dim); }
+      .stat-failed .stat-num { color: var(--accent-red); }
+
+      .tracker-toolbar { display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: center; margin-bottom: 16px; padding: 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; }
+      .tracker-filters { display: flex; gap: 6px; flex-wrap: wrap; }
+      .tracker-filter { font-family: "DM Sans", sans-serif; font-size: 12px; font-weight: 500; color: var(--text-dim); background: transparent; border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; cursor: pointer; transition: all 0.15s; }
+      .tracker-filter:hover { color: var(--text-bright); border-color: var(--border-hover); }
+      .tracker-filter.active { color: var(--accent-purple); border-color: rgba(167, 139, 250, 0.4); background: rgba(167, 139, 250, 0.08); }
+
+      .tracker-actions { display: flex; gap: 6px; }
+      .tracker-btn { font-family: "DM Sans", sans-serif; font-size: 12px; font-weight: 500; color: var(--text-dim); background: transparent; border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; cursor: pointer; transition: all 0.15s; }
+      .tracker-btn:hover { color: var(--text-bright); border-color: var(--border-hover); }
+      .tracker-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+      .tracker-btn-danger:hover { color: var(--accent-red); border-color: rgba(248, 113, 113, 0.4); }
+
+      .tracker-group { margin-bottom: 24px; }
+      .tracker-group-header { font-family: "JetBrains Mono", monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent-amber); margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+      .tracker-row { display: grid; grid-template-columns: 1fr auto auto auto auto; gap: 10px; align-items: center; padding: 10px 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; transition: all 0.15s; }
+      .tracker-row:hover { background: var(--bg-card-hover); border-color: var(--border-hover); }
+
+      /* Sparkline history chart */
+      .tracker-history { margin: 20px 0 24px; padding: 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; }
+      .tracker-history-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+      .tracker-history-title { font-family: "JetBrains Mono", monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent-emerald); }
+      .tracker-history-meta { font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--text-dim); }
+      .tracker-history-empty { font-size: 12px; color: var(--text-dim); text-align: center; padding: 16px 0; font-style: italic; }
+      .tracker-history svg { display: block; }
+      .tracker-history-axis { font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--text-dim); display: flex; justify-content: space-between; margin-top: 4px; }
+      .tracker-url { font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .tracker-url a { color: var(--accent-sky); text-decoration: none; }
+      .tracker-url a:hover { text-decoration: underline; }
+
+      .status-badge { font-family: "JetBrains Mono", monospace; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; padding: 4px 10px; border-radius: 4px; cursor: pointer; border: 1px solid; transition: all 0.15s; min-width: 110px; text-align: center; }
+      .status-not_submitted { color: var(--text-dim); background: rgba(255, 255, 255, 0.04); border-color: var(--border); }
+      .status-submitted { color: var(--accent-amber); background: rgba(251, 191, 36, 0.08); border-color: rgba(251, 191, 36, 0.25); }
+      .status-indexed { color: var(--accent-emerald); background: rgba(52, 211, 153, 0.08); border-color: rgba(52, 211, 153, 0.25); }
+      .status-failed { color: var(--accent-red); background: rgba(248, 113, 113, 0.08); border-color: rgba(248, 113, 113, 0.25); }
+
+      .live-badge { font-family: "JetBrains Mono", monospace; font-size: 10px; font-weight: 600; padding: 4px 10px; border-radius: 4px; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--text-dim); transition: all 0.15s; min-width: 60px; text-align: center; }
+      .live-badge:hover { border-color: var(--border-hover); color: var(--text-bright); }
+      .live-badge.live-ok { color: var(--accent-emerald); border-color: rgba(52, 211, 153, 0.3); background: rgba(52, 211, 153, 0.05); }
+      .live-badge.live-down { color: var(--accent-red); border-color: rgba(248, 113, 113, 0.3); background: rgba(248, 113, 113, 0.05); }
+      .live-badge.live-checking { color: var(--accent-amber); border-color: rgba(251, 191, 36, 0.3); }
+
+      .tracker-action-btn { font-family: "JetBrains Mono", monospace; font-size: 10px; font-weight: 500; padding: 4px 10px; border-radius: 4px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); cursor: pointer; transition: all 0.15s; }
+      .tracker-action-btn:hover { color: var(--accent-sky); border-color: rgba(56, 189, 248, 0.3); background: rgba(56, 189, 248, 0.05); }
+
+      .tracker-help { font-size: 12px; color: var(--text-dim); margin-top: 16px; padding: 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; line-height: 1.6; }
+      .tracker-help strong { color: var(--text); }
+
+      @media (max-width: 768px) {
+        .tracker-stats { grid-template-columns: repeat(2, 1fr); }
+        .tracker-row { grid-template-columns: 1fr; }
+        .tracker-toolbar { flex-direction: column; align-items: stretch; }
+      }
+    </style>
+
+    <div class="container" style="padding-top: 0;">
+      <div class="section" id="indexing">
+        <div class="section-header">
+          <span class="section-number">11</span>
+          <h2>Google Indexing Tracker</h2>
+        </div>
+        <p>Track GSC indexing status across all <span id="tracker-total">0</span> sitemap URLs. State persists in browser localStorage. Live checks verify URL is reachable; indexing status is manual (GSC API requires OAuth).</p>
+
+        <div class="tracker-history">
+          <div class="tracker-history-header">
+            <div class="tracker-history-title">Indexed pages — last 30 days</div>
+            <div class="tracker-history-meta" id="history-meta">No data</div>
+          </div>
+          <div id="history-chart"></div>
+        </div>
+
+        <div class="tracker-stats">
+          <div class="stat-card stat-total"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Total</div></div>
+          <div class="stat-card stat-indexed"><div class="stat-num" id="stat-indexed">0</div><div class="stat-label">Indexed</div></div>
+          <div class="stat-card stat-submitted"><div class="stat-num" id="stat-submitted">0</div><div class="stat-label">Submitted</div></div>
+          <div class="stat-card stat-pending"><div class="stat-num" id="stat-pending">0</div><div class="stat-label">Not Submitted</div></div>
+          <div class="stat-card stat-failed"><div class="stat-num" id="stat-failed">0</div><div class="stat-label">Failed</div></div>
+        </div>
+
+        <div class="tracker-toolbar">
+          <div class="tracker-filters">
+            <button class="tracker-filter active" data-filter="all">All</button>
+            <button class="tracker-filter" data-filter="not_submitted">Not Submitted</button>
+            <button class="tracker-filter" data-filter="submitted">Submitted</button>
+            <button class="tracker-filter" data-filter="indexed">Indexed</button>
+            <button class="tracker-filter" data-filter="failed">Failed</button>
+          </div>
+          <div class="tracker-actions">
+            <button class="tracker-btn" id="btn-check-all">⟳ Check All Live</button>
+            <button class="tracker-btn" id="btn-export">⤓ Export JSON</button>
+            <button class="tracker-btn tracker-btn-danger" id="btn-reset">↺ Reset</button>
+          </div>
+        </div>
+
+        <div id="tracker-table"></div>
+
+        <p class="tracker-help">
+          <strong>How to use:</strong> Click status badges to cycle: Not Submitted → Submitted → Indexed → Failed → back. Click <strong>Inspect</strong> to open GSC URL Inspection in a new tab. Click <strong>Google</strong> to run a <code>site:</code> search — if the page appears in results, it's actually indexed (more reliable than trusting GSC's "Submitted" state). Click <strong>Live?</strong> to ping the URL. Use <strong>Check All Live</strong> to batch-verify reachability (runs in batches of 5). The 30-day chart auto-snapshots whenever you change a status. State is saved per browser; use <strong>Export JSON</strong> for backup (now includes history).
+        </p>
+      </div>
+    </div>
+
+    <script>
+      (function() {
+        const STORAGE_KEY = 'promagen-indexing-tracker-v1';
+        const HISTORY_KEY = 'promagen-indexing-history-v1';
+        const SITE = 'https://promagen.com';
+        const GSC_PROPERTY = 'https://promagen.com/';
+
+        const URLS = [
+          { path: '/', cat: 'Authority Hubs' },
+          { path: '/pro-promagen', cat: 'Authority Hubs' },
+          { path: '/platforms', cat: 'Authority Hubs' },
+          { path: '/platforms/negative-prompts', cat: 'Authority Hubs' },
+          { path: '/guides/prompt-formats', cat: 'Authority Hubs' },
+          { path: '/about/how-we-score', cat: 'Authority Hubs' },
+          { path: '/guides/best-generator-for', cat: 'Authority Hubs' },
+          { path: '/guides/best-generator-for/photorealism', cat: 'Use Case Pages' },
+          { path: '/guides/best-generator-for/illustration', cat: 'Use Case Pages' },
+          { path: '/guides/best-generator-for/concept-art', cat: 'Use Case Pages' },
+          { path: '/guides/best-generator-for/product-mockups', cat: 'Use Case Pages' },
+          { path: '/platforms/compare/midjourney-vs-dalle', cat: 'Comparisons' },
+          { path: '/platforms/compare/midjourney-vs-flux', cat: 'Comparisons' },
+          { path: '/platforms/compare/flux-vs-stable-diffusion', cat: 'Comparisons' },
+          { path: '/platforms/compare/leonardo-vs-ideogram', cat: 'Comparisons' },
+          { path: '/platforms/compare/dalle-vs-adobe-firefly', cat: 'Comparisons' },
+          { path: '/platforms/compare/midjourney-vs-leonardo', cat: 'Comparisons' },
+          { path: '/platforms/compare/ideogram-vs-midjourney', cat: 'Comparisons' },
+          { path: '/platforms/compare/canva-vs-adobe-firefly', cat: 'Comparisons' },
+          { path: '/platforms/midjourney', cat: 'Platform Profiles' },
+          { path: '/platforms/openai', cat: 'Platform Profiles' },
+          { path: '/platforms/flux', cat: 'Platform Profiles' },
+          { path: '/platforms/stability', cat: 'Platform Profiles' },
+          { path: '/platforms/leonardo', cat: 'Platform Profiles' },
+          { path: '/platforms/ideogram', cat: 'Platform Profiles' },
+          { path: '/platforms/adobe-firefly', cat: 'Platform Profiles' },
+          { path: '/platforms/google-imagen', cat: 'Platform Profiles' },
+          { path: '/platforms/recraft', cat: 'Platform Profiles' },
+          { path: '/platforms/runway', cat: 'Platform Profiles' },
+          { path: '/platforms/luma-ai', cat: 'Platform Profiles' },
+          { path: '/platforms/kling', cat: 'Platform Profiles' },
+          { path: '/platforms/playground', cat: 'Platform Profiles' },
+          { path: '/platforms/lexica', cat: 'Platform Profiles' },
+          { path: '/platforms/dreamstudio', cat: 'Platform Profiles' },
+          { path: '/platforms/canva', cat: 'Platform Profiles' },
+          { path: '/platforms/clipdrop', cat: 'Platform Profiles' },
+          { path: '/platforms/novelai', cat: 'Platform Profiles' },
+          { path: '/platforms/dreamlike', cat: 'Platform Profiles' },
+          { path: '/platforms/artbreeder', cat: 'Platform Profiles' },
+          { path: '/platforms/artguru', cat: 'Platform Profiles' },
+          { path: '/platforms/artistly', cat: 'Platform Profiles' },
+          { path: '/platforms/bing', cat: 'Platform Profiles' },
+          { path: '/platforms/bluewillow', cat: 'Platform Profiles' },
+          { path: '/platforms/123rf', cat: 'Platform Profiles' },
+          { path: '/platforms/craiyon', cat: 'Platform Profiles' },
+          { path: '/platforms/deepai', cat: 'Platform Profiles' },
+          { path: '/platforms/fotor', cat: 'Platform Profiles' },
+          { path: '/platforms/hotpot', cat: 'Platform Profiles' },
+          { path: '/platforms/imagine-meta', cat: 'Platform Profiles' },
+          { path: '/platforms/jasper-art', cat: 'Platform Profiles' },
+          { path: '/platforms/microsoft-designer', cat: 'Platform Profiles' },
+          { path: '/platforms/myedit', cat: 'Platform Profiles' },
+          { path: '/platforms/photoleap', cat: 'Platform Profiles' },
+          { path: '/platforms/picsart', cat: 'Platform Profiles' },
+          { path: '/platforms/picwish', cat: 'Platform Profiles' },
+          { path: '/platforms/pixlr', cat: 'Platform Profiles' },
+          { path: '/platforms/simplified', cat: 'Platform Profiles' },
+          { path: '/platforms/visme', cat: 'Platform Profiles' },
+          { path: '/platforms/vistacreate', cat: 'Platform Profiles' },
+          { path: '/providers', cat: 'Product Pages' },
+          { path: '/providers/compare', cat: 'Product Pages' },
+          { path: '/providers/trends', cat: 'Product Pages' },
+          { path: '/providers/leaderboard', cat: 'Product Pages' },
+          { path: '/leaderboard', cat: 'Product Pages' },
+          { path: '/inspire', cat: 'Product Pages' },
+          { path: '/studio/library', cat: 'Product Pages' },
+          { path: '/world-context', cat: 'Product Pages' },
+          { path: '/macro', cat: 'Product Pages' },
+          { path: '/status', cat: 'Product Pages' },
+        ];
+
+        // Pre-populate the 4 URLs already submitted to GSC (from earlier session)
+        const PRE_SUBMITTED = ['/', '/platforms', '/platforms/negative-prompts', '/guides/prompt-formats'];
+
+        const NEXT_STATUS = { not_submitted: 'submitted', submitted: 'indexed', indexed: 'failed', failed: 'not_submitted' };
+        const STATUS_LABELS = { not_submitted: 'Not Submitted', submitted: 'Submitted', indexed: 'Indexed', failed: 'Failed' };
+
+        let state = {};
+        let activeFilter = 'all';
+
+        function loadState() {
+          let saved = {};
+          try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch {}
+          const result = {};
+          URLS.forEach(u => {
+            result[u.path] = saved[u.path] || {
+              status: PRE_SUBMITTED.includes(u.path) ? 'submitted' : 'not_submitted',
+              live: null,
+              lastChecked: null,
+            };
+          });
+          return result;
+        }
+
+        function saveState() {
+          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+        }
+
+        function cycleStatus(path) {
+          state[path].status = NEXT_STATUS[state[path].status];
+          saveState();
+          snapshotToday();
+          render();
+          renderSparkline();
+        }
+
+        async function checkLive(path) {
+          state[path].live = 'checking';
+          render();
+          try {
+            await fetch(SITE + path, { mode: 'no-cors', cache: 'no-cache' });
+            state[path].live = 'ok';
+          } catch {
+            state[path].live = 'down';
+          }
+          state[path].lastChecked = new Date().toISOString();
+          saveState();
+          render();
+        }
+
+        async function checkAllLive() {
+          const btn = document.getElementById('btn-check-all');
+          btn.disabled = true;
+          const originalText = btn.textContent;
+          btn.textContent = '⟳ Checking...';
+          const paths = URLS.map(u => u.path);
+          for (let i = 0; i < paths.length; i += 5) {
+            const batch = paths.slice(i, i + 5);
+            await Promise.all(batch.map(p => checkLive(p)));
+          }
+          btn.disabled = false;
+          btn.textContent = originalText;
+        }
+
+        function inspectInGSC(path) {
+          const fullUrl = SITE + path;
+          const gscUrl = 'https://search.google.com/search-console/inspect?resource_id=' +
+            encodeURIComponent(GSC_PROPERTY) + '&id=' + encodeURIComponent(fullUrl);
+          window.open(gscUrl, '_blank', 'noopener');
+        }
+
+        function inspectInGoogle(path) {
+          const query = 'site:promagen.com' + path;
+          const googleUrl = 'https://www.google.com/search?q=' + encodeURIComponent(query);
+          window.open(googleUrl, '_blank', 'noopener');
+        }
+
+        function loadHistory() {
+          try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}'); }
+          catch { return {}; }
+        }
+
+        function saveHistory(history) {
+          try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); } catch {}
+        }
+
+        function snapshotToday() {
+          const history = loadHistory();
+          const today = new Date().toISOString().split('T')[0];
+          const counts = { indexed: 0, submitted: 0, total: URLS.length };
+          URLS.forEach(u => {
+            if (state[u.path].status === 'indexed') counts.indexed++;
+            if (state[u.path].status === 'submitted') counts.submitted++;
+          });
+          history[today] = counts;
+          // Trim history to last 90 days
+          const cutoff = new Date();
+          cutoff.setDate(cutoff.getDate() - 90);
+          const cutoffStr = cutoff.toISOString().split('T')[0];
+          Object.keys(history).forEach(k => { if (k < cutoffStr) delete history[k]; });
+          saveHistory(history);
+        }
+
+        function renderSparkline() {
+          const history = loadHistory();
+          const days = 30;
+          const today = new Date();
+          const points = [];
+          for (let i = days - 1; i >= 0; i--) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - i);
+            const ds = d.toISOString().split('T')[0];
+            const e = history[ds];
+            points.push({ date: ds, indexed: e ? e.indexed : null });
+          }
+          const valid = points.filter(p => p.indexed !== null);
+          const chartEl = document.getElementById('history-chart');
+          const metaEl = document.getElementById('history-meta');
+          if (valid.length === 0) {
+            chartEl.innerHTML = '<div class="tracker-history-empty">No history yet — first snapshot will appear after you mark something as indexed.</div>';
+            metaEl.textContent = 'No data';
+            return;
+          }
+          const indexedValues = valid.map(p => p.indexed);
+          const max = Math.max(...indexedValues, 1);
+          const min = 0;
+          const range = max - min || 1;
+          const w = 600, h = 60, pad = 6;
+          const stepX = (w - pad * 2) / (days - 1);
+          let path = '';
+          let area = '';
+          let circles = '';
+          let started = false;
+          let lastX = pad, lastY = h - pad;
+          points.forEach((p, i) => {
+            if (p.indexed === null) return;
+            const x = pad + i * stepX;
+            const y = h - pad - ((p.indexed - min) / range) * (h - pad * 2);
+            if (!started) { path += 'M' + x + ',' + y; area += 'M' + x + ',' + (h - pad) + ' L' + x + ',' + y; started = true; }
+            else { path += ' L' + x + ',' + y; area += ' L' + x + ',' + y; }
+            circles += '<circle cx="' + x + '" cy="' + y + '" r="2.5" fill="#34d399"/>';
+            lastX = x; lastY = y;
+          });
+          area += ' L' + lastX + ',' + (h - pad) + ' Z';
+          const svg = '<svg viewBox="0 0 ' + w + ' ' + h + '" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style="width:100%;height:60px;">' +
+            '<path d="' + area + '" fill="rgba(52,211,153,0.08)" stroke="none"/>' +
+            '<path d="' + path + '" fill="none" stroke="#34d399" stroke-width="1.5"/>' +
+            circles +
+            '</svg>' +
+            '<div class="tracker-history-axis"><span>30 days ago</span><span>today</span></div>';
+          chartEl.innerHTML = svg;
+          const todayCount = points[points.length - 1].indexed;
+          const firstValid = valid[0].indexed;
+          const delta = todayCount !== null ? todayCount - firstValid : 0;
+          const deltaStr = delta > 0 ? ' (+' + delta + ')' : delta < 0 ? ' (' + delta + ')' : '';
+          metaEl.textContent = (todayCount !== null ? todayCount : valid[valid.length - 1].indexed) + ' / ' + URLS.length + deltaStr;
+        }
+
+        function exportJSON() {
+          const exportData = {
+            exported: new Date().toISOString(),
+            site: SITE,
+            total: URLS.length,
+            state: state,
+            history: loadHistory(),
+          };
+          const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'promagen-indexing-' + new Date().toISOString().split('T')[0] + '.json';
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+
+        function reset() {
+          if (!confirm('Reset all tracking state AND history? This cannot be undone.')) return;
+          try { localStorage.removeItem(STORAGE_KEY); localStorage.removeItem(HISTORY_KEY); } catch {}
+          state = loadState();
+          render();
+          renderSparkline();
+        }
+
+        function setFilter(f) {
+          activeFilter = f;
+          document.querySelectorAll('.tracker-filter').forEach(b => {
+            b.classList.toggle('active', b.dataset.filter === f);
+          });
+          render();
+        }
+
+        function render() {
+          const counts = { total: URLS.length, indexed: 0, submitted: 0, not_submitted: 0, failed: 0 };
+          URLS.forEach(u => { counts[state[u.path].status]++; });
+          document.getElementById('stat-total').textContent = counts.total;
+          document.getElementById('stat-indexed').textContent = counts.indexed;
+          document.getElementById('stat-submitted').textContent = counts.submitted;
+          document.getElementById('stat-pending').textContent = counts.not_submitted;
+          document.getElementById('stat-failed').textContent = counts.failed;
+          document.getElementById('tracker-total').textContent = counts.total;
+
+          const groups = {};
+          URLS.forEach(u => {
+            if (!groups[u.cat]) groups[u.cat] = [];
+            groups[u.cat].push(u);
+          });
+
+          const container = document.getElementById('tracker-table');
+          container.innerHTML = '';
+
+          Object.keys(groups).forEach(cat => {
+            const visibleInGroup = groups[cat].filter(u =>
+              activeFilter === 'all' || state[u.path].status === activeFilter
+            );
+            if (visibleInGroup.length === 0) return;
+
+            const groupEl = document.createElement('div');
+            groupEl.className = 'tracker-group';
+            const headerEl = document.createElement('div');
+            headerEl.className = 'tracker-group-header';
+            headerEl.textContent = cat + ' (' + visibleInGroup.length + ')';
+            groupEl.appendChild(headerEl);
+
+            visibleInGroup.forEach(u => {
+              const s = state[u.path];
+              const liveLabel = s.live === 'checking' ? '⟳' : s.live === 'ok' ? '● Live' : s.live === 'down' ? '● Down' : 'Live?';
+              const liveClass = s.live === 'ok' ? 'live-ok' : s.live === 'down' ? 'live-down' : s.live === 'checking' ? 'live-checking' : '';
+
+              const row = document.createElement('div');
+              row.className = 'tracker-row';
+
+              const urlDiv = document.createElement('div');
+              urlDiv.className = 'tracker-url';
+              const urlLink = document.createElement('a');
+              urlLink.href = SITE + u.path;
+              urlLink.target = '_blank';
+              urlLink.rel = 'noopener';
+              urlLink.textContent = u.path;
+              urlDiv.appendChild(urlLink);
+
+              const statusBtn = document.createElement('button');
+              statusBtn.className = 'status-badge status-' + s.status;
+              statusBtn.textContent = STATUS_LABELS[s.status];
+              statusBtn.title = 'Click to cycle status';
+              statusBtn.addEventListener('click', () => cycleStatus(u.path));
+
+              const liveBtn = document.createElement('button');
+              liveBtn.className = 'live-badge ' + liveClass;
+              liveBtn.textContent = liveLabel;
+              liveBtn.title = 'Check if URL is reachable';
+              liveBtn.addEventListener('click', () => checkLive(u.path));
+
+              const inspectBtn = document.createElement('button');
+              inspectBtn.className = 'tracker-action-btn';
+              inspectBtn.textContent = 'Inspect';
+              inspectBtn.title = 'Open in Google Search Console URL Inspection';
+              inspectBtn.addEventListener('click', () => inspectInGSC(u.path));
+
+              const googleBtn = document.createElement('button');
+              googleBtn.className = 'tracker-action-btn';
+              googleBtn.textContent = 'Google';
+              googleBtn.title = 'Search Google with site: operator to verify actual indexing';
+              googleBtn.addEventListener('click', () => inspectInGoogle(u.path));
+
+              row.appendChild(urlDiv);
+              row.appendChild(statusBtn);
+              row.appendChild(liveBtn);
+              row.appendChild(inspectBtn);
+              row.appendChild(googleBtn);
+              groupEl.appendChild(row);
+            });
+
+            container.appendChild(groupEl);
+          });
+        }
+
+        function init() {
+          state = loadState();
+          snapshotToday();
+          document.querySelectorAll('.tracker-filter').forEach(b => {
+            b.addEventListener('click', () => setFilter(b.dataset.filter));
+          });
+          document.getElementById('btn-check-all').addEventListener('click', checkAllLive);
+          document.getElementById('btn-export').addEventListener('click', exportJSON);
+          document.getElementById('btn-reset').addEventListener('click', reset);
+          render();
+          renderSparkline();
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', init);
+        } else {
+          init();
+        }
+      })();
     </script>
   </body>
 </html>

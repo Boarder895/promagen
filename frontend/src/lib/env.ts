@@ -8,6 +8,10 @@
 // - Prefer "safe mode" switches + provider kill-switches via env vars so you can react instantly from Vercel.
 // - Env parsing stays permissive (mostly optional) so local dev never explodes unless a required helper is called.
 //
+// v1.3.0 (10 Apr 2026): Added CALL2_HARNESS_DEV_AUTH for the Call 2 quality harness
+//   dev-only endpoint at /api/dev/generate-tier-prompts. Preview-environment-only secret;
+//   never set in Production. Authority: call-2-harness-build-plan-v1.md Phase A.
+//
 // v1.2.0 (9 Apr 2026): Added SENTINEL_ENABLED, RESEND_API_KEY, SENTINEL_EMAIL_TO
 //   for Sentinel AI Visibility Intelligence System (sentinel.md v2.0.0).
 //
@@ -76,6 +80,11 @@ const EnvSchema = z.object({
   SENTINEL_ENABLED: z.string().optional(),
   RESEND_API_KEY: z.string().optional(),
   SENTINEL_EMAIL_TO: z.string().optional(),
+
+  // Call 2 Quality Harness — dev-only endpoint protection (Preview env only).
+  // The /api/dev/generate-tier-prompts endpoint 404s in Production regardless,
+  // and 404s on missing/wrong X-Dev-Auth header. Belt and braces.
+  CALL2_HARNESS_DEV_AUTH: z.string().optional(),
 });
 
 type ParsedEnv = z.infer<typeof EnvSchema>;
@@ -152,6 +161,12 @@ export const env = Object.freeze({
     resendApiKey: raw.RESEND_API_KEY?.trim(),
     emailTo: raw.SENTINEL_EMAIL_TO?.trim() ?? 'martin@promagen.com',
   },
+
+  // Call 2 Quality Harness — dev endpoint auth secret.
+  // Read by src/app/api/dev/generate-tier-prompts/route.ts to gate access.
+  // Set in .env.local for local dev and in Vercel Preview environment only.
+  // NEVER set in Production — the endpoint 404s in Production regardless.
+  call2HarnessDevAuth: raw.CALL2_HARNESS_DEV_AUTH?.trim(),
 });
 
 export function requireDatabaseUrl(): string {

@@ -318,6 +318,8 @@ Plain does NOT mean flat. Keep it easy to understand, but still vivid.
 - WRONG: "A lone explorer stands at the edge of a frozen valley at first light, with visible breath, fine snow, and towering ice cliffs." (static checklist, echoes input, no value-add)
 - RIGHT: "At first light on a frozen valley's edge, an explorer's breath drifts through cold air as fine snow sweeps the ground. Towering ice cliffs and distant peaks glow pale blue under a vast, crystalline sky."
 
+CRITICAL SCHEMA REMINDER: Every tier value MUST be a JSON object with "positive" and "negative" string fields. NEVER return a tier as a flat string. WRONG: "tier1": "masterpiece, ..." — RIGHT: "tier1": { "positive": "masterpiece, ...", "negative": "blurry, ..." }. If you catch yourself writing a bare string for any tier, STOP and wrap it in {"positive": "...", "negative": "..."}.
+
 Return format:
 {
   "tier1": { "positive": "...", "negative": "..." },
