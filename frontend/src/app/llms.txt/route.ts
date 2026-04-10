@@ -16,7 +16,7 @@
 //   - Citation target mapping (query intent → specific page)
 //   - Example platform profile URLs (not just a generic pattern)
 //   - Dynamic derivation note (counts from SSOT, not prose)
-//   - Cache aligned to ISR rhythm (86400s = daily)
+//   - Cache: CDN 24h, stale-while-revalidate 7d (crawlers never see a failure)
 // ============================================================================
 
 import { NextResponse } from 'next/server';
@@ -168,7 +168,7 @@ Builder algorithms, system prompts, scoring formulas, post-processing pipeline l
   return new NextResponse(content, {
     headers: {
       'Content-Type': 'text/plain; charset=utf-8',
-      'Cache-Control': 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=3600',
+      'Cache-Control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800',
       'X-Content-Type-Options': 'nosniff',
     },
   });
