@@ -35,6 +35,12 @@ export interface PlatformBatchScore {
   readonly optimisedScore: number;
 }
 
+/**
+ * How the ceiling was determined.
+ * ChatGPT 93/100 review: "surface ceiling source in the output"
+ */
+export type CeilingSource = 'measured' | 'estimated' | 'fallback';
+
 /** Aggregated triage result for a single platform. */
 export interface PlatformTriageResult {
   /** Platform ID */
@@ -43,8 +49,10 @@ export interface PlatformTriageResult {
   readonly meanAssembledBaseline: number;
   /** Mean optimised score across all scenes */
   readonly meanOptimisedScore: number;
-  /** Theoretical ceiling for this platform (100 or DNA-derived) */
+  /** Theoretical ceiling for this platform */
   readonly ceiling: number;
+  /** How the ceiling was determined */
+  readonly ceilingSource: CeilingSource;
   /** Available headroom = ceiling - meanAssembledBaseline */
   readonly availableHeadroom: number;
   /** Absolute gain = meanOptimisedScore - meanAssembledBaseline */
@@ -99,6 +107,56 @@ const AMBER_THRESHOLD = 0.20;
 
 /** Default ceiling when no DNA measurement exists. */
 const DEFAULT_CEILING = 100;
+
+/**
+ * Conservative ceiling estimates by encoder family.
+ * Architecture: "estimated conservatively, then refined through harmony data."
+ *
+ * - clip:         95 — hardware-limited by 77-token budget
+ * - t5:           97 — 512-token budget, near-uniform attention
+ * - llm_rewrite:  93 — less prompt control due to GPT-4 rewriting
+ * - llm_semantic:  95 — ChatGLM3 semantic understanding helps
+ * - proprietary:   95 — general conservative estimate
+ */
+const ENCODER_FAMILY_CEILINGS: Record<string, number> = {
+  clip: 95,
+  t5: 97,
+  llm_rewrite: 93,
+  llm_semantic: 95,
+  proprietary: 95,
+};
+
+/**
+ * Determine the theoretical ceiling for a platform.
+ *
+ * Priority:
+ *   1. measured — DNA has a measured optimisedScore from harmony data
+ *      Ceiling = max(optimisedScore + 3, encoderEstimate) — 3pt margin for growth
+ *   2. estimated — DNA has encoder family, use conservative estimate
+ *   3. fallback — no DNA at all, use 100
+ */
+export function estimateCeiling(
+  dna: PlatformDNA | undefined | null,
+): { ceiling: number; source: CeilingSource } {
+  if (!dna) {
+    return { ceiling: DEFAULT_CEILING, source: 'fallback' };
+  }
+
+  // If DNA has a measured optimised score, use it + margin
+  if (dna.optimisedScore !== null && dna.optimisedScore > 0) {
+    const encoderEstimate = ENCODER_FAMILY_CEILINGS[dna.encoderFamily] ?? DEFAULT_CEILING;
+    const measured = Math.max(dna.optimisedScore + 3, encoderEstimate);
+    return { ceiling: Math.min(measured, 100), source: 'measured' };
+  }
+
+  // Use encoder-family-based conservative estimate
+  const estimate = ENCODER_FAMILY_CEILINGS[dna.encoderFamily];
+  if (estimate !== undefined) {
+    return { ceiling: estimate, source: 'estimated' };
+  }
+
+  return { ceiling: DEFAULT_CEILING, source: 'fallback' };
+}
 
 // ============================================================================
 // COMPUTATION
@@ -181,8 +239,8 @@ export function computeTriage(
       (sum, s) => sum + s.optimisedScore, 0,
     ) / platformScores.length;
 
-    // Ceiling: from DNA if measured, otherwise default
-    const ceiling = DEFAULT_CEILING;
+    // Ceiling: from DNA measurement → encoder estimate → fallback
+    const { ceiling, source: ceilingSource } = estimateCeiling(dna);
 
     // Headroom computation
     const { absoluteGain, availableHeadroom, headroomFraction } =
@@ -201,6 +259,7 @@ export function computeTriage(
       meanAssembledBaseline: Math.round(meanAssembledBaseline * 100) / 100,
       meanOptimisedScore: Math.round(meanOptimisedScore * 100) / 100,
       ceiling,
+      ceilingSource,
       availableHeadroom: Math.round(availableHeadroom * 100) / 100,
       absoluteGain: Math.round(absoluteGain * 100) / 100,
       headroomFraction: Math.round(headroomFraction * 1000) / 1000,
@@ -266,16 +325,17 @@ export function generateTriageMarkdown(report: TriageReport): string {
   lines.push('');
   lines.push('## Per-Platform Triage');
   lines.push('');
-  lines.push('| Platform | GPT? | Baseline | Optimised | Gain | Headroom | Fraction | Bucket |');
-  lines.push('| -------- | ---- | -------- | --------- | ---- | -------- | -------- | ------ |');
+  lines.push('| Platform | GPT? | Baseline | Optimised | Gain | Ceiling (src) | Headroom | Fraction | Bucket |');
+  lines.push('| -------- | ---- | -------- | --------- | ---- | ------------- | -------- | -------- | ------ |');
 
   for (const p of report.platforms) {
     const bucketIcon = p.bucket === 'green' ? '🟢' : p.bucket === 'amber' ? '🟡' : '🔴';
     const gpt = p.requiresGPT ? 'GPT' : 'Det';
     const fraction = `${(p.headroomFraction * 100).toFixed(1)}%`;
+    const ceilingSrc = p.ceilingSource === 'measured' ? 'M' : p.ceilingSource === 'estimated' ? 'E' : 'F';
 
     lines.push(
-      `| ${p.platformId} | ${gpt} | ${p.meanAssembledBaseline} | ${p.meanOptimisedScore} | ${p.absoluteGain > 0 ? '+' : ''}${p.absoluteGain} | ${p.availableHeadroom} | ${fraction} | ${bucketIcon} |`,
+      `| ${p.platformId} | ${gpt} | ${p.meanAssembledBaseline} | ${p.meanOptimisedScore} | ${p.absoluteGain > 0 ? '+' : ''}${p.absoluteGain} | ${p.ceiling} (${ceilingSrc}) | ${p.availableHeadroom} | ${fraction} | ${bucketIcon} |`,
     );
   }
 

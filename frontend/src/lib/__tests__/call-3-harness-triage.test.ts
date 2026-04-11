@@ -11,6 +11,7 @@ import {
   computeHeadroomFraction,
   computeTriage,
   generateTriageMarkdown,
+  estimateCeiling,
 } from '@/lib/call-3-harness/triage';
 import type { PlatformBatchScore } from '@/lib/call-3-harness/triage';
 import type { PlatformDNA } from '@/data/platform-dna/types';
@@ -226,5 +227,113 @@ describe('Test scene diversity (Phase 6 prerequisite)', () => {
     expect(categories.has('outdoor_dramatic')).toBe(true);
     expect(categories.has('indoor_character')).toBe(true);
     expect(categories.has('abstract_stylised')).toBe(true);
+  });
+});
+
+// ============================================================================
+// CEILING ESTIMATION — ChatGPT 93/100 fix
+// ============================================================================
+
+describe('estimateCeiling (DNA-derived ceilings)', () => {
+  it('returns fallback 100 when no DNA provided', () => {
+    const result = estimateCeiling(null);
+
+    expect(result.ceiling).toBe(100);
+    expect(result.source).toBe('fallback');
+  });
+
+  it('uses encoder-family estimate for CLIP platforms', () => {
+    const dna = getDNA('stability');
+    const result = estimateCeiling(dna);
+
+    expect(result.ceiling).toBe(95); // CLIP estimate
+    expect(result.source).toBe('estimated');
+  });
+
+  it('uses encoder-family estimate for T5 platforms', () => {
+    const dna = getDNA('flux');
+    const result = estimateCeiling(dna);
+
+    // flux is T5 → 97
+    expect(result.ceiling).toBe(97);
+    expect(result.source).toBe('estimated');
+  });
+
+  it('uses measured ceiling when DNA has optimisedScore', () => {
+    // Create a mock DNA with measured optimisedScore
+    const mockDna = {
+      ...getDNA('stability')!,
+      optimisedScore: 92,
+    } as PlatformDNA;
+
+    const result = estimateCeiling(mockDna);
+
+    // measured = max(92 + 3, 95) = 95, capped at 100
+    expect(result.ceiling).toBe(95);
+    expect(result.source).toBe('measured');
+  });
+
+  it('never exceeds 100', () => {
+    const mockDna = {
+      ...getDNA('stability')!,
+      optimisedScore: 99,
+    } as PlatformDNA;
+
+    const result = estimateCeiling(mockDna);
+
+    // max(99 + 3, 95) = 102, capped at 100
+    expect(result.ceiling).toBeLessThanOrEqual(100);
+  });
+
+  it('triage report includes ceilingSource', () => {
+    const scores: PlatformBatchScore[] = [
+      { platformId: 'stability', sceneId: 'scene-01', assembledScore: 80, optimisedScore: 90 },
+    ];
+    const dnaMap = new Map<string, PlatformDNA>();
+    const dna = getDNA('stability');
+    if (dna) dnaMap.set('stability', dna);
+
+    const report = computeTriage(scores, dnaMap);
+
+    expect(report.platforms[0]?.ceilingSource).toBe('estimated');
+    expect(report.platforms[0]?.ceiling).toBe(95);
+  });
+
+  it('uses different ceilings for different encoder families', () => {
+    const scores: PlatformBatchScore[] = [
+      { platformId: 'stability', sceneId: 'scene-01', assembledScore: 80, optimisedScore: 88 },
+      { platformId: 'flux', sceneId: 'scene-01', assembledScore: 80, optimisedScore: 88 },
+    ];
+    const dnaMap = new Map<string, PlatformDNA>();
+    const stabDna = getDNA('stability');
+    const fluxDna = getDNA('flux');
+    if (stabDna) dnaMap.set('stability', stabDna);
+    if (fluxDna) dnaMap.set('flux', fluxDna);
+
+    const report = computeTriage(scores, dnaMap);
+
+    const stab = report.platforms.find((p) => p.platformId === 'stability');
+    const flux = report.platforms.find((p) => p.platformId === 'flux');
+
+    // CLIP ceiling 95 vs T5 ceiling 97 → different headroom
+    expect(stab?.ceiling).toBe(95);
+    expect(flux?.ceiling).toBe(97);
+    expect(stab?.availableHeadroom).not.toBe(flux?.availableHeadroom);
+  });
+
+  it('markdown shows ceiling source', () => {
+    const scores: PlatformBatchScore[] = [
+      { platformId: 'stability', sceneId: 'scene-01', assembledScore: 80, optimisedScore: 88 },
+    ];
+    const dnaMap = new Map<string, PlatformDNA>();
+    const dna = getDNA('stability');
+    if (dna) dnaMap.set('stability', dna);
+
+    const report = computeTriage(scores, dnaMap);
+    const md = generateTriageMarkdown(report);
+
+    // Should show ceiling with source indicator
+    expect(md).toContain('95 (E)'); // E = estimated
+    expect(md).toContain('Ceiling (src)');
   });
 });
