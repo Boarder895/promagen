@@ -125,7 +125,7 @@ const FRAMING_LABELS = new Set([
   'seen from below', 'seen from above', 'looming overhead',
 ]);
 
-function detectInventedLabels(inputText: string, outputText: string): string[] {
+export function detectInventedLabels(inputText: string, outputText: string): string[] {
   const inputLower = inputText.toLowerCase();
   const outputLower = outputText.toLowerCase();
   const invented: string[] = [];
@@ -248,7 +248,7 @@ interface CompositionResult {
   findings: ProseFinding[];
 }
 
-function detectMechanicalCompositionLanguage(
+export function detectMechanicalCompositionLanguage(
   inputText: string,
   outputText: string,
 ): CompositionResult {
@@ -320,7 +320,7 @@ interface TextbookResult {
   findings: ProseFinding[];
 }
 
-function detectTextbookPromptLanguage(
+export function detectTextbookPromptLanguage(
   inputText: string,
   outputText: string,
 ): TextbookResult {
@@ -429,7 +429,7 @@ interface RedundantResult {
   findings: ProseFinding[];
 }
 
-function detectRedundantPhraseReuse(
+export function detectRedundantPhraseReuse(
   inputText: string,
   outputText: string,
 ): RedundantResult {

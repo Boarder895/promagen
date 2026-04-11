@@ -32,7 +32,7 @@ import { extractAnchors, analyseOptimisationNeed, reorderSubjectFirst } from "@/
 import type { Call3Mode } from "@/lib/optimise-prompts/preflight";
 import { runMjDeterministic } from "@/lib/optimise-prompts/midjourney-deterministic";
 import { checkRegression, defaultRegressionOptions, checkMjDeterministicRegression } from "@/lib/optimise-prompts/regression-guard";
-import { anchorDiffGate } from "@/lib/optimise-prompts/anchor-diff-gate";
+import { computeAPS } from "@/lib/optimise-prompts/aps-gate";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -537,30 +537,46 @@ export async function POST(req: NextRequest): Promise<Response> {
       result.changes = ["Weight regression detected — the Algorithms declared the assembled prompt to also be the Optimised Prompt"];
     }
 
-    // Step 3: Regression guard — "no worse than input"
+    // Step 3: Quality gates — "no worse than input"
     //
-    // Compares GPT's output against the assembled input on platform-relevant
-    // structural metrics. If the output regressed (dropped anchors, invented
-    // content, verb substitution, sentence collapse, weight loss), reject
-    // GPT's output and return the assembled prompt unchanged.
+    // Two-layer defence:
+    //   Layer 1: APS gate (primary) — anchor preservation score + 3 vetoes
+    //   Layer 2: Regression guard (secondary) — 8 heuristic checks
     //
-    // This is the final safety net. GPT got every chance — system prompt,
-    // zone block, compliance gates. If it still made things worse, the user
-    // gets back what they had.
+    // APS gate catches anchor loss, invented content, and prose quality
+    // degradation. Regression guard catches edge cases the APS misses
+    // (verb substitution, sentence count drift, weight loss on T1/T2).
+    //
+    // Architecture: call-3-quality-architecture-v0.2.0.md §6
 
-    // ── Fast anchor-diff gate (deterministic, no API cost) ───────────
-    // Catches the most common failure family: GPT silently drops anchors
-    // or shortens prompts. Runs before the heavier heuristic checks.
-    const anchorGate = anchorDiffGate(sanitisedPrompt, result.optimised);
-    if (anchorGate.verdict === 'REJECT') {
-      console.warn(
-        "[optimise-prompt] Anchor-diff gate rejected:",
-        anchorGate.reason,
-      );
+    // ── Layer 1: APS gate (primary quality gate) ─────────────────────
+    const apsResult = computeAPS(sanitisedPrompt, result.optimised, anchors);
+
+    if (apsResult.verdict === 'REJECT' || apsResult.verdict === 'RETRY') {
+      // REJECT or RETRY → fallback to assembled prompt
+      // Phase 8 will add retry logic for RETRY verdict on retry-enabled platforms.
+      // Until then, RETRY is treated as REJECT (fallback).
+      const reason = apsResult.anyVetoFired
+        ? `APS gate: score=${apsResult.score.toFixed(2)} verdict=${apsResult.scoreVerdict}, ` +
+          `vetoed: ${[
+            apsResult.criticalAnchorVeto ? 'critical_anchor_loss' : '',
+            apsResult.inventedContentVeto ? 'invented_content' : '',
+            apsResult.proseQualityVeto ? 'prose_quality' : '',
+          ].filter(Boolean).join(', ')}`
+        : `APS gate: score=${apsResult.score.toFixed(2)} verdict=${apsResult.verdict}`;
+
+      console.warn("[optimise-prompt] APS gate rejected:", reason);
+
+      if (apsResult.droppedAnchors.length > 0) {
+        console.debug(
+          "[optimise-prompt] Dropped anchors:",
+          apsResult.droppedAnchors.map((a) => `${a.anchor} (${a.severity})`).join(", "),
+        );
+      }
 
       let fallback = sanitisedPrompt;
       const fallbackChanges = [
-        `Anchor-diff gate: ${anchorGate.reason}`,
+        reason,
         'Returned assembled prompt — the Algorithms declared the assembled prompt to also be the Optimised Prompt',
       ];
 
@@ -577,9 +593,9 @@ export async function POST(req: NextRequest): Promise<Response> {
       result.changes = fallbackChanges;
     }
 
-    // ── Full regression guard (heuristic checks) ─────────────────────
-    // Only runs if anchor-diff gate passed (no early rejection above).
-    if (anchorGate.verdict === 'ACCEPT') {
+    // ── Layer 2: Regression guard (secondary safety net) ─────────────
+    // Only runs if APS gate accepted — no double-fallback.
+    if (apsResult.verdict === 'ACCEPT' || apsResult.verdict === 'ACCEPT_WITH_WARNING') {
       const regressionOpts = defaultRegressionOptions(
         parsed.data.providerContext.tier,
         call3Mode,
@@ -623,6 +639,14 @@ export async function POST(req: NextRequest): Promise<Response> {
       if (pq.findings.length > 0) {
         console.debug(
           `[optimise-prompt] Prose quality: composition=${pq.compositionHardFail ? 'HARD_FAIL' : pq.findings.filter(f => f.detector === 'composition').length + ' findings'} textbook=${pq.textbookScore}pts redundant=${pq.redundantCount} passed=${regressionCheck.passed}`,
+        );
+      }
+
+      // ── APS warning diagnostics (accepted but with concerns) ──────────
+      if (apsResult.verdict === 'ACCEPT_WITH_WARNING') {
+        console.debug(
+          `[optimise-prompt] APS accepted with warning: score=${apsResult.score.toFixed(2)}, ` +
+          `dropped=${apsResult.droppedAnchors.map((a) => a.anchor).join(', ')}`,
         );
       }
     }

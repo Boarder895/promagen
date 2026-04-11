@@ -78,6 +78,7 @@ module.exports = {
         '<rootDir>/src/__tests__/schemas.catalogs.test.{ts,tsx}',
         '<rootDir>/src/__tests__/providers.schema.test.{ts,tsx}',
         '<rootDir>/src/__tests__/fx-pairs.test.{ts,tsx}',
+        '<rootDir>/src/__tests__/platform-dna/**/*.test.{ts,tsx}',
         '<rootDir>/src/components/providers/__tests__/phase-4-evolution.test.{ts,tsx}',
       ],
     },

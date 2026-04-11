@@ -1,0 +1,1740 @@
+{
+  "_meta": {
+    "version": "1.1.0",
+    "date": "2026-04-11",
+    "authority": "call-3-quality-architecture-v0.2.0.md \u00a74",
+    "platformCount": 40,
+    "encoderFamilyCounts": {
+      "clip": 7,
+      "llm_semantic": 2,
+      "t5": 2,
+      "llm_rewrite": 1,
+      "proprietary": 28
+    },
+    "notes": [
+      "charCeiling sourced from platform-config.json maxChars",
+      "tokenLimit is ENCODER hard limit, not platform config tokenLimit",
+      "negativeMode sourced from negative-prompt-audit v3.0.0",
+      "Transform assignments from architecture \u00a74.3 (draft, requires harmony validation)",
+      "hallucinationMap starts null \u2014 populated from BQI data in Phase 9",
+      "assembledBaseline/optimisedScore/availableHeadroom start null \u2014 populated in Phase 6",
+      "encoderNotes present on platforms with classification edge cases (novelai, clipdrop, bing, microsoft-designer, playground)",
+      "v1.1.0: Fixed google-imagen qualityTagsEffective (false, T5 platform). Populated all knownFailureModes. Added encoderNotes."
+    ]
+  },
+  "stability": {
+    "id": "stability",
+    "encoderFamily": "clip",
+    "promptStylePreference": "weighted_keywords",
+    "syntaxMode": "parenthetical",
+    "negativeMode": "separate_field",
+    "tokenLimit": 77,
+    "charCeiling": 875,
+    "processingProfile": {
+      "frontLoadImportance": 0.8,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": true
+    },
+    "allowedTransforms": [
+      "T_QUALITY_POSITION",
+      "T_SUBJECT_FRONT",
+      "T_ATTENTION_SEQUENCE",
+      "T_WEIGHT_REBALANCE",
+      "T_TOKEN_MERGE",
+      "T_SEMANTIC_COMPRESS",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": {
+      "quality_prefix": {
+        "min": 2,
+        "max": 4,
+        "priority": 0.6
+      },
+      "subject": {
+        "min": 5,
+        "max": 14,
+        "priority": 1.0
+      },
+      "action": {
+        "min": 2,
+        "max": 6,
+        "priority": 0.9
+      },
+      "style": {
+        "min": 2,
+        "max": 5,
+        "priority": 0.95
+      },
+      "environment": {
+        "min": 2,
+        "max": 5,
+        "priority": 0.7
+      },
+      "lighting": {
+        "min": 2,
+        "max": 5,
+        "priority": 0.75
+      },
+      "colour": {
+        "min": 2,
+        "max": 5,
+        "priority": 0.55
+      },
+      "atmosphere": {
+        "min": 1,
+        "max": 4,
+        "priority": 0.45
+      },
+      "composition": {
+        "min": 1,
+        "max": 3,
+        "priority": 0.35
+      },
+      "camera": {
+        "min": 1,
+        "max": 3,
+        "priority": 0.3
+      },
+      "quality_suffix": {
+        "min": 1,
+        "max": 3,
+        "priority": 0.5
+      }
+    },
+    "knownFailureModes": [
+      "interaction_fragmentation",
+      "orphaned_colour_weights",
+      "token_overflow_silent_truncation"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested"
+  },
+  "dreamstudio": {
+    "id": "dreamstudio",
+    "encoderFamily": "clip",
+    "promptStylePreference": "weighted_keywords",
+    "syntaxMode": "parenthetical",
+    "negativeMode": "separate_field",
+    "tokenLimit": 77,
+    "charCeiling": 875,
+    "processingProfile": {
+      "frontLoadImportance": 0.8,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": true
+    },
+    "allowedTransforms": [
+      "T_QUALITY_POSITION",
+      "T_SUBJECT_FRONT",
+      "T_ATTENTION_SEQUENCE",
+      "T_WEIGHT_REBALANCE",
+      "T_TOKEN_MERGE",
+      "T_SEMANTIC_COMPRESS",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": {
+      "quality_prefix": {
+        "min": 2,
+        "max": 4,
+        "priority": 0.6
+      },
+      "subject": {
+        "min": 5,
+        "max": 14,
+        "priority": 1.0
+      },
+      "action": {
+        "min": 2,
+        "max": 6,
+        "priority": 0.9
+      },
+      "style": {
+        "min": 2,
+        "max": 5,
+        "priority": 0.95
+      },
+      "environment": {
+        "min": 2,
+        "max": 5,
+        "priority": 0.7
+      },
+      "lighting": {
+        "min": 2,
+        "max": 5,
+        "priority": 0.75
+      },
+      "colour": {
+        "min": 2,
+        "max": 5,
+        "priority": 0.55
+      },
+      "atmosphere": {
+        "min": 1,
+        "max": 4,
+        "priority": 0.45
+      },
+      "composition": {
+        "min": 1,
+        "max": 3,
+        "priority": 0.35
+      },
+      "camera": {
+        "min": 1,
+        "max": 3,
+        "priority": 0.3
+      },
+      "quality_suffix": {
+        "min": 1,
+        "max": 3,
+        "priority": 0.5
+      }
+    },
+    "knownFailureModes": [
+      "interaction_fragmentation",
+      "orphaned_colour_weights",
+      "token_overflow_silent_truncation"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested"
+  },
+  "dreamlike": {
+    "id": "dreamlike",
+    "encoderFamily": "clip",
+    "promptStylePreference": "weighted_keywords",
+    "syntaxMode": "parenthetical",
+    "negativeMode": "separate_field",
+    "tokenLimit": 77,
+    "charCeiling": 875,
+    "processingProfile": {
+      "frontLoadImportance": 0.8,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": true
+    },
+    "allowedTransforms": [
+      "T_QUALITY_POSITION",
+      "T_SUBJECT_FRONT",
+      "T_ATTENTION_SEQUENCE",
+      "T_TOKEN_MERGE",
+      "T_SEMANTIC_COMPRESS",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": {
+      "quality_prefix": {
+        "min": 2,
+        "max": 4,
+        "priority": 0.6
+      },
+      "subject": {
+        "min": 5,
+        "max": 14,
+        "priority": 1.0
+      },
+      "action": {
+        "min": 2,
+        "max": 6,
+        "priority": 0.9
+      },
+      "style": {
+        "min": 2,
+        "max": 5,
+        "priority": 0.95
+      },
+      "environment": {
+        "min": 2,
+        "max": 5,
+        "priority": 0.7
+      },
+      "lighting": {
+        "min": 2,
+        "max": 5,
+        "priority": 0.75
+      },
+      "colour": {
+        "min": 2,
+        "max": 5,
+        "priority": 0.55
+      },
+      "atmosphere": {
+        "min": 1,
+        "max": 4,
+        "priority": 0.45
+      },
+      "composition": {
+        "min": 1,
+        "max": 3,
+        "priority": 0.35
+      },
+      "camera": {
+        "min": 1,
+        "max": 3,
+        "priority": 0.3
+      },
+      "quality_suffix": {
+        "min": 1,
+        "max": 3,
+        "priority": 0.5
+      }
+    },
+    "knownFailureModes": [
+      "interaction_fragmentation",
+      "token_overflow_silent_truncation"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested"
+  },
+  "leonardo": {
+    "id": "leonardo",
+    "encoderFamily": "clip",
+    "promptStylePreference": "weighted_keywords",
+    "syntaxMode": "double_colon",
+    "negativeMode": "separate_field",
+    "tokenLimit": 77,
+    "charCeiling": 1000,
+    "processingProfile": {
+      "frontLoadImportance": 0.8,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": true
+    },
+    "allowedTransforms": [
+      "T_QUALITY_POSITION",
+      "T_SUBJECT_FRONT",
+      "T_ATTENTION_SEQUENCE",
+      "T_WEIGHT_REBALANCE",
+      "T_TOKEN_MERGE",
+      "T_SEMANTIC_COMPRESS",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": {
+      "quality_prefix": {
+        "min": 2,
+        "max": 4,
+        "priority": 0.6
+      },
+      "subject": {
+        "min": 5,
+        "max": 14,
+        "priority": 1.0
+      },
+      "action": {
+        "min": 2,
+        "max": 6,
+        "priority": 0.9
+      },
+      "style": {
+        "min": 2,
+        "max": 5,
+        "priority": 0.95
+      },
+      "environment": {
+        "min": 2,
+        "max": 5,
+        "priority": 0.7
+      },
+      "lighting": {
+        "min": 2,
+        "max": 5,
+        "priority": 0.75
+      },
+      "colour": {
+        "min": 2,
+        "max": 5,
+        "priority": 0.55
+      },
+      "atmosphere": {
+        "min": 1,
+        "max": 4,
+        "priority": 0.45
+      },
+      "composition": {
+        "min": 1,
+        "max": 3,
+        "priority": 0.35
+      },
+      "camera": {
+        "min": 1,
+        "max": 3,
+        "priority": 0.3
+      },
+      "quality_suffix": {
+        "min": 1,
+        "max": 3,
+        "priority": 0.5
+      }
+    },
+    "knownFailureModes": [
+      "interaction_fragmentation",
+      "orphaned_colour_weights",
+      "token_overflow_silent_truncation"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested"
+  },
+  "lexica": {
+    "id": "lexica",
+    "encoderFamily": "clip",
+    "promptStylePreference": "weighted_keywords",
+    "syntaxMode": "none",
+    "negativeMode": "separate_field",
+    "tokenLimit": 77,
+    "charCeiling": 875,
+    "processingProfile": {
+      "frontLoadImportance": 0.8,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": true
+    },
+    "allowedTransforms": [
+      "T_QUALITY_POSITION",
+      "T_SUBJECT_FRONT",
+      "T_ATTENTION_SEQUENCE",
+      "T_SEMANTIC_COMPRESS",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": {
+      "quality_prefix": {
+        "min": 2,
+        "max": 4,
+        "priority": 0.6
+      },
+      "subject": {
+        "min": 5,
+        "max": 14,
+        "priority": 1.0
+      },
+      "action": {
+        "min": 2,
+        "max": 6,
+        "priority": 0.9
+      },
+      "style": {
+        "min": 2,
+        "max": 5,
+        "priority": 0.95
+      },
+      "environment": {
+        "min": 2,
+        "max": 5,
+        "priority": 0.7
+      },
+      "lighting": {
+        "min": 2,
+        "max": 5,
+        "priority": 0.75
+      },
+      "colour": {
+        "min": 2,
+        "max": 5,
+        "priority": 0.55
+      },
+      "atmosphere": {
+        "min": 1,
+        "max": 4,
+        "priority": 0.45
+      },
+      "composition": {
+        "min": 1,
+        "max": 3,
+        "priority": 0.35
+      },
+      "camera": {
+        "min": 1,
+        "max": 3,
+        "priority": 0.3
+      },
+      "quality_suffix": {
+        "min": 1,
+        "max": 3,
+        "priority": 0.5
+      }
+    },
+    "knownFailureModes": [
+      "interaction_fragmentation",
+      "token_overflow_silent_truncation"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested"
+  },
+  "fotor": {
+    "id": "fotor",
+    "encoderFamily": "clip",
+    "promptStylePreference": "weighted_keywords",
+    "syntaxMode": "parenthetical",
+    "negativeMode": "separate_field",
+    "tokenLimit": 77,
+    "charCeiling": 500,
+    "processingProfile": {
+      "frontLoadImportance": 0.8,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": true
+    },
+    "allowedTransforms": [
+      "T_QUALITY_POSITION",
+      "T_SUBJECT_FRONT",
+      "T_ATTENTION_SEQUENCE",
+      "T_WEIGHT_REBALANCE",
+      "T_TOKEN_MERGE",
+      "T_SEMANTIC_COMPRESS",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": {
+      "quality_prefix": {
+        "min": 2,
+        "max": 4,
+        "priority": 0.6
+      },
+      "subject": {
+        "min": 5,
+        "max": 14,
+        "priority": 1.0
+      },
+      "action": {
+        "min": 2,
+        "max": 6,
+        "priority": 0.9
+      },
+      "style": {
+        "min": 2,
+        "max": 5,
+        "priority": 0.95
+      },
+      "environment": {
+        "min": 2,
+        "max": 5,
+        "priority": 0.7
+      },
+      "lighting": {
+        "min": 2,
+        "max": 5,
+        "priority": 0.75
+      },
+      "colour": {
+        "min": 2,
+        "max": 5,
+        "priority": 0.55
+      },
+      "atmosphere": {
+        "min": 1,
+        "max": 4,
+        "priority": 0.45
+      },
+      "composition": {
+        "min": 1,
+        "max": 3,
+        "priority": 0.35
+      },
+      "camera": {
+        "min": 1,
+        "max": 3,
+        "priority": 0.3
+      },
+      "quality_suffix": {
+        "min": 1,
+        "max": 3,
+        "priority": 0.5
+      }
+    },
+    "knownFailureModes": [
+      "interaction_fragmentation",
+      "orphaned_colour_weights",
+      "token_overflow_silent_truncation"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested"
+  },
+  "novelai": {
+    "id": "novelai",
+    "encoderFamily": "clip",
+    "promptStylePreference": "weighted_keywords",
+    "syntaxMode": "curly_brace",
+    "negativeMode": "separate_field",
+    "tokenLimit": 77,
+    "charCeiling": 1000,
+    "processingProfile": {
+      "frontLoadImportance": 0.8,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": true
+    },
+    "allowedTransforms": [
+      "T_QUALITY_POSITION",
+      "T_SUBJECT_FRONT",
+      "T_ATTENTION_SEQUENCE",
+      "T_SEMANTIC_COMPRESS",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": {
+      "quality_prefix": {
+        "min": 2,
+        "max": 4,
+        "priority": 0.6
+      },
+      "subject": {
+        "min": 5,
+        "max": 14,
+        "priority": 1.0
+      },
+      "action": {
+        "min": 2,
+        "max": 6,
+        "priority": 0.9
+      },
+      "style": {
+        "min": 2,
+        "max": 5,
+        "priority": 0.95
+      },
+      "environment": {
+        "min": 2,
+        "max": 5,
+        "priority": 0.7
+      },
+      "lighting": {
+        "min": 2,
+        "max": 5,
+        "priority": 0.75
+      },
+      "colour": {
+        "min": 2,
+        "max": 5,
+        "priority": 0.55
+      },
+      "atmosphere": {
+        "min": 1,
+        "max": 4,
+        "priority": 0.45
+      },
+      "composition": {
+        "min": 1,
+        "max": 3,
+        "priority": 0.35
+      },
+      "camera": {
+        "min": 1,
+        "max": 3,
+        "priority": 0.3
+      },
+      "quality_suffix": {
+        "min": 1,
+        "max": 3,
+        "priority": 0.5
+      }
+    },
+    "knownFailureModes": [
+      "interaction_fragmentation",
+      "token_overflow_silent_truncation"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested",
+    "encoderNotes": "Spans two encoder families: V3 uses CLIP ViT-L/14 (77 tokens), V4+ uses T5 (512 tokens). This profile targets V3/CLIP as the default path. If platform-config switches to V4, encoderFamily should change to t5 and tokenLimit to 512. See architecture \u00a73.4 footnote."
+  },
+  "midjourney": {
+    "id": "midjourney",
+    "encoderFamily": "llm_semantic",
+    "promptStylePreference": "mixed",
+    "syntaxMode": "double_colon",
+    "negativeMode": "inline",
+    "tokenLimit": null,
+    "charCeiling": 1000,
+    "processingProfile": {
+      "frontLoadImportance": 0.9,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": false
+    },
+    "allowedTransforms": [
+      "T_PARAM_VALIDATE",
+      "T_WEIGHT_VALIDATE",
+      "T_CLAUSE_FRONT",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "invalid_weight_syntax",
+      "parameter_conflict",
+      "excessive_no_terms"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested"
+  },
+  "flux": {
+    "id": "flux",
+    "encoderFamily": "t5",
+    "promptStylePreference": "structured_nl",
+    "syntaxMode": "none",
+    "negativeMode": "none",
+    "tokenLimit": 512,
+    "charCeiling": 1250,
+    "processingProfile": {
+      "frontLoadImportance": 0.4,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": false
+    },
+    "allowedTransforms": [
+      "T_SCENE_PREMISE",
+      "T_SUBJECT_FRONT",
+      "T_REDUNDANCY_STRIP",
+      "T_PROSE_RESTRUCTURE",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": true,
+    "gptTemperature": 0.3,
+    "retryEnabled": true,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "synthetic_filler_injection",
+      "scene_premise_burial"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested"
+  },
+  "google-imagen": {
+    "id": "google-imagen",
+    "encoderFamily": "t5",
+    "promptStylePreference": "structured_nl",
+    "syntaxMode": "none",
+    "negativeMode": "none",
+    "tokenLimit": 512,
+    "charCeiling": 875,
+    "processingProfile": {
+      "frontLoadImportance": 0.4,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": false
+    },
+    "allowedTransforms": [
+      "T_SCENE_PREMISE",
+      "T_SUBJECT_FRONT",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "gpt_degradation_proven",
+      "assembled_outscores_optimised"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested"
+  },
+  "openai": {
+    "id": "openai",
+    "encoderFamily": "llm_rewrite",
+    "promptStylePreference": "freeform_nl",
+    "syntaxMode": "none",
+    "negativeMode": "none",
+    "tokenLimit": null,
+    "charCeiling": 1000,
+    "processingProfile": {
+      "frontLoadImportance": 0.2,
+      "rewritesPrompt": true,
+      "qualityTagsEffective": false
+    },
+    "allowedTransforms": [
+      "T_NARRATIVE_ARMOUR",
+      "T_NEGATIVE_GENERATE",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": true,
+    "gptTemperature": 0.4,
+    "retryEnabled": true,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "rewrite_drift",
+      "specificity_loss_through_rewriting",
+      "vague_modifier_expansion"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested"
+  },
+  "kling": {
+    "id": "kling",
+    "encoderFamily": "llm_semantic",
+    "promptStylePreference": "structured_nl",
+    "syntaxMode": "none",
+    "negativeMode": "separate_field",
+    "tokenLimit": 256,
+    "charCeiling": 875,
+    "processingProfile": {
+      "frontLoadImportance": 0.3,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": true
+    },
+    "allowedTransforms": [
+      "T_PROSE_RESTRUCTURE",
+      "T_SUBJECT_FRONT",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": true,
+    "gptTemperature": 0.3,
+    "retryEnabled": true,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "negative_backfire",
+      "gpt_compression"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested"
+  },
+  "recraft": {
+    "id": "recraft",
+    "encoderFamily": "proprietary",
+    "promptStylePreference": "structured_nl",
+    "syntaxMode": "none",
+    "negativeMode": "separate_field",
+    "tokenLimit": null,
+    "charCeiling": 1000,
+    "processingProfile": {
+      "frontLoadImportance": 0.5,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": false
+    },
+    "allowedTransforms": [
+      "T_SCENE_PREMISE",
+      "T_SUBJECT_FRONT",
+      "T_PROSE_RESTRUCTURE",
+      "T_NEGATIVE_GENERATE",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": true,
+    "gptTemperature": 0.3,
+    "retryEnabled": true,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "style_preset_conflict",
+      "negative_inconsistency"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested"
+  },
+  "ideogram": {
+    "id": "ideogram",
+    "encoderFamily": "proprietary",
+    "promptStylePreference": "structured_nl",
+    "syntaxMode": "none",
+    "negativeMode": "separate_field",
+    "tokenLimit": null,
+    "charCeiling": 1000,
+    "processingProfile": {
+      "frontLoadImportance": 0.5,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": false
+    },
+    "allowedTransforms": [
+      "T_SUBJECT_FRONT",
+      "T_PROSE_RESTRUCTURE",
+      "T_NEGATIVE_GENERATE",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": true,
+    "gptTemperature": 0.3,
+    "retryEnabled": false,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "text_rendering_degradation_from_stacking"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested"
+  },
+  "runway": {
+    "id": "runway",
+    "encoderFamily": "proprietary",
+    "promptStylePreference": "structured_nl",
+    "syntaxMode": "none",
+    "negativeMode": "none",
+    "tokenLimit": null,
+    "charCeiling": 1000,
+    "processingProfile": {
+      "frontLoadImportance": 0.5,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": false
+    },
+    "allowedTransforms": [
+      "T_SCENE_PREMISE",
+      "T_PROSE_RESTRUCTURE",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": true,
+    "gptTemperature": 0.3,
+    "retryEnabled": false,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "camera_motion_format_violation"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested"
+  },
+  "adobe-firefly": {
+    "id": "adobe-firefly",
+    "encoderFamily": "proprietary",
+    "promptStylePreference": "freeform_nl",
+    "syntaxMode": "none",
+    "negativeMode": "none",
+    "tokenLimit": null,
+    "charCeiling": 1000,
+    "processingProfile": {
+      "frontLoadImportance": 0.5,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": false
+    },
+    "allowedTransforms": [
+      "T_SUBJECT_FRONT",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "ui_panel_override",
+      "negative_field_removed"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "in_progress"
+  },
+  "luma-ai": {
+    "id": "luma-ai",
+    "encoderFamily": "proprietary",
+    "promptStylePreference": "freeform_nl",
+    "syntaxMode": "none",
+    "negativeMode": "counterproductive",
+    "tokenLimit": null,
+    "charCeiling": 875,
+    "processingProfile": {
+      "frontLoadImportance": 0.5,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": false
+    },
+    "allowedTransforms": [
+      "T_SCENE_PREMISE",
+      "T_SUBJECT_FRONT",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "negation_counterproductive"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested"
+  },
+  "canva": {
+    "id": "canva",
+    "encoderFamily": "proprietary",
+    "promptStylePreference": "freeform_nl",
+    "syntaxMode": "none",
+    "negativeMode": "none",
+    "tokenLimit": null,
+    "charCeiling": 500,
+    "processingProfile": {
+      "frontLoadImportance": 0.5,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": false
+    },
+    "allowedTransforms": [
+      "T_SUBJECT_FRONT",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "nl_degradation_proven",
+      "assembled_outscores_optimised"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested"
+  },
+  "bing": {
+    "id": "bing",
+    "encoderFamily": "proprietary",
+    "promptStylePreference": "freeform_nl",
+    "syntaxMode": "none",
+    "negativeMode": "none",
+    "tokenLimit": null,
+    "charCeiling": 480,
+    "processingProfile": {
+      "frontLoadImportance": 0.3,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": false
+    },
+    "allowedTransforms": [
+      "T_SUBJECT_FRONT",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "dalle_backend_char_limit"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested",
+    "encoderNotes": "DALL-E 3 backend without confirmed GPT-4 prompt rewriting. Unlike openai, bing may pass prompts directly to the diffusion model. Classified as proprietary rather than llm_rewrite due to this uncertainty."
+  },
+  "imagine-meta": {
+    "id": "imagine-meta",
+    "encoderFamily": "proprietary",
+    "promptStylePreference": "freeform_nl",
+    "syntaxMode": "none",
+    "negativeMode": "none",
+    "tokenLimit": null,
+    "charCeiling": 1000,
+    "processingProfile": {
+      "frontLoadImportance": 0.5,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": false
+    },
+    "allowedTransforms": [
+      "T_SUBJECT_FRONT",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "undocumented_encoder_response",
+      "limited_transform_headroom"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested"
+  },
+  "playground": {
+    "id": "playground",
+    "encoderFamily": "proprietary",
+    "promptStylePreference": "freeform_nl",
+    "syntaxMode": "none",
+    "negativeMode": "separate_field",
+    "tokenLimit": null,
+    "charCeiling": 1000,
+    "processingProfile": {
+      "frontLoadImportance": 0.5,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": false
+    },
+    "allowedTransforms": [
+      "T_SUBJECT_FRONT",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "encoder_pivot_risk",
+      "limited_transform_headroom"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested",
+    "encoderNotes": "Pivoted from CLIP-based Playground V2 to proprietary PGv3 LLM encoder. Encoder architecture undocumented. May warrant reclassification if architecture details are published."
+  },
+  "deepai": {
+    "id": "deepai",
+    "encoderFamily": "proprietary",
+    "promptStylePreference": "freeform_nl",
+    "syntaxMode": "none",
+    "negativeMode": "none",
+    "tokenLimit": null,
+    "charCeiling": 500,
+    "processingProfile": {
+      "frontLoadImportance": 0.5,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": false
+    },
+    "allowedTransforms": [
+      "T_SUBJECT_FRONT",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "api_only_negative_not_in_ui",
+      "limited_transform_headroom"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested"
+  },
+  "pixlr": {
+    "id": "pixlr",
+    "encoderFamily": "proprietary",
+    "promptStylePreference": "freeform_nl",
+    "syntaxMode": "none",
+    "negativeMode": "separate_field",
+    "tokenLimit": null,
+    "charCeiling": 500,
+    "processingProfile": {
+      "frontLoadImportance": 0.5,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": false
+    },
+    "allowedTransforms": [
+      "T_SUBJECT_FRONT",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "multi_generation_mode_variance",
+      "limited_transform_headroom"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested"
+  },
+  "simplified": {
+    "id": "simplified",
+    "encoderFamily": "proprietary",
+    "promptStylePreference": "freeform_nl",
+    "syntaxMode": "none",
+    "negativeMode": "separate_field",
+    "tokenLimit": null,
+    "charCeiling": 500,
+    "processingProfile": {
+      "frontLoadImportance": 0.5,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": false
+    },
+    "allowedTransforms": [
+      "T_SUBJECT_FRONT",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "multi_model_aggregator_variance",
+      "limited_transform_headroom"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested"
+  },
+  "visme": {
+    "id": "visme",
+    "encoderFamily": "proprietary",
+    "promptStylePreference": "freeform_nl",
+    "syntaxMode": "none",
+    "negativeMode": "none",
+    "tokenLimit": null,
+    "charCeiling": 500,
+    "processingProfile": {
+      "frontLoadImportance": 0.5,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": false
+    },
+    "allowedTransforms": [
+      "T_SUBJECT_FRONT",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "undocumented_encoder_response",
+      "tight_char_ceiling"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested"
+  },
+  "vistacreate": {
+    "id": "vistacreate",
+    "encoderFamily": "proprietary",
+    "promptStylePreference": "freeform_nl",
+    "syntaxMode": "none",
+    "negativeMode": "none",
+    "tokenLimit": null,
+    "charCeiling": 500,
+    "processingProfile": {
+      "frontLoadImportance": 0.5,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": false
+    },
+    "allowedTransforms": [
+      "T_SUBJECT_FRONT",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "undocumented_encoder_response",
+      "limited_transform_headroom"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested"
+  },
+  "123rf": {
+    "id": "123rf",
+    "encoderFamily": "proprietary",
+    "promptStylePreference": "freeform_nl",
+    "syntaxMode": "none",
+    "negativeMode": "none",
+    "tokenLimit": null,
+    "charCeiling": 500,
+    "processingProfile": {
+      "frontLoadImportance": 0.5,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": false
+    },
+    "allowedTransforms": [
+      "T_SUBJECT_FRONT",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "stock_photo_training_bias",
+      "limited_transform_headroom"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "in_progress"
+  },
+  "myedit": {
+    "id": "myedit",
+    "encoderFamily": "proprietary",
+    "promptStylePreference": "freeform_nl",
+    "syntaxMode": "none",
+    "negativeMode": "none",
+    "tokenLimit": null,
+    "charCeiling": 500,
+    "processingProfile": {
+      "frontLoadImportance": 0.5,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": false
+    },
+    "allowedTransforms": [
+      "T_SUBJECT_FRONT",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "undocumented_encoder_response",
+      "tight_char_ceiling"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested"
+  },
+  "artbreeder": {
+    "id": "artbreeder",
+    "encoderFamily": "proprietary",
+    "promptStylePreference": "freeform_nl",
+    "syntaxMode": "none",
+    "negativeMode": "separate_field",
+    "tokenLimit": null,
+    "charCeiling": 500,
+    "processingProfile": {
+      "frontLoadImportance": 0.5,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": false
+    },
+    "allowedTransforms": [
+      "T_SUBJECT_FRONT",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "hybrid_genetic_prompt_interface",
+      "limited_transform_headroom"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "in_progress"
+  },
+  "artguru": {
+    "id": "artguru",
+    "encoderFamily": "proprietary",
+    "promptStylePreference": "freeform_nl",
+    "syntaxMode": "none",
+    "negativeMode": "separate_field",
+    "tokenLimit": null,
+    "charCeiling": 500,
+    "processingProfile": {
+      "frontLoadImportance": 0.5,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": false
+    },
+    "allowedTransforms": [
+      "T_SUBJECT_FRONT",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "undocumented_encoder_response",
+      "limited_transform_headroom"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested"
+  },
+  "artistly": {
+    "id": "artistly",
+    "encoderFamily": "proprietary",
+    "promptStylePreference": "freeform_nl",
+    "syntaxMode": "none",
+    "negativeMode": "none",
+    "tokenLimit": null,
+    "charCeiling": 500,
+    "processingProfile": {
+      "frontLoadImportance": 0.5,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": false
+    },
+    "allowedTransforms": [
+      "T_SUBJECT_FRONT",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "undocumented_encoder_response",
+      "no_negative_support"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested"
+  },
+  "bluewillow": {
+    "id": "bluewillow",
+    "encoderFamily": "proprietary",
+    "promptStylePreference": "freeform_nl",
+    "syntaxMode": "none",
+    "negativeMode": "inline",
+    "tokenLimit": null,
+    "charCeiling": 500,
+    "processingProfile": {
+      "frontLoadImportance": 0.5,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": false
+    },
+    "allowedTransforms": [
+      "T_SUBJECT_FRONT",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "discord_only_interface",
+      "inline_negative_limit_unknown"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested"
+  },
+  "clipdrop": {
+    "id": "clipdrop",
+    "encoderFamily": "proprietary",
+    "promptStylePreference": "freeform_nl",
+    "syntaxMode": "none",
+    "negativeMode": "none",
+    "tokenLimit": null,
+    "charCeiling": 1000,
+    "processingProfile": {
+      "frontLoadImportance": 0.5,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": false
+    },
+    "allowedTransforms": [
+      "T_SUBJECT_FRONT",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "encoder_undocumented_post_acquisition",
+      "limited_transform_headroom"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested",
+    "encoderNotes": "Historically associated with Stability AI's CLIP-based models. Acquired by Jasper AI \u2014 current encoder architecture undocumented. Classified as proprietary until encoder can be confirmed. If confirmed CLIP, move to clip family and add attention sequencing transforms."
+  },
+  "craiyon": {
+    "id": "craiyon",
+    "encoderFamily": "proprietary",
+    "promptStylePreference": "freeform_nl",
+    "syntaxMode": "none",
+    "negativeMode": "separate_field",
+    "tokenLimit": null,
+    "charCeiling": 375,
+    "processingProfile": {
+      "frontLoadImportance": 0.5,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": false
+    },
+    "allowedTransforms": [
+      "T_SUBJECT_FRONT",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "tight_char_ceiling"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested"
+  },
+  "hotpot": {
+    "id": "hotpot",
+    "encoderFamily": "proprietary",
+    "promptStylePreference": "freeform_nl",
+    "syntaxMode": "none",
+    "negativeMode": "none",
+    "tokenLimit": null,
+    "charCeiling": 500,
+    "processingProfile": {
+      "frontLoadImportance": 0.5,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": false
+    },
+    "allowedTransforms": [
+      "T_SUBJECT_FRONT",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "undocumented_encoder_response",
+      "limited_transform_headroom"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested"
+  },
+  "jasper-art": {
+    "id": "jasper-art",
+    "encoderFamily": "proprietary",
+    "promptStylePreference": "freeform_nl",
+    "syntaxMode": "none",
+    "negativeMode": "none",
+    "tokenLimit": null,
+    "charCeiling": 1000,
+    "processingProfile": {
+      "frontLoadImportance": 0.5,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": false
+    },
+    "allowedTransforms": [
+      "T_SUBJECT_FRONT",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "undocumented_encoder_response",
+      "limited_transform_headroom"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested"
+  },
+  "microsoft-designer": {
+    "id": "microsoft-designer",
+    "encoderFamily": "proprietary",
+    "promptStylePreference": "freeform_nl",
+    "syntaxMode": "none",
+    "negativeMode": "none",
+    "tokenLimit": null,
+    "charCeiling": 500,
+    "processingProfile": {
+      "frontLoadImportance": 0.3,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": false
+    },
+    "allowedTransforms": [
+      "T_SUBJECT_FRONT",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "dalle_backend_char_limit"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested",
+    "encoderNotes": "DALL-E 3 backend. Same uncertainty as bing regarding GPT-4 rewriting. Classified as proprietary until behaviour can be confirmed."
+  },
+  "photoleap": {
+    "id": "photoleap",
+    "encoderFamily": "proprietary",
+    "promptStylePreference": "freeform_nl",
+    "syntaxMode": "none",
+    "negativeMode": "none",
+    "tokenLimit": null,
+    "charCeiling": 500,
+    "processingProfile": {
+      "frontLoadImportance": 0.5,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": false
+    },
+    "allowedTransforms": [
+      "T_SUBJECT_FRONT",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "mobile_primary_interface",
+      "tight_char_ceiling"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested"
+  },
+  "picsart": {
+    "id": "picsart",
+    "encoderFamily": "proprietary",
+    "promptStylePreference": "freeform_nl",
+    "syntaxMode": "none",
+    "negativeMode": "none",
+    "tokenLimit": null,
+    "charCeiling": 500,
+    "processingProfile": {
+      "frontLoadImportance": 0.5,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": false
+    },
+    "allowedTransforms": [
+      "T_SUBJECT_FRONT",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "mobile_primary_interface",
+      "limited_transform_headroom"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested"
+  },
+  "picwish": {
+    "id": "picwish",
+    "encoderFamily": "proprietary",
+    "promptStylePreference": "freeform_nl",
+    "syntaxMode": "none",
+    "negativeMode": "none",
+    "tokenLimit": null,
+    "charCeiling": 500,
+    "processingProfile": {
+      "frontLoadImportance": 0.5,
+      "rewritesPrompt": false,
+      "qualityTagsEffective": false
+    },
+    "allowedTransforms": [
+      "T_SUBJECT_FRONT",
+      "T_REDUNDANCY_STRIP",
+      "T_CHAR_ENFORCE"
+    ],
+    "requiresGPT": false,
+    "gptTemperature": null,
+    "retryEnabled": false,
+    "tokenBudget": null,
+    "knownFailureModes": [
+      "undocumented_encoder_response",
+      "tight_char_ceiling"
+    ],
+    "hallucinationMap": null,
+    "assembledBaseline": null,
+    "optimisedScore": null,
+    "availableHeadroom": null,
+    "harmonyStatus": "untested"
+  }
+}
