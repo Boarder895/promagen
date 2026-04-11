@@ -264,14 +264,9 @@ export async function POST(req: NextRequest): Promise<Response> {
       optimised = pipelineResult.text;
       changes.push(...pipelineResult.changes);
 
-      if (pipelineResult.transformsApplied.length > 0) {
+      if (pipelineResult.transformsModified.length > 0) {
         console.debug(
-          `[optimise-prompt] DNA deterministic: ${dna.id} — applied ${pipelineResult.transformsApplied.join(', ')}`,
-        );
-      }
-      if (pipelineResult.transformsSkipped.length > 0) {
-        console.debug(
-          `[optimise-prompt] DNA deterministic: ${dna.id} — skipped ${pipelineResult.transformsSkipped.join(', ')}`,
+          `[optimise-prompt] DNA deterministic: ${dna.id} — modified: ${pipelineResult.transformsModified.join(', ')} | executed: ${pipelineResult.transformsExecuted.length} | skipped: ${pipelineResult.transformsSkipped.length}`,
         );
       }
     }

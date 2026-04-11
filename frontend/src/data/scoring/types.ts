@@ -13,6 +13,17 @@ export interface AnchorSpec {
   severity: 'critical' | 'important' | 'optional';
 }
 
+/**
+ * Scene category for the 3-category harmony mandate (architecture §9.3).
+ * Every harmony pass must include at least 3 scenes from 3 different categories.
+ */
+export type SceneCategory =
+  | 'outdoor_dramatic'
+  | 'indoor_character'
+  | 'abstract_stylised'
+  | 'multi_anchor'
+  | 'stress_test';
+
 /** A test scene used for builder quality regression testing */
 export interface TestScene {
   /** Unique scene identifier (e.g. "scene-01-minimal") */
@@ -29,6 +40,11 @@ export interface TestScene {
   categoriesExpected: string[];
   /** Whether this scene is a holdout (never used during tuning) */
   holdout: boolean;
+  /**
+   * Scene category for the 3-category harmony mandate.
+   * Added in Phase 6 for triage support.
+   */
+  sceneCategory?: SceneCategory;
 }
 
 /**

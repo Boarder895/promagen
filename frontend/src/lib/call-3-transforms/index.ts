@@ -52,18 +52,30 @@ import { clauseFront } from './clause-front';
 /**
  * The result of running the full deterministic transform pipeline.
  * Extends TransformOutput with pipeline metadata.
+ *
+ * ChatGPT 91/100 review: "make no-op vs applied reporting stricter"
+ * — transformsExecuted: all transforms that ran (including no-ops)
+ * — transformsModified: only transforms that actually changed the text
+ * — transformsSkipped: GPT-only, unregistered, or errored transforms
  */
 export interface TransformPipelineResult {
   /** The final transformed text */
   readonly text: string;
   /** All change descriptions from all transforms */
   readonly changes: readonly string[];
-  /** Which transforms were executed (in order) */
-  readonly transformsApplied: readonly TransformId[];
-  /** Which transforms were skipped (GPT-only or not in allowedTransforms) */
+  /** All transforms that ran successfully (including no-ops) */
+  readonly transformsExecuted: readonly TransformId[];
+  /** Only transforms that actually modified the text */
+  readonly transformsModified: readonly TransformId[];
+  /** Which transforms were skipped (GPT-only, unregistered, or errored) */
   readonly transformsSkipped: readonly TransformId[];
   /** Whether any transform modified the text */
   readonly wasModified: boolean;
+  /**
+   * @deprecated Use transformsExecuted. Kept for backward compatibility.
+   * Alias for transformsExecuted.
+   */
+  readonly transformsApplied: readonly TransformId[];
 }
 
 // ============================================================================
@@ -179,7 +191,8 @@ export function runDeterministicTransforms(
   anchors: AnchorManifest,
 ): TransformPipelineResult {
   const allChanges: string[] = [];
-  const applied: TransformId[] = [];
+  const executed: TransformId[] = [];
+  const modified: TransformId[] = [];
   const skipped: TransformId[] = [];
   let currentText = text.trim();
   const originalText = currentText;
@@ -207,15 +220,18 @@ export function runDeterministicTransforms(
 
     // ── Execute transform ────────────────────────────────────────────
     try {
+      const textBefore = currentText;
       const result = fn(currentText, anchors, dna);
+      executed.push(transformId);
 
       if (result.changes.length > 0) {
         allChanges.push(...result.changes);
-        applied.push(transformId);
         currentText = result.text;
-      } else {
-        // Transform ran but made no changes (no-op)
-        applied.push(transformId);
+      }
+
+      // Track whether text actually changed (not just diagnostics)
+      if (result.text !== textBefore) {
+        modified.push(transformId);
       }
     } catch (err) {
       // Transform threw — log error, skip, continue pipeline.
@@ -231,9 +247,12 @@ export function runDeterministicTransforms(
   return {
     text: currentText,
     changes: allChanges,
-    transformsApplied: applied,
+    transformsExecuted: executed,
+    transformsModified: modified,
     transformsSkipped: skipped,
     wasModified: currentText !== originalText,
+    // Backward compat
+    transformsApplied: executed,
   };
 }
 

@@ -83,9 +83,25 @@ describe('runDeterministicTransforms (coordinator)', () => {
     const result = runDeterministicTransforms(LIGHTHOUSE_PROMPT, dna, anchors);
 
     // Stability has 8 transforms, all deterministic
-    expect(result.transformsApplied.length).toBeGreaterThan(0);
+    expect(result.transformsExecuted.length).toBeGreaterThan(0);
     expect(result.transformsSkipped.length).toBe(0);
     expect(result.text.length).toBeGreaterThan(0);
+    // transformsApplied is backward-compat alias for transformsExecuted
+    expect(result.transformsApplied).toEqual(result.transformsExecuted);
+  });
+
+  it('distinguishes executed from modified transforms', () => {
+    const dna = dnaFor('stability');
+    const anchors = anchorsFor(LIGHTHOUSE_PROMPT);
+    const result = runDeterministicTransforms(LIGHTHOUSE_PROMPT, dna, anchors);
+
+    // All executed transforms are a superset of modified transforms
+    expect(result.transformsExecuted.length).toBeGreaterThanOrEqual(result.transformsModified.length);
+    // Some transforms should be no-ops (executed but not modified)
+    // Modified + no-ops = executed
+    for (const mod of result.transformsModified) {
+      expect(result.transformsExecuted).toContain(mod);
+    }
   });
 
   it('skips GPT transforms and reports them as skipped', () => {
@@ -685,5 +701,141 @@ describe('DNA-driven preflight decision', () => {
 
     // No DNA → legacy mode decides
     expect(['REORDER_ONLY', 'PASS_THROUGH']).toContain(decision);
+  });
+});
+
+// ============================================================================
+// SEMANTIC SAFETY — "Must not compress" (ChatGPT 91/100 recommendation)
+// ============================================================================
+
+describe('Semantic safety — must NOT compress', () => {
+  const { semanticCompress } = require('@/lib/call-3-transforms/semantic-compress');
+
+  it('preserves colour+noun pairs that look compressible but carry meaning', () => {
+    // "dark red" is NOT a redundant modifier — it's a specific colour
+    const result = semanticCompress('dark red coat, copper sky', EMPTY_ANCHORS, 77);
+
+    expect(result.text).toContain('dark red');
+  });
+
+  it('preserves adjective pairs where both words add visual information', () => {
+    // "cold dark" — cold is temperature/mood, dark is lighting. Not redundant.
+    const result = semanticCompress('cold dark corridor, warm light ahead', EMPTY_ANCHORS, 77);
+
+    expect(result.text).toContain('cold dark');
+  });
+
+  it('preserves subject phrases even when they contain compressible-looking modifiers', () => {
+    const anchors: AnchorManifest = {
+      ...EMPTY_ANCHORS,
+      subjectPhrase: 'aged old lighthouse keeper',
+    };
+    // "aged old" IS in the synonym table, but the prompt should still be safe
+    // because compression only applies within segments, not to the subject concept
+    const result = semanticCompress('aged old lighthouse keeper on cliff, copper sky', anchors, 77);
+
+    // The subject identity must survive compression
+    expect(result.text).toContain('lighthouse keeper');
+  });
+
+  it('never produces empty segments from compression', () => {
+    const result = semanticCompress(
+      'bright vivid, dark shadowy, tall towering, cold icy',
+      EMPTY_ANCHORS,
+      77,
+    );
+
+    // No empty segments should appear
+    const segments = result.text.split(',').map((s: string) => s.trim());
+    for (const seg of segments) {
+      expect(seg.length).toBeGreaterThan(0);
+    }
+  });
+});
+
+// ============================================================================
+// TOKEN MERGE SAFETY — "Must not merge" (ChatGPT 91/100 recommendation)
+// ============================================================================
+
+describe('Token merge safety — must NOT merge', () => {
+  it('does not merge unrelated multi-word segments', () => {
+    const prompt = 'a lighthouse keeper, dramatic storm, copper sky, golden hour';
+    const anchors = anchorsFor(prompt);
+    const dna = dnaFor('stability');
+
+    const result = tokenMerge(prompt, anchors, dna);
+
+    // Multi-word segments should never merge — only single-word fragments
+    expect(result.text).toBe(prompt);
+  });
+
+  it('does not merge segments across visual categories', () => {
+    // "dramatic" (modifier/atmosphere) + "lighthouse" (noun/subject) should NOT merge
+    const prompt = 'masterpiece, dramatic, lighthouse, golden, hour';
+    const anchors = anchorsFor(prompt);
+    const dna = dnaFor('stability');
+
+    const result = tokenMerge(prompt, anchors, dna);
+
+    // dramatic + lighthouse should NOT merge (atmosphere + subject)
+    expect(result.text).not.toContain('dramatic-lighthouse');
+    expect(result.text).not.toContain('dramatic lighthouse');
+  });
+
+  it('does not create nonsensical hyphenated compounds', () => {
+    // Two modifiers should not merge into a compound
+    const prompt = 'vivid, ethereal, soft, gentle, tones';
+    const anchors = EMPTY_ANCHORS;
+    const dna = dnaFor('stability');
+
+    const result = tokenMerge(prompt, anchors, dna);
+
+    // modifier + modifier should not produce a hyphenated compound
+    expect(result.text).not.toContain('vivid-ethereal');
+  });
+});
+
+// ============================================================================
+// TRANSFORM ORDERING — conflict tests (ChatGPT 91/100 recommendation)
+// ============================================================================
+
+describe('Transform ordering — pipeline interactions', () => {
+  it('quality-position before attention-sequence produces coherent output', () => {
+    // The DNA pipeline runs quality-position BEFORE attention-sequence.
+    // Quality prefix should be at position 0, then AVIS reorders the rest.
+    const prompt = 'dramatic lighting, a fox in a forest, masterpiece, golden hour, 8k';
+    const dna = dnaFor('stability');
+    const anchors = anchorsFor(prompt);
+
+    const result = runDeterministicTransforms(prompt, dna, anchors);
+
+    // masterpiece should be at or near the front (quality-position moved it)
+    const firstSegment = result.text.split(',')[0]?.trim().toLowerCase() ?? '';
+    expect(
+      firstSegment === 'masterpiece' || firstSegment === 'best quality' || result.text.toLowerCase().indexOf('masterpiece') < 30,
+    ).toBe(true);
+  });
+
+  it('redundancy-strip after semantic-compress does not re-introduce duplicates', () => {
+    // After compression, redundancy-strip should not undo the compression
+    const prompt = 'bright vivid sunset, bright vivid glow, copper sky, golden hour, sharp focus';
+    const dna = dnaFor('stability');
+    const anchors = anchorsFor(prompt);
+
+    const result = runDeterministicTransforms(prompt, dna, anchors);
+
+    // "bright vivid" should not appear twice in the final output
+    const matches = result.text.match(/bright vivid/gi);
+    expect(matches === null || matches.length <= 1).toBe(true);
+  });
+
+  it('char-enforce always runs last and respects ceiling', () => {
+    const dna = dnaFor('stability');
+    const anchors = anchorsFor(LIGHTHOUSE_PROMPT);
+
+    const result = runDeterministicTransforms(LIGHTHOUSE_PROMPT, dna, anchors);
+
+    // Output must never exceed the platform's character ceiling
+    expect(result.text.length).toBeLessThanOrEqual(dna.charCeiling);
   });
 });
