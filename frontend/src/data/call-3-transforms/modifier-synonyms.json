@@ -1,0 +1,64 @@
+{
+  "_meta": {
+    "version": "1.1.0",
+    "date": "2026-04-11",
+    "authority": "call-3-quality-architecture-v0.2.0.md §5.4",
+    "description": "Conservative synonym lookup for redundant modifier compression. Only apply when the synonym is visually equivalent — no creative paraphrasing. Each entry maps a verbose modifier pair to a single concise term that preserves the same visual concept. v1.1.0: Audited per ChatGPT 93/100 review — removed 5 redundantModifiers (mood/material/era shift: grizzled, deep→deep, soft→gentle, hard→rigid, wet→sodden) and 5 compoundFormations (inventive: chiaroscuro, storm-driven, ice-covered, fog-shrouded, moss-covered stone).",
+    "rules": [
+      "Only apply within a single phrase segment (never cross phrase boundaries)",
+      "Both original modifiers must be semantically redundant (saying the same thing twice)",
+      "The replacement must produce the same visual output in image generation",
+      "If in doubt, do not compress — preservation outranks enrichment (Law 2)"
+    ]
+  },
+
+  "redundantModifiers": {
+    "ancient old": "ancient",
+    "aged old": "aged",
+    "worn old": "weathered",
+    "bright vivid": "vivid",
+    "bright vibrant": "vibrant",
+    "dark shadowy": "shadowy",
+    "dark gloomy": "gloomy",
+    "dark murky": "murky",
+    "large enormous": "enormous",
+    "large massive": "massive",
+    "big enormous": "enormous",
+    "big huge": "huge",
+    "small tiny": "tiny",
+    "small miniature": "miniature",
+    "tall towering": "towering",
+    "thick dense": "dense",
+    "thin slender": "slender",
+    "rough coarse": "coarse",
+    "smooth polished": "polished",
+    "wet damp": "damp",
+    "cold freezing": "freezing",
+    "cold icy": "icy",
+    "hot burning": "burning",
+    "hot scorching": "scorching",
+    "fast rapid": "rapid",
+    "slow sluggish": "sluggish",
+    "quiet silent": "silent",
+    "loud thundering": "thundering",
+    "shiny gleaming": "gleaming",
+    "shiny glistening": "glistening",
+    "rusty corroded": "corroded",
+    "dusty grimy": "grimy",
+    "misty foggy": "foggy",
+    "hazy misty": "hazy"
+  },
+
+  "compoundFormations": {
+    "purple and copper": "purple-copper",
+    "copper and purple": "copper-purple",
+    "gold and silver": "gold-silver",
+    "black and white": "monochrome",
+    "blue and green": "blue-green",
+    "red and orange": "red-orange",
+    "pink and purple": "pink-purple",
+    "grey and blue": "grey-blue",
+    "warm and cool": "warm-cool",
+    "iron and rust": "rusted iron"
+  }
+}

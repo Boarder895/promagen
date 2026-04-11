@@ -33,6 +33,8 @@ import type { Call3Mode } from "@/lib/optimise-prompts/preflight";
 import { runMjDeterministic } from "@/lib/optimise-prompts/midjourney-deterministic";
 import { checkRegression, defaultRegressionOptions, checkMjDeterministicRegression } from "@/lib/optimise-prompts/regression-guard";
 import { computeAPS } from "@/lib/optimise-prompts/aps-gate";
+import { getDNA } from "@/data/platform-dna";
+import { runDeterministicTransforms } from "@/lib/call-3-transforms";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -243,19 +245,38 @@ export async function POST(req: NextRequest): Promise<Response> {
   // ── Preflight decision engine ──────────────────────────────────────
   // Runs BEFORE GPT. Decides whether GPT is needed or a deterministic
   // transform suffices. Most Tier 4 platforms skip GPT entirely.
+  // DNA profile takes priority over legacy call3Mode (Phase 5).
   const { maxChars } = parsed.data.providerContext;
   const hardCeiling = maxChars ?? 5000;
   const call3Mode = (parsed.data.providerContext.call3Mode ?? 'gpt_rewrite') as Call3Mode;
   const anchors = extractAnchors(sanitisedPrompt);
-  const decision = analyseOptimisationNeed(sanitisedPrompt, call3Mode, hardCeiling, anchors);
+  const dna = getDNA(parsed.data.providerId);
+  const decision = analyseOptimisationNeed(sanitisedPrompt, call3Mode, hardCeiling, anchors, dna);
 
   // ── Deterministic fast path (no GPT) ───────────────────────────────
-  if (decision === 'PASS_THROUGH' || decision === 'REORDER_ONLY' || decision === 'FORMAT_ONLY' || decision === 'MJ_DETERMINISTIC_ONLY') {
+  if (decision === 'PASS_THROUGH' || decision === 'REORDER_ONLY' || decision === 'FORMAT_ONLY' || decision === 'MJ_DETERMINISTIC_ONLY' || decision === 'DNA_DETERMINISTIC') {
     let optimised = sanitisedPrompt;
     const changes: string[] = [];
 
+    // DNA_DETERMINISTIC: run the full transform catalogue from DNA profile
+    if (decision === 'DNA_DETERMINISTIC' && dna) {
+      const pipelineResult = runDeterministicTransforms(sanitisedPrompt, dna, anchors);
+      optimised = pipelineResult.text;
+      changes.push(...pipelineResult.changes);
+
+      if (pipelineResult.transformsApplied.length > 0) {
+        console.debug(
+          `[optimise-prompt] DNA deterministic: ${dna.id} — applied ${pipelineResult.transformsApplied.join(', ')}`,
+        );
+      }
+      if (pipelineResult.transformsSkipped.length > 0) {
+        console.debug(
+          `[optimise-prompt] DNA deterministic: ${dna.id} — skipped ${pipelineResult.transformsSkipped.join(', ')}`,
+        );
+      }
+    }
     // MJ_DETERMINISTIC_ONLY: parse, validate, normalise Midjourney structure
-    if (decision === 'MJ_DETERMINISTIC_ONLY') {
+    else if (decision === 'MJ_DETERMINISTIC_ONLY') {
       const mj = runMjDeterministic(sanitisedPrompt);
       optimised = mj.result.text;
       changes.push(...mj.result.changes);

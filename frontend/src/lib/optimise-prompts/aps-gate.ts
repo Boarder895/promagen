@@ -359,6 +359,27 @@ function checkInventedContentVeto(
     }
   }
 
+  // ── Invented light sources ────────────────────────────────────
+  const inputLights = new Set(inputAnchors.lightSources.map((l) => l.toLowerCase()));
+  for (const light of outputAnchors.lightSources) {
+    if (!inputLights.has(light.toLowerCase())) {
+      invented.push(`invented light source: "${light}"`);
+    }
+  }
+
+  // ── Invented action verbs ─────────────────────────────────────
+  // Only flag verbs that are clearly new — not inflectional variants.
+  // "crashes" and "crashing" should not both flag. Use stem comparison.
+  const inputVerbStems = new Set(
+    inputAnchors.actionVerbs.map((v) => v.toLowerCase().replace(/(?:es|s|ing|ed)$/, '')),
+  );
+  for (const verb of outputAnchors.actionVerbs) {
+    const stem = verb.toLowerCase().replace(/(?:es|s|ing|ed)$/, '');
+    if (!inputVerbStems.has(stem)) {
+      invented.push(`invented verb: "${verb}"`);
+    }
+  }
+
   return invented;
 }
 
@@ -465,16 +486,13 @@ export function computeAPS(
   const anyVetoFired = criticalAnchorVeto || inventedContentVeto || proseQualityVeto;
 
   // ── Determine final verdict ─────────────────────────────────────
-  // Vetoes can only make the verdict stricter, never more lenient.
-  // If any veto fires and the score-based verdict was ACCEPT or
-  // ACCEPT_WITH_WARNING, override to REJECT.
+  // Architecture §6.3: vetoes "reject regardless of APS score".
+  // Any veto overrides ACCEPT, ACCEPT_WITH_WARNING, or RETRY to REJECT.
+  // Only a score-based REJECT stays REJECT (already the strictest).
   let verdict = scoreVerdict;
 
-  if (anyVetoFired) {
-    if (verdict === 'ACCEPT' || verdict === 'ACCEPT_WITH_WARNING') {
-      verdict = 'REJECT';
-    }
-    // RETRY and REJECT are already strict enough — vetoes don't change them
+  if (anyVetoFired && verdict !== 'REJECT') {
+    verdict = 'REJECT';
   }
 
   return {

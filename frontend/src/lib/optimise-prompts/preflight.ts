@@ -49,6 +49,7 @@ export type Call3Decision =
   | 'FORMAT_ONLY'           // Group gate cleanup only, no GPT
   | 'COMPRESS_ONLY'         // Deterministic compression, no GPT
   | 'MJ_DETERMINISTIC_ONLY' // Midjourney deterministic parse/normalise, no GPT
+  | 'DNA_DETERMINISTIC'     // Full deterministic transform catalogue from DNA profile
   | 'GPT_REWRITE';          // Full GPT path
 
 /** Config-driven mode per platform. */
@@ -415,8 +416,18 @@ export function analyseOptimisationNeed(
   call3Mode: Call3Mode,
   hardCeiling: number,
   anchors: AnchorManifest,
+  dna?: import('@/data/platform-dna/types').PlatformDNA | null,
 ): Call3Decision {
-  // ── Config-driven routing ────────────────────────────────────────────
+  // ── DNA-driven routing (takes priority over legacy call3Mode) ──────
+  // Architecture: call-3-quality-architecture-v0.2.0.md §4
+  // If the platform has a DNA profile and it says deterministic-only,
+  // the DNA is the authority. call3Mode becomes the legacy fallback
+  // for platforms without DNA profiles.
+  if (dna && !dna.requiresGPT) {
+    return 'DNA_DETERMINISTIC';
+  }
+
+  // ── Config-driven routing (legacy fallback) ─────────────────────────
   switch (call3Mode) {
     case 'pass_through':
       return 'PASS_THROUGH';
