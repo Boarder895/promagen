@@ -46,9 +46,9 @@ describe('Call 2 Harness — scene-library', () => {
   // ── LOADING + FILTERING ───────────────────────────────────────────────────
 
   describe('loadScenes', () => {
-    it('returns all 40 approved scenes by default (none are holdout yet)', () => {
+    it('returns all 41 approved scenes by default (none are holdout yet)', () => {
       const scenes = loadScenes();
-      expect(scenes.length).toBe(40);
+      expect(scenes.length).toBe(41);
       // Default filter is approved-only
       for (const s of scenes) {
         expect(s.status).toBe('approved');
@@ -56,9 +56,9 @@ describe('Call 2 Harness — scene-library', () => {
       }
     });
 
-    it('filters by category — canonical = 15', () => {
+    it('filters by category — canonical = 16', () => {
       const scenes = loadScenes({ category: 'canonical' });
-      expect(scenes.length).toBe(15);
+      expect(scenes.length).toBe(16);
       for (const s of scenes) expect(s.category).toBe('canonical');
     });
 
@@ -139,7 +139,7 @@ describe('Call 2 Harness — scene-library', () => {
   describe('getSceneCountsByCategory', () => {
     it('returns the expected breakdown for the v1.1.0 library', () => {
       const counts = getSceneCountsByCategory();
-      expect(counts.canonical).toBe(15);
+      expect(counts.canonical).toBe(16);
       expect(counts.stress).toBe(10);
       expect(counts.trap).toBe(8);
       expect(counts.human_factors).toBe(5);
@@ -153,7 +153,7 @@ describe('Call 2 Harness — scene-library', () => {
         (a, b) => a + b,
         0,
       );
-      expect(total).toBe(40);
+      expect(total).toBe(41);
     });
   });
 

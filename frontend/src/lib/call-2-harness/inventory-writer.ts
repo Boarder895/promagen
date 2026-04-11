@@ -89,6 +89,29 @@ export interface RuleInventoryEntry {
   readonly health: RuleHealth;
   readonly interpretation: string;
   readonly evaluation_count: number;
+  /**
+   * Per-scene Stage D failure breakdown. Only populated for rules with at
+   * least one Stage D failure — omitted entirely for healthy rules to keep
+   * the inventory compact.
+   *
+   * Answers: "which scenes are causing this rule to fail, and how?"
+   * For T3.char_count_in_range, the details strings include OVER/UNDER
+   * direction tagging with exact character counts.
+   */
+  readonly stage_d_scene_detail?: Readonly<Record<string, SceneRuleDetail>>;
+}
+
+/**
+ * Per-scene failure detail for one rule. Shows how many of the scene's
+ * samples failed at Stage D and the mechanical scorer's details strings.
+ */
+export interface SceneRuleDetail {
+  /** Number of samples from this scene that failed this rule at Stage D */
+  readonly fail_count: number;
+  /** Total samples from this scene (typically samplesPerScene) */
+  readonly sample_count: number;
+  /** Details strings from the mechanical scorer for each failing sample */
+  readonly details: readonly string[];
 }
 
 export interface ClusterInventoryEntry {
@@ -201,6 +224,47 @@ export function buildInventory(
       }
     }
 
+    // ── Per-scene Stage D failure breakdown ────────────────────────────────
+    // Only computed for rules with at least one Stage D failure.
+    // Groups failures by sceneId so you can see which scenes cause the misses.
+    let sceneDetail: Record<string, SceneRuleDetail> | undefined;
+    if (stageD > 0) {
+      const sceneMap = new Map<string, { fails: number; total: number; details: string[] }>();
+
+      for (const sample of samples) {
+        const found = sample.stages.d.results.find((r) => r.ruleId === rule.id);
+        if (!found) continue;
+
+        let entry = sceneMap.get(sample.sceneId);
+        if (!entry) {
+          entry = { fails: 0, total: 0, details: [] };
+          sceneMap.set(sample.sceneId, entry);
+        }
+        entry.total += 1;
+        if (!found.passed) {
+          entry.fails += 1;
+          if (found.details) entry.details.push(found.details);
+        }
+      }
+
+      // Only include scenes that actually failed — no point listing 40 scenes
+      // with 0 failures each
+      const failingScenes: Record<string, SceneRuleDetail> = {};
+      for (const [sceneId, entry] of sceneMap) {
+        if (entry.fails > 0) {
+          failingScenes[sceneId] = {
+            fail_count: entry.fails,
+            sample_count: entry.total,
+            details: Object.freeze([...entry.details]),
+          };
+        }
+      }
+
+      if (Object.keys(failingScenes).length > 0) {
+        sceneDetail = failingScenes;
+      }
+    }
+
     byRule[rule.id] = {
       stage_a_fail_rate: round4(stageA),
       stage_b_fail_rate: round4(stageB),
@@ -210,6 +274,7 @@ export function buildInventory(
       health,
       interpretation,
       evaluation_count: evaluationCount,
+      ...(sceneDetail ? { stage_d_scene_detail: Object.freeze(sceneDetail) } : {}),
     };
   }
 

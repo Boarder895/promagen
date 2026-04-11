@@ -38,6 +38,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { enforceT1Syntax, enforceMjParameters } from "@/lib/harmony-compliance";
 import type { ComplianceContext } from "@/lib/harmony-compliance";
 import { postProcessTiers } from "@/lib/harmony-post-processing";
+import { normaliseTierBundle } from "@/lib/call-2-normalise-schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -260,7 +261,7 @@ SELF-CHECK — before returning Tier 2, verify: (1) 3+ weighted :: clauses prese
 
 TIER 3 — Natural Language (e.g., DALL·E, Adobe Firefly, Google Imagen):
 Write like an experienced visual director describing a shot, not like a prompt coach giving instructions.
-- LENGTH: 280–420 characters, 2–3 sentences. Select the 4–5 most impactful visual elements — do not try to preserve everything from a long input.
+- LENGTH: 280–420 characters, 2–3 sentences. If your draft falls noticeably short or feels thin, do not pad with generic filler — enrich it with one concrete sensory, spatial, or lighting detail that sharpens the shot. Select the 4–5 most impactful visual elements — do not try to preserve everything from a long input.
 - Convert negatives to positive reinforcement ("sharp and clear" not "no blur").
 - EXPERT VALUE PRIORITY: Add in this order: (1) composition/framing cue, (2) lighting/atmosphere detail, (3) style/medium reference woven naturally. Each must be something the user did NOT provide.
 - FIRST SENTENCE MUST RESTRUCTURE, NOT REPEAT. This is the most common failure in this tier. Your opening MUST NOT begin with the same subject + location + time phrasing as the user's input. Count: if your first 8 words closely match the user's first 8 words, you are paraphrasing — STOP and rewrite from scratch. Lead with composition, time, or environment — then position the subject within it.
@@ -573,7 +574,19 @@ export async function POST(req: NextRequest): Promise<Response> {
       );
     }
 
-    const validated = ResponseSchema.safeParse(jsonParsed);
+    // ── Schema repair: wrap flat-string tiers into { positive, negative } ──
+    // GPT occasionally returns "tier1": "text" instead of "tier1": { "positive": "text", "negative": "..." }.
+    // The v4.5 harness showed 4.5% of samples failing for this exact pattern.
+    // This deterministic normaliser rescues them before Zod validation.
+    const normalised = normaliseTierBundle(jsonParsed);
+    if (normalised.wasRepaired) {
+      console.debug(
+        "[generate-tier-prompts] Schema repair:",
+        normalised.repairs.join("; "),
+      );
+    }
+
+    const validated = ResponseSchema.safeParse(normalised.data);
     if (!validated.success) {
       console.error(
         "[generate-tier-prompts] Schema validation failed:",

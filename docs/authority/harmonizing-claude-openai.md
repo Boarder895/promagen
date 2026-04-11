@@ -1,20 +1,22 @@
 # Harmonizing Claude ↔ OpenAI — System Prompt Engineering Playbook
 
-**Version:** 3.0.0  
+**Version:** 4.0.0  
 **Created:** 23 March 2026  
-**Updated:** 29 March 2026  
+**Updated:** 11 April 2026  
 **Owner:** Promagen  
-**Status:** Active — proven methodology, applied to Call 2 (v4.5 production-confirmed via three-assessor stress testing) and Call 3 (43 independent builder files, harmony pass in progress). Three-assessor scoring standard established (Claude, ChatGPT, Grok).  
+**Status:** Active — proven methodology, applied to Call 2 (v4.5 production-confirmed via three-assessor stress testing, 27/27 HEALTHY harness rules) and Call 3 (40 independent builder files, harmony pass in progress). Three-assessor scoring standard established (Claude, ChatGPT, Grok). Call 2 quality architecture now includes mechanical scorer, schema normaliser, deterministic post-processing (P14/P15/P16), and harness infrastructure (16 files, 41 scenes, 5 runs).  
 **Authority:** This document defines the repeatable methodology for engineering system prompts where Claude writes the instructions and GPT-5.4-mini executes them, with Claude, ChatGPT, and Grok independently scoring output quality.
 
 > **Cross-references:**
 >
 > - `ai-disguise.md` v5.0.0 — §6 (deployed system prompt SSoT reference), §7 (post-processing layer), §8 (harmony engineering summary)
 > - `prompt-lab.md` v4.0.0 — Prompt Lab architecture, component table, negative prompt window
-> - `prompt-optimizer.md` v6.0.0 — Call 3 architecture (43 independent builders, compliance gates, server-side charCount)
+> - `prompt-optimizer.md` v6.0.0 — Call 3 architecture (40 independent builders, compliance gates, server-side charCount)
 > - `prompt-lab-v4-flow.md` v2.0.0 — Call 2 v4.5 status, three-assessor methodology, GPT ceilings
 > - `human-sentence-conversion.md` v2.0.0 — Call 1 (parse-sentence) specification
 > - `platform-config.json` + `platform-config.ts` — Platform SSOT (40 platforms)
+> - `call-2-quality-architecture-v0.3.1_1.md` — Harness architecture, route-stage model, mechanical scorer
+> - `call-2-normalise-schema.ts` — Schema repair normaliser (pre-validation tier-shape fixer)
 > - `code-standard.md` — All code standards
 
 ---
@@ -40,7 +42,7 @@
 
 Promagen uses a split-brain architecture where **Claude** (Anthropic) writes the system prompts and code, and **GPT-5.4-mini** (OpenAI) executes them at runtime to generate image prompts for 40 AI platforms. This creates a unique engineering challenge: the author of the instructions never sees them executed, and the executor never participated in designing them.
 
-This document captures the repeatable methodology that took Call 2's generic tier output from **62/100 to 96/100** across 6 rounds of iterative refinement + 3 stress tests (900-char complex inputs), with dual-assessor score convergence from a 20-point gap to a ≤1-point gap. The methodology was subsequently extended to a **three-assessor model** (Claude, ChatGPT, Grok) for the v4.0→v4.5 fix programme, and applied to Call 3 through 43 independent platform builder files.
+This document captures the repeatable methodology that took Call 2's generic tier output from **62/100 to 96/100** across 6 rounds of iterative refinement + 3 stress tests (900-char complex inputs), with dual-assessor score convergence from a 20-point gap to a ≤1-point gap. The methodology was subsequently extended to a **three-assessor model** (Claude, ChatGPT, Grok) for the v4.0→v4.5 fix programme, and applied to Call 3 through 40 independent platform builder files.
 
 ### Why this doc exists
 
@@ -54,8 +56,10 @@ Without it, the next developer (or future Martin) would have to rediscover throu
 - Why temperature 0.5 is the right trade-off for this use case
 - What the 30 rules do and why each one exists
 - Why the post-processing pipeline was extracted to a separate testable module
+- Why measuring the rule matters more than measuring the model (Pattern 8)
+- Why schema repair belongs in deterministic code, not prompt instructions
 
-This doc is also the **playbook for Call 3** — the same methodology applied to 43 platform-specific system prompts (harmony pass in progress).
+This doc is also the **playbook for Call 3** — the same methodology applied to 40 platform-specific system prompts (harmony pass in progress).
 
 ---
 
@@ -122,9 +126,19 @@ This doc is also the **playbook for Call 3** — the same methodology applied to
 
 **v3.0.0 upgrade — three-assessor model:** For the v4.0→v4.5 fix programme, **Grok** was added as a third independent assessor. Three human test scenes (station violinist, Victorian flower seller, sci-fi hangar mechanic) were scored by all three assessors. This revealed a critical calibration finding: **Claude scores T3 approximately 5–6 points too high and T4 approximately 3–5 points too high** compared to the ChatGPT/Grok median. Claude under-penalises verb substitutions and anchor drops. The triangulated median across three assessors is now the standard for calibration. Dual assessment (Claude + ChatGPT) remains sufficient for individual builder harmony passes; three-assessor is used for system-wide calibration.
 
+### Three-way build review (v4.0.0)
+
+Distinct from the three-assessor _scoring_ methodology above. Every build deliverable now uses a three-way _review_ workflow:
+
+1. **Claude proposes** the build (code, config, or fix)
+2. **Martin sends to ChatGPT** for independent structural assessment
+3. **Claude reviews ChatGPT's feedback** — accepts genuine structural corrections, explicitly rejects incorrect findings with stated reasoning — produces final agreed version
+
+This was used for every build drop in the Call 2 harness session (P14/P15/P16, schema normaliser, four-zone scorer, cellist scene). ChatGPT's structural observations are taken seriously even when absolute scores differ from Claude's.
+
 ### Key insight: ChatGPT doesn't know about post-processing
 
-ChatGPT grades raw GPT output. It doesn't know post-processing exists (5 functions in Call 2's `harmony-post-processing.ts` + compliance functions in `harmony-compliance.ts`; 7 functions in Call 3's separate `harmony-post-processing.ts`). This means:
+ChatGPT grades raw GPT output. It doesn't know post-processing exists (8 processing functions + `postProcessTiers()` orchestrator = 9 exported functions in Call 2's `harmony-post-processing.ts` at 624 lines; 7 processing functions + `postProcessTiers()` orchestrator = 8 exported functions in Call 3's separate `harmony-post-processing.ts` at 439 lines). This means:
 
 - ChatGPT's scores reflect the worst case the user could see (without safety nets)
 - Claude's scores reflect what the user actually sees (after safety nets)
@@ -189,21 +203,24 @@ Some GPT mechanical artefacts **cannot be eliminated via system prompt**. They a
 1. **System prompt rule** — reduces the error rate (e.g., from 100% to 50%)
 2. **Post-processing code** — catches remaining errors server-side before the user sees them (reduces user-visible rate to 0%)
 
-**Current belt-and-braces pairs (v2.0.0):**
+**Current belt-and-braces pairs (v4.0.0 — Call 2 only, 8 active):**
 
-| Artefact                         | System prompt rule                          | Post-processing catch                                                   | Added  |
-| -------------------------------- | ------------------------------------------- | ----------------------------------------------------------------------- | ------ |
-| T2 duplicate `--no` block        | "FINAL RULE — NEVER DUPLICATE NEGATIVES"    | P1 `deduplicateMjParams()` — deduplicates all MJ params                 | R4     |
-| T1 trailing period               | "NO sentence-ending punctuation"            | P2 `stripTrailingPunctuation()` — regex strips trailing `.!?`           | R4     |
-| T4 self-correction hallucination | "NEVER include questions, self-corrections" | P3 `fixT4SelfCorrection()` — strips "? No, it is" patterns              | R2     |
-| T4 meta-language openers         | "Do not use meta-language"                  | P8 `fixT4MetaOpeners()` — 23 abstract nouns × 21 meta verbs             | R2/ST2 |
-| T4 short sentence checklists     | "Every sentence MUST be at least 10 words"  | P10 `mergeT4ShortSentences()` — em-dash merge into previous             | R3     |
-| T3 meta-commentary openers       | "BANNED PHRASES" list (11 phrases)          | P11 `fixT3MetaOpeners()` — 20 abstract nouns × 18 perception verbs      | R5     |
-| T1 CLIP-unfriendly adjectives    | "CLIP interprets LITERALLY"                 | P12 `stripClipQualitativeAdjectives()` — 10 adjectives, unweighted only | R5     |
+| Artefact                         | System prompt rule                          | Post-processing catch                                              | Added      |
+| -------------------------------- | ------------------------------------------- | ------------------------------------------------------------------ | ---------- |
+| T2 duplicate `--no` block        | "FINAL RULE — NEVER DUPLICATE NEGATIVES"    | P1 `deduplicateMjParams()` — deduplicates all MJ params            | R4         |
+| T1 trailing period               | "NO sentence-ending punctuation"            | P2 `stripTrailingPunctuation()` — regex strips trailing `.!?`      | R4         |
+| T4 self-correction hallucination | "NEVER include questions, self-corrections" | P3 `fixT4SelfCorrection()` — strips "? No, it is" patterns         | R2         |
+| T4 meta-language openers         | "Do not use meta-language"                  | P8 `fixT4MetaOpeners()` — 23 abstract nouns × 21 meta verbs        | R2/ST2     |
+| T4 short sentence checklists     | "Every sentence MUST be at least 10 words"  | P10 `mergeT4ShortSentences()` — em-dash merge into previous        | R3         |
+| T1 over-long weight-wrap phrases | "CLIP weight-wrap: ≤4 words per group"      | P14 `enforceT1WeightWrap()` — 2-word-tail heuristic auto-split     | Harness v1 |
+| T3 over-length output            | "280–420 characters"                        | P15 `enforceT3MaxLength()` — sentence/clause/whitespace truncation | Harness v1 |
+| T4 over-length output            | "≤325 characters"                           | P16 `enforceT4MaxLength()` — sentence/comma/whitespace truncation  | Harness v1 |
 
-**File:** Call 2 functions in `src/lib/harmony-post-processing.ts` (272 lines). Call 3 functions in `src/lib/optimise-prompts/harmony-post-processing.ts` (439 lines).
+**P11 `fixT3MetaOpeners()` and P12 `stripClipQualitativeAdjectives()` were removed from Call 2 on 28 Mar 2026** and now exist only in Call 3's separate `harmony-post-processing.ts` (439 lines, 8 exported functions).
 
-**Application to Call 3:** After the first round of testing, identify which errors persist despite rules. Build post-processing for those immediately — don't waste rounds trying to fix them via prompt alone. Call 3 now has its own 7-function post-processing pipeline.
+**File:** Call 2 functions in `src/lib/harmony-post-processing.ts` (624 lines, 9 exported functions). Call 3 functions in `src/lib/optimise-prompts/harmony-post-processing.ts` (439 lines, 8 exported functions).
+
+**Application to Call 3:** After the first round of testing, identify which errors persist despite rules. Build post-processing for those immediately — don't waste rounds trying to fix them via prompt alone. Call 3 now has its own 8-function post-processing pipeline.
 
 ### Pattern 5: Temperature Trade-offs
 
@@ -244,6 +261,25 @@ GPT doesn't just find synonym verbs for banned phrases — it rotates **nouns** 
 
 **Application to Call 3:** Any banned pattern will need a lookup-set code catch from day one. GPT will find evasion routes faster than you can add prompt rules.
 
+### Pattern 8: Measure First, Calibrate Second (v4.0.0)
+
+**The four-zone split principle.** When a harness rule reports failures, question the _rule_ before questioning the _model_. The T3 `char_count_in_range` rule originally had a single threshold: anything below 280 chars was a failure. The harness showed high fail rates — but inspection revealed that many "failures" were sensible compact prompts in the 220–280 range that scored well visually. The rule was penalising good output.
+
+**The fix:** Instead of tweaking the system prompt (which was already correct), the mechanical scorer was split into four diagnostic zones:
+
+| Zone       | Range   | Verdict | Rationale                                                               |
+| ---------- | ------- | ------- | ----------------------------------------------------------------------- |
+| HARD_UNDER | < 220   | FAIL    | Genuinely thin — even aggressive compression shouldn't go this low      |
+| SOFT_UNDER | 220–279 | PASS    | Sensible compression on shorter inputs — measurement problem, not model |
+| Sweet spot | 280–420 | PASS    | Target range                                                            |
+| OVER       | > 420   | FAIL    | Addressed by P15 truncation                                             |
+
+ChatGPT recommended 220 as the HARD_UNDER threshold over Claude's initial proposal of 200 — another case where the three-way review pattern (Pattern documented in §2) caught a calibration error before it shipped.
+
+**The T3 prompt tweak learning:** Three harness runs tested adding a nudge to the T3 system prompt section ("If your draft falls noticeably short or feels thin, enrich it with one concrete sensory, spatial, or lighting detail"). Measurement across three runs proved this prompt change had no measurable effect on T3 char count — the model was already producing output at its natural length. The fix was the four-zone scorer recalibration, not the prompt. Important learning for Pattern 2 (system prompt rules): **not every problem is a prompt problem, and some prompt tweaks produce no measurable change even when they sound correct.**
+
+**Principle:** "A rule that penalises sensible compression on edge-case inputs is a measurement problem, not a model problem." Applies to any mechanical scoring system.
+
 ---
 
 ## 4. Anti-Patterns
@@ -276,11 +312,17 @@ T4 (Plain Language) dropped from 94 to 82 between rounds — not because of a ru
 
 **Rule:** Diagnose whether a score drop is a rule gap or GPT variability before building a fix.
 
+### Anti-Pattern 5: Measuring the model when the rule is wrong (v4.0.0)
+
+The T3 `char_count_in_range` harness rule reported high failure rates. The instinct was to tweak the system prompt to make GPT produce longer output. Three runs proved the prompt tweak had zero effect. The actual problem was the rule's threshold — it was penalising sensible 220–279 char outputs that scored well visually. The fix was recalibrating the rule (four-zone split), not the model. See Pattern 8.
+
+**Rule:** When a mechanical scorer reports failures, verify that the rule itself is correct before spending cycles on prompt changes. Data first, then diagnosis, then fix.
+
 ---
 
 ## 5. System Prompt Evolution — The 30 Rules
 
-**SSoT:** `buildSystemPrompt()` in `src/app/api/generate-tier-prompts/route.ts` (650 lines). The function is dynamic — it adapts to provider context. Always read the code for current rules. **Current version: v4.5** — 6 iterative versions (v4.0→v4.5) stress-tested with three human scenes and three assessors. See §9 for the full fix programme.
+**SSoT:** `buildSystemPrompt()` in `src/app/api/generate-tier-prompts/route.ts` (665 lines). The function is dynamic — it adapts to provider context. Always read the code for current rules. **Current version: v4.5** — 6 iterative versions (v4.0→v4.5) stress-tested with three human scenes and three assessors. See §9 for the full fix programme.
 
 **Rule ceiling:** 30 (enforced by `RULE_CEILING` in `harmony-compliance.ts` with test assertion). Raising requires explicit Martin approval.
 
@@ -330,32 +372,49 @@ T4 (Plain Language) dropped from 94 to 82 between rounds — not because of a ru
 
 ## 6. Post-Processing Layer
 
-Two separate post-processing files exist — one for Call 2, one for Call 3. Both are extracted from their respective route files for testability.
+Two separate post-processing files exist — one for Call 2, one for Call 3. Both are extracted from their respective route files for testability. A schema normaliser sits upstream of both.
+
+### Schema Normaliser (v4.0.0)
+
+**File:** `src/lib/call-2-normalise-schema.ts` (81 lines) — pre-validation tier-shape fixer.  
+**Import:** Both `generate-tier-prompts/route.ts` and `dev/generate-tier-prompts/route.ts` import `normaliseTierBundle()`.
+
+GPT occasionally returns a tier as a flat string (`"tier1": "masterpiece, ..."`) instead of the required object (`"tier1": { "positive": "masterpiece, ...", "negative": "blurry, ..." }`). The v4.5 harness proof-of-life run showed 9/200 samples (4.5%) failing with SCHEMA_ERROR for exactly this pattern. Every failure was a flat string where an object was expected.
+
+The normaliser runs **between** `JSON.parse()` and `Zod.safeParse()`. It inspects each tier value and wraps flat strings into `{ positive: value, negative: "" }`. Genuinely malformed data (null, number, array, deeply broken shapes) is left untouched for Zod to catch properly.
+
+**Design principle:** Deterministic code fix for a measured problem. This does NOT retry, re-prompt, or paper over other schema issues. It fixes exactly one pattern.
 
 ### Call 2 Post-Processing
 
-**File:** `src/lib/harmony-post-processing.ts` (272 lines) — extracted from route.ts in v2.0.0.  
+**File:** `src/lib/harmony-post-processing.ts` (624 lines) — extracted from route.ts in v2.0.0.  
 **Import:** `generate-tier-prompts/route.ts` imports `postProcessTiers()` from this module.
 
-**Functions (5 active — P11 and P12 removed 28 Mar 2026, migrated to Call 3 only):**
+**Functions (8 active processing functions + 1 orchestrator = 9 exported functions):**
 
-| ID  | Function                     | Tier | What it does                                                             | Catch rate               |
-| --- | ---------------------------- | ---- | ------------------------------------------------------------------------ | ------------------------ |
-| P1  | `deduplicateMjParams()`      | T2   | Merges all --no/--ar/--v/--s blocks, deduplicates terms, removes fusions | 100%                     |
-| P2  | `stripTrailingPunctuation()` | T1   | Strips trailing `.!?` from CLIP prompts                                  | 100%                     |
-| P3  | `fixT4SelfCorrection()`      | T4   | Strips "? No, it is" self-correction hallucinations                      | 100%                     |
-| P8  | `fixT4MetaOpeners()`         | T4   | Strips "The [abstract noun] [meta verb]" openers (23 nouns × 21 verbs)   | 100% (start of sentence) |
-| P10 | `mergeT4ShortSentences()`    | T4   | Merges final sentences under 10 words into previous via em-dash          | 100%                     |
+| ID  | Function                     | Tier | What it does                                                                                                                                                                                                                                      | Added      |
+| --- | ---------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| P1  | `deduplicateMjParams()`      | T2   | Merges all --no/--ar/--v/--s blocks, deduplicates terms, removes fusions                                                                                                                                                                          | R4         |
+| P2  | `stripTrailingPunctuation()` | T1   | Strips trailing `.!?` from CLIP prompts                                                                                                                                                                                                           | R4         |
+| P3  | `fixT4SelfCorrection()`      | T4   | Strips "? No, it is" self-correction hallucinations                                                                                                                                                                                               | R2         |
+| P8  | `fixT4MetaOpeners()`         | T4   | Strips "The [abstract noun] [meta verb]" openers (23 nouns × 21 verbs)                                                                                                                                                                            | R2/ST2     |
+| P10 | `mergeT4ShortSentences()`    | T4   | Merges final sentences under 10 words into previous via em-dash                                                                                                                                                                                   | R3         |
+| P14 | `enforceT1WeightWrap()`      | T1   | Regex scan for weight-wrapped phrases >4 words. Auto-split using 2-word-tail heuristic (keeps noun head inside wrapper, ejects prefix words as unweighted comma-separated terms). Skips malformed/nested parens. Returns fix log.                 | Harness v1 |
+| P15 | `enforceT3MaxLength()`       | T3   | If T3 positive >420 chars, truncate at last sentence boundary under 420. Fallback: clause boundary (semicolon, dash, comma). Fallback: nearest whitespace. Verifies result still meets 280-char minimum — if not, falls back to comma truncation. | Harness v1 |
+| P16 | `enforceT4MaxLength()`       | T4   | If T4 positive >325 chars, truncate at last sentence boundary under 325. Fallback: comma. Fallback: nearest whitespace. No minimum floor needed.                                                                                                  | Harness v1 |
+|     | `postProcessTiers()`         | All  | Orchestrator — applies the correct functions per tier in the correct order                                                                                                                                                                        | R4         |
 
 T1 also gets `enforceWeightCap()` from `harmony-compliance.ts`.
 
 **Pipeline per tier (Call 2):**
 
 ```
-T1: enforceWeightCap(8) → P2 (strip punctuation)
+GPT response → JSON.parse → Schema Normaliser → Zod validation → Post-processing:
+
+T1: enforceWeightCap(8) → P2 (strip punctuation) → P14 (weight-wrap enforcement)
 T2: P1 (dedup MJ params) → [P5 in compliance gate adds missing params]
-T3: (no post-processing — P11 removed from Call 2)
-T4: P3 (self-correction) → P8 (meta-openers) → P10 (short sentence merge)
+T3: P15 (over-length truncation)
+T4: P3 (self-correction) → P8 (meta-openers) → P10 (short sentence merge) → P16 (over-length truncation)
 ```
 
 ### Call 3 Post-Processing (v3.0.0)
@@ -363,7 +422,7 @@ T4: P3 (self-correction) → P8 (meta-openers) → P10 (short sentence merge)
 **File:** `src/lib/optimise-prompts/harmony-post-processing.ts` (439 lines) — separate from Call 2.  
 **Import:** `optimise-prompt/route.ts` imports from this module via `resolve-group-prompt.ts`.
 
-**Functions (7 active — includes P11 and P12 which were removed from Call 2):**
+**Functions (7 active processing functions + 1 orchestrator = 8 exported functions — includes P11 and P12 which were removed from Call 2):**
 
 | ID  | Function                           | Tier | What it does                                                                 | Catch rate               |
 | --- | ---------------------------------- | ---- | ---------------------------------------------------------------------------- | ------------------------ |
@@ -374,6 +433,7 @@ T4: P3 (self-correction) → P8 (meta-openers) → P10 (short sentence merge)
 | P10 | `mergeT4ShortSentences()`          | T4   | Merges final sentences under 10 words into previous via em-dash              | 100%                     |
 | P11 | `fixT3MetaOpeners()`               | T3   | Strips "The [abstract noun] [perception verb]" openers (20 nouns × 18 verbs) | 100% (start of sentence) |
 | P12 | `stripClipQualitativeAdjectives()` | T1   | Strips CLIP-unfriendly adjectives from unweighted segments only              | 100% (unweighted)        |
+|     | `postProcessTiers()`               | All  | Orchestrator                                                                 |                          |
 
 ### Compliance gate (shared by both Call 2 and Call 3)
 
@@ -397,7 +457,10 @@ T4: P3 (self-correction) → P8 (meta-openers) → P10 (short sentence merge)
 
 ```typescript
 // Call 2 (generate-tier-prompts/route.ts):
+import { normaliseTierBundle } from "@/lib/call-2-normalise-schema";
 import { postProcessTiers } from "@/lib/harmony-post-processing";
+const normalised = normaliseTierBundle(jsonParsed); // schema repair
+const validated = ResponseSchema.safeParse(normalised.data);
 const processed = postProcessTiers(validated.data);
 
 // Call 3 (optimise-prompt/route.ts):
@@ -528,18 +591,16 @@ Both `postProcessTiers()` functions MUST run on their respective Call responses.
 
 ### Round 5 — Final polish (93/100, +4)
 
-**Fixes applied:** T2 FINAL RULE repositioning, S17 (10-word minimum with WRONG/RIGHT example).
+**Fixes applied:** S17 (10-word sentence rule), S18 (meta-language ban). P3 + P8 added for T4. P10 for short sentence merge.
 
-| Tier | Score | Change | Key improvement                        |
-| ---- | ----- | ------ | -------------------------------------- |
-| T1   | 96    | +1     | Plateau                                |
-| T2   | 88    | +3     | Better weight hierarchy (4 levels)     |
-| T3   | 95    | +1     | Cleanest output — no directives at all |
-| T4   | 93    | +11    | 10-word rule fixed the regression      |
+| Tier | Score | Change | Key improvement                         |
+| ---- | ----- | ------ | --------------------------------------- |
+| T1   | 95    | 0      | Stable                                  |
+| T2   | 89    | +4     | Steady, P1 cleaning residual duplicates |
+| T3   | 95    | +1     | Polish                                  |
+| T4   | 92    | +10    | 10-word rule + P8 meta-language strip   |
 
-**Assessor gap:** 1.75 points. **Converged.**
-
-### Score trajectory (v1.0.0 — Rounds 1–5)
+### Score trajectory (Rounds 1–5)
 
 ```
 100 ┤
@@ -582,6 +643,20 @@ Three curated 900-char inputs designed to expose specific weaknesses. Each run t
 | ST2  | Cellist: abstract emotion, fine detail, period interior decay               | 95    | 95–96   | 96–97 | 88–94 | **94–95** | "The room feels" → confirmed P8 needed broadening, T1 over-tokenisation on complex inputs              |
 | ST3  | Deep-sea diver: technical photography terms, extreme scale, bioluminescence | 93–94 | 96      | 95–98 | 92–95 | **94–96** | First clean T2 raw output (no dupes!), G2 user-term reformatting gap, "eighty metres depth" non-visual |
 
+### v4.0.0 — Harness Proof-of-Life (10–11 April 2026)
+
+The Call 2 quality harness (16 files, 41 scenes including the cellist addition) ran 5 rounds with mechanical scoring against 27 rules. This is automated structural validation, distinct from the human dual/three-assessor methodology above.
+
+| Run | Samples | Healthy Rules | Key Finding                                                                                     |
+| --- | ------- | ------------- | ----------------------------------------------------------------------------------------------- |
+| 1   | 200     | 24/27         | T1.weight_wrap_4_words_max, T3.char_count_in_range, T4.char_count_under_325 failing             |
+| 2   | 200     | 25/27         | P14 built — T1 weight-wrap fixed. T3/T4 length still failing                                    |
+| 3   | 200     | 26/27         | P15 built — T3 over-length fixed. T4 still failing                                              |
+| 4   | 200     | 26/27         | P16 built — T4 over-length fixed. Schema normaliser built (9/200 SCHEMA_ERROR rescued)          |
+| 5   | 200     | **27/27**     | All rules HEALTHY. 0/200 sample failures. Schema normaliser catching 4.5% of responses silently |
+
+**Cellist scene finding:** Scored 71/100 on T1 — the weakest single-scene score. Failure pattern: colour isolation and orphaned interaction pairs. This is a GPT model behaviour trait under load on 6+ interaction-pair inputs, not fixable by system prompt rules. Deferred to Call 3 platform-specific builders (Leonardo/SD/DreamStudio should restructure fragmented tokens into merged interaction events).
+
 ### Known ceiling
 
 **Moderate inputs:** 96/100 average. **Complex inputs:** 94.5/100 average.
@@ -594,6 +669,7 @@ The remaining gap on complex scenes is **compositional intelligence** — GPT li
 - "burn" → glow (T1/T4, cracked in T3/T4 on v4.5)
 - Run-to-run variance of 83–92 on identical inputs is expected
 - T4 verb softening in plain-language mode is a permanent ceiling
+- T1 CLIP interaction fragmentation on 6+ interaction-pair inputs — model behaviour, not prompt-addressable
 
 ---
 
@@ -632,34 +708,34 @@ The remaining gap on complex scenes is **compositional intelligence** — GPT li
 | T4          | ~80           | ~93        | **+13**                 |
 | **Overall** | ~88           | ~95        | **+7**                  |
 
-**Production status:** v4.5 confirmed as production file. The code in `generate-tier-prompts/route.ts` (650 lines) is the SSoT.
+**Production status:** v4.5 confirmed as production file. The code in `generate-tier-prompts/route.ts` (665 lines) is the SSoT.
 
 ---
 
 ## 10. Call 3 — Platform-Specific Optimisation (In Progress)
 
-Call 3 (`POST /api/optimise-prompt`, 406 lines) takes an assembled prompt + provider context and returns a platform-optimised version. The harmony methodology has been applied with these results:
+Call 3 (`POST /api/optimise-prompt`, 651 lines) takes an assembled prompt + provider context and returns a platform-optimised version. The harmony methodology has been applied with these results:
 
 ### Architecture (implemented)
 
-**43 independent builder files** in `src/lib/optimise-prompts/group-*.ts` — each platform has its own system prompt with no shared imports between builders. Complete isolation prevents cross-platform regressions.
+**40 independent builder files** in `src/lib/optimise-prompts/group-*.ts` — each platform has its own system prompt with no shared imports between builders. Complete isolation prevents cross-platform regressions.
 
-**Routing:** `platform-groups.ts` (181 lines) maps each provider ID to a group. `resolve-group-prompt.ts` (205 lines) resolves the system prompt, falling back to `generic-fallback.ts` (78 lines).
+**Routing:** `platform-groups.ts` (175 lines) maps each provider ID to a group. `resolve-group-prompt.ts` (192 lines) resolves the system prompt, falling back to `generic-fallback.ts` (77 lines).
 
 **Config:** GPT-5.4-mini, temperature 0.4 for prose groups, 0.2 for CLIP groups. proseGroups detection flips primary input for NL platforms (original sentence primary, assembled prompt secondary).
 
-**Post-processing:** `src/lib/optimise-prompts/harmony-post-processing.ts` (439 lines, 7 functions). Compliance gates in `harmony-compliance.ts` (833 lines). Server-side charCount measurement after all gates.
+**Post-processing:** `src/lib/optimise-prompts/harmony-post-processing.ts` (439 lines, 8 exported functions). Compliance gates in `harmony-compliance.ts` (833 lines). Server-side charCount measurement after all gates.
 
 ### Differences from Call 2
 
-| Aspect          | Call 2 (generic tiers)                                       | Call 3 (platform-specific)                                   |
-| --------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| Input           | Human text (creative, variable length)                       | Assembled prompt (structured, predictable)                   |
-| Output          | 4 tier prompts (4 families)                                  | 1 optimised prompt (1 specific platform)                     |
-| Temperature     | 0.5 (creative restructuring)                                 | 0.4 prose / 0.2 CLIP (precision)                             |
-| System prompt   | 30 rules for 4 families (v4.5)                               | Per-platform rules in 43 independent builders                |
-| Post-processing | 5 functions (Call 2 `harmony-post-processing.ts`, 272 lines) | 7 functions (Call 3 `harmony-post-processing.ts`, 439 lines) |
-| Test matrix     | 3 scenes × 4 outputs × 3 assessors                           | 1 scene (Lighthouse Keeper) × 40 platforms                   |
+| Aspect          | Call 2 (generic tiers)                                                | Call 3 (platform-specific)                                            |
+| --------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Input           | Human text (creative, variable length)                                | Assembled prompt (structured, predictable)                            |
+| Output          | 4 tier prompts (4 families)                                           | 1 optimised prompt (1 specific platform)                              |
+| Temperature     | 0.5 (creative restructuring)                                          | 0.4 prose / 0.2 CLIP (precision)                                      |
+| System prompt   | 30 rules for 4 families (v4.5)                                        | Per-platform rules in 40 independent builders                         |
+| Post-processing | 9 exported functions (Call 2 `harmony-post-processing.ts`, 624 lines) | 8 exported functions (Call 3 `harmony-post-processing.ts`, 439 lines) |
+| Test matrix     | 3 scenes × 4 outputs × 3 assessors + 41 scenes × 27 rules (harness)   | 1 scene (Lighthouse Keeper) × 40 platforms                            |
 
 ### Harmony pass methodology (proven)
 
@@ -671,9 +747,9 @@ Call 3 (`POST /api/optimise-prompt`, 406 lines) takes an assembled prompt + prov
 
 ### Performance findings
 
-- **CLIP platforms:** Call 3 averages ~2pt gain (85→87) — marginal, may not justify API cost per platform
+- **CLIP platforms:** Call 3 averages ~2pt gain (85→87) — marginal. T1 CLIP quality is the weakest tier (cellist 71/100). Call 3 builders for CLIP platforms should focus on targeted enrichment (restructuring fragmented tokens into merged interaction events), not generic optimisation
 - **NL platforms:** Call 3 averages ~6-8pt gain (88→94) — worth the API cost
-- **Pending decision:** Test each CLIP platform individually, retain Call 3 where it adds value, bypass where it doesn't
+- **Current direction:** T1 CLIP interaction fragmentation is a model behaviour trait at Call 2, not fixable by prompt rules. Call 3 platform-specific builders (Leonardo/SD/DreamStudio) are the fix path — they should restructure fragmented tokens into merged interaction events
 
 ### Harmony pass status
 
@@ -705,14 +781,20 @@ Call 3 (`POST /api/optimise-prompt`, 406 lines) takes an assembled prompt + prov
 ### When to build post-processing instead
 
 - GPT violates the rule >30% of the time despite examples and repositioning
-- The artefact is mechanical (duplication, punctuation) not semantic
-- A 5-line string operation catches it reliably
+- The artefact is mechanical (duplication, punctuation, over-length) not semantic
+- A deterministic string operation catches it reliably
 
 ### When to adjust temperature
 
 - Increase: if output is too conservative/paraphrased (T3 was)
 - Decrease: if syntax/structural rules are being violated (Call 3 should be 0.2)
 - Never above 0.5 for structured output with syntax requirements
+
+### When to question the rule instead of the model
+
+- The harness reports high fail rates but human inspection shows the "failures" are visually reasonable output
+- The rule threshold was inherited from early rounds and never re-validated against production data
+- The model is producing output at its natural length/shape and the rule penalises it — that's a measurement problem (Pattern 8)
 
 ### When to stop iterating
 
@@ -728,8 +810,8 @@ Call 3 (`POST /api/optimise-prompt`, 406 lines) takes an assembled prompt + prov
 1. **This methodology is the standard for all GPT system prompt work** — Call 2, Call 3, future Call 2 updates, any new API routes that use GPT
 2. **Three-assessor calibration for system-wide changes** — Claude, ChatGPT, Grok. Triangulated median is the standard. Claude scores T3 ~5-6pts and T4 ~3-5pts too high — use external assessors for calibration.
 3. **Dual assessment minimum for individual builder harmony passes** — never ship a builder change without testing through both Claude and ChatGPT
-4. **Call 2 post-processing cannot be removed** — 5 functions in `src/lib/harmony-post-processing.ts` (272 lines) are permanent safety nets. P11 and P12 were removed from Call 2 (28 Mar 2026) and now exist only in Call 3.
-5. **Call 3 post-processing cannot be removed** — 7 functions in `src/lib/optimise-prompts/harmony-post-processing.ts` (439 lines) are permanent. Compliance gates in `harmony-compliance.ts` (833 lines) are permanent.
+4. **Call 2 post-processing cannot be removed** — 9 exported functions in `src/lib/harmony-post-processing.ts` (624 lines) are permanent safety nets. P11 and P12 were removed from Call 2 (28 Mar 2026) and now exist only in Call 3. P14/P15/P16 were added from harness findings (11 Apr 2026). Active processing functions: P1, P2, P3, P8, P10, P14, P15, P16.
+5. **Call 3 post-processing cannot be removed** — 8 exported functions in `src/lib/optimise-prompts/harmony-post-processing.ts` (439 lines) are permanent. Compliance gates in `harmony-compliance.ts` (833 lines) are permanent.
 6. **No Call 3 builder may import from another builder** — complete isolation prevents cross-platform regressions
 7. **Temperature must be documented and justified** — every API route must record its temperature and the rationale in the route file header. Call 2: 0.5. Call 3: 0.4 prose / 0.2 CLIP.
 8. **Concrete examples in every system prompt** — no rule without a WRONG/RIGHT pair or a structural example
@@ -739,10 +821,15 @@ Call 3 (`POST /api/optimise-prompt`, 406 lines) takes an assembled prompt + prov
 12. **Server-side `charCount` measurement is mandatory** — never trust GPT self-reported counts. `result.charCount = result.optimised.length` after all compliance gates.
 13. **`effectiveWasOptimized` must compare text content** (`optimised !== activeTierPromptText`), NOT length — length comparison hides enriched prompts.
 14. **Deterministic fixes belong in code, not prompts** — if a bug can be expressed as deterministic logic, it must be a compliance gate or post-processing function, not a prompt rule.
+15. **Three-way build review for all deliverables** — Claude proposes → Martin sends to ChatGPT → Claude reviews feedback, accepts genuine structural corrections, rejects incorrect findings → final agreed version.
+16. **Measure the rule before fixing the model** — when the harness reports failures, verify the scoring rule's threshold is correct before spending cycles on prompt changes. The four-zone split principle (Pattern 8).
+17. **Schema normaliser is permanent** — `call-2-normalise-schema.ts` runs between JSON.parse and Zod validation. Fixes flat-string tier values. Do not remove or bypass.
 
 ---
 
 ## Changelog
+
+- **11 Apr 2026 (v4.0.0):** **POST-PROCESSING P14/P15/P16 + SCHEMA NORMALISER + HARNESS FINDINGS + PATTERN 8 + THREE-WAY REVIEW.** §1: Builder count 43→40 (verified grep). Added schema normaliser and Pattern 8 references. §2: Added three-way build review workflow (distinct from three-assessor scoring). Updated Key Insight: Call 2 now 9 exported functions / 624 lines (was 5 / 272). Call 3 now 8 exported functions / 439 lines (was 7 / 439). §3 Pattern 4: Table completely corrected — removed P11/P12 from Call 2 rows (were shown as active despite removal note elsewhere), added P14 `enforceT1WeightWrap()`, P15 `enforceT3MaxLength()`, P16 `enforceT4MaxLength()`. File reference updated 272→624 lines, 5→9 exported functions. §3 NEW Pattern 8: "Measure First, Calibrate Second" — the four-zone split principle from T3 harness findings. Includes T3 prompt tweak learning (three runs, zero measurable effect — important negative result). §4: NEW Anti-Pattern 5: "Measuring the model when the rule is wrong." §5: route.ts line count 650→665. §6: Complete rewrite of Call 2 section (624 lines, 9 functions, P14/P15/P16 added to table, pipeline updated with schema normaliser step). NEW Schema Normaliser subsection (81 lines, pre-validation, 4.5% rescue rate). Integration points updated with normaliser code. §8: NEW v4.0.0 Harness Proof-of-Life section (5 runs, 24/27→27/27 HEALTHY, cellist finding, T1 fragmentation ceiling). §10: Builder count 43→40, route lines 406→651, platform-groups 181→175, resolve-group-prompt 205→192, generic-fallback 78→77. Differences table updated (9 vs 8 functions, 624 vs 439 lines, added harness to test matrix). Performance findings reframed: CLIP platforms need targeted enrichment, not skipping. §11: Added "When to question the rule" decision criterion. §12: Rule 4 updated (9 functions, 624 lines, P14/P15/P16 listed). Rule 5 updated (8 functions). NEW rules 15 (three-way build review), 16 (measure rule before fixing model), 17 (schema normaliser permanent). 14→17 rules. Cross-references: added call-2-quality-architecture doc and call-2-normalise-schema.ts.
 
 - **29 Mar 2026 (v3.0.0):** **THREE-ASSESSOR METHODOLOGY + CALL 2 v4.5 + CALL 3 ARCHITECTURE.** §1: Platform count 42→40. Added three-assessor reference. §2: Added three-assessor model (Claude, ChatGPT, Grok) with calibration finding (Claude +5-6pts T3, +3-5pts T4 vs median). Updated post-processing insight — Call 2 now 5 functions (P11/P12 removed 28 Mar), Call 3 has 7 functions. §3: Pattern 4 file reference updated — two files (272 + 439 lines). Pattern 7 implementation updated — P11 now Call 3 only. §4: Anti-Pattern 2 updated with v4.4 T2 root-cause fix (schema bug, not unfixable GPT behaviour). §5: SSoT reference updated — route.ts 650 lines, v4.5 confirmed. §6: Completely rewritten — split into Call 2 (272 lines, 5 functions) and Call 3 (439 lines, 7 functions) subsections. P11/P12 documented as removed from Call 2, migrated to Call 3 only. Pipeline per tier corrected. Compliance gate updated 486→833 lines with full function list including `enforceWeightCap`, `enforceClipKeywordCleanup`, `enforceNegativeContradiction`, `runFullCompliance`, `detectT3BannedPhrases`. §8: Added GPT ceilings section (reflect→smear, burn→glow, 83-92 variance). §9 NEW: Call 2 v4.0→v4.5 fix programme — baseline failures (T1 zero interactions, T2 `--no` duplication, T3 verb softening, T4 anchor drops), 5 fix versions with specific changes per version, calibrated three-assessor gains (T1 +7, T2 +8, T3 +0, T4 +13, overall +7). §10 (was §9): Rewritten from future plan to actual state — 43 independent builder files, routing (platform-groups.ts 181 lines, resolve-group-prompt.ts 205 lines), config (0.4 prose / 0.2 CLIP), harmony pass methodology, performance findings (CLIP ~2pt vs NL ~6-8pt), status table (Firefly 93/100, 123RF 91/100, Artbreeder in progress). §11 (was §10): Renumbered. §12 (was §11): Rewritten — three-assessor calibration (rule 2), dual minimum for builders (rule 3), Call 2/Call 3 post-processing split (rules 4-5), builder isolation (rule 6), temperature documentation (rule 7), server-side charCount (rule 12), effectiveWasOptimized text comparison (rule 13), deterministic-fixes-in-code principle (rule 14). 10→14 rules. Cross-references updated: ai-disguise v4.0.0→v5.0.0, prompt-lab v3.1.0→v4.0.0, added prompt-optimizer v6.0.0, prompt-lab-v4-flow v2.0.0, platform-config SSOT.
 

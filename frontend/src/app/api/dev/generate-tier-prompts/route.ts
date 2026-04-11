@@ -50,6 +50,7 @@ import {
 } from '@/lib/harmony-compliance';
 import type { ComplianceContext } from '@/lib/harmony-compliance';
 import { postProcessTiers } from '@/lib/harmony-post-processing';
+import { normaliseTierBundle } from '@/lib/call-2-normalise-schema';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -363,7 +364,14 @@ export async function POST(req: NextRequest): Promise<Response> {
     );
   }
 
-  const stageAValidated = TierBundleSchema.safeParse(stageARaw);
+  // ── Schema repair: wrap flat-string tiers into { positive, negative } ────
+  // Without this, flat-string responses are dead 502s — no scoring at all.
+  // With this, they become scoreable Stage A samples. The metadata flag
+  // `schema_normalised` tells the harness that repair intervened.
+  const normalised = normaliseTierBundle(stageARaw);
+  const schemaNormalised = normalised.wasRepaired;
+
+  const stageAValidated = TierBundleSchema.safeParse(normalised.data);
   if (!stageAValidated.success) {
     return NextResponse.json(
       {
@@ -435,6 +443,8 @@ export async function POST(req: NextRequest): Promise<Response> {
         },
         stages_applied: ['a', 'b', 'c', 'd'] as const,
         provider_context_present: providerContext !== null,
+        schema_normalised: schemaNormalised,
+        schema_repairs: schemaNormalised ? normalised.repairs : [],
       },
     },
     {

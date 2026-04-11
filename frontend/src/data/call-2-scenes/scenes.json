@@ -2,7 +2,7 @@
   "schema_version": "1.1.0",
   "generated_from": "call-2-harness-scenes-brief-completed.xlsx",
   "generated_at": "2026-04-10",
-  "count": 40,
+  "count": 41,
   "scenes": [
     {
       "id": "lighthouse-keeper-canonical",
@@ -1137,6 +1137,48 @@
       ],
       "perturbation_seeds": [
         "synonym"
+      ],
+      "holdout": false,
+      "status": "approved",
+      "tag_provenance": "manual"
+    },
+    {
+      "id": "cellist-abandoned-cathedral",
+      "category": "canonical",
+      "concept": "Interaction-dense single performer in architectural ruin with layered light-on-surface events and abstract mood conversion",
+      "input": "A lone cellist performing in an abandoned cathedral at dusk, shafts of dying golden light streaming through shattered rose windows and spilling pools of crimson and violet across cracked marble floors, dust motes suspended in the light beams, the bow poised above the strings mid-stroke, ivy creeping through collapsed stonework, a sense of sacred defiance against slow ruin",
+      "tags": [
+        "character",
+        "architecture",
+        "lighting",
+        "interaction-dense",
+        "colour",
+        "emotional",
+        "atmosphere"
+      ],
+      "exercises_clusters": [
+        "interaction_flattening",
+        "syntax_leak",
+        "tier_drift",
+        "paraphrase_echo_collapse"
+      ],
+      "exercises_rules": [
+        "T1.interaction_preservation",
+        "T1.no_isolated_colour_weights",
+        "T1.subject_highest_weight",
+        "T1.scale_modifier_preservation",
+        "T1.weight_wrap_4_words_max",
+        "T3.verb_fidelity",
+        "T3.mood_conversion",
+        "T3.sentence_count_2_to_3",
+        "T4.anchor_triage",
+        "T4.value_add_conversion"
+      ],
+      "perturbation_seeds": [
+        "synonym",
+        "clause_reorder",
+        "polite_prefix",
+        "punctuation"
       ],
       "holdout": false,
       "status": "approved",

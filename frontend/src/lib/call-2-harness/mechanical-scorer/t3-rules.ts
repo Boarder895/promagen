@@ -18,7 +18,25 @@ import type { RuleDefinition } from './types';
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
-const T3_MIN_CHARS = 280;
+/**
+ * T3 length zones (four-zone split, agreed by Claude + ChatGPT + Martin):
+ *
+ *   < HARD_FLOOR (220)  → FAIL, tagged HARD_UNDER. Genuinely thin — even
+ *                          sparse/adversarial inputs should produce more than this.
+ *   HARD_FLOOR–SOFT_FLOOR (220–279) → PASS, tagged SOFT_UNDER. Sensible
+ *                          compression on edge-case inputs. Monitored but not penalised.
+ *   SOFT_FLOOR–MAX (280–420) → PASS. Sweet spot — the system prompt target.
+ *   > MAX (420)          → FAIL, tagged OVER. P15 truncation catches this at Stage B.
+ *
+ * The system prompt still targets 280–420. This split only affects the scorer,
+ * not the prompt or the post-processing pipeline.
+ *
+ * Evidence (Run 4, v4.5): 71% of T3 under-length failures came from trap/stress
+ * scenes. Only one observed output was below 220 (214 on trap-rule-override).
+ * All canonical creative scenes were above 280.
+ */
+const T3_HARD_FLOOR = 220;
+const T3_SOFT_FLOOR = 280;
 const T3_MAX_CHARS = 420;
 const T3_MIN_SENTENCES = 2;
 const T3_MAX_SENTENCES = 3;
@@ -84,20 +102,44 @@ function firstNWords(text: string, n: number): string[] {
 // ── Rule definitions ───────────────────────────────────────────────────────
 
 export const T3_RULES: readonly RuleDefinition[] = Object.freeze([
-  // ── R1: char count in [280, 420] ────────────────────────────────────────
+  // ── R1: char count — four-zone split ──────────────────────────────────────
+  // HARD_UNDER (<220): fail — genuinely thin output
+  // SOFT_UNDER (220–279): pass with diagnostic — sensible compression
+  // Sweet spot (280–420): pass — system prompt target
+  // OVER (>420): fail — P15 truncation should have caught this
   {
     id: 'T3.char_count_in_range',
     tier: 3,
     cluster: 'tier_drift',
-    description: 'T3 must be 280–420 characters. Below = sparse paraphrase. Above = bloated.',
+    description: 'T3 four-zone length check. HARD_UNDER (<220) and OVER (>420) are failures. SOFT_UNDER (220–279) passes with diagnostic tag. Sweet spot 280–420 passes clean.',
     check(bundle) {
       const len = bundle.tier3.positive.length;
-      if (len < T3_MIN_CHARS || len > T3_MAX_CHARS) {
+
+      // Zone 1: OVER — above the ceiling
+      if (len > T3_MAX_CHARS) {
         return {
           passed: false,
-          details: `T3 length ${len}, expected [${T3_MIN_CHARS}, ${T3_MAX_CHARS}]`,
+          details: `T3 length ${len}, OVER [${T3_SOFT_FLOOR}, ${T3_MAX_CHARS}]`,
         };
       }
+
+      // Zone 2: HARD_UNDER — genuinely thin output
+      if (len < T3_HARD_FLOOR) {
+        return {
+          passed: false,
+          details: `T3 length ${len}, HARD_UNDER ${T3_HARD_FLOOR}`,
+        };
+      }
+
+      // Zone 3: SOFT_UNDER — compressed but acceptable, diagnostic only
+      if (len < T3_SOFT_FLOOR) {
+        return {
+          passed: true,
+          details: `T3 length ${len}, SOFT_UNDER [${T3_HARD_FLOOR}, ${T3_SOFT_FLOOR})`,
+        };
+      }
+
+      // Zone 4: Sweet spot — no diagnostic needed
       return { passed: true };
     },
   },
