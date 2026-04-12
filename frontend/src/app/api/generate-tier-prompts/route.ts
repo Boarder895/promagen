@@ -5,6 +5,18 @@
 // Generates all 4 tier prompts directly from the user's human text
 // description using the Prompt Intelligence Engine.
 //
+// v6.0: Phase B — T2 removed, content invention removed, 3-tier output.
+//   - T2 (Midjourney) section deleted from system prompt (moves to Call T2, Phase C)
+//   - P4 rewritten: "do not preserve the user's wording" — anti-echo at precedence level
+//   - T3 EXPERT VALUE replaced: approved content only, no invented cues
+//   - T3 example block replaced with P1-compliant restructuring example
+//   - Zod ResponseSchema: tier2 dropped, 3-tier output (tier1, tier3, tier4)
+//   - enforceMjParameters() compliance removed (dead code without T2)
+//   - TIER_DISPLAY: tier 2 entry removed
+// v5.0: Engine-fill removed (P1: user is the only source of creative intent).
+//   fill: "engine" branch deleted from user message construction.
+//   categoryDecisions now only contains user-typed terms.
+//   coverageSeed field added to request schema (Phase A prep for anatomy array).
 // v4.5: T4 character ceiling raised 250→325 (SSOT idealMax avg is 277, 7/15 platforms accept 300+).
 // v4.4: T2 negative duplication root-cause fix — empty negative field, inline only.
 // v4.3: T1 interaction dedup + T4 value-add reframed as conversion not addition.
@@ -18,7 +30,7 @@
 //   T4: anchor triage + value-add self-check + anti-paraphrase (Fixes 2, 3, 4)
 // v4.0: Accepts optional gapIntent + categoryDecisions from the
 // Check → Assess → Decide → Generate flow. When present, the user
-// message includes category decisions (engine-fill vs user-chosen terms).
+// message includes user-typed category decisions.
 // Backward compatible: omitting gapIntent/categoryDecisions works identically.
 //
 // Authority: prompt-lab-v4-flow.md §9, ai-disguise.md §5
@@ -35,7 +47,7 @@ import { z } from "zod";
 
 import { env } from "@/lib/env";
 import { rateLimit } from "@/lib/rate-limit";
-import { enforceT1Syntax, enforceMjParameters } from "@/lib/harmony-compliance";
+import { enforceT1Syntax } from "@/lib/harmony-compliance";
 import type { ComplianceContext } from "@/lib/harmony-compliance";
 import { postProcessTiers } from "@/lib/harmony-post-processing";
 import { normaliseTierBundle } from "@/lib/call-2-normalise-schema";
@@ -104,20 +116,56 @@ const RequestSchema = z.object({
       }),
     )
     .optional(),
+  /** Phase A prep: Call 1's matched phrases per category, seeds anatomy array.
+   *  Optional — absent on first fire (Call 1/Call 2 run in parallel).
+   *  Present on re-fires (provider change) when Call 1 has already returned. */
+  coverageSeed: z
+    .array(
+      z.object({
+        category: z.enum([
+          "subject",
+          "action",
+          "style",
+          "environment",
+          "composition",
+          "camera",
+          "lighting",
+          "colour",
+          "atmosphere",
+          "materials",
+          "fidelity",
+          "negative",
+        ]),
+        matchedPhrases: z.array(z.string().max(200)).max(20),
+      }),
+    )
+    .optional(),
 });
 
 // ============================================================================
 // RESPONSE SCHEMA
 // ============================================================================
 
+/** Anatomy segment schema — maps a substring of the positive prompt to a category */
+const AnatomySegmentSchema = z.object({
+  text: z.string().max(500),
+  category: z.enum([
+    'subject', 'action', 'style', 'environment', 'composition', 'camera',
+    'lighting', 'colour', 'atmosphere', 'materials', 'fidelity', 'negative', 'structural',
+  ]),
+  source: z.enum(['human', 'user_addition', 'generated_negative', 'structural']),
+  locked: z.boolean(),
+});
+
 const TierOutputSchema = z.object({
   positive: z.string().max(2000),
   negative: z.string().max(500),
+  /** Phase B: anatomy array — optional, GPT may omit. Validated server-side when present. */
+  anatomy: z.array(AnatomySegmentSchema).max(50).optional(),
 });
 
 const ResponseSchema = z.object({
   tier1: TierOutputSchema,
-  tier2: TierOutputSchema,
   tier3: TierOutputSchema,
   tier4: TierOutputSchema,
 });
@@ -130,7 +178,6 @@ export type GeneratedTierPrompts = z.infer<typeof ResponseSchema>;
 
 const TIER_DISPLAY: Record<number, string> = {
   1: "CLIP-Based",
-  2: "Midjourney Family",
   3: "Natural Language",
   4: "Plain Language",
 };
@@ -186,7 +233,7 @@ Sweet spot: ~${providerContext.sweetSpot} tokens. Token limit: ${providerContext
 ${providerContext.qualityPrefix?.length ? `Quality prefix: ${providerContext.qualityPrefix.join(", ")}.` : ""}
 ${providerContext.supportsWeighting ? "This platform supports term weighting." : "This platform does NOT support term weighting — do not include weight syntax."}
 Negative support: ${providerContext.negativeSupport}.
-Prioritise Tier ${providerContext.tier} output quality — invest the most care in Tier ${providerContext.tier}. Still generate ALL 4 tiers.
+Prioritise Tier ${providerContext.tier} output quality — invest the most care in Tier ${providerContext.tier}. Still generate ALL 3 tiers.
 Do NOT assume this provider context rewrites the behaviour of every tier — it mainly overrides Tier 1 syntax and biases quality toward Tier ${providerContext.tier}.
 CONCRETE EXAMPLE for ${providerContext.name} Tier 1 output (follow this syntax pattern exactly):
 ${syntaxExample}`;
@@ -194,16 +241,16 @@ ${syntaxExample}`;
 
   return `You are an expert AI image prompt generator for 45 AI image generation platforms.
 
-Given a natural English description, generate 4 different prompt versions optimised for different platform families. Return ONLY valid JSON with no preamble, no markdown, no explanation.
+Given a natural English description, generate 3 different prompt versions optimised for different platform families. Return ONLY valid JSON with no preamble, no markdown, no explanation.
 
 PRECEDENCE LADDER — when any rules compete, resolve conflicts in this strict order:
 P1 (SYNTAX): Valid JSON. Correct weight syntax, parameter format, and structural skeleton for each tier. Syntax errors break the prompt — nothing else matters if syntax is wrong.
 P2 (NATIVE FEEL): Each tier must feel native to its platform family. T1 = clean weighted keywords. T2 = flowing prose with :: weights and --params. T3 = grammatical sentences from a visual director. T4 = plain language a casual user understands instantly.
 P3 (PRESERVE ANCHORS): Keep the user's primary subject, 3 strongest scene elements, spatial relationships, and emotional intent. Never drop the emotional layer — convert abstract emotions ("sacred silence", "fading glory") to visual equivalents a camera could capture. T1: one atmosphere keyword. T2: mood woven into descriptive prose (never as a standalone weighted abstract term). T3: feeling shown through sensory language. T4: one plain-language mood phrase.
-P4 (ADD EXPERT VALUE): Every tier must contain at least one element the user did NOT provide. Priority order: composition/framing cue first, then lighting technique, then atmosphere detail, then style/medium reference. Reformatting is not value-add — your addition must be something the user did not mention at all.
+P4 (RESTRUCTURE FOR PLATFORM): Rephrase, reorder, and regroup the approved content so it reads natively for that tier; preserve scene intent and approved anchors, but do not preserve the user's wording. Do not invent new positive elements, objects, actions, settings, or style cues. For T3 and T4, the opening must be freshly written and must not echo the user's first words or first clause. Source precedence: (1) human text, (2) user-typed gap-fill additions, (3) generated negatives (protective only).
 ${providerBlock}
 
-The 4 tiers:
+The 3 tiers:
 
 TIER 1 — CLIP-Based (e.g., Leonardo, Stable Diffusion, DreamStudio):
 ${t1SyntaxInstruction}
@@ -233,37 +280,11 @@ ${t1SyntaxInstruction}
 - DROP ORDER when the input is dense (cut from the bottom first): subject > core scene nouns > lighting/time-of-day > style > composition cue > atmosphere > minor texture/garnish.
 - Target: ~100 tokens (~350 characters) for creative text.
 
-TIER 2 — Midjourney Family:
-BLOCK 1 — POSITIVE PROMPT SKELETON:
-- Descriptive prose with :: weighting. Minimum 3 weighted :: clauses. Subject clause carries the highest weight.
-- Place :: weights at the END of complete descriptive clauses, NEVER mid-phrase. WRONG: "lone researcher::2.0 standing in the blizzard". RIGHT: "lone researcher standing in the blizzard::2.0".
-- Do NOT use abstract emotional terms as standalone weighted clauses. WRONG: "quiet bittersweet atmosphere::1.2". Weave mood into descriptive prose or convert to visual equivalents.
-- Include at least one art style or rendering medium reference (e.g., concept art, cinematic still, fantasy illustration).
-- Include at least one composition or framing cue NOT in the user's input.
-- Target: ~300 characters for creative text (before parameters). Prioritise completeness over brevity.
-
-BLOCK 2 — NEGATIVES:
-- ALL negatives MUST follow a --no flag. Without --no, Midjourney treats negatives as positive prompt — this REVERSES their meaning.
-- 5–8 negatives. Scene-specific first (what could go wrong with THIS scene), then 2–3 generic quality terms (text, watermark, blurry). Do NOT default to "extra limbs, distorted anatomy" unless the scene prominently features human anatomy.
-- IMPORTANT: For Tier 2, ALL negatives go INSIDE the positive field after --no. The separate "negative" JSON field for Tier 2 MUST be an empty string "". Do NOT write negatives in both places — that causes duplication.
-
-BLOCK 3 — MANDATORY PARAMETERS:
-- EVERY prompt MUST end with: --ar [ratio] --v 7 --s [value] --no [negatives].
-- --ar: 16:9 landscapes, 9:16 portraits, 1:1 balanced, 3:2 standard photography.
-- --s: 500 default, 750 for highly stylistic scenes.
-- If ANY of --ar, --v, --s, or --no is missing, the prompt is structurally incomplete.
-- STRICT ORDERING: weighted subject → environment/scene → style/composition → --ar --v --s → --no LAST.
-
-BLOCK 4 — STRUCTURAL EXAMPLE (follow this pattern exactly):
-  elderly samurai standing on a stone bridge at golden hour::2.0, cherry blossoms falling through warm amber light and mist rising from the river below::1.4, cinematic concept art with ukiyo-e influences::1.2, wide establishing shot, weathered armour catching the last light, serene stillness across the valley --ar 16:9 --v 7 --s 500 --no modern buildings, cars, text, watermark, blurry, extra people
-
-SELF-CHECK — before returning Tier 2, verify: (1) 3+ weighted :: clauses present, (2) --ar, --v, --s, --no all present, (3) "--no" appears EXACTLY ONCE in the entire Tier 2 output. If "--no" appears more than once, you have duplicated the negative block — delete the duplicate immediately. Write the negatives ONCE and STOP. Do NOT continue writing after the last negative term.
-
 TIER 3 — Natural Language (e.g., DALL·E, Adobe Firefly, Google Imagen):
 Write like an experienced visual director describing a shot, not like a prompt coach giving instructions.
 - LENGTH: 280–420 characters, 2–3 sentences. If your draft falls noticeably short or feels thin, do not pad with generic filler — enrich it with one concrete sensory, spatial, or lighting detail that sharpens the shot. Select the 4–5 most impactful visual elements — do not try to preserve everything from a long input.
 - Convert negatives to positive reinforcement ("sharp and clear" not "no blur").
-- EXPERT VALUE PRIORITY: Add in this order: (1) composition/framing cue, (2) lighting/atmosphere detail, (3) style/medium reference woven naturally. Each must be something the user did NOT provide.
+- APPROVED CONTENT ONLY: Use only content from the user's description and their explicit category additions. Restructure, reorder, and convert abstract terms to visual equivalents — but do not add composition, lighting, atmosphere, or style cues not present in the approved inputs. Restructuring IS value-add: changing sentence architecture, leading with environment instead of subject, converting "quiet honour" to "the weight of years visible in weathered armour" — all permitted. Inventing a "low angle" or "cinematic wide-angle" the user never mentioned is NOT permitted.
 - FIRST SENTENCE MUST RESTRUCTURE, NOT REPEAT. This is the most common failure in this tier. Your opening MUST NOT begin with the same subject + location + time phrasing as the user's input. Count: if your first 8 words closely match the user's first 8 words, you are paraphrasing — STOP and rewrite from scratch. Lead with composition, time, or environment — then position the subject within it.
   WRONG (input starts "A weathered lighthouse keeper stands on the rain-soaked gallery deck"): "A weathered lighthouse keeper stands on the rain-soaked gallery deck, gripping..." — this is the user's sentence with minor edits.
   RIGHT: "From a low vantage on the storm-lashed coast, a lone figure grips the iron railing of a lighthouse gallery deck as twilight waves detonate against the rocks below..."
@@ -287,8 +308,8 @@ Write like an experienced visual director describing a shot, not like a prompt c
 - FULL EXAMPLE:
   INPUT: "An elderly samurai standing on a stone bridge at golden hour, cherry blossoms falling, mist rising from the river below, a sense of quiet honour and fading glory"
   WRONG: "An elderly samurai stands on a stone bridge at golden hour as cherry blossoms fall and mist rises from the river below, with a sense of quiet honour."
-  RIGHT: "An elderly samurai stands at the centre of a stone bridge in warm golden-hour light, viewed from a low angle that frames him against falling cherry blossoms and the mist-wrapped valley beyond, the weight of years carved into his weathered armour as soft haze drifts through the fading light."
-  WHY: It adds "low angle" (composition), "cinematic wide-angle detail" (style), "soft atmospheric haze" (atmosphere), and "centre of the frame" (framing) — four expert additions the user did NOT provide. It converts "quiet honour and fading glory" into "the weight of years visible in his weathered armour" — visual, not abstract.
+  RIGHT: "At golden hour on an ancient stone bridge, an elderly samurai stands amid falling cherry blossoms as mist rises from the river below, the weight of years carved into his weathered armour and the valley beyond dissolving into soft haze."
+  WHY: It restructures the sentence architecture (leads with time+place, not subject), converts "quiet honour and fading glory" into a visual equivalent ("the weight of years carved into weathered armour"), and enriches the user's "mist rising" into spatial depth ("valley beyond dissolving into soft haze"). All content comes from the user — no invented composition, lighting, or style cues.
 
 TIER 4 — Plain Language (e.g., Canva, Bing, Freepik):
 Plain does NOT mean flat. Keep it easy to understand, but still vivid.
@@ -319,12 +340,11 @@ Plain does NOT mean flat. Keep it easy to understand, but still vivid.
 - WRONG: "A lone explorer stands at the edge of a frozen valley at first light, with visible breath, fine snow, and towering ice cliffs." (static checklist, echoes input, no value-add)
 - RIGHT: "At first light on a frozen valley's edge, an explorer's breath drifts through cold air as fine snow sweeps the ground. Towering ice cliffs and distant peaks glow pale blue under a vast, crystalline sky."
 
-CRITICAL SCHEMA REMINDER: Every tier value MUST be a JSON object with "positive" and "negative" string fields. NEVER return a tier as a flat string. WRONG: "tier1": "masterpiece, ..." — RIGHT: "tier1": { "positive": "masterpiece, ...", "negative": "blurry, ..." }. If you catch yourself writing a bare string for any tier, STOP and wrap it in {"positive": "...", "negative": "..."}.
+CRITICAL SCHEMA REMINDER: Every tier value MUST be a JSON object with "positive" and "negative" fields. NEVER return a tier as a flat string. WRONG: "tier1": "masterpiece, ..." — RIGHT: "tier1": { "positive": "masterpiece, ...", "negative": "blurry, ..." }. If you catch yourself writing a bare string for any tier, STOP and wrap it in {"positive": "...", "negative": "..."}. Generate exactly 3 tiers: tier1, tier3, tier4. Do NOT generate tier2 — Midjourney is handled separately.
 
 Return format:
 {
   "tier1": { "positive": "...", "negative": "..." },
-  "tier2": { "positive": "...prompt text... --ar 16:9 --v 7 --s 500 --no negatives here", "negative": "" },
   "tier3": { "positive": "...", "negative": "..." },
   "tier4": { "positive": "...", "negative": "..." }
 }`;
@@ -414,28 +434,15 @@ export async function POST(req: NextRequest): Promise<Response> {
     categoryDecisions &&
     categoryDecisions.length > 0
   ) {
-    const engineFills = categoryDecisions.filter((d) => d.fill === "engine");
-    const manualFills = categoryDecisions.filter((d) => d.fill !== "engine");
-
+    // P1: Only user-provided terms — no engine-fill (removed v5.0).
     const parts: string[] = [
       sanitised,
       "",
       "CATEGORY DECISIONS (from user assessment):",
+      "User-chosen terms (incorporate these naturally into all 4 tiers):",
     ];
-
-    if (engineFills.length > 0) {
-      parts.push(
-        `Engine-fill categories (add expert-level content for these): ${engineFills.map((d) => d.category).join(", ")}`,
-      );
-    }
-
-    if (manualFills.length > 0) {
-      parts.push(
-        "User-chosen terms (incorporate these naturally into all 4 tiers):",
-      );
-      for (const d of manualFills) {
-        parts.push(`  - ${d.category}: ${d.fill}`);
-      }
+    for (const d of categoryDecisions) {
+      parts.push(`  - ${d.category}: ${d.fill}`);
     }
 
     userMessage = parts.join("\n");
@@ -445,6 +452,22 @@ export async function POST(req: NextRequest): Promise<Response> {
     userMessage = sanitised;
   }
   // gapIntent "all-satisfied" or absent — just the human text (original behaviour)
+
+  // ── Append coverage seed if available (Phase A anatomy prep) ────────
+  // When Call 1 has already returned (re-fire, provider change), include
+  // the phrase→category mapping as structured JSON so GPT can use it for
+  // anatomy tagging in Phase B. Kept separate from human text to avoid
+  // polluting the user's creative description with metadata.
+  const { coverageSeed } = parsed.data;
+  if (coverageSeed && coverageSeed.length > 0) {
+    const coveredSeeds = coverageSeed.filter((s) => s.matchedPhrases.length > 0);
+    if (coveredSeeds.length > 0) {
+      const seedJson = JSON.stringify(
+        coveredSeeds.map((s) => ({ category: s.category, phrases: s.matchedPhrases })),
+      );
+      userMessage += `\n\n<category_assessment>${seedJson}</category_assessment>`;
+    }
+  }
 
   // ── Call generation engine ──────────────────────────────────────────
   try {
@@ -602,8 +625,36 @@ export async function POST(req: NextRequest): Promise<Response> {
       );
     }
 
+    // ── Anatomy validation: verify concatenation equals positive ────────
+    // When GPT returns anatomy, the concatenation of all segment texts
+    // must exactly equal the positive string. If not, discard the anatomy
+    // (graceful fallback to substring matching — same as pre-Phase B).
+    const tierKeys = ['tier1', 'tier3', 'tier4'] as const;
+    for (const key of tierKeys) {
+      const tier = validated.data[key];
+      if (tier.anatomy && tier.anatomy.length > 0) {
+        const concatenated = tier.anatomy.map((s) => s.text).join('');
+        if (concatenated !== tier.positive) {
+          console.debug(
+            `[generate-tier-prompts] Anatomy concat mismatch for ${key} — discarding anatomy. ` +
+            `Expected ${tier.positive.length} chars, got ${concatenated.length}.`,
+          );
+          // Discard invalid anatomy — Zod already validated the shape,
+          // but concatenation is a semantic rule Zod can't check.
+          (tier as Record<string, unknown>).anatomy = undefined;
+        }
+      }
+    }
+
     // ── Post-process: catch engine mechanical errors ──────────────────
-    const processed = postProcessTiers(validated.data);
+    // Phase B: GPT returns 3 tiers (no tier2). Inject empty tier2 so
+    // postProcessTiers receives the full TierPrompts shape it expects.
+    // deduplicateMjParams on empty string is a no-op — zero cost.
+    const fullTiers = {
+      ...validated.data,
+      tier2: { positive: '', negative: '' },
+    };
+    const processed = postProcessTiers(fullTiers);
 
     // ── Compliance gate: deterministic syntax validation (P4/P5) ──
     // This is the permanent safety net — catches what the engine misses, 100% of the time.
@@ -631,18 +682,8 @@ export async function POST(req: NextRequest): Promise<Response> {
       }
     }
 
-    // P5: T2 MJ parameter compliance (always, regardless of provider)
-    const t2Result = enforceMjParameters(processed.tier2.positive);
-    if (t2Result.wasFixed) {
-      compliant = {
-        ...compliant,
-        tier2: { ...compliant.tier2, positive: t2Result.text },
-      };
-      console.debug(
-        "[generate-tier-prompts] P5 compliance fix:",
-        t2Result.fixes.join("; "),
-      );
-    }
+    // P5: T2 MJ parameter compliance — REMOVED (Phase B).
+    // Midjourney is no longer generated by Call 2. Moves to Call T2 (Phase C).
 
     // ── Return compliance-gated tier prompts ─────────────────────────
     return NextResponse.json(

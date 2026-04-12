@@ -1,7 +1,14 @@
 // src/components/prompts/enhanced-educational-preview.tsx
 // ============================================================================
-// ENHANCED EDUCATIONAL PREVIEW v6.0.0
+// ENHANCED EDUCATIONAL PREVIEW v6.0.1
 // ============================================================================
+// v6.0.1 (13 Apr 2026): Phase A audit — engine-fill removal confirmed.
+//   - Audited for "Let the engine decide" UI option: NOT PRESENT.
+//   - No gap-fill UI with engine auto-fill exists in this file.
+//   - The build plan listed this file for engine-fill removal (§3.1),
+//     but the UI option was already absent. This audit confirms it.
+//   - No code changes — audit and version bump only.
+//
 // Full prompt builder experience for /studio/playground when no provider selected.
 // Educational mode: shows all 4 tiers, or single tier when provider selected.
 //

@@ -469,7 +469,7 @@ async function callOptimise(
   originalSentence: string,
   platformId: string,
   platformConfig: PlatformConfig,
-): Promise<{ optimised: string; negative?: string; changes: string[] }> {
+): Promise<{ optimised: string; rawGptOutput: string; negative?: string; changes: string[] }> {
   const providerContext = {
     name: platformId,
     tier: platformConfig.tier ?? 3,
@@ -511,6 +511,7 @@ async function callOptimise(
   const result = data.result || data;
   return {
     optimised: result.optimised || result.optimized || '',
+    rawGptOutput: result.rawGptOutput || result.optimised || result.optimized || '',
     negative: result.negative,
     changes: result.changes || [],
   };
@@ -940,13 +941,13 @@ async function runPipeline(
               call3_mode = ${pConfig.call3Mode ?? 'gpt_rewrite'},
               builder_version = ${builderVersion},
               snapshot_hash = ${snapshot?.snapshotHash ?? null},
-              raw_optimised_prompt = ${c3Result.optimised},
+              raw_optimised_prompt = ${c3Result.rawGptOutput},
               optimised_prompt = ${c3Result.optimised},
               negative_prompt = ${c3Result.negative ?? null},
               output_hash = ${md5(c3Result.optimised)},
-              raw_optimised_char_count = ${c3Result.optimised.length},
+              raw_optimised_char_count = ${c3Result.rawGptOutput.length},
               optimised_char_count = ${c3Result.optimised.length},
-              post_processing_changed = ${false},
+              post_processing_changed = ${c3Result.rawGptOutput !== c3Result.optimised},
               gpt_score = ${scoreResult.score},
               gpt_axes = ${JSON.stringify(scoreResult.axes)},
               gpt_directives = ${JSON.stringify(scoreResult.directives)},
@@ -980,12 +981,12 @@ async function runPipeline(
               ${tier}, ${pConfig.call3Mode ?? 'gpt_rewrite'}, ${builderVersion},
               ${replicateIndex}, ${snapshot?.snapshotHash ?? null},
               ${scene.humanText}, ${assembledPrompt},
-              ${c3Result.optimised}, ${c3Result.optimised},
+              ${c3Result.rawGptOutput}, ${c3Result.optimised},
               ${c3Result.negative ?? null},
               ${md5(assembledPrompt)}, ${md5(c3Result.optimised)},
-              ${assembledPrompt.length}, ${c3Result.optimised.length},
+              ${assembledPrompt.length}, ${c3Result.rawGptOutput.length},
               ${c3Result.optimised.length},
-              ${false}, ${scoreResult.score},
+              ${c3Result.rawGptOutput !== c3Result.optimised}, ${scoreResult.score},
               ${JSON.stringify(scoreResult.axes)},
               ${JSON.stringify(scoreResult.directives)},
               ${scoreResult.summary},

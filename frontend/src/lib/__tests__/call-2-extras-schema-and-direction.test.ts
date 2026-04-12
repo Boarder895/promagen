@@ -108,9 +108,9 @@ describe('Schema normaliser → Zod validation chain', () => {
     const result = normaliseTierBundle(rawFromGPT);
     expect(result.wasRepaired).toBe(true);
 
-    // Verify the normalised data has the shape Zod expects
+    // Verify the normalised data has the shape Zod expects (Phase B: 3 tiers)
     const data = result.data as Record<string, unknown>;
-    for (const key of ['tier1', 'tier2', 'tier3', 'tier4']) {
+    for (const key of ['tier1', 'tier3', 'tier4']) {
       const tier = data[key] as Record<string, unknown>;
       expect(typeof tier.positive).toBe('string');
       expect(typeof tier.negative).toBe('string');

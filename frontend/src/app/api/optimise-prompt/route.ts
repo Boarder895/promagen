@@ -330,6 +330,8 @@ export async function POST(req: NextRequest): Promise<Response> {
           changes,
           charCount: optimised.length,
           tokenEstimate: Math.round(optimised.length / 4),
+          // Deterministic path: raw output equals final output (no APS gate).
+          rawGptOutput: optimised,
         },
       },
       {
@@ -567,6 +569,13 @@ export async function POST(req: NextRequest): Promise<Response> {
     //
     // Architecture: call-3-quality-architecture-v0.2.0.md §6
 
+    // ── Capture raw GPT output before quality gates ────────────────────
+    // Persisted separately by the BQI runner so we can inspect what GPT
+    // actually produced when the APS gate or regression guard rejects it.
+    // Without this, rejected GPT output is lost — you see the fallback
+    // but never the attempt. Essential for builder refinement.
+    const rawGptOutput = result.optimised;
+
     // ── Layer 1: APS gate (primary quality gate) ─────────────────────
     const apsResult = computeAPS(sanitisedPrompt, result.optimised, anchors);
     let retryOutcome: RetryResult = RETRY_NOT_ATTEMPTED;
@@ -787,7 +796,15 @@ export async function POST(req: NextRequest): Promise<Response> {
 
     // ── Return compliance-gated optimised prompt ─────────────────────
     return NextResponse.json(
-      { result },
+      {
+        result: {
+          ...result,
+          // Raw GPT output before APS gate / regression guard.
+          // Same as result.optimised when gates accepted; differs when
+          // the gate rejected and fell back to assembled prompt.
+          rawGptOutput,
+        },
+      },
       {
         status: 200,
         headers: { "Cache-Control": "no-store" },

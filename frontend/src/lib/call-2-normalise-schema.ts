@@ -21,7 +21,8 @@
 // Test file: src/lib/__tests__/call-2-normalise-schema.test.ts
 // ============================================================================
 
-const TIER_KEYS = ['tier1', 'tier2', 'tier3', 'tier4'] as const;
+// Phase B: T2 removed from Call 2 — Midjourney moves to dedicated Call T2.
+const TIER_KEYS = ['tier1', 'tier3', 'tier4'] as const;
 
 export interface NormaliseResult {
   /** The normalised data — may be identical to input if no repair was needed */
@@ -35,7 +36,7 @@ export interface NormaliseResult {
 /**
  * Normalise a parsed Call 2 engine response before Zod validation.
  *
- * For each of the four tier keys (tier1–tier4):
+ * For each of the three tier keys (tier1, tier3, tier4):
  * - If the value is a string → wrap as { positive: value, negative: "" }
  * - If the value is already an object → leave untouched
  * - If the value is anything else (null, undefined, number, array) → leave untouched

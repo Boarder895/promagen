@@ -54,9 +54,9 @@ describe('normaliseTierBundle', () => {
     expect(data.tier4).toBe(input.tier4);
   });
 
-  // ── All four tiers flat strings (worst case from harness) ───────────────
+  // ── Phase B: three tiers repaired (T2 removed from TIER_KEYS) ─────────
 
-  it('wraps all four flat-string tiers', () => {
+  it('wraps all three flat-string tiers (Phase B: T2 skipped)', () => {
     const input = {
       tier1: 'masterpiece, (samurai:1.4)',
       tier2: 'samurai on bridge::2.0 --ar 16:9 --v 7 --s 500 --no text',
@@ -66,13 +66,14 @@ describe('normaliseTierBundle', () => {
 
     const result = normaliseTierBundle(input);
     expect(result.wasRepaired).toBe(true);
-    expect(result.repairs).toHaveLength(4);
+    expect(result.repairs).toHaveLength(3); // tier1, tier3, tier4 — tier2 not in TIER_KEYS
 
     const data = result.data as Record<string, Record<string, string>>;
-    for (const key of ['tier1', 'tier2', 'tier3', 'tier4']) {
+    for (const key of ['tier1', 'tier3', 'tier4']) {
       expect(data[key]).toHaveProperty('positive');
       expect(data[key]).toHaveProperty('negative', '');
     }
+    // tier2 stays as flat string — not in TIER_KEYS, Zod handles it
   });
 
   // ── Mixed: some flat, some correct, some missing ────────────────────────

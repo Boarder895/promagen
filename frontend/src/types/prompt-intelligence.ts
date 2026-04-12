@@ -338,20 +338,58 @@ export const EMPTY_SELECTIONS: PromptSelections = {
 };
 
 // ============================================================================
+// ANATOMY ARRAY (Phase B — colour coding from source)
+// ============================================================================
+
+/**
+ * A single segment of a prompt mapped to its source category.
+ * The anatomy array covers every character of the positive prompt —
+ * concatenation of all segment texts must exactly equal the positive string.
+ *
+ * Authority: prompt-lab-api-architecture-v1.1.md §5.2
+ */
+export interface AnatomySegment {
+  /** The text of this segment (exact substring of the positive prompt) */
+  text: string;
+  /** Which prompt category this segment belongs to */
+  category: 'subject' | 'action' | 'style' | 'environment' | 'composition' |
+    'camera' | 'lighting' | 'colour' | 'atmosphere' | 'materials' |
+    'fidelity' | 'negative' | 'structural';
+  /** Where this content originated */
+  source: 'human' | 'user_addition' | 'generated_negative' | 'structural';
+  /** Whether this content is locked (from user) and must not be deleted by downstream optimisation */
+  locked: boolean;
+}
+
+// ============================================================================
 // GENERATED PROMPTS
 // ============================================================================
 
 export interface GeneratedPrompts {
   tier1: string; // CLIP-Based with weights
-  tier2: string; // Midjourney with parameters
+  tier2: string; // Phase B: empty string from Call 2 (MJ moves to Call T2)
   tier3: string; // Natural language sentences
   tier4: string; // Plain, simple
   negative: {
     tier1: string; // Negative for CLIP
-    tier2: string; // --no for Midjourney
+    tier2: string; // Phase B: empty string from Call 2
     tier3: string; // "without X" for natural
     tier4: string; // Simple exclusions
   };
+  // NOTE: anatomy is NOT here. Adding it would break the dynamic tier access
+  // pattern in EEP: source[`tier${n}`] resolves to string | anatomy object.
+  // Anatomy is returned separately via TierAnatomy in the hook's return type.
+}
+
+/**
+ * Per-tier anatomy arrays — returned separately from GeneratedPrompts
+ * to keep the prompt strings clean for dynamic access.
+ * Stored in useTierGeneration hook state, exposed via return type.
+ */
+export interface TierAnatomy {
+  tier1?: AnatomySegment[];
+  tier3?: AnatomySegment[];
+  tier4?: AnatomySegment[];
 }
 
 // ============================================================================

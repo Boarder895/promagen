@@ -1916,7 +1916,7 @@
       "compressionNotes": "Front tokens weighted more heavily",
       "supportsWeighting": true,
       "weightingSyntax": "{term}::{weight}",
-      "call3Mode": "mj_deterministic",
+      "call3Mode": "gpt_rewrite",
       "semanticRewriteAllowed": false
     },
     "myedit": {

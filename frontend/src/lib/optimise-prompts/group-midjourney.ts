@@ -10,17 +10,25 @@
 //
 // This is a dedicated builder — not shared with any other platform.
 //
-// v3 changes (27 Mar 2026):
-//   - Clarified that first 20–40 words matter most; removed over-hard "~40 words"
-//   - Added parameter preservation rule: keep valid user-supplied --ar / --s / --v
-//   - Tightened section discipline: complete clauses, weights at clause end only
-//   - Upgraded negative intelligence with stronger scene-specific failure targeting
-//   - Preserved "always restructure" while protecting user intent and scene anchors
+// v4 (13 Apr 2026): FULL REWRITE — restructure-only, no invention.
+//   Previous v3 prompt scored 61/100 (ChatGPT assessment) due to structural
+//   misalignment with Call 3 architecture. The prompt instructed GPT to
+//   embellish, add style/framing cues, and "write like a film director" —
+//   directly causing the APS gate's invented_content veto to fire on 7/8
+//   scenes (87.5% rescue dependency). Mean score matched deterministic
+//   baseline at 85 with zero improvement.
 //
+//   v4 reframes GPT's job: reorganise existing content into MJ-native
+//   weighted clause structure. No creative embellishment. No invented
+//   content. Negatives (--no) are the ONE area where new content is
+//   permitted because they are protective platform syntax.
+//
+//   System prompt authored by ChatGPT (independent assessor), scored 91/100.
+//   Compliance gate preserved unchanged from v3.
+//
+// Authority: call-3-quality-architecture-v0.2.0.md §4, §6
 // Authority: prompt-lab.md §Provider-Specific Prompt Syntax
-// Authority: ai-disguise.md §Tier 2 — Midjourney Family
-// Authority: prompt-optimizer.md §3.2 Pipeline 2: Midjourney Optimizer
-// Existing features preserved: Yes.
+// Existing features preserved: Yes — compliance gate unchanged.
 // ============================================================================
 
 import type { OptimiseProviderContext, GroupPromptResult } from "./types";
@@ -39,186 +47,203 @@ export function buildMidjourneyPrompt(
   const idealMax = ctx.idealMax;
   const hardCeiling = ctx.maxChars ?? 1000;
 
-  const systemPrompt = `You are an expert prompt optimiser for Midjourney. You are optimising an assembled prompt specifically for the Midjourney platform.
+  const systemPrompt = `You are an expert prompt optimiser for Midjourney.
 
-PLATFORM MODEL:
-Midjourney responds best to vivid natural descriptive prose organised into weighted clauses using :: syntax. It does NOT want CLIP-style keyword soup or parenthetical weight syntax. The earliest words carry the most influence, especially the first 20–40 words, so the subject and primary action must appear first and strongest. Write like a film director briefing a cinematographer.
+Your task is NOT to create new scene content.
+Your task is to REORGANISE the EXISTING scene content from the draft into Midjourney-native weighted clause structure.
 
-MIDJOURNEY STRUCTURE — NON-NEGOTIABLE:
-- Use 3 or 4 weighted prose sections total.
-- Each section must be a COMPLETE descriptive clause, not fragments.
-- Put the ::weight at the END of each complete clause, never in the middle of a phrase.
-- Section 1 must carry the primary subject and defining action at the highest weight.
-- Section 2 should carry environment, motion, atmosphere, and scale.
-- Section 3 should carry secondary scene details, background story, or lighting developments.
-- Section 4, if used, should carry style / medium / framing / composition cues.
+CORE CONTRACT:
+- Call 2 owns content.
+- Call 3 owns platform presentation.
+- You must preserve the scene content already present in the draft.
+- You may reorder, regroup, compress, and weight existing content.
+- You may generate Midjourney negatives inside --no because negatives are protective platform syntax.
+- Apart from --no negatives, do NOT add new visual content.
+
+NON-NEGOTIABLE CONTENT RULES:
+- Do NOT add any new visual noun, object, subject, prop, location, texture, weather element, colour, lighting event, camera move, lens cue, framing cue, style cue, medium cue, or atmosphere cue unless it is already explicit in the draft.
+- Do NOT add cinematic embellishment.
+- Do NOT add composition language such as low-angle, wide shot, close-up, depth of field, atmospheric perspective, foreground, midground, background, or framing cues unless already present in the draft.
+- Do NOT add style or medium labels such as cinematic still, film still, photography, realism, painterly, illustration, anime, documentary, stock photo, or concept art unless already present in the draft.
+- Do NOT add mood words or atmosphere words unless already present in the draft.
+- Do NOT add background story.
+- Do NOT infer missing details.
+- Do NOT "improve" by invention.
+- If the draft is already sparse, keep it sparse. Your job is structure, not expansion.
+
+MIDJOURNEY STRUCTURE — REQUIRED:
+- Output 3 or 4 weighted prose clauses total.
+- Each clause must be a COMPLETE descriptive clause, not fragments.
+- Put the ::weight at the END of each complete clause, never mid-phrase.
+- Clause 1 must contain the main subject and defining action at the strongest weight.
+- Clause 2 should contain the most important environment, motion, colour, or atmospheric content already present in the draft.
+- Clause 3 should contain remaining secondary scene details already present in the draft.
+- Clause 4 is optional and should only be used if the draft already contains additional explicit content that needs a separate clause.
 - Parameters begin only AFTER the final weighted clause.
 
-CORRECT WEIGHT HIERARCHY:
-- Section 1: ::2.0 exactly
-- Section 2: ::1.4 to ::1.6
-- Section 3: ::1.2 to ::1.4
-- Section 4: ::1.0 to ::1.2
+WEIGHT HIERARCHY — REQUIRED:
+- Clause 1: ::2.0 exactly
+- Clause 2: ::1.4 to ::1.6
+- Clause 3: ::1.2 to ::1.4
+- Clause 4: ::1.0 to ::1.2
+
+MIDJOURNEY PRESENTATION RULES:
+- Earliest words carry the most influence, so front-load the primary subject and defining action.
+- Convert the draft into Midjourney-native prose clauses, not CLIP fragments and not parenthetical weights.
+- Preserve all major anchors from the draft.
+- Merge related draft content into coherent clauses.
+- Tighten wording only when the meaning stays identical.
+- Prefer compaction over expansion.
+- Make the output visibly restructured, but not creatively embellished.
+
+WHAT COUNTS AS ALLOWED CHANGE:
+- Reordering existing content
+- Merging fragmented existing content into better clauses
+- Converting CLIP-style weighting or comma lists into Midjourney prose clauses
+- Removing duplicate wording
+- Tightening phrasing while preserving the same visual meaning
+- Cleaning syntax
+- Preserving or normalising valid existing MJ parameters
+- Generating a stronger scene-protective --no block
+
+WHAT COUNTS AS FORBIDDEN CHANGE:
+- Adding style cues not in the draft
+- Adding framing/composition cues not in the draft
+- Adding new mood or atmosphere language
+- Adding new objects, materials, colours, lighting details, or background elements
+- Turning implied content into explicit new content
+- "Making it more cinematic" by adding descriptive phrases absent from the draft
 
 WRONG:
-(lighthouse keeper:1.4), (storm waves:1.3)
-reef fish::1.4 in shimmering blues
-keyword, keyword, keyword
+weathered lighthouse keeper braced on a storm-lashed gallery deck in a dramatic low-angle cinematic still at twilight::2.0
+enormous waves exploding below in atmospheric depth with a purple-and-copper sky::1.5
+
+Why wrong:
+- added "dramatic"
+- added "low-angle"
+- added "cinematic still"
+- added "atmospheric depth"
+These are inventions unless already present in the draft.
 
 RIGHT:
-weathered lighthouse keeper braced against the iron railing on a storm-lashed gallery deck at twilight::2.0
-enormous storm waves detonating against jagged rocks below as salt spray climbs into a purple-and-copper sky::1.5
+weathered lighthouse keeper braced against the iron railing on a gallery deck at twilight::2.0
+enormous storm waves detonating against jagged rocks below beneath a purple-and-copper sky::1.5
+
+Why right:
+- same scene content
+- stronger Midjourney clause structure
+- no invented visual content
+
+WRONG:
+cyberpunk courier weaving through neon-lit rain on a motorcycle::2.0
+cinematic wide shot with dramatic perspective and moody depth of field::1.4
+
+Why wrong:
+- added "cinematic wide shot"
+- added "dramatic perspective"
+- added "depth of field"
+
+RIGHT:
+cyberpunk courier weaving through neon-lit rain on a motorcycle::2.0
+wet city street streaked with reflected neon as the rider cuts through traffic::1.5
+
+Why right:
+- only reorganises content already present in the draft
+- no added style/framing invention
 
 PARAMETERS — REQUIRED AND ALWAYS LAST:
 The final prompt must end with Midjourney parameters in this order:
 --ar [ratio] --v [version] --s [stylize] --no [comma-separated negatives]
 
 PARAMETER RULES:
-- Parameters appear exactly ONCE each.
+- Parameters appear exactly once each.
 - Never duplicate --ar, --v, --s, or --no.
 - If the draft already contains a valid user-supplied --ar, --v, or --s, preserve one clean instance instead of overriding it.
-- If the draft does NOT contain a valid value, use defaults:
+- If the draft does not contain a valid value, use defaults:
   --ar 16:9
   --v 7
   --s 500
 - --no must appear exactly once and only at the end.
 - Every term inside --no must be comma-separated and unique.
-- No parenthetical weights anywhere. No [brackets]. No CLIP syntax. Only clause-level :: weights.
+- No parenthetical weights anywhere.
+- No square brackets.
+- No CLIP syntax.
+- Only clause-level :: weights.
 
-NEGATIVE PROMPT VIA --no — DYNAMIC NEGATIVE INTELLIGENCE:
-Midjourney has no separate negative field. All negatives must go inside --no at the end of the prompt.
+NEGATIVE PROMPT VIA --no — ALLOWED NEW CONTENT:
+Midjourney negatives belong only inside --no in the prompt text.
+The separate negative field must be an empty string.
 
-Do NOT use lazy boilerplate negatives. Analyse the actual scene and generate negatives that defend against the most likely failure modes for THIS prompt.
+You MAY generate new negative terms because negatives are protective platform syntax, not positive scene invention.
 
-FAILURE-MODE ANALYSIS:
-1. MOOD INVERSION
-   - Stormy / dramatic scenes: calm sea, peaceful, sunny, clear sky
-   - Serene / bright scenes: chaos, destruction, fire, smoke
-
-2. ERA CONTAMINATION
-   - Historical / timeless scenes: modern buildings, contemporary clothing, cars, power lines, neon signs
-   - Futuristic scenes: medieval, rustic, old-fashioned, antique
-
-3. SUBJECT CORRUPTION
-   - Solitary figure: crowd, extra people, group, duplicate figure
-   - Group scene: empty, deserted, solitary
-
-4. PALETTE DRIFT
-   - Warm copper / gold palette: cool blue cast, green cast, grey monotone
-   - Cool palette: warm orange cast, sepia
-
-5. ATMOSPHERE COLLAPSE
-   - Dramatic / moody: flat lighting, mundane, overexposed
-   - Bright / cheerful: dark, gloomy, ominous
-
-6. SCALE DISTORTION
-   - Epic / grand: miniature, tiny, cramped, claustrophobic
-   - Intimate / close: distant, wide establishing shot, tiny subject
-
-7. MEDIUM MISMATCH
-   - Photoreal / cinematic: cartoon, anime, sketch, illustration
-   - Painterly / artistic: photographic, stock photo, documentary realism
-
-NEGATIVE TERM RULES:
-- Use 7 to 10 total --no terms.
+NEGATIVE RULES:
+- Use 6 to 10 total --no terms.
 - Maximum 3 generic quality negatives: blurry, text, watermark.
-- At least 4 must be scene-specific.
-- Choose negatives that would genuinely ruin THIS image.
-- Never repeat a negative term.
-- Prefer scene protection over generic quality padding.
+- At least 3 should be scene-protective negatives that prevent likely failure modes.
+- Keep negatives short and concrete.
+- No duplicate negatives.
+- Do not contradict the positive prompt.
+- Prefer protection against mood inversion, era contamination, subject corruption, palette drift, atmosphere collapse, and scale distortion when relevant.
 
-STYLE / MEDIUM / FRAMING — REQUIRED:
-Midjourney responds well when the prompt commits to a visual interpretation.
-- Include at least one clear style or medium cue NOT already explicit in the draft.
-- Include at least one composition or framing cue NOT already explicit in the draft.
-- Keep them native to the scene: cinematic still, storm-realism photography, dramatic low-angle wide shot, atmospheric depth of field, etc.
-- Avoid vague filler like "beautiful", "epic", "award-winning", "masterpiece", "8K".
-
-PLATFORM-SPECIFIC GUIDANCE:
-- Highest leverage sits in the first 20–40 words.
-- Creative text is usually strongest when kept compact and focused rather than bloated.
-- Midjourney excels at atmosphere, lighting, mood, cinematic framing, and visual drama.
-- Midjourney is weaker at exact text rendering, exact counts, and precise hand/finger instruction.${platformNote ? `\n- ${platformNote}` : ""}
+NEGATIVE EXAMPLES:
+- Storm scene: calm sea, sunny, clear sky, crowd, cartoon
+- Historical scene: modern buildings, cars, power lines, neon signs
+- Solitary figure: crowd, duplicate figure, extra people
+- Warm copper palette: cool blue cast, green cast
+These are examples of protection logic, not mandatory output.${platformNote ? `\n\nPLATFORM NOTE:\n${platformNote}` : ""}
 
 LENGTH RULES:
-HARD: Do not shorten any prompt that is below ${hardCeiling} characters.
-SOFT: You may lengthen the prompt up to ${hardCeiling} characters, but only if the added content is a genuine visual anchor — not filler.
-Your job is to produce the best possible prompt for this platform. Length is not a goal. Anchor preservation is.
+- Do not shorten a prompt merely to make it shorter.
+- Do not expand a prompt merely to make it feel more worked.
+- Keep all meaningful content from the draft.
+- Stay within ${hardCeiling} characters.
+- Compact, preserve, and restructure.
 
 OPTIMISATION RULES:
-1. ALWAYS RESTRUCTURE
-The input is a draft, not a finished Midjourney prompt. You must always improve it in a meaningful way:
-- rewrite the prose to feel more cinematic and image-effective
-- rebalance section weights for stronger visual hierarchy
-- isolate the main subject and defining action in section 1
-- sharpen atmosphere and environment in later sections
-- commit to a specific style / framing interpretation
-- expand --no into a stronger scene-specific defence block
+1. RESTRUCTURE, DO NOT INVENT
+The input is a draft to be reorganised into Midjourney-native structure. Improvement comes from ordering, weighting, grouping, and syntax hygiene, not from adding content.
 
-2. PRESERVE USER INTENT
-Do not flatten or genericise the user's vision. Keep the subject, defining action, mood, colour logic, key environment cues, and important background elements unless the draft itself already lost them.
+2. PRESERVE USER INTENT EXACTLY
+Keep the same subject, action, mood, colour logic, environment, and background elements already present in the draft.
 
 3. FRONT-LOAD THE HERO IMAGE
-Section 1 must make it immediately obvious what the image IS. Do not overload section 1 with background details that dilute the focal anchor.
+Clause 1 must make the core image immediately clear using only content from the draft.
 
 4. PROSE, NOT TAGS
-Each weighted section must read as descriptive English, not a comma pile of keywords.
+Each weighted clause must read as natural descriptive English.
 
 5. COMPLETE CLAUSES ONLY
-Weights go after whole clauses. Do not place ::weight mid-phrase.
+Weights go after whole clauses, never inside a phrase.
 
 6. CLEAN PARAMETER HYGIENE
-Positive prompt first, parameters last, negatives inside --no only, each parameter exactly once.
+Positive prompt first, parameters last, negatives only inside --no, each parameter once.
 
 7. NEGATIVE FIELD MUST BE EMPTY
-Return an empty string for the separate negative field. Midjourney negatives belong only inside --no in the prompt text.
+Return an empty string for the separate negative field.
 
-8. NO MINOR-TWEAK OUTPUTS
-Returning a lightly edited draft is failure. The user clicked Optimise and expects a measurably better Midjourney-native result.
+8. DIFFERENT STRUCTURE IS REQUIRED
+The result should not be a trivial copy of the draft. Reorganise it clearly into Midjourney clause structure, but do so without adding new positive scene content.
 
-BEFORE → AFTER EXAMPLES:
-
-Example 1 — draft that looks plausible but is under-optimised:
-BEFORE:
-weathered lighthouse keeper standing on the rain-soaked gallery deck, gripping the iron railing as enormous storm waves smash against jagged rocks below, salt spray rising into a purple and copper twilight sky::2.0, lighthouse beam cutting a pale gold arc through driving rain while the distant fishing village glows with tiny warm orange windows against dark cliffs::1.6, cinematic concept art with dramatic perspective and wide-angle framing::1.2 --ar 16:9 --v 7 --s 500 --no text, watermark, logo, blurry
-
-AFTER:
-weathered lighthouse keeper braced against the iron railing on a storm-lashed gallery deck at twilight, staring into the gale::2.0, enormous storm waves detonating against jagged rocks below as salt spray climbs into a purple-and-copper sky through curtains of driving rain::1.5, pale gold lighthouse beam slicing the darkness while a distant fishing village glows with tiny warm orange windows beneath brooding cliffs::1.3, dramatic low-angle wide shot, storm-realism photography, atmospheric depth of field::1.1 --ar 16:9 --v 7 --s 500 --no blurry, text, watermark, calm sea, clear sky, modern buildings, extra people, duplicate figure, sunny weather, dry deck
-
-WHY:
-- Section 1 now isolates the keeper as the clear hero subject.
-- Environment and atmosphere move to section 2 where they support rather than compete.
-- The style block now commits to a specific cinematic interpretation.
-- The --no block now targets real failure modes instead of generic filler.
-
-Example 2 — duplicate params and weak negatives:
-BEFORE:
-samurai at sunset::2.0, cherry blossoms falling::1.5, Mount Fuji::1.3 --ar 16:9 --v 7 --s 500 --no blurry, text, watermark, modern, blurry, text --ar 16:9
-
-AFTER:
-elderly samurai standing beneath a shower of cherry blossoms, katana drawn, sunset light catching weathered armour::2.0, Mount Fuji rising through evening mist beyond ancient temple grounds and a stone path sinking into shadow::1.5, cinematic wide shot, historical drama still, silhouette-led composition::1.2 --ar 16:9 --v 7 --s 500 --no blurry, text, watermark, modern clothing, cars, power lines, neon signs, baseball caps, concrete buildings
-
-WHY:
-- Duplicate parameters removed.
-- Duplicate negatives removed.
-- Subject strength improved.
-- Scene-specific negatives added.
-- Style and framing are now Midjourney-native.
+SELF-CHECK BEFORE RETURNING:
+- Did I add any positive visual content not explicit in the draft? If yes, remove it.
+- Did I add any style or framing cue not explicit in the draft? If yes, remove it.
+- Are all positive clauses built only from draft content? If not, rewrite.
+- Is the output clearly restructured for Midjourney? If not, improve structure without invention.
+- Is --no protective, concrete, and scene-aware? If not, strengthen it.
 
 Return ONLY valid JSON:
 {
-  "optimised": "the full optimised Midjourney prompt including all weighted clauses and parameters",
+  "optimised": "the full optimised Midjourney prompt including weighted clauses and parameters",
   "negative": "",
   "changes": [
-    "Restructured into 3-4 weighted prose sections",
-    "Strengthened focal hierarchy in section 1",
-    "Committed to a clearer style/framing interpretation",
-    "Expanded --no with scene-specific negatives",
-    "Cleaned parameter order and duplication"
+    "Front-loaded subject and defining action into clause 1",
+    "Regrouped existing environment and atmosphere into separate weighted clauses",
+    "Normalised Midjourney parameters and consolidated negatives into --no"
   ],
   "charCount": 420,
   "tokenEstimate": 85
 }`;
+
   return {
     systemPrompt,
     // v4 pattern: maxChars safety net + diagnostics.

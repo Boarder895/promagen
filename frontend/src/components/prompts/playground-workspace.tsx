@@ -1,7 +1,14 @@
 // src/components/prompts/playground-workspace.tsx
 // ============================================================================
-// PLAYGROUND WORKSPACE v6.1.0 — Call 4 Data Wiring
+// PLAYGROUND WORKSPACE v7.0.0 — Phase A: Coverage Seed Wiring
 // ============================================================================
+// v7.0.0 (13 Apr 2026): Phase A — coverageSeed downstream wiring
+//   - Imports buildCoverageSeed from category-assessment types
+//   - On provider-change re-fire, passes Call 1's coverageSeed to Call 2
+//   - First fire: coverageSeed absent (Call 1/Call 2 parallel, Call 1 not back yet)
+//   - Re-fire: coverageSeed present (Call 1 already returned)
+//   - No user-visible change — prep for Phase B anatomy array
+//
 // v6.1.0 (2 Apr 2026):
 // - Added onHumanTextChange callback — exposes human text to page client
 //   for Call 4 scoring payload.
@@ -46,6 +53,7 @@ import { useDriftDetection } from '@/hooks/use-drift-detection';
 
 // Call 1: Category assessment with matched phrases
 import type { CoverageAssessment } from '@/types/category-assessment';
+import { buildCoverageSeed } from '@/types/category-assessment';
 import type { GeneratedPrompts } from '@/types/prompt-intelligence';
 import { useCategoryAssessment } from '@/hooks/use-category-assessment';
 
@@ -295,6 +303,10 @@ export default function PlaygroundWorkspace({ providers, onProviderChange, onPro
   // builder. Now we pass it directly to EEP as railSelectedProviderId
   // so the EEP syncs its own internal state without triggering the view switch.
 
+  // ── Ref for latest assessment (avoids stale closure in provider-change effect) ──
+  const assessmentRef = useRef(assessment);
+  useEffect(() => { assessmentRef.current = assessment; }, [assessment]);
+
   // ── Auto-re-fire Call 2 when provider changes ─────────────────────
   // Provider change does NOT trigger re-assessment (Call 1 assesses
   // content, not provider). Only re-fire Call 2 if tiers already generated.
@@ -311,7 +323,10 @@ export default function PlaygroundWorkspace({ providers, onProviderChange, onPro
       const provider = providers.find((p) => p.id === selectedProviderId);
       if (provider) {
         const ctx = buildProviderContext(selectedProviderId, provider.name);
-        generateTiers(humanText, selectedProviderId, ctx);
+        // On re-fire, Call 1 has already returned — pass coverageSeed from ref
+        const current = assessmentRef.current;
+        const seed = current ? buildCoverageSeed(current) : undefined;
+        generateTiers(humanText, selectedProviderId, ctx, undefined, undefined, seed);
       }
     }
   }, [selectedProviderId, humanText, providers, generateTiers, aiTierPrompts]);

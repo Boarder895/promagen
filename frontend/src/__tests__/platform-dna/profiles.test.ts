@@ -344,8 +344,8 @@ describe('Platform DNA — Midjourney specific', () => {
     expect(mj!.allowedTransforms).toContain('T_WEIGHT_VALIDATE');
   });
 
-  test('midjourney is deterministic', () => {
-    expect(mj!.requiresGPT).toBe(false);
+  test('midjourney requires GPT (Call T2 — Phase C)', () => {
+    expect(mj!.requiresGPT).toBe(true);
   });
 
   test('midjourney frontLoadImportance is highest (0.9)', () => {

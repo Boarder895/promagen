@@ -310,8 +310,8 @@ describe('POST /api/dev/generate-tier-prompts', () => {
 
   // ── RESCUE DEPENDENCY SIGNATURE — the whole point of Phase A ──────────────
 
-  describe('rescue dependency signature (the whole point of Phase A)', () => {
-    it('Stage A preserves duplicate --no blocks; Stages B/C/D have them merged', async () => {
+  describe('Phase B: T2 is empty across all stages (MJ moves to Call T2)', () => {
+    it('tier2 is empty string in all four stages', async () => {
       mockOpenAiResponse(RESCUE_NEEDED_TIER_BUNDLE);
 
       const req = makeReq(makeValidBody(), withAuth());
@@ -325,26 +325,11 @@ describe('POST /api/dev/generate-tier-prompts', () => {
         stage_d_final: { tier2: { positive: string } };
       };
 
-      const stageAT2 = data.stage_a_raw_model.tier2.positive;
-      const stageBT2 = data.stage_b_post_processed.tier2.positive;
-      const stageDT2 = data.stage_d_final.tier2.positive;
-
-      // Stage A: model bug intact — TWO --no blocks
-      const stageANoCount = (stageAT2.match(/--no\s/g) ?? []).length;
-      expect(stageANoCount).toBe(2);
-      expect(stageAT2).toContain('--no blurry --no low quality');
-
-      // Stage B: rescued — ONE --no block, both terms preserved
-      const stageBNoCount = (stageBT2.match(/--no\s/g) ?? []).length;
-      expect(stageBNoCount).toBe(1);
-      expect(stageBT2).toContain('--no blurry, low quality');
-
-      // Stage D: same as Stage B (no further mutation in this case)
-      expect(stageDT2).toBe(stageBT2);
-
-      // The diff between A and D is the rescue. This is the mechanical proof
-      // the harness can see what production hides.
-      expect(stageAT2).not.toBe(stageDT2);
+      // Phase B: T2 removed from Call 2. All stages have empty tier2.
+      expect(data.stage_a_raw_model.tier2.positive).toBe('');
+      expect(data.stage_b_post_processed.tier2.positive).toBe('');
+      expect(data.stage_c_compliance_enforced.tier2.positive).toBe('');
+      expect(data.stage_d_final.tier2.positive).toBe('');
     });
   });
 });

@@ -551,6 +551,8 @@ export interface TierPrompts {
 
 /**
  * Run the full post-processing pipeline on all 4 tiers.
+ * Phase B: tier2 will be empty strings (MJ removed from Call 2).
+ * Processing still runs — deduplicateMjParams on empty string is a no-op.
  * Mutates nothing — returns a new object.
  */
 export function postProcessTiers(tiers: TierPrompts): TierPrompts {

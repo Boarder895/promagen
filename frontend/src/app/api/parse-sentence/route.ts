@@ -97,32 +97,53 @@ Given a natural language description of an image, determine which of these 12 ca
 The 12 categories:
 - subject: The main focus — people, animals, objects, landscapes, architecture, abstract concepts.
 - action: What the subject is doing or the scene's motion/activity.
-- style: Artistic style, rendering approach, or art movement.
+- style: Artistic style, rendering approach, or art movement (requires explicit rendering terms like "cinematic", "watercolour", "photorealistic", "oil painting").
 - environment: Setting, location, backdrop, time-of-day context.
 - composition: Framing, perspective, depth of field, rule of thirds.
 - camera: Lens type, camera model, focal length, shooting angle.
-- lighting: Light sources, direction, quality, intensity.
-- colour: Dominant colours, palette, tonal character, colour grading.
-- atmosphere: Mood, weather effects, atmospheric conditions, emotional tone.
-- materials: Textures, surfaces, physical qualities of objects in the scene.
+- lighting: Light sources, direction, quality, intensity. Must be an explicit lighting reference — not inferred from time of day or location.
+- colour: Dominant colours, palette, tonal character, colour grading. Must name specific colours or colour concepts.
+- atmosphere: Mood, weather effects, atmospheric conditions. Must be explicitly stated — not inferred from the subject or environment.
+- materials: Textures, surfaces, physical qualities of objects in the scene. Must be explicitly mentioned — not inferred from nouns.
 - fidelity: Quality descriptors — resolution, detail level, sharpness, "masterpiece", "8K".
 - negative: Explicit exclusions — "no people", "no text", "without watermarks".
 
 Rules:
-1. A category is "covered: true" if the text explicitly or clearly implies content for that category.
-2. For covered categories, return the exact phrases from the user's input that address it. Use the user's own words — do NOT paraphrase, do NOT add words, do NOT reinterpret.
+1. A category is "covered: true" ONLY if the text explicitly describes or directly references content for that category. Do NOT mark a category as covered based on what you think the user probably meant or what a good prompt should have.
+2. For covered categories, return the exact phrases from the user's input. Use the user's own words — do NOT paraphrase, do NOT add words, do NOT reinterpret.
    WRONG: User wrote "blue hour" → matchedPhrases: ["cool blue twilight lighting"] (paraphrased)
    RIGHT: User wrote "blue hour" → matchedPhrases: ["blue hour"] (exact words from input)
-3. A single phrase may be short ("8K") or multi-word ("weathered white suit standing on the roof"). Extract the meaningful chunk, not individual words.
+3. A single phrase may be short ("8K") or multi-word ("weathered white suit standing on the roof"). Extract the meaningful chunk as a contiguous substring, not individual words.
    WRONG: "a lone astronaut in a weathered white suit" → subject matchedPhrases: ["lone", "astronaut", "white", "suit"]
    RIGHT: "a lone astronaut in a weathered white suit" → subject matchedPhrases: ["lone astronaut in a weathered white suit"]
 4. A category may have multiple matched phrases. Return all of them.
    Example: lighting matchedPhrases: ["blue hour", "last orange sunset", "first city lights"]
-5. For uncovered categories, return an empty matchedPhrases array.
-6. Do NOT over-infer. "A dog running in a park" does NOT imply camera, lighting, composition, style, fidelity, colour, materials, or negative. Only subject, action, and environment are covered.
-7. "negative" is ONLY covered if the text explicitly mentions exclusions (no/without/excluding).
+5. For uncovered categories, return covered: false and an empty matchedPhrases array.
+6. Do NOT over-infer. A category is NOT covered unless the user's text explicitly addresses it:
+   INPUT: "A dog running in a park"
+   WRONG: atmosphere covered (you inferred "playful" from "running"). The user did not write a mood.
+   WRONG: lighting covered (you inferred "daylight" from "park"). The user did not mention light.
+   WRONG: materials covered (you inferred "grass" from "park"). The user did not mention textures.
+   RIGHT: Only subject ("dog"), action ("running"), and environment ("park") are covered. That is 3 of 12.
+
+   INPUT: "A samurai at sunset"
+   WRONG: lighting covered — "sunset" is a time reference (environment), not a lighting instruction.
+   WRONG: colour covered — you inferred warm tones from "sunset". The user did not name colours.
+   RIGHT: Only subject ("samurai") and environment ("at sunset") are covered. That is 2 of 12.
+
+   INPUT: "Portrait of a woman, golden hour, shallow depth of field, shot on 85mm lens"
+   RIGHT: subject ("woman"), lighting ("golden hour"), composition ("shallow depth of field"), camera ("85mm lens").
+   WRONG: style covered — "portrait" is a subject descriptor, not an art style. Style requires "portrait photography" or "oil painting" etc.
+
+   INPUT: "A forest with morning mist"
+   RIGHT: environment ("forest"), atmosphere ("morning mist") — mist IS an explicit atmospheric condition.
+   WRONG: lighting covered — "morning" is time context, not a lighting instruction.
+   WRONG: materials covered — you inferred "bark" or "leaves" from "forest".
+7. "negative" is ONLY covered if the text explicitly mentions exclusions (no/without/excluding/avoid).
 8. Handle structured input: CLIP tokens like "(sunset:1.2)" and Midjourney parameters like "--ar 16:9 --v 6" count as coverage. Extract the meaningful part as the matchedPhrase.
 9. Preserve user intent — analyse what they wrote, not what a good prompt "should" have.
+10. Sparse input produces sparse coverage. If the user writes a short description, most categories will be uncovered. That is correct. Do not lower your threshold to compensate. "A cat on a sofa" = 2 categories (subject, environment). Return coveredCount: 2.
+11. VERIFICATION: Before returning, check each matchedPhrase appears as a verbatim substring in the user's input. If you cannot point to the exact characters, do not include it.
 
 Return ONLY valid JSON with no preamble, no markdown, no explanation:
 {

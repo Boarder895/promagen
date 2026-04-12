@@ -44,3 +44,35 @@ export interface CoverageAssessment {
 
 /** Error types for failed states */
 export type PromptLabErrorType = 'network' | 'rate-limit' | 'content-policy' | 'unknown';
+
+// ============================================================================
+// DOWNSTREAM PHRASE SEEDING (Phase A prep for anatomy array)
+// ============================================================================
+
+/**
+ * Normalised phrase→category mapping from Call 1's assessment.
+ * Passed to Call 2/Call T2 as `coverageSeed` so GPT knows which
+ * phrases belong to which categories — seeds the anatomy array.
+ *
+ * State owner: useCategoryAssessment hook (assessment.coverage)
+ * Prop path: playground-workspace → generateTiers → route body
+ * Consumed by: generate-tier-prompts/route.ts (appended to user message)
+ */
+export interface CoverageSeed {
+  category: PromptCategory;
+  matchedPhrases: string[];
+}
+
+/**
+ * Build a CoverageSeed array from a CoverageAssessment.
+ * Filters to covered categories only — uncovered categories have no phrases.
+ */
+export function buildCoverageSeed(assessment: CoverageAssessment): CoverageSeed[] {
+  const seeds: CoverageSeed[] = [];
+  for (const [cat, data] of Object.entries(assessment.coverage)) {
+    if (data.covered && data.matchedPhrases.length > 0) {
+      seeds.push({ category: cat as PromptCategory, matchedPhrases: data.matchedPhrases });
+    }
+  }
+  return seeds;
+}

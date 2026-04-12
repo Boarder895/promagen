@@ -1,16 +1,28 @@
 // src/hooks/use-category-assessment.ts
 // ============================================================================
-// useCategoryAssessment — Call 1 Coverage + Matched Phrases
+// useCategoryAssessment — Call 1 Coverage + Matched Phrases v1.1.0
 // ============================================================================
+// v1.1.0 (13 Apr 2026): Phase A documentation
+//   - Documented downstream accessibility for coverageSeed wiring
+//   - assessment.coverage is the canonical state owner for matchedPhrases
+//   - Downstream consumers (Call 2, Call T2) access via buildCoverageSeed()
+//   - No code changes — hook already stores and exposes everything needed
+//
 // Calls POST /api/parse-sentence with mode: "assess".
 // Returns per-category coverage (covered/not) with matched phrases from
 // the user's text. Used for text colouring and category coverage pills.
+//
+// STATE OWNERSHIP:
+//   assessment (CoverageAssessment | null) — owned here, exposed to consumers.
+//   Downstream path: playground-workspace reads assessment via this hook,
+//   converts to CoverageSeed[] via buildCoverageSeed(), passes to
+//   generateTiers() which forwards to generate-tier-prompts/route.ts.
 //
 // This hook is used ONLY by the Prompt Lab. The standard builder
 // continues to use useSentenceConversion (mode: "extract").
 //
 // Security: No "AI", "GPT", "OpenAI" in any client-facing string.
-// Authority: prompt-lab.md
+// Authority: prompt-lab.md, prompt-lab-api-architecture-v1.1.md §5.1
 // ============================================================================
 
 'use client';

@@ -693,9 +693,9 @@
       "T_REDUNDANCY_STRIP",
       "T_CHAR_ENFORCE"
     ],
-    "requiresGPT": false,
-    "gptTemperature": null,
-    "retryEnabled": false,
+    "requiresGPT": true,
+    "gptTemperature": 0.3,
+    "retryEnabled": true,
     "tokenBudget": null,
     "knownFailureModes": [
       "invalid_weight_syntax",
@@ -706,7 +706,7 @@
     "assembledBaseline": null,
     "optimisedScore": null,
     "availableHeadroom": null,
-    "harmonyStatus": "untested"
+    "harmonyStatus": "in_progress"
   },
   "flux": {
     "id": "flux",

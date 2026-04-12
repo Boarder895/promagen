@@ -599,10 +599,18 @@ export function checkRegression(
   }
 
   // ── Check 5: Weight regression (T1/T2) ─────────────────────────────
+  // T1 (CLIP): strict — any weight loss is a regression.
+  // T2 (Midjourney): GPT may consolidate clauses (e.g. 5→3 or 5→4)
+  //   as part of valid restructuring. Allow up to 2 fewer clauses.
+  //   Only fail if ALL weights are lost or reduction exceeds tolerance.
+  //   Evidence: v4 MJ builder (13 Apr 2026) correctly produces 3–4 clauses
+  //   from 5-clause assembled input, but the strict check was killing
+  //   valid GPT output (87.5% → 37.5% rescue dependency, blocked by this).
   if (options.supportsWeighting) {
     const inputWeightCount = (inputText.match(/\w::[\d.]+/g) ?? []).length;
     const outputWeightCount = (outputText.match(/\w::[\d.]+/g) ?? []).length;
-    if (inputWeightCount > 0 && outputWeightCount < inputWeightCount) {
+    const tolerance = options.tier === 2 ? 2 : 0;
+    if (inputWeightCount > 0 && outputWeightCount < inputWeightCount - tolerance) {
       regressions.push(`Weight clause regression: ${inputWeightCount} → ${outputWeightCount} weighted clauses`);
     }
   }
