@@ -33,6 +33,8 @@ import type { Call3Mode } from "@/lib/optimise-prompts/preflight";
 import { runMjDeterministic } from "@/lib/optimise-prompts/midjourney-deterministic";
 import { checkRegression, defaultRegressionOptions, checkMjDeterministicRegression } from "@/lib/optimise-prompts/regression-guard";
 import { computeAPS } from "@/lib/optimise-prompts/aps-gate";
+import { shouldRetry, buildRetryConfig, evaluateRetry, RETRY_NOT_ATTEMPTED } from "@/lib/optimise-prompts/retry-protocol";
+import type { RetryResult } from "@/lib/optimise-prompts/retry-protocol";
 import { getDNA } from "@/data/platform-dna";
 import { runDeterministicTransforms } from "@/lib/call-3-transforms";
 
@@ -567,11 +569,10 @@ export async function POST(req: NextRequest): Promise<Response> {
 
     // ── Layer 1: APS gate (primary quality gate) ─────────────────────
     const apsResult = computeAPS(sanitisedPrompt, result.optimised, anchors);
+    let retryOutcome: RetryResult = RETRY_NOT_ATTEMPTED;
 
-    if (apsResult.verdict === 'REJECT' || apsResult.verdict === 'RETRY') {
-      // REJECT or RETRY → fallback to assembled prompt
-      // Phase 8 will add retry logic for RETRY verdict on retry-enabled platforms.
-      // Until then, RETRY is treated as REJECT (fallback).
+    if (apsResult.verdict === 'REJECT') {
+      // REJECT → immediate fallback, no retry
       const reason = apsResult.anyVetoFired
         ? `APS gate: score=${apsResult.score.toFixed(2)} verdict=${apsResult.scoreVerdict}, ` +
           `vetoed: ${[
@@ -582,13 +583,6 @@ export async function POST(req: NextRequest): Promise<Response> {
         : `APS gate: score=${apsResult.score.toFixed(2)} verdict=${apsResult.verdict}`;
 
       console.warn("[optimise-prompt] APS gate rejected:", reason);
-
-      if (apsResult.droppedAnchors.length > 0) {
-        console.debug(
-          "[optimise-prompt] Dropped anchors:",
-          apsResult.droppedAnchors.map((a) => `${a.anchor} (${a.severity})`).join(", "),
-        );
-      }
 
       let fallback = sanitisedPrompt;
       const fallbackChanges = [
@@ -607,6 +601,127 @@ export async function POST(req: NextRequest): Promise<Response> {
       result.optimised = fallback;
       result.charCount = fallback.length;
       result.changes = fallbackChanges;
+    } else if (apsResult.verdict === 'RETRY') {
+      // ── Phase 8: Iterative retry protocol (architecture §8) ────────
+      // RETRY band (APS 0.70–0.84, no vetoes). Check if platform supports retry.
+      const retryDecision = shouldRetry(apsResult, dna);
+
+      if (retryDecision.shouldRetry && dna) {
+        console.debug(
+          `[optimise-prompt] Retry attempt: ${retryDecision.reason}`,
+        );
+
+        // Build retry config with tighter constraints + explicit anchor list
+        const effectiveTemp = builderTemperature ?? (isProseGroup ? 0.4 : 0.2);
+        const retryConfig = buildRetryConfig(
+          userMessage,
+          result.optimised,
+          apsResult.droppedAnchors,
+          effectiveTemp,
+          dna,
+        );
+
+        // ── Second GPT call with retry message ──────────────────────
+        try {
+          const retryRes = await fetch(
+            "https://api.openai.com/v1/chat/completions",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${apiKey}`,
+              },
+              body: JSON.stringify({
+                model: "gpt-5.4-mini",
+                temperature: retryConfig.retryTemperature,
+                max_completion_tokens: 1200,
+                response_format: { type: "json_object" },
+                messages: [
+                  { role: "system", content: systemPrompt },
+                  { role: "user", content: retryConfig.retryUserMessage },
+                ],
+              }),
+            },
+          );
+
+          if (retryRes.ok) {
+            const retryData = await retryRes.json();
+            const retryContent = retryData?.choices?.[0]?.message?.content;
+
+            if (retryContent && typeof retryContent === 'string') {
+              try {
+                const retryParsed = JSON.parse(retryContent);
+                const retryValidated = ResponseSchema.safeParse(retryParsed);
+
+                if (retryValidated.success && retryValidated.data.optimised?.trim()) {
+                  // Run compliance gate on retry output
+                  let retryText = retryValidated.data.optimised;
+                  if (groupCompliance) {
+                    const gateResult = groupCompliance(retryText);
+                    if (gateResult.wasFixed) retryText = gateResult.text;
+                  }
+
+                  // Run APS on retry output (stricter threshold)
+                  const retryAps = computeAPS(sanitisedPrompt, retryText, anchors);
+                  retryOutcome = evaluateRetry(retryAps, apsResult.droppedAnchors);
+
+                  if (retryOutcome.accepted) {
+                    // Retry succeeded — use retry output
+                    result.optimised = retryText;
+                    result.charCount = retryText.length;
+                    result.changes = [
+                      ...(retryValidated.data.changes ?? []),
+                      `Retry accepted: ${retryOutcome.summary}`,
+                    ];
+                    if (retryValidated.data.negative) {
+                      result.negative = retryValidated.data.negative;
+                    }
+                    console.debug(`[optimise-prompt] ${retryOutcome.summary}`);
+                  } else {
+                    // Retry failed — fall back to assembled prompt
+                    console.warn(`[optimise-prompt] ${retryOutcome.summary}`);
+                  }
+                }
+              } catch {
+                console.warn('[optimise-prompt] Retry parse failed');
+              }
+            }
+          } else {
+            console.warn(`[optimise-prompt] Retry API error: ${retryRes.status}`);
+          }
+        } catch (retryErr) {
+          console.warn('[optimise-prompt] Retry fetch error:', retryErr);
+        }
+      } else {
+        console.debug(
+          `[optimise-prompt] Retry skipped: ${retryDecision.reason}`,
+        );
+      }
+
+      // If retry was not attempted or failed, fall back to assembled prompt
+      if (!retryOutcome.accepted) {
+        const reason = retryOutcome.attempted
+          ? `APS retry: ${retryOutcome.summary}`
+          : `APS gate: score=${apsResult.score.toFixed(2)} verdict=RETRY, retry ${retryDecision.shouldRetry ? 'failed' : 'not enabled'}`;
+
+        let fallback = sanitisedPrompt;
+        const fallbackChanges = [
+          reason,
+          'Returned assembled prompt — the Algorithms declared the assembled prompt to also be the Optimised Prompt',
+        ];
+
+        if (groupCompliance) {
+          const gateResult = groupCompliance(fallback);
+          if (gateResult.wasFixed) {
+            fallback = gateResult.text;
+            fallbackChanges.push(...gateResult.fixes);
+          }
+        }
+
+        result.optimised = fallback;
+        result.charCount = fallback.length;
+        result.changes = fallbackChanges;
+      }
     }
 
     // ── Layer 2: Regression guard (secondary safety net) ─────────────

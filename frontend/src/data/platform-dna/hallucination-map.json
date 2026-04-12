@@ -1,0 +1,73 @@
+{
+  "_meta": {
+    "version": "1.0.0",
+    "date": "2026-04-11",
+    "authority": "call-3-quality-architecture-v0.2.0.md §7.3",
+    "description": "Per-platform, per-scene-type characteristic failure modes. Built incrementally from BQI data. Initial entries seeded from community knowledge with confidence: assumed. Martin should review before using in production negative generation.",
+    "notes": [
+      "Entries with confidence: assumed need validation through BQI testing",
+      "severity: high = visibly damages the image, medium = noticeable degradation, low = subtle",
+      "Only platforms with known, documented failure patterns are included",
+      "Empty platforms are intentionally omitted — they will be populated from Phase 11 harmony data"
+    ]
+  },
+
+  "stability": {
+    "outdoor_dramatic": [
+      { "pattern": "extra fingers on human subjects", "confidence": "assumed", "severity": "high" },
+      { "pattern": "text artifacts in sky regions", "confidence": "assumed", "severity": "medium" }
+    ],
+    "indoor_character": [
+      { "pattern": "distorted facial features at close range", "confidence": "assumed", "severity": "high" },
+      { "pattern": "inconsistent hand anatomy", "confidence": "assumed", "severity": "high" }
+    ]
+  },
+
+  "leonardo": {
+    "outdoor_dramatic": [
+      { "pattern": "oversmoothed textures at high detail settings", "confidence": "assumed", "severity": "medium" }
+    ],
+    "indoor_character": [
+      { "pattern": "duplicated background elements", "confidence": "assumed", "severity": "medium" }
+    ]
+  },
+
+  "midjourney": {
+    "abstract_stylised": [
+      { "pattern": "unwanted text generation in abstract compositions", "confidence": "assumed", "severity": "high" }
+    ],
+    "indoor_character": [
+      { "pattern": "merged limbs in multi-figure scenes", "confidence": "assumed", "severity": "high" }
+    ]
+  },
+
+  "openai": {
+    "outdoor_dramatic": [
+      { "pattern": "GPT-4 rewrite flattens specific visual details", "confidence": "assumed", "severity": "medium" }
+    ],
+    "abstract_stylised": [
+      { "pattern": "rewriter grounds abstract concepts into realism", "confidence": "assumed", "severity": "high" }
+    ]
+  },
+
+  "flux": {
+    "indoor_character": [
+      { "pattern": "texture repetition on large surfaces", "confidence": "assumed", "severity": "medium" }
+    ]
+  },
+
+  "recraft": {
+    "outdoor_dramatic": [
+      { "pattern": "style taxonomy mismatch for photorealistic scenes", "confidence": "assumed", "severity": "medium" }
+    ]
+  },
+
+  "novelai": {
+    "indoor_character": [
+      { "pattern": "anime style bleeding into photorealistic requests", "confidence": "assumed", "severity": "high" }
+    ],
+    "outdoor_dramatic": [
+      { "pattern": "background detail collapse at high token counts", "confidence": "assumed", "severity": "medium" }
+    ]
+  }
+}

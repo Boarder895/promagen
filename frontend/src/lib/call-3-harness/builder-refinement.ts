@@ -228,19 +228,35 @@ export function validateBuilderPrompt(
   });
   if (!hasAnchorRule) suggestions.push('Add RULE ZERO: "Every visual anchor from the input MUST appear in your output"');
 
-  // ── Check 2: Banned behaviours ─────────────────────────────────────
+  // ── Check 2: Banned behaviours (ChatGPT: require BOTH, not either) ──
   const bansScaffolding = lower.includes('foreground') || lower.includes('scaffolding') || lower.includes('composition scaffolding');
-  const bansInvention = lower.includes('do not invent') || lower.includes('do not add') || lower.includes('banned');
-  const hasBans = bansScaffolding || bansInvention;
+  const bansInvention = lower.includes('do not invent') || lower.includes('do not add') || lower.includes('not in the input');
+  const hasBothBans = bansScaffolding && bansInvention;
   checks.push({
     name: 'banned_behaviours',
-    passed: hasBans,
-    detail: hasBans
-      ? 'Banned behaviour rules found'
-      : 'Missing explicit bans on composition scaffolding and invented content',
+    passed: hasBothBans,
+    detail: hasBothBans
+      ? 'Both scaffolding ban and invention ban found'
+      : !bansScaffolding && !bansInvention
+        ? 'Missing both scaffolding ban and invention ban'
+        : !bansScaffolding
+          ? 'Missing explicit scaffolding ban (foreground/midground/background)'
+          : 'Missing explicit invention ban (do not invent/add content)',
     weight: 15,
   });
-  if (!hasBans) suggestions.push('Add BANNED section: no scaffolding, no invented content, no synonym churn');
+  if (!hasBothBans) suggestions.push('Must ban BOTH: (1) composition scaffolding and (2) invented content. Having only one is not enough.');
+
+  // ── Check 2b: Anti-synonym-churn (ChatGPT addition) ────────────────
+  const bansChurn = lower.includes('synonym') || lower.includes('thesaurus') || lower.includes('do not substitute');
+  checks.push({
+    name: 'anti_synonym_churn',
+    passed: bansChurn,
+    detail: bansChurn
+      ? 'Anti-synonym-churn wording found'
+      : 'Missing explicit ban on synonym substitution',
+    weight: 5,
+  });
+  if (!bansChurn) suggestions.push('Add explicit anti-churn: "Do NOT substitute synonyms for specific visual terms"');
 
   // ── Check 3: Transform listing ─────────────────────────────────────
   const gptTransforms = dna.allowedTransforms.filter((t) => GPT_TRANSFORM_IDS.has(t));
@@ -258,6 +274,31 @@ export function validateBuilderPrompt(
   if (!mentionsTransforms && gptTransforms.length > 0) {
     suggestions.push(`List exactly which transforms GPT should perform: ${gptTransforms.join(', ')}`);
   }
+
+  // ── Check 3b: Disallowed transforms (ChatGPT addition) ─────────────
+  // Detect if the prompt mentions transforms NOT in the DNA allowedTransforms
+  const allTransformIds: string[] = [
+    'T_SUBJECT_FRONT', 'T_ATTENTION_SEQUENCE', 'T_WEIGHT_REBALANCE',
+    'T_TOKEN_MERGE', 'T_SEMANTIC_COMPRESS', 'T_REDUNDANCY_STRIP',
+    'T_QUALITY_POSITION', 'T_PARAM_VALIDATE', 'T_WEIGHT_VALIDATE',
+    'T_CLAUSE_FRONT', 'T_SCENE_PREMISE', 'T_PROSE_RESTRUCTURE',
+    'T_NARRATIVE_ARMOUR', 'T_NEGATIVE_GENERATE', 'T_CHAR_ENFORCE',
+    'T_SYNTAX_CLEANUP',
+  ];
+  const allowedSet = new Set(dna.allowedTransforms.map((t) => t.toLowerCase()));
+  const disallowedMentioned = allTransformIds.filter(
+    (t) => lower.includes(t.toLowerCase()) && !allowedSet.has(t.toLowerCase()),
+  );
+  const noDisallowed = disallowedMentioned.length === 0;
+  checks.push({
+    name: 'no_disallowed_transforms',
+    passed: noDisallowed,
+    detail: noDisallowed
+      ? 'No disallowed transforms mentioned'
+      : `Prompt mentions transforms not in DNA: ${disallowedMentioned.join(', ')}`,
+    weight: 5,
+  });
+  if (!noDisallowed) suggestions.push(`Remove mentions of disallowed transforms: ${disallowedMentioned.join(', ')}`);
 
   // ── Check 4: Pre-flight verification ───────────────────────────────
   const hasPreFlight = lower.includes('pre-flight') || lower.includes('preflight') || lower.includes('before returning') || lower.includes('verify');

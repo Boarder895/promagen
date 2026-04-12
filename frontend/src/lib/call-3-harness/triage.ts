@@ -67,6 +67,16 @@ export interface PlatformTriageResult {
   readonly requiresGPT: boolean;
   /** Per-scene breakdown */
   readonly scenes: readonly SceneTriageDetail[];
+  /**
+   * Scene where Call 3 performed worst (lowest gain or most negative).
+   * ChatGPT 94/100: "mean can hide severe per-scene regressions"
+   */
+  readonly worstScene: SceneTriageDetail | null;
+  /**
+   * True if any individual scene has a negative gain (Call 3 degraded it).
+   * A platform can be Green on mean but still have per-scene regressions.
+   */
+  readonly hasSceneRegression: boolean;
 }
 
 /** Per-scene detail within a platform triage result. */
@@ -254,6 +264,12 @@ export function computeTriage(
       gain: s.optimisedScore - s.assembledScore,
     }));
 
+    // Per-scene weakness surfacing (ChatGPT 94/100: mean hides regressions)
+    const worstScene = scenes.length > 0
+      ? scenes.reduce((worst, s) => s.gain < worst.gain ? s : worst)
+      : null;
+    const hasSceneRegression = scenes.some((s) => s.gain < 0);
+
     platforms.push({
       platformId,
       meanAssembledBaseline: Math.round(meanAssembledBaseline * 100) / 100,
@@ -267,6 +283,8 @@ export function computeTriage(
       sceneCount: platformScores.length,
       requiresGPT: dna?.requiresGPT ?? false,
       scenes,
+      worstScene,
+      hasSceneRegression,
     });
   }
 
@@ -340,6 +358,23 @@ export function generateTriageMarkdown(report: TriageReport): string {
   }
 
   lines.push('');
+
+  // ── Per-scene regression warnings ──────────────────────────────────
+  const regressors = report.platforms.filter((p) => p.hasSceneRegression);
+  if (regressors.length > 0) {
+    lines.push('## Per-Scene Regression Warnings');
+    lines.push('');
+    lines.push('These platforms have a positive mean gain but negative gain on at least one scene:');
+    lines.push('');
+    for (const p of regressors) {
+      const badScenes = p.scenes.filter((s) => s.gain < 0);
+      for (const s of badScenes) {
+        lines.push(`- **${p.platformId}** — ${s.sceneId}: assembled ${s.assembledScore} → optimised ${s.optimisedScore} (${s.gain})`);
+      }
+    }
+    lines.push('');
+  }
+
   lines.push('---');
   lines.push('');
   lines.push('## Next Steps');

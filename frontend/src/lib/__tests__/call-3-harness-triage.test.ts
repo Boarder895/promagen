@@ -160,6 +160,39 @@ describe('computeTriage', () => {
     expect(a?.scenes[0]?.gain).toBe(12); // 92 - 80
   });
 
+  it('surfaces worst scene per platform', () => {
+    const report = computeTriage(mockScores, mockDnaMap);
+
+    // Platform C degrades on both scenes — worst should be the most negative
+    const c = report.platforms.find((p) => p.platformId === 'platform-c');
+    expect(c?.worstScene).not.toBeNull();
+    expect(c?.worstScene?.gain).toBeLessThan(0);
+  });
+
+  it('flags per-scene regression when mean hides it', () => {
+    // Platform with positive mean but one negative scene
+    const mixedScores: PlatformBatchScore[] = [
+      { platformId: 'mixed', sceneId: 'scene-01', assembledScore: 80, optimisedScore: 95 }, // +15
+      { platformId: 'mixed', sceneId: 'scene-02', assembledScore: 90, optimisedScore: 87 }, // -3
+    ];
+    // Mean gain: (95-80 + 87-90) / 2 = +6, but scene-02 regressed
+
+    const report = computeTriage(mixedScores, mockDnaMap);
+    const mixed = report.platforms.find((p) => p.platformId === 'mixed');
+
+    expect(mixed?.hasSceneRegression).toBe(true);
+    expect(mixed?.absoluteGain).toBeGreaterThan(0); // Mean is positive
+    expect(mixed?.worstScene?.sceneId).toBe('scene-02');
+    expect(mixed?.worstScene?.gain).toBe(-3);
+  });
+
+  it('hasSceneRegression is false when all scenes improve', () => {
+    const report = computeTriage(mockScores, mockDnaMap);
+
+    const a = report.platforms.find((p) => p.platformId === 'platform-a');
+    expect(a?.hasSceneRegression).toBe(false);
+  });
+
   it('handles empty input gracefully', () => {
     const report = computeTriage([], mockDnaMap);
 
