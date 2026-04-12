@@ -67,7 +67,7 @@ const MAX_CALL3_CHANGES = 10;
 const MAX_CALL3_CHANGE_CHARS = 200;
 const MAX_PLATFORM_LIMIT = 10000;
 const MAX_CATEGORY_RICHNESS = 10;
-const OPENAI_MAX_COMPLETION_TOKENS = 1200;
+const OPENAI_MAX_COMPLETION_TOKENS = 1500;
 
 // ============================================================================
 // REQUEST SCHEMA — Strict types + max-length guards + relational validation
@@ -180,8 +180,8 @@ const ScoreResponseSchema = z.object({
     economyClarity: z.number().min(0).max(15),
     negativeQuality: z.number().min(0).max(10).nullable(),
   }),
-  directives: z.array(z.string().trim().min(1).max(300)).min(0).max(3),
-  summary: z.string().trim().min(1).max(300),
+  directives: z.array(z.string().trim().min(1).max(600)).min(0).max(3),
+  summary: z.string().trim().min(1).max(600),
   anchorAudit: z
     .array(
       z.object({
