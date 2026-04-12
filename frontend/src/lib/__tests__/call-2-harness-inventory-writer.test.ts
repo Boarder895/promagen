@@ -394,7 +394,7 @@ describe('buildInventory', () => {
     expect(inv.run_class).toBe('decision_support');
     expect(inv.harness_version).toBe('0.3.2');
     expect(inv.model_version).toBe('gpt-5.4-mini-test');
-    expect(inv.cluster_schema_version).toBe('v1');
+    expect(inv.cluster_schema_version).toBe('v2');
   });
 
   it('by_cluster aggregates fails into the correct cluster', () => {
@@ -440,8 +440,8 @@ describe('buildInventory', () => {
     const exercised = new Set<string>(['T1.subject_highest_weight', 'T2.no_exactly_once']);
     const inv = buildInventory(makeRun(samples), { ruleIdsExercisedByScenes: exercised });
 
-    // 27 total mechanical rules - 2 exercised = 25 gaps
-    expect(inv.coverage_gaps.length).toBe(25);
+    // 29 total mechanical rules - 2 exercised = 27 gaps
+    expect(inv.coverage_gaps.length).toBe(27);
     // The two exercised rules should NOT appear in gaps
     const gapsText = inv.coverage_gaps.join('\n');
     expect(gapsText).not.toContain('T1.subject_highest_weight');

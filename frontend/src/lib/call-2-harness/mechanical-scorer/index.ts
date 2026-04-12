@@ -28,6 +28,7 @@ import { T1_RULES } from './t1-rules';
 import { T2_RULES } from './t2-rules';
 import { T3_RULES } from './t3-rules';
 import { T4_RULES } from './t4-rules';
+import { COVERAGE_RULES } from './coverage-rules';
 import {
   ALL_CLUSTERS,
   CLUSTER_SCHEMA_VERSION,
@@ -57,17 +58,18 @@ export { T1_RULES } from './t1-rules';
 export { T2_RULES } from './t2-rules';
 export { T3_RULES } from './t3-rules';
 export { T4_RULES } from './t4-rules';
+export { COVERAGE_RULES } from './coverage-rules';
 
 /**
- * The full ordered list of mechanical rules across all four tiers.
- * Frozen at module load. Useful for introspection (Phase G cluster mapping
- * generation, mutation testing rule prioritisation).
+ * The full ordered list of mechanical rules across all tiers.
+ * Frozen at module load.
  */
 export const ALL_RULES: readonly RuleDefinition[] = Object.freeze([
   ...T1_RULES,
   ...T2_RULES,
   ...T3_RULES,
   ...T4_RULES,
+  ...COVERAGE_RULES,
 ]);
 
 /**

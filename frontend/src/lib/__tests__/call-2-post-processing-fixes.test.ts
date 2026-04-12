@@ -31,14 +31,15 @@ import {
 describe('P14: enforceT1WeightWrap', () => {
   // ── Core splitting behaviour ─────────────────────────────────────────────
 
-  it('splits a 6-word weight-wrapped phrase using 2-word-tail heuristic', () => {
-    // System prompt WRONG example: "small girl in a yellow raincoat" = 6 words
+  it('splits a 6-word phrase, filtering stop-word orphans from prefix', () => {
+    // "small girl in a yellow raincoat" = 6 words
+    // Noun-anchor tail: "yellow raincoat" (tailLen=2, "yellow" not stop word)
+    // Prefix: ["small", "girl", "in", "a"] → filter stop words → ["small", "girl"]
     const input = 'masterpiece, best quality, (small girl in a yellow raincoat:1.3), sharp focus';
     const result = enforceT1WeightWrap(input);
 
-    // Tail 2 = "yellow raincoat", prefix = "small, girl, in, a"
     expect(result.text).toBe(
-      'masterpiece, best quality, small, girl, in, a, (yellow raincoat:1.3), sharp focus',
+      'masterpiece, best quality, small, girl, (yellow raincoat:1.3), sharp focus',
     );
     expect(result.fixes).toHaveLength(1);
     expect(result.fixes[0]).toContain('small girl in a yellow raincoat');
@@ -46,8 +47,6 @@ describe('P14: enforceT1WeightWrap', () => {
   });
 
   it('does NOT split a 4-word phrase — exactly at the limit', () => {
-    // "frost-encrusted orange survival suit" = 4 words
-    // (frost-encrusted is hyphenated = 1 word, orange = 1, survival = 1, suit = 1)
     const input = '(frost-encrusted orange survival suit:1.3)';
     const result = enforceT1WeightWrap(input);
 
@@ -55,13 +54,12 @@ describe('P14: enforceT1WeightWrap', () => {
     expect(result.fixes).toHaveLength(0);
   });
 
-  it('splits a 5-word phrase with hyphenated compound', () => {
-    // "rain-soaked gallery deck lighthouse keeper" = 5 words
-    // (rain-soaked=1, gallery=1, deck=1, lighthouse=1, keeper=1)
+  it('splits a 5-word phrase — no stop words in prefix', () => {
+    // "rain-soaked gallery deck lighthouse keeper" = 5 words, no stop words
+    // Tail: "lighthouse keeper", prefix: "rain-soaked, gallery, deck" (all meaningful)
     const input = '(rain-soaked gallery deck lighthouse keeper:1.4)';
     const result = enforceT1WeightWrap(input);
 
-    // Tail 2 = "lighthouse keeper", prefix = "rain-soaked, gallery, deck"
     expect(result.text).toBe(
       'rain-soaked, gallery, deck, (lighthouse keeper:1.4)',
     );
@@ -84,16 +82,66 @@ describe('P14: enforceT1WeightWrap', () => {
     expect(result.fixes).toHaveLength(0);
   });
 
-  it('fixes multiple offending phrases in one pass', () => {
-    // Phrase 1: "a very large old stone bridge over river" = 8 words → tail 2 = "over river"
-    // Phrase 2: "tall young woman in flowing silk dress" = 7 words → tail 2 = "silk dress"
+  it('fixes multiple offending phrases — stop-word guard prevents bad tails', () => {
+    // "a very large old stone bridge over river" = 8 words
+    //   tailLen=2: "over" is stop word → skip
+    //   tailLen=3: "bridge" is not stop → tail = "bridge over river"
+    //   prefix meaningful: "very, large, old, stone" (filter "a")
+    // "tall young woman in flowing silk dress" = 7 words
+    //   tailLen=2: "silk" not stop → tail = "silk dress"
+    //   prefix meaningful: "tall, young, woman, flowing" (filter "in")
     const input =
       'masterpiece, (a very large old stone bridge over river:1.3), (tall young woman in flowing silk dress:1.2)';
     const result = enforceT1WeightWrap(input);
 
-    expect(result.text).toContain('(over river:1.3)');
+    expect(result.text).toContain('(bridge over river:1.3)');
+    expect(result.text).not.toContain('(over river:1.3)');
     expect(result.text).toContain('(silk dress:1.2)');
     expect(result.fixes).toHaveLength(2);
+  });
+
+  // ── Stop-word guard: the exact failures P14 v2.0 fixes ──────────────────
+
+  it('prevents "(of light:1.3)" — stops preposition-led tail', () => {
+    // "dust motes in shaft of light" = 6 words
+    // Old P14: tail = "of light" → GARBAGE
+    // New P14: tailLen=2 "of" is stop → skip, tailLen=3 "shaft" not stop → "shaft of light"
+    const input = '(dust motes in shaft of light:1.3)';
+    const result = enforceT1WeightWrap(input);
+
+    expect(result.text).toBe('dust, motes, (shaft of light:1.3)');
+    expect(result.text).not.toContain('(of light');
+  });
+
+  it('prevents "(to shoulder:1.2)" — stops preposition-led tail', () => {
+    // "umbrellas jostling shoulder to shoulder" = 5 words
+    // Old P14: tail = "to shoulder" → GARBAGE
+    // New P14: tailLen=2 "to" is stop → skip, tailLen=3 "shoulder" not stop → "shoulder to shoulder"
+    const input = '(umbrellas jostling shoulder to shoulder:1.2)';
+    const result = enforceT1WeightWrap(input);
+
+    expect(result.text).toBe('umbrellas, jostling, (shoulder to shoulder:1.2)');
+    expect(result.text).not.toContain('(to shoulder');
+  });
+
+  it('filters stop-word orphans: "and" removed from prefix', () => {
+    // "mixed warm and cool streetlamps" = 5 words
+    // Tail: "cool streetlamps" ("cool" not stop)
+    // Prefix: ["mixed", "warm", "and"] → filter → ["mixed", "warm"]
+    const input = '(mixed warm and cool streetlamps:1.3)';
+    const result = enforceT1WeightWrap(input);
+
+    expect(result.text).toBe('mixed, warm, (cool streetlamps:1.3)');
+    expect(result.text).not.toContain(', and,');
+  });
+
+  it('filters "through" from prefix — interaction preservation', () => {
+    // "traffic lights glowing through misty drizzle" = 6 words
+    const input = '(traffic lights glowing through misty drizzle:1.3)';
+    const result = enforceT1WeightWrap(input);
+
+    expect(result.text).toBe('traffic, lights, glowing, (misty drizzle:1.3)');
+    expect(result.text).not.toContain(', through,');
   });
 
   // ── Edge cases ──────────────────────────────────────────────────────────

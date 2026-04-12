@@ -478,7 +478,7 @@ async function main(): Promise<void> {
           c: data.stage_c_compliance_enforced,
           d: data.stage_d_final,
         },
-        { input: scene.input },
+        { input: scene.input, expectedElements: scene.expected_elements },
       );
 
       samples.push({

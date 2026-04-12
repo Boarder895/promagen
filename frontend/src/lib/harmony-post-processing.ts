@@ -240,16 +240,17 @@ export function mergeT4ShortSentences(prompt: string): string {
 // P14: T1 Weight-Wrap Enforcement (≤4 words)
 // ============================================================================
 // Harness rule: T1.weight_wrap_4_words_max
-// Harness data: stage_d_fail_rate 0.2408 (REAL_FAILURE)
 //
 // Problem: GPT weight-wraps phrases longer than 4 words despite being told not to.
 //   WRONG: (small girl in a yellow raincoat:1.3)
 //   RIGHT: (small girl:1.3), yellow raincoat
 //
-// Fix: Regex-scan T1 positive for (phrase:weight) where phrase exceeds 4 words
-// (hyphenated compounds count as 1 word). Auto-split using conservative 2-word-tail
-// heuristic: keep last 2 words inside the wrapper (noun head), eject prefix words
-// as unweighted comma-separated terms. Skip malformed/nested parens — just log.
+// v2.0: Smarter noun-anchor tail selection with stop-word guard.
+//   Old 2-word-tail heuristic produced orphan tokens and nonsense tails like
+//   "(of light:1.3)" or "(to shoulder:1.2)". New algorithm:
+//   1. Scan from end for a tail whose first word is NOT a stop word
+//   2. Filter pure stop words from ejected prefix (don't emit "in", "of", "to" alone)
+//   3. Fallback: unwrap phrase entirely rather than producing garbage
 // ============================================================================
 
 /** Regex matching parenthetical weights: (phrase:1.3) */
@@ -257,11 +258,25 @@ const PAREN_WEIGHT_RE_GLOBAL = /\(([^):]+):([\d.]+)\)/g;
 
 /**
  * Count words in a phrase. Hyphenated compounds count as ONE word.
- * "frost-encrusted orange survival suit" → 4 words (frost-encrusted=1, orange=1, survival=1, suit=1)
- * "small girl in a yellow raincoat" → 6 words
+ * "frost-encrusted orange survival suit" → 4 words
  */
 function countWeightWords(phrase: string): number {
   return phrase.trim().split(/\s+/).filter(Boolean).length;
+}
+
+/**
+ * Stop words that should never begin a weighted tail.
+ * These produce nonsense CLIP tokens like "(of light:1.3)" or "(to shoulder:1.2)".
+ * Also filtered from ejected prefix to prevent orphan tokens like "in", "and", "the".
+ */
+const WEIGHT_STOP_WORDS = new Set([
+  'a', 'an', 'the', 'and', 'or', 'of', 'to', 'in', 'on', 'at',
+  'by', 'with', 'from', 'through', 'across', 'under', 'over',
+  'into', 'onto', 'upon', 'between', 'among', 'for', 'as',
+]);
+
+function isWeightStopWord(word: string): boolean {
+  return WEIGHT_STOP_WORDS.has(word.toLowerCase());
 }
 
 export interface WeightWrapResult {
@@ -271,11 +286,41 @@ export interface WeightWrapResult {
 }
 
 /**
+ * Find the best noun-anchor tail for a weighted phrase.
+ *
+ * Scans from the end trying tail lengths 2, 3, then 4. The first tail
+ * whose leading word is NOT a stop word wins. Returns null if every
+ * possible tail starts with a stop word — caller should use fallback.
+ */
+function findNounAnchorTail(
+  words: string[],
+): { tail: string; prefixWords: string[] } | null {
+  const maxTail = Math.min(4, words.length - 1);
+
+  for (let tailLen = 2; tailLen <= maxTail; tailLen++) {
+    const tailStart = words.length - tailLen;
+    const firstTailWord = words[tailStart];
+
+    if (firstTailWord && !isWeightStopWord(firstTailWord)) {
+      return {
+        tail: words.slice(tailStart).join(' '),
+        prefixWords: words.slice(0, tailStart),
+      };
+    }
+  }
+
+  return null;
+}
+
+/**
  * P14: Enforce T1 weight-wrap 4-word limit.
  *
- * For each (phrase:weight) where phrase exceeds 4 words:
- * - Keep the last 2 words inside the wrapper (noun head)
- * - Eject prefix words as unweighted comma-separated terms before the wrapper
+ * v2.0 algorithm (per ChatGPT analysis, 12 Apr 2026):
+ * 1. For each (phrase:weight) where phrase exceeds 4 words:
+ *    a. Find noun-anchor tail (2–4 words, must not start with stop word)
+ *    b. Eject prefix words, filtering out pure stop words
+ *    c. If no valid tail exists, unwrap the phrase entirely (no weight)
+ *       rather than producing semantic garbage
  *
  * Skips malformed or nested parentheses — logs them but doesn't try to fix.
  */
@@ -299,17 +344,36 @@ export function enforceT1WeightWrap(text: string): WeightWrapResult {
 
     const words = trimmedPhrase.split(/\s+/);
 
-    // Sanity guard: if we somehow have fewer than 3 words after split, skip
+    // Sanity guard
     if (words.length < 3) {
       skipped.push(`Unexpected word split for "${trimmedPhrase}" — skipping`);
       return fullMatch;
     }
 
-    // 2-word-tail heuristic: keep last 2 words as the noun head inside wrapper
-    const tail = words.slice(-2).join(' ');
-    const prefix = words.slice(0, -2).join(', ');
+    // Try to find a noun-anchor tail
+    const anchor = findNounAnchorTail(words);
 
-    const fixed = `${prefix}, (${tail}:${weight})`;
+    if (!anchor) {
+      // FALLBACK: no valid tail found — every tail starts with a stop word.
+      // Unwrap the phrase entirely rather than producing garbage like "(of light:1.3)".
+      // A semantically intact unweighted phrase is better than shredded nonsense.
+      const unwrapped = trimmedPhrase;
+      fixes.push(`"(${trimmedPhrase}:${weight})" → "${unwrapped}" [unwrapped — no valid noun tail]`);
+      return unwrapped;
+    }
+
+    // Build the fix: filter stop words from prefix, keep the weighted tail
+    const meaningfulPrefix = anchor.prefixWords
+      .filter((w) => !isWeightStopWord(w));
+
+    let fixed: string;
+    if (meaningfulPrefix.length > 0) {
+      fixed = `${meaningfulPrefix.join(', ')}, (${anchor.tail}:${weight})`;
+    } else {
+      // All prefix words were stop words — just the weighted tail
+      fixed = `(${anchor.tail}:${weight})`;
+    }
+
     fixes.push(`"(${trimmedPhrase}:${weight})" → "${fixed}"`);
     return fixed;
   });

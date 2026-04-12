@@ -83,12 +83,12 @@ function runOneRule(
 // ============================================================================
 
 describe('Call 2 Harness — mechanical scorer module integrity', () => {
-  it('exports the cluster-schema-v1 constant', () => {
-    expect(CLUSTER_SCHEMA_VERSION).toBe('v1');
+  it('exports the cluster-schema-v2 constant', () => {
+    expect(CLUSTER_SCHEMA_VERSION).toBe('v2');
   });
 
-  it('lists exactly 8 clusters', () => {
-    expect(ALL_CLUSTERS.length).toBe(8);
+  it('lists exactly 9 clusters', () => {
+    expect(ALL_CLUSTERS.length).toBe(9);
   });
 
   it('every rule ID is unique across all four tiers', () => {
@@ -110,12 +110,12 @@ describe('Call 2 Harness — mechanical scorer module integrity', () => {
     }
   });
 
-  it('expected counts: T1 9, T2 8, T3 5, T4 5, total 27', () => {
+  it('expected counts: T1 9, T2 8, T3 5, T4 5, coverage 2, total 29', () => {
     expect(T1_RULES.length).toBe(9);
     expect(T2_RULES.length).toBe(8);
     expect(T3_RULES.length).toBe(5);
     expect(T4_RULES.length).toBe(5);
-    expect(ALL_RULES.length).toBe(27);
+    expect(ALL_RULES.length).toBe(29);
   });
 });
 
@@ -458,7 +458,7 @@ describe('coordinator — runMechanicalScorer', () => {
     expect(result.failCount).toBe(0);
     expect(result.passCount).toBe(ALL_RULES.length);
     expect(result.stage).toBe('d');
-    expect(result.clusterSchemaVersion).toBe('v1');
+    expect(result.clusterSchemaVersion).toBe('v2');
     // Every cluster tally is zero
     for (const c of ALL_CLUSTERS) {
       expect(result.failsByCluster[c]).toBe(0);

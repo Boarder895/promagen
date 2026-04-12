@@ -38,7 +38,21 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "expected_elements": [
+        "lighthouse keeper",
+        "gallery deck",
+        "twilight",
+        "iron railing",
+        "storm waves",
+        "jagged rocks",
+        "salt spray",
+        "purple-and-copper sky",
+        "lighthouse beam",
+        "fishing village",
+        "orange windows",
+        "dark cliffs"
+      ]
     },
     {
       "id": "golden-hour-cyclist",
@@ -69,7 +83,19 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "expected_elements": [
+        "cyclist",
+        "country lane",
+        "golden hour",
+        "sunlight",
+        "hedgerows",
+        "tarmac",
+        "shadows",
+        "spinning wheels",
+        "dust",
+        "evening air"
+      ]
     },
     {
       "id": "busy-tokyo-crosswalk",
@@ -101,7 +127,20 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "expected_elements": [
+        "crossing",
+        "rain",
+        "night",
+        "neon signs",
+        "magenta",
+        "cyan",
+        "reflections",
+        "zebra stripes",
+        "umbrellas",
+        "traffic lights",
+        "drizzle"
+      ]
     },
     {
       "id": "single-tear-on-cheek",
@@ -223,7 +262,19 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "expected_elements": [
+        "scuba diver",
+        "coral reef",
+        "tropical water",
+        "branching coral",
+        "sunlight",
+        "fish",
+        "blue depth",
+        "reds",
+        "golds",
+        "turquoise"
+      ]
     },
     {
       "id": "medieval-blacksmith-forge",
@@ -284,7 +335,21 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "expected_elements": [
+        "astronaut",
+        "EVA tether",
+        "Earth",
+        "gloved hand",
+        "cloud bands",
+        "oceans",
+        "atmosphere",
+        "sun glare",
+        "visor",
+        "white highlights",
+        "blackness",
+        "isolation"
+      ]
     },
     {
       "id": "rainy-bookstore-window-cat",
@@ -315,7 +380,19 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "expected_elements": [
+        "cat",
+        "windowsill",
+        "bookshop",
+        "rainy street",
+        "amber lamplight",
+        "stacked novels",
+        "wooden shelves",
+        "steaming mug",
+        "headlights",
+        "umbrellas"
+      ]
     },
     {
       "id": "storm-chaser-tornado-distance",
@@ -345,7 +422,19 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "expected_elements": [
+        "storm chaser",
+        "tornado",
+        "prairie",
+        "battered vehicle",
+        "dark funnel",
+        "bruised sky",
+        "dry grass",
+        "wind",
+        "storm base",
+        "solitary figure"
+      ]
     },
     {
       "id": "monk-meditating-temple-courtyard",
@@ -438,7 +527,18 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "expected_elements": [
+        "firefighter",
+        "dog",
+        "smoke",
+        "ash",
+        "orange emergency light",
+        "darkened gear",
+        "debris",
+        "rescue",
+        "swirling smoke"
+      ]
     },
     {
       "id": "vintage-car-on-route-66-sunset",
@@ -691,7 +791,14 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "expected_elements": [
+        "red poppy",
+        "white field",
+        "blank sky",
+        "negative space",
+        "colour"
+      ]
     },
     {
       "id": "stress-non-photoreal-explicit",
@@ -825,7 +932,17 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "expected_elements": [
+        "bottle",
+        "wooden table",
+        "melting ice",
+        "newspaper",
+        "window light",
+        "glass",
+        "reflection",
+        "varnished surface"
+      ]
     },
     {
       "id": "trap-celebrity-likeness",

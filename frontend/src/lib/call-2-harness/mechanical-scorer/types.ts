@@ -21,7 +21,8 @@ export type Cluster =
   | 'negative_handling_leak'
   | 'value_add_filler'
   | 'tier_drift'
-  | 'constraint_collision';
+  | 'constraint_collision'
+  | 'content_fidelity_loss';
 
 export const ALL_CLUSTERS: readonly Cluster[] = Object.freeze([
   'subject_salience_loss',
@@ -32,9 +33,10 @@ export const ALL_CLUSTERS: readonly Cluster[] = Object.freeze([
   'value_add_filler',
   'tier_drift',
   'constraint_collision',
+  'content_fidelity_loss',
 ]);
 
-export const CLUSTER_SCHEMA_VERSION = 'v1' as const;
+export const CLUSTER_SCHEMA_VERSION = 'v2' as const;
 
 export type Tier = 1 | 2 | 3 | 4;
 
@@ -62,6 +64,7 @@ export interface ProviderContext {
 export interface RuleContext {
   readonly input: string;
   readonly providerContext?: ProviderContext;
+  readonly expectedElements?: readonly string[];
 }
 
 /**

@@ -58,6 +58,7 @@ export interface Scene {
   readonly tag_provenance: TagProvenance;
   readonly dev_only?: boolean;
   readonly dev_only_reason?: string;
+  readonly expected_elements?: readonly string[];
 }
 
 export interface SceneLibraryMetadata {
