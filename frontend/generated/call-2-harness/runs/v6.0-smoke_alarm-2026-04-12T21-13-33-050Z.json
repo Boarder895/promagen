@@ -1,0 +1,508 @@
+{
+  "schema_version": "1.0.0",
+  "version": "v6.0",
+  "harness_version": "0.3.1",
+  "cluster_schema_version": "v1",
+  "model_version": "gpt-5.4-mini-2026-03-17",
+  "run_timestamp": "2026-04-12T21:13:33.050Z",
+  "scene_count": 41,
+  "samples_per_scene": 5,
+  "wall_clock_seconds": 553,
+  "run_class": "smoke_alarm",
+  "by_rule": {
+    "T1.weight_syntax_correct": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 820
+    },
+    "T1.weight_steps_0_1": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 820
+    },
+    "T1.weight_wrap_4_words_max": {
+      "stage_a_fail_rate": 0.3463,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0.3463,
+      "health": "FRAGILE",
+      "interpretation": "Cleanup layer rescues 35% of model failures. One cleanup change away from a latent failure pool.",
+      "evaluation_count": 820
+    },
+    "T1.quality_prefix_present": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 820
+    },
+    "T1.quality_suffix_present": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 820
+    },
+    "T1.comma_separated_format": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 820
+    },
+    "T1.no_trailing_punctuation": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 820
+    },
+    "T1.no_isolated_colour_weights": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 820
+    },
+    "T1.subject_highest_weight": {
+      "stage_a_fail_rate": 0.0244,
+      "stage_b_fail_rate": 0.0244,
+      "stage_c_fail_rate": 0.0244,
+      "stage_d_fail_rate": 0.0244,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 820,
+      "stage_d_scene_detail": {
+        "stress-all-adjectives-no-nouns": {
+          "fail_count": 4,
+          "sample_count": 5,
+          "details": [
+            "First weight 1.2 is below max 1.3 — subject is not the highest",
+            "First weight 1.2 is below max 1.3 — subject is not the highest",
+            "First weight 1.2 is below max 1.3 — subject is not the highest",
+            "First weight 1.2 is below max 1.3 — subject is not the highest"
+          ]
+        },
+        "trap-contradictory-instructions": {
+          "fail_count": 1,
+          "sample_count": 5,
+          "details": [
+            "First weight 1.3 is below max 1.4 — subject is not the highest"
+          ]
+        }
+      }
+    },
+    "T2.ar_param_present": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 820
+    },
+    "T2.v_param_present": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 820
+    },
+    "T2.s_param_present": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 820
+    },
+    "T2.no_param_present": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 820
+    },
+    "T2.no_exactly_once": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 820
+    },
+    "T2.weight_clauses_min_3": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 820
+    },
+    "T2.no_mid_phrase_weights": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 820
+    },
+    "T2.empty_negative_json_field": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 820
+    },
+    "T3.char_count_in_range": {
+      "stage_a_fail_rate": 0.0537,
+      "stage_b_fail_rate": 0.0244,
+      "stage_c_fail_rate": 0.0244,
+      "stage_d_fail_rate": 0.0244,
+      "rescue_dependency": 0.03,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 820,
+      "stage_d_scene_detail": {
+        "stress-all-adjectives-no-nouns": {
+          "fail_count": 1,
+          "sample_count": 5,
+          "details": [
+            "T3 length 214, HARD_UNDER 220"
+          ]
+        },
+        "trap-rule-override-attempt": {
+          "fail_count": 3,
+          "sample_count": 5,
+          "details": [
+            "T3 length 154, HARD_UNDER 220",
+            "T3 length 142, HARD_UNDER 220",
+            "T3 length 132, HARD_UNDER 220"
+          ]
+        },
+        "human-emoji-mixed": {
+          "fail_count": 1,
+          "sample_count": 5,
+          "details": [
+            "T3 length 209, HARD_UNDER 220"
+          ]
+        }
+      }
+    },
+    "T3.sentence_count_2_to_3": {
+      "stage_a_fail_rate": 0.0146,
+      "stage_b_fail_rate": 0.0146,
+      "stage_c_fail_rate": 0.0146,
+      "stage_d_fail_rate": 0.0146,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 820,
+      "stage_d_scene_detail": {
+        "trap-rule-override-attempt": {
+          "fail_count": 3,
+          "sample_count": 5,
+          "details": [
+            "T3 has 1 sentences, expected 2-3",
+            "T3 has 1 sentences, expected 2-3",
+            "T3 has 1 sentences, expected 2-3"
+          ]
+        }
+      }
+    },
+    "T3.no_banned_phrases": {
+      "stage_a_fail_rate": 0.0049,
+      "stage_b_fail_rate": 0.0049,
+      "stage_c_fail_rate": 0.0049,
+      "stage_d_fail_rate": 0.0049,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 820,
+      "stage_d_scene_detail": {
+        "trap-negative-only-input": {
+          "fail_count": 1,
+          "sample_count": 5,
+          "details": [
+            "Banned phrases: that feels"
+          ]
+        }
+      }
+    },
+    "T3.no_banned_tail_constructions": {
+      "stage_a_fail_rate": 0.0098,
+      "stage_b_fail_rate": 0.0098,
+      "stage_c_fail_rate": 0.0098,
+      "stage_d_fail_rate": 0.0098,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 820,
+      "stage_d_scene_detail": {
+        "trap-rule-override-attempt": {
+          "fail_count": 2,
+          "sample_count": 5,
+          "details": [
+            "Banned tail construction in final sentence: \"...at as the only strong color against the muted haze\"",
+            "Banned tail construction in final sentence: \"...y visible, captured in a simple, restrained moment\""
+          ]
+        }
+      }
+    },
+    "T3.first_8_words_no_echo": {
+      "stage_a_fail_rate": 0.0098,
+      "stage_b_fail_rate": 0.0098,
+      "stage_c_fail_rate": 0.0098,
+      "stage_d_fail_rate": 0.0098,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 820,
+      "stage_d_scene_detail": {
+        "stress-negative-space": {
+          "fail_count": 2,
+          "sample_count": 5,
+          "details": [
+            "T3 first 8 words echo input (6/8 positional matches): \"a single red poppy rises from a vast\"",
+            "T3 first 8 words echo input (6/8 positional matches): \"a single red poppy rises from a vast\""
+          ]
+        }
+      }
+    },
+    "T4.char_count_under_325": {
+      "stage_a_fail_rate": 0.1122,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0.1122,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 820
+    },
+    "T4.min_10_words_per_sentence": {
+      "stage_a_fail_rate": 0.0146,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0.0146,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 820
+    },
+    "T4.no_banned_openers": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 820
+    },
+    "T4.no_meta_language": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 820
+    },
+    "T4.first_8_words_no_echo": {
+      "stage_a_fail_rate": 0.0293,
+      "stage_b_fail_rate": 0.0293,
+      "stage_c_fail_rate": 0.0293,
+      "stage_d_fail_rate": 0.0293,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 820,
+      "stage_d_scene_detail": {
+        "stress-pure-colour-palette": {
+          "fail_count": 1,
+          "sample_count": 5,
+          "details": [
+            "T4 first 8 words echo input (8/8 positional matches): \"deep cobalt blue, burnt orange, soft cream, pale\""
+          ]
+        },
+        "stress-negative-space": {
+          "fail_count": 5,
+          "sample_count": 5,
+          "details": [
+            "T4 first 8 words echo input (8/8 positional matches): \"a single red poppy stands in a vast\"",
+            "T4 first 8 words echo input (8/8 positional matches): \"a single red poppy stands in a vast\"",
+            "T4 first 8 words echo input (8/8 positional matches): \"a single red poppy stands in a vast\"",
+            "T4 first 8 words echo input (8/8 positional matches): \"a single red poppy stands in a vast\"",
+            "T4 first 8 words echo input (8/8 positional matches): \"a single red poppy stands in a vast\""
+          ]
+        }
+      }
+    }
+  },
+  "by_cluster": {
+    "subject_salience_loss": {
+      "fail_rate": 0.0244,
+      "contributing_rules": [
+        "T1.subject_highest_weight"
+      ],
+      "stage_d_fail_count": 5,
+      "rule_count": 1
+    },
+    "interaction_flattening": {
+      "fail_rate": 0,
+      "contributing_rules": [],
+      "stage_d_fail_count": 0,
+      "rule_count": 0
+    },
+    "paraphrase_echo_collapse": {
+      "fail_rate": 0.0089,
+      "contributing_rules": [
+        "T3.no_banned_phrases",
+        "T3.no_banned_tail_constructions",
+        "T3.first_8_words_no_echo",
+        "T4.no_banned_openers",
+        "T4.no_meta_language",
+        "T4.first_8_words_no_echo"
+      ],
+      "stage_d_fail_count": 11,
+      "rule_count": 6
+    },
+    "syntax_leak": {
+      "fail_rate": 0,
+      "contributing_rules": [
+        "T1.weight_syntax_correct",
+        "T1.weight_steps_0_1",
+        "T1.weight_wrap_4_words_max",
+        "T1.quality_prefix_present",
+        "T1.quality_suffix_present",
+        "T1.no_trailing_punctuation",
+        "T1.no_isolated_colour_weights",
+        "T2.ar_param_present",
+        "T2.v_param_present",
+        "T2.s_param_present",
+        "T2.weight_clauses_min_3",
+        "T2.no_mid_phrase_weights"
+      ],
+      "stage_d_fail_count": 0,
+      "rule_count": 12
+    },
+    "negative_handling_leak": {
+      "fail_rate": 0,
+      "contributing_rules": [
+        "T2.no_param_present",
+        "T2.no_exactly_once",
+        "T2.empty_negative_json_field"
+      ],
+      "stage_d_fail_count": 0,
+      "rule_count": 3
+    },
+    "value_add_filler": {
+      "fail_rate": 0,
+      "contributing_rules": [],
+      "stage_d_fail_count": 0,
+      "rule_count": 0
+    },
+    "tier_drift": {
+      "fail_rate": 0.0078,
+      "contributing_rules": [
+        "T1.comma_separated_format",
+        "T3.char_count_in_range",
+        "T3.sentence_count_2_to_3",
+        "T4.char_count_under_325",
+        "T4.min_10_words_per_sentence"
+      ],
+      "stage_d_fail_count": 8,
+      "rule_count": 5
+    },
+    "constraint_collision": {
+      "fail_rate": 0,
+      "contributing_rules": [],
+      "stage_d_fail_count": 0,
+      "rule_count": 0
+    }
+  },
+  "by_judge": null,
+  "metamorphic_stability": null,
+  "spot_audit": null,
+  "coverage_gaps": [
+    "T1.weight_syntax_correct: no scene in the library exercises this rule",
+    "T1.quality_suffix_present: no scene in the library exercises this rule",
+    "T1.comma_separated_format: no scene in the library exercises this rule",
+    "T1.no_trailing_punctuation: no scene in the library exercises this rule",
+    "T2.ar_param_present: no scene in the library exercises this rule",
+    "T2.v_param_present: no scene in the library exercises this rule",
+    "T2.s_param_present: no scene in the library exercises this rule",
+    "T2.no_param_present: no scene in the library exercises this rule",
+    "T2.no_mid_phrase_weights: no scene in the library exercises this rule",
+    "T3.char_count_in_range: no scene in the library exercises this rule",
+    "T3.no_banned_tail_constructions: no scene in the library exercises this rule",
+    "T3.first_8_words_no_echo: no scene in the library exercises this rule",
+    "T4.min_10_words_per_sentence: no scene in the library exercises this rule",
+    "T4.no_banned_openers: no scene in the library exercises this rule",
+    "T4.no_meta_language: no scene in the library exercises this rule",
+    "T4.first_8_words_no_echo: no scene in the library exercises this rule"
+  ],
+  "diff_vs_previous": {
+    "previous_version": "v4.5",
+    "current_version": "v6.0",
+    "rules_improved": [],
+    "rules_regressed": [],
+    "rules_unchanged": 27,
+    "clusters_improved": [],
+    "clusters_regressed": [],
+    "warnings": [
+      {
+        "type": "cleanup_introducing_failure",
+        "ruleId": "T3.char_count_in_range",
+        "message": "T3.char_count_in_range: Stage A improved but Stage D regressed — cleanup layer is introducing failures (Stage A delta -0.0100, Stage D delta +0.0244)"
+      }
+    ]
+  },
+  "holdout_run": null
+}

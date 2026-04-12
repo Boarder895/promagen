@@ -7,7 +7,11 @@
 //
 // v6.0: Phase B — T2 removed, content invention removed, 3-tier output.
 //   - T2 (Midjourney) section deleted from system prompt (moves to Call T2, Phase C)
+//   - P3 carve-out: "but not their original sentence position or opening order"
 //   - P4 rewritten: "do not preserve the user's wording" — anti-echo at precedence level
+//   - T3 LENGTH: enrichment licence (visual properties of existing elements, not new content)
+//   - T3 echo: restructuring recipe + simple-input WRONG/RIGHT (bookshop cat)
+//   - T4 echo: expanded to match T3 strength + simple-input WRONG/RIGHT
 //   - T3 EXPERT VALUE replaced: approved content only, no invented cues
 //   - T3 example block replaced with P1-compliant restructuring example
 //   - Zod ResponseSchema: tier2 dropped, 3-tier output (tier1, tier3, tier4)
@@ -246,7 +250,7 @@ Given a natural English description, generate 3 different prompt versions optimi
 PRECEDENCE LADDER — when any rules compete, resolve conflicts in this strict order:
 P1 (SYNTAX): Valid JSON. Correct weight syntax, parameter format, and structural skeleton for each tier. Syntax errors break the prompt — nothing else matters if syntax is wrong.
 P2 (NATIVE FEEL): Each tier must feel native to its platform family. T1 = clean weighted keywords. T2 = flowing prose with :: weights and --params. T3 = grammatical sentences from a visual director. T4 = plain language a casual user understands instantly.
-P3 (PRESERVE ANCHORS): Keep the user's primary subject, 3 strongest scene elements, spatial relationships, and emotional intent. Never drop the emotional layer — convert abstract emotions ("sacred silence", "fading glory") to visual equivalents a camera could capture. T1: one atmosphere keyword. T2: mood woven into descriptive prose (never as a standalone weighted abstract term). T3: feeling shown through sensory language. T4: one plain-language mood phrase.
+P3 (PRESERVE ANCHORS): Keep the user's primary subject, 3 strongest scene elements, spatial relationships, and emotional intent, but not their original sentence position or opening order. Never drop the emotional layer — convert abstract emotions ("sacred silence", "fading glory") to visual equivalents a camera could capture. T1: one atmosphere keyword. T2: mood woven into descriptive prose (never as a standalone weighted abstract term). T3: feeling shown through sensory language. T4: one plain-language mood phrase.
 P4 (RESTRUCTURE FOR PLATFORM): Rephrase, reorder, and regroup the approved content so it reads natively for that tier; preserve scene intent and approved anchors, but do not preserve the user's wording. Do not invent new positive elements, objects, actions, settings, or style cues. For T3 and T4, the opening must be freshly written and must not echo the user's first words or first clause. Source precedence: (1) human text, (2) user-typed gap-fill additions, (3) generated negatives (protective only).
 ${providerBlock}
 
@@ -282,13 +286,14 @@ ${t1SyntaxInstruction}
 
 TIER 3 — Natural Language (e.g., DALL·E, Adobe Firefly, Google Imagen):
 Write like an experienced visual director describing a shot, not like a prompt coach giving instructions.
-- LENGTH: 280–420 characters, 2–3 sentences. If your draft falls noticeably short or feels thin, do not pad with generic filler — enrich it with one concrete sensory, spatial, or lighting detail that sharpens the shot. Select the 4–5 most impactful visual elements — do not try to preserve everything from a long input.
+- LENGTH: 280–420 characters, 2–3 sentences. If your draft falls short, expand by describing VISUAL PROPERTIES of elements already present: light quality, shadow behaviour, surface texture, colour temperature, depth of field, spatial scale, atmospheric clarity, or physical response to existing conditions. These are observable consequences of the approved scene, not new content. Do NOT add new objects, people, animals, structures, settings, or style cues the user did not supply. For long inputs, keep only the 4–5 most visually important approved elements.
 - Convert negatives to positive reinforcement ("sharp and clear" not "no blur").
 - APPROVED CONTENT ONLY: Use only content from the user's description and their explicit category additions. Restructure, reorder, and convert abstract terms to visual equivalents — but do not add composition, lighting, atmosphere, or style cues not present in the approved inputs. Restructuring IS value-add: changing sentence architecture, leading with environment instead of subject, converting "quiet honour" to "the weight of years visible in weathered armour" — all permitted. Inventing a "low angle" or "cinematic wide-angle" the user never mentioned is NOT permitted.
-- FIRST SENTENCE MUST RESTRUCTURE, NOT REPEAT. This is the most common failure in this tier. Your opening MUST NOT begin with the same subject + location + time phrasing as the user's input. Count: if your first 8 words closely match the user's first 8 words, you are paraphrasing — STOP and rewrite from scratch. Lead with composition, time, or environment — then position the subject within it.
-  WRONG (input starts "A weathered lighthouse keeper stands on the rain-soaked gallery deck"): "A weathered lighthouse keeper stands on the rain-soaked gallery deck, gripping..." — this is the user's sentence with minor edits.
-  RIGHT: "From a low vantage on the storm-lashed coast, a lone figure grips the iron railing of a lighthouse gallery deck as twilight waves detonate against the rocks below..."
-  The RIGHT version restructures the spatial perspective, leads with composition, and repositions the subject within a new framing. The user's words are preserved as anchors but the sentence architecture is yours.
+- FIRST SENTENCE MUST RESTRUCTURE, NOT REPEAT. If the user's input begins with [article] [subject] [verb], do not keep that opening shape. Open instead with time, environment, atmosphere, composition, or another strong non-subject element, then place the subject after that opening clause. If no strong non-subject element exists, open with a visual property of the approved scene such as light direction, colour temperature, spatial scale, or air quality. Preserve the user's subject and specific verb, but not in the same opening position or wording. If your first 8 words closely match the user's first 8 words, stop and rewrite from scratch.
+  WRONG (input: "A cat sits on the windowsill of a cosy bookshop"):
+  "A cat sits on the windowsill of a cosy bookshop, watching the rain." — this repeats the user's opening.
+  RIGHT: "Inside a cosy bookshop under warm lamplight, a cat watches the rain from a crowded windowsill."
+  The RIGHT version leads with setting, repositions the subject after the opening clause, and preserves anchors without echoing the input's structure.
 - MOOD CONVERSION IS MANDATORY. If the input contains emotional language, convert it to visual equivalents — never drop it, never state it as meta-commentary. WRONG: "The mood is defiant solitude." RIGHT: "...alone against the driving white expanse, her flare the only warm colour in a world stripped to ice and wind."
 - BANNED PHRASES: "rendered as", "in the style of", "should feel like", "meant to look like", "designed to resemble", "intended to appear as", "the image should", "the scene feels", "the scene is", "the mood is", "that feels", "gives the scene". Integrate style as part of the scene itself.
 - BANNED TAIL CONSTRUCTIONS: Do NOT end with a detached style/rendering phrase appended after the scene is complete. Any sentence ending that uses "captured" followed by any word (in, with, like, as, through) is BANNED. Also banned: "shot with [style]", "all framed in [style]", "in cinematic [anything]" as a sentence-ending appendage. Style references must be WOVEN INTO the scene description, not bolted on at the end.
@@ -317,9 +322,10 @@ Plain does NOT mean flat. Keep it easy to understand, but still vivid.
 - Sentence 1: subject + action + one strong visual anchor. State the primary setting EXPLICITLY ("underwater", "in a dense forest", "on a stormy coast at twilight" — never imply it).
 - Sentence 2: environment detail + one of: motion (wind, drifting, sweeping), spatial depth (distant, towering, foreground/background), or atmospheric texture (mist, haze, glow). Without this, the output reads as a flat inventory.
 - SENTENCE OPENERS: Do NOT start any sentence with "It is" or "There is" — these are the flattest possible openers. Lead with the visual subject or a strong action.
-- DO NOT ECHO THE INPUT'S OPENING. Your first sentence must not reproduce the user's first 8 words in the same order. Restructure: lead with environment, time, or action instead.
-  WRONG (input starts "A weathered lighthouse keeper stands on the rain-soaked gallery deck at twilight"): "A weathered lighthouse keeper stands on a rain-soaked gallery deck at twilight, with storm waves crashing below." — this is the user's sentence with minor edits.
-  RIGHT: "At twilight on the rain-lashed coast, a lighthouse keeper grips the gallery railing as storm waves crash below."
+- DO NOT ECHO THE INPUT'S OPENING. Your first sentence must be freshly structured, not a light rewrite of the user's first clause. If the input starts with [article] [subject] [verb], begin with setting, time, atmosphere, or action context instead, then place the subject after that opening clause. If no clear setting or time exists, open with a visible property of the approved scene such as light, colour, scale, or air clarity. Keep the same subject and core action, but not in the same opening order. If your first 8 words land too close to the user's first 8 words, rewrite.
+  WRONG (input: "A cat sits on the windowsill of a cosy bookshop"):
+  "A cat sits on the windowsill of a cosy bookshop, looking out at the rain." — this echoes the user's opening.
+  RIGHT: "Inside a cosy bookshop, warm light falls across a windowsill where a cat watches the rain."
 - Every sentence MUST be at least 10 words.
 - ANCHOR TRIAGE — when space is tight, keep in this priority order, cut from the bottom:
   1. Subject + primary action (never cut)

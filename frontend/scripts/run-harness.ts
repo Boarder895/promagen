@@ -111,6 +111,7 @@ interface ParsedArgs {
   endpoint: string;
   concurrency: number;
   dryRun: boolean;
+  sceneFilter: string[] | null;
 }
 
 const DEFAULT_ENDPOINT = 'http://localhost:3000/api/dev/generate-tier-prompts';
@@ -128,6 +129,7 @@ function parseArgs(argv: readonly string[]): ParsedArgs {
     endpoint: DEFAULT_ENDPOINT,
     concurrency: 1,
     dryRun: false,
+    sceneFilter: null as string[] | null,
   };
 
   for (let i = 0; i < argv.length; i++) {
@@ -185,6 +187,12 @@ function parseArgs(argv: readonly string[]): ParsedArgs {
       case '--dry-run':
         args.dryRun = true;
         break;
+      case '--scenes':
+        args.sceneFilter = next().split(',').map((s) => s.trim()).filter(Boolean);
+        if (args.sceneFilter.length === 0) {
+          throw new Error('[run-harness] --scenes requires at least one scene ID');
+        }
+        break;
       case '--help':
       case '-h':
         printHelpAndExit(0);
@@ -219,6 +227,7 @@ function printHelpAndExit(code: number): never {
       `  --endpoint <url>              Default ${DEFAULT_ENDPOINT}`,
       '  --concurrency <n>             Parallel in-flight requests (default 1)',
       '  --dry-run                     Plan the run, refuse the OpenAI calls',
+      '  --scenes <ids>                Comma-separated scene IDs to run (default: all)',
       '  -h, --help                    Show this help and exit',
     ].join('\n'),
   );
@@ -377,12 +386,26 @@ async function main(): Promise<void> {
   info(`scenes loaded   : ${scenes.length}`);
   info(`samples / scene : ${cfg.samplesPerScene}`);
 
+  // ── Optional scene filter (--scenes flag) ──────────────────────────────────
+  let filteredScenes = scenes;
+  if (args.sceneFilter !== null) {
+    filteredScenes = scenes.filter((s) => args.sceneFilter!.includes(s.id));
+    const missing = args.sceneFilter.filter(
+      (id) => !scenes.some((s) => s.id === id),
+    );
+    if (missing.length > 0) {
+      warn(`--scenes: ${missing.length} IDs not found in library: ${missing.join(', ')}`);
+    }
+    if (filteredScenes.length === 0) {
+      fail('--scenes filter matched zero scenes. Check your scene IDs.');
+      process.exit(2);
+    }
+    info(`scene filter    : ${filteredScenes.length}/${scenes.length} scenes selected`);
+  }
+
   // ── Safety gate 3: dev_only scenes only allowed against the dev endpoint ──
-  // (We already enforce dev endpoint above. This gate is the belt to that
-  //  brace — if --endpoint somehow drifts in future, the dev_only count
-  //  surfaces visibly here.)
   const devOnlyAll = getDevOnlyScenes();
-  const devOnlyInRun = scenes.filter((s) => s.dev_only === true);
+  const devOnlyInRun = filteredScenes.filter((s) => s.dev_only === true);
   if (devOnlyInRun.length > 0) {
     info(`dev_only scenes : ${devOnlyInRun.length} (allowed against dev endpoint)`);
   } else {
@@ -390,8 +413,8 @@ async function main(): Promise<void> {
   }
 
   // ── Safety gate 4: total calls must not exceed --max-calls ────────────────
-  const totalCalls = scenes.length * cfg.samplesPerScene;
-  info(`total calls     : ${totalCalls} (${scenes.length} scenes × ${cfg.samplesPerScene} samples)`);
+  const totalCalls = filteredScenes.length * cfg.samplesPerScene;
+  info(`total calls     : ${totalCalls} (${filteredScenes.length} scenes × ${cfg.samplesPerScene} samples)`);
   if (totalCalls > args.maxCalls) {
     fail(`total calls ${totalCalls} exceeds --max-calls ${args.maxCalls}.`);
     fail('Either raise --max-calls explicitly or pick a smaller run class.');
@@ -403,7 +426,7 @@ async function main(): Promise<void> {
   // not a "this rule didn't fail" check. The runner is the only place that
   // knows which rules the scenes claim to exercise.
   const ruleIdsExercisedByScenes = new Set<string>();
-  for (const scene of scenes) {
+  for (const scene of filteredScenes) {
     for (const ruleId of scene.exercises_rules) {
       ruleIdsExercisedByScenes.add(ruleId);
     }
@@ -431,7 +454,7 @@ async function main(): Promise<void> {
   // Ctrl-C if something goes sideways.
   type WorkItem = { scene: Scene; sampleIndex: number };
   const queue: WorkItem[] = [];
-  for (const scene of scenes) {
+  for (const scene of filteredScenes) {
     for (let s = 0; s < cfg.samplesPerScene; s++) {
       queue.push({ scene, sampleIndex: s });
     }
@@ -514,7 +537,7 @@ async function main(): Promise<void> {
     harnessVersion: HARNESS_VERSION,
     modelVersion: modelVersionSeen,
     runTimestamp: runStartedAtIso,
-    sceneCount: scenes.length,
+    sceneCount: filteredScenes.length,
     samplesPerScene: cfg.samplesPerScene,
     wallClockSeconds,
     samples,
