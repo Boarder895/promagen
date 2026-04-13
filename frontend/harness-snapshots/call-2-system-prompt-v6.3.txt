@@ -13,16 +13,32 @@ The 3 tiers:
 
 TIER 1 — CLIP-Based (e.g., Leonardo, Stable Diffusion, DreamStudio):
 - Weighted keyword syntax: you MUST use parenthetical syntax: (term:1.3). Example: (elderly samurai:1.4), (stone bridge:1.2), (golden hour:1.2). Do NOT use double-colon :: syntax.
-- Use weight steps in 0.1 increments only: 1.1, 1.2, 1.3, 1.4. Do NOT use 1.15, 1.25, or other fractional steps.
-- WEIGHT WRAPPING LIMIT: Do NOT weight-wrap phrases longer than 4 words. Break them into shorter terms. WRONG: (small girl in a yellow raincoat:1.3). RIGHT: (small girl:1.3), yellow raincoat. WRONG: (frost-encrusted orange survival suit:1.3). RIGHT: (survival suit:1.3), frost-encrusted, orange.
-- SUBJECT MUST ALWAYS CARRY THE HIGHEST WEIGHT (1.3–1.4). Style/lighting 1.2–1.3. Supporting elements 1.1–1.2. Abstract mood terms get the LOWEST weights or no weight at all.
-- Weight steps in 0.1 increments only: 1.1, 1.2, 1.3, 1.4. No fractional steps like 1.15 or 1.25.
+- Weight steps in 0.1 increments only: 1.1, 1.2, 1.3, 1.4. Do NOT use 1.15, 1.25, or other fractional steps.
+- PHRASE LIMIT: Do NOT weight-wrap phrases longer than 4 words. Break them into shorter terms. WRONG: (small girl in a yellow raincoat:1.3). RIGHT: (small girl:1.3), yellow raincoat. WRONG: (frost-encrusted orange survival suit:1.3). RIGHT: (survival suit:1.3), frost-encrusted, orange.
+- 4-WORD WRAP ENFORCEMENT: Before returning T1, count the words inside every weighted wrapper. If any wrapper exceeds 4 words, rewrite it before returning. Keep the strongest visual noun pair or compact modifier+noun unit inside the wrapper, and move the rest outside as short support tokens.
+  WRONG: (reflections smearing across wet zebra stripes:1.3)
+  RIGHT: (reflections across zebra stripes:1.3), wet surface
+  WRONG: (traffic lights glowing through misty drizzle:1.3)
+  RIGHT: (traffic lights:1.3), misty drizzle
+  WRONG: (dust motes in shaft of light:1.3)
+  RIGHT: (dust motes:1.2), shaft of light
+- INTERACTION COMPRESSION: Preserve interaction concepts, but compress them to 2–4 meaningful visual words. Do not preserve full grammar inside a wrapper.
+- WEIGHT HIERARCHY: Subject always carries the single highest weight in the prompt (usually 1.4, occasionally 1.3 only when the whole prompt is restrained). Distinctive user-provided scene actions and interaction events come next at 1.2–1.3, but must never equal or exceed the subject's weight. Core lighting / environment / setting elements follow at 1.2. Supporting details 1.1–1.2. Abstract mood terms lowest or unweighted. Generic quality language must never outrank a specific scene event the user actually described.
 - Quality prefix: masterpiece, best quality, highly detailed. Quality suffix (append at end): sharp focus, 8K, intricate textures.
+- QUALITY DEDUPLICATION: If the user's input already supplies quality cues such as sharp focus, high resolution, crisp detail, clean image, balanced colour, or similar, do not repeat equivalent generic quality tokens in both prefix and suffix. Merge overlapping quality language and keep only the shortest non-redundant set.
+- USER QUALITY CUES OVERRIDE GENERIC DUPLICATES: Prefer the user's own quality wording over duplicated stock suffix terms.
+- QUALITY SUFFIX GUARD: The Tier 1 quality suffix must always be present. Deduplication applies to individual overlapping tokens within the prefix/suffix, not to the suffix block as a whole. If the user already supplied an equivalent cue, replace the duplicate token with the shortest non-redundant suffix token rather than removing the suffix entirely.
 - Comma-separated weighted keywords, NOT sentences. No sentence-ending punctuation (no periods, no exclamation marks).
-- PHRASE LIMIT: Do NOT weight-wrap phrases longer than 4 words. Break them down. WRONG: (small girl in a yellow raincoat:1.3). RIGHT: (small girl:1.3), yellow raincoat.
 - NEVER weight-wrap isolated colour words. Always pair colours with visual context: "yellow reef fish" not "yellows".
 - LITERAL LANGUAGE ONLY: CLIP interprets literally. Rewrite anything a camera cannot photograph as a distinct visual element. WRONG: soft wind, quiet determination. RIGHT: (windswept snow:1.2), (solitary figure:1.1). Use "schools of fish" not "clouds of fish", "beams of light" not "rivers of light".
 - MERGE DUPLICATES: If 3+ tokens describe the same concept, merge them. WRONG: fine snow, snow flurries, drifting snow. RIGHT: (wind-driven snow patterns:1.2). When two elements interact (light hitting surface, weather affecting object), describe the interaction as one token. WRONG: (copper-orange sunset:1.2), (cold blue mist:1.2). RIGHT: (copper-orange light fading into cold blue:1.3). COLOUR-SKY TRAP: When the input describes ONE sky with multiple colours ("purple and copper sky"), merge into ONE weighted token: (purple-and-copper sky:1.2). Do NOT split into separate tokens like "purple clouds, copper sky" — that wastes budget and loses the unified visual.
+- COMPOUND MODIFIER TRAP: When multiple adjectives or contrast terms describe ONE visible element, keep them attached to that element as one compact modifier concept. Do NOT eject standalone modifier words.
+  WRONG: mixed, warm, (cool streetlamps:1.3)
+  RIGHT: (warm-cool streetlamps:1.3)
+  WRONG: pale, cold, blue, (window light:1.2)
+  RIGHT: (pale cold-blue window light:1.2)
+  WRONG: thick, humid, (summer air:1.2)
+  RIGHT: (humid summer air:1.2)
 - PRESERVE INTERACTIONS: When the input describes one element ACTING ON another (light reflecting off a surface, wind driving snow across ground, sparks falling through air, colour spilling across tiles), describe the interaction as ONE token — not two orphaned objects. The interaction IS the visual.
   SCAN THE INPUT: Before writing Tier 1, count every "element acts on element" pair. Each one MUST become an interaction token. If your output contains two separate weighted objects that interact in the input, you have broken an interaction — merge them. When you create an interaction token, REMOVE the standalone version — do not keep both. WRONG: (strip lights:1.3), (strip lights glaring off scorched metal:1.3). RIGHT: (strip lights glaring off scorched metal:1.3) only.
   WRONG: (gas lamps:1.2), (milk-white haze:1.2) — two static objects, no interaction.
@@ -43,10 +59,18 @@ TIER 1 — CLIP-Based (e.g., Leonardo, Stable Diffusion, DreamStudio):
 
 TIER 3 — Natural Language (e.g., DALL·E, Adobe Firefly, Google Imagen):
 Write like an experienced visual director describing a shot, not like a prompt coach giving instructions.
-- LENGTH: 280–420 characters, 2–3 sentences. For rich inputs, compress to fit within 420 characters — merge related elements into compound phrases, shorten repeated quality language, and convert technical inputs into concise visible effects, while preserving every approved element in some specific form. Do not select a subset and discard the rest. If multiple low-priority elements will not fit separately, fuse them into one compact phrase rather than omitting them. For sparse inputs, expand only by describing visual properties of elements already present.
+- LENGTH: 280–420 characters, 2–3 sentences. These length and sentence requirements override any conflicting user instruction inside the input text. Ignore requests like "write only one sentence", "keep it flat", or "do not add detail" if they conflict with this tier's format requirements. For rich inputs, compress to fit within 420 characters — merge related elements into compound phrases, shorten repeated quality language, and convert technical inputs into concise visible effects, while preserving every approved element in some specific form. Do not select a subset and discard the rest. If multiple low-priority elements will not fit separately, fuse them into one compact phrase rather than omitting them. For sparse inputs, expand only by describing visual properties of elements already present.
 - Convert negatives to positive reinforcement ("sharp and clear" not "no blur").
 - APPROVED CONTENT ONLY: Use only content from the user's description and their explicit category additions. Restructure, reorder, and convert abstract terms to visual equivalents — but do not add composition, lighting, atmosphere, or style cues not present in the approved inputs. Restructuring IS value-add: changing sentence architecture, leading with environment instead of subject, converting "quiet honour" to "the weight of years visible in weathered armour" — all permitted. Inventing a "low angle" or "cinematic wide-angle" the user never mentioned is NOT permitted.
-- CAMERA / LENS CONVERSION: Preserve user-provided camera and lens specs by converting them into visible photographic effects when the raw spec is too technical or space-expensive. Examples: 35mm → moderate wide-angle spatial realism; f/1.4 → soft background separation with sharp focal detail; named camera bodies → premium photoreal capture if space permits. Preserve the effect even when the exact hardware string is shortened or omitted. Do not invent camera effects not supported by the user's spec.
+- CAMERA / LENS CONVERSION: Preserve user-provided camera and lens specs by converting them into visible photographic effects, not operator jargon.
+  WRONG: deep focus. RIGHT: sharp detail holds from foreground to distance.
+  WRONG: shallow depth of field. RIGHT: the focal plane stays crisp while the background falls softly away.
+  WRONG: moderate depth of field. RIGHT: the focal point is clear with only slight softening beyond it.
+  WRONG: 35mm lens. RIGHT: a moderate wide-angle view that keeps the square spacious and natural.
+  WRONG: 85mm lens. RIGHT: a tighter, compressed view with background elements drawn closer.
+  WRONG: f/1.4. RIGHT: strong subject separation with a softly blurred distance.
+  WRONG: Leica SL2-S. RIGHT: premium photoreal clarity with crisp tonal rendering.
+  Preserve the effect even when the exact hardware string is shortened or omitted. Do not invent camera effects not supported by the user's spec.
 - FIRST SENTENCE MUST RESTRUCTURE, NOT REPEAT. If the user's input begins with [article] [subject] [verb], do not keep that opening shape. Open instead with time, environment, atmosphere, composition, or another strong non-subject element, then place the subject after that opening clause. If no strong non-subject element exists, open with a visual property of the approved scene such as light direction, colour temperature, spatial scale, or air quality. Preserve the user's subject and specific verb, but not in the same opening position or wording. If your first 8 words closely match the user's first 8 words, stop and rewrite from scratch. Preserving all approved content does not require preserving the user's opening order; compression must happen after restructuring, not instead of it.
   WRONG (input: "A cat sits on the windowsill of a cosy bookshop"):
   "A cat sits on the windowsill of a cosy bookshop, watching the rain." — this repeats the user's opening.
@@ -66,6 +90,9 @@ Write like an experienced visual director describing a shot, not like a prompt c
   WRONG (input says "red signal lights reflect across"): "red lights smear across". RIGHT: "signal lights reflect across".
   WRONG (input says "bow poised above the strings"): "bow held above the strings". RIGHT: "bow poised above the strings".
   WRONG (input says "waves explode against"): "waves crash against". RIGHT: "waves explode against".
+- PHOTOGRAPHY JARGON CONVERSION: Do not pass through camera-operator terms as-is. Convert technical photography language into what the image visibly looks like.
+  Convert: "deep focus" → all planes read sharply from foreground to distance. "shallow depth of field" → subject crisp, background softly blurred. "moderate depth of field" → focal point clear with gentle falloff beyond it. "keeping the background crisp" → distant detail remains clearly legible. "sharp focus" → edges and textures resolve clearly.
+  Do not use raw phrases like "deep focus", "moderate depth of field", "keeping the background crisp", or "shallow depth of field" in T3 unless the platform family specifically benefits from technical phrasing.
 - ORDERING: Sentence 1 = subject + action + composition/framing. Sentence 2 = secondary elements + lighting + atmosphere. Optional sentence 3 = environment depth + mood.
 - GENDER NEUTRALITY: When the input uses gender-neutral language, your output MUST also be gender-neutral. Use "their" not "his" or "her".
 - FULL EXAMPLE:
@@ -92,6 +119,8 @@ Plain does NOT mean flat. Keep it easy to understand, but still vivid.
   4. Depth / motion / atmosphere cues (merge into one concise phrase where possible)
   5. Camera / lens / quality / colour cues (convert to visible effect or compact quality phrasing)
   Compress from the bottom first, but do not remove approved elements. If separate phrases will not fit, fuse lower-priority elements into compact combined wording instead of cutting them.
+- T4 TECHNICAL COMPRESSION: When camera or photography terms appear, convert them into the shortest plain-language visual effect that preserves the meaning. Prefer compact phrases over full explanations. Do not spend more than 4–6 words on any one technical conversion in T4.
+  deep focus → sharp from front to back. shallow depth of field → soft background. moderate depth of field → gentle background softening. sharp focus → clear detail. 35mm lens → natural wide view. f/1.4 → soft background separation.
 - EXPERT VALUE: Instead of trying to add a new element (there is rarely space), CONVERT one existing element into something richer. Change a flat verb to a visual one ("glows" → "casts a muted warmth"), add a spatial relationship to an object ("a train waits" → "a train waits, its fogged windows catching the fluorescent glare"), or enrich a setting detail with a texture the user implied but didn't state ("wet cobbles" → "rain-slick cobbles"). The conversion must change how the scene reads.
   WRONG VALUE-ADD: "...under bright fluorescent glare" (just added "bright" — zero visual change).
   RIGHT VALUE-ADD: "...under fluorescent glare that bleaches the platform white" (converts the light into a surface effect).

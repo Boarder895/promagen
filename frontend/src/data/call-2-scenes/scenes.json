@@ -2,7 +2,7 @@
   "schema_version": "1.1.0",
   "generated_from": "call-2-harness-scenes-brief-completed.xlsx",
   "generated_at": "2026-04-10",
-  "count": 41,
+  "count": 42,
   "scenes": [
     {
       "id": "lighthouse-keeper-canonical",
@@ -1300,6 +1300,64 @@
       "holdout": false,
       "status": "approved",
       "tag_provenance": "manual"
+    },
+    {
+      "id": "trafalgar-square-12-category",
+      "category": "canonical",
+      "concept": "Dense 12-category urban night scene with weather, camera specs, and technical photography terms",
+      "input": "London South-westerly 15 km/h breeze, dust skittering across flagstones in Trafalgar Square, in photorealistic, Mixed warm and cool streetlamps on wet pavement in softly diffused air., humid summer night thickness, 10 PM, deep focus landscape, wide open-square scene, pavement-to-facade depth, moderate depth of field with background in sharp focus, 35mm lens, Shot on Leica SL2-S, 35mm f/1.4, sharp focus and high resolution and professional photography, sharp focus, clean image, unmarked, balanced colors",
+      "tags": [
+        "weather",
+        "urban",
+        "night",
+        "lighting",
+        "camera-specs",
+        "lens",
+        "atmosphere",
+        "technical",
+        "dense-input",
+        "12-category"
+      ],
+      "exercises_clusters": [
+        "content_fidelity_loss",
+        "tier_drift",
+        "syntax_leak"
+      ],
+      "exercises_rules": [
+        "T3.input_element_coverage",
+        "T4.input_element_coverage",
+        "T1.weight_wrap_4_words_max",
+        "T3.char_count_in_range",
+        "T1.subject_highest_weight"
+      ],
+      "perturbation_seeds": [
+        "remove-camera-specs",
+        "remove-weather",
+        "simplify-to-3-categories"
+      ],
+      "holdout": false,
+      "status": "approved",
+      "tag_provenance": "manual",
+      "expected_elements": [
+        "south-westerly breeze",
+        "dust skittering",
+        "flagstones",
+        "Trafalgar Square",
+        "warm streetlamps",
+        "cool streetlamps",
+        "wet pavement",
+        "diffused air",
+        "humid summer night",
+        "10 PM",
+        "deep focus",
+        "wide open square",
+        "pavement-to-facade depth",
+        "background in sharp focus",
+        "35mm lens",
+        "Leica SL2-S",
+        "f/1.4",
+        "balanced colors"
+      ]
     }
   ],
   "cluster_schema_version": "v1",
