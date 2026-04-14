@@ -1,0 +1,142 @@
+{
+  "schema_version": "1.0.0",
+  "authority": "api-call-2-v2_1_0.md §7",
+  "purpose": "Hand-written reference T1/T3/T4 outputs verified against image generation. When a sub-aim is borderline, compare harness output against these to distinguish measurement error from real quality fault.",
+  "scenes": [
+    {
+      "scene_id": "lighthouse-keeper-canonical",
+      "concept": "Single character on dramatic weather scene with layered lighting",
+      "gold_standard": {
+        "tier1": {
+          "text": "(weathered lighthouse keeper:1.4), (rain-soaked gallery deck:1.3), (twilight storm:1.3), (iron railing:1.1), (enormous waves crashing jagged rocks:1.2), (salt spray:1.1), (purple-and-copper sky:1.2), (pale gold lighthouse beam:1.2), (driving rain:1.1), (distant fishing village warm orange windows:1.1), (dark cliffs:1.0), masterpiece, best quality, cinematic wide-angle, highly detailed, sharp focus, 8k",
+          "reasoning": "Subject highest at 1.4. Scene-defining elements (storm, sky, beam) at 1.2-1.3. Supporting details (railing, spray, cliffs) at 1.0-1.1. Quality tokens last and never above scene content — trimmed to 6 core tokens (masterpiece, best quality, cinematic wide-angle, highly detailed, sharp focus, 8k). No duplicate quality families. Purple-and-copper sky preserved exactly. Interaction preserved: waves crashing jagged rocks kept as one phrase.",
+          "char_count": 404
+        },
+        "tier3": {
+          "text": "Rain hammers the iron gallery of a coastal lighthouse where a weathered keeper grips the railing, storm waves detonating against jagged rocks far below as salt spray climbs into a purple-and-copper twilight. The beam sweeps a pale gold arc through sheets of rain while a distant fishing village glows with warm orange windows against dark cliffsides, the whole scene framed in low cinematic width.",
+          "reasoning": "Opens with weather action, not the subject — restructured from input. Subject arrives in the first clause but not in the input's opening position. Every critical anchor survives: keeper, railing, waves, rocks, spray, sky colour, beam, village, windows, cliffs. Compression: 'enormous storm waves crash against the jagged rocks below' → 'storm waves detonating against jagged rocks far below' — same meaning, stronger verb, fewer words. No meta-commentary. No banned phrases. 2 sentences.",
+          "char_count": 390
+        },
+        "tier4": {
+          "text": "A weathered lighthouse keeper stands gripping an iron railing as huge storm waves smash into jagged rocks below. Salt spray rises into a purple-and-copper sky while the lighthouse beam cuts through heavy rain, and a small fishing village glows with tiny orange windows against dark cliffs in the distance.",
+          "reasoning": "Every word is plain language a casual user would understand. No camera terms, no jargon, no technical language. Purple-and-copper sky preserved — it is the user's specific creative choice, not technical jargon. Compression: removed 'gallery deck' (casual users may not know what this is) but kept every other visual anchor. 2 sentences, under 325 chars.",
+          "char_count": 302
+        }
+      },
+      "image_expectation": "Dramatic low-angle coastal scene at twilight. Weathered figure gripping railing. Massive storm waves hitting rocks. Purple-copper sky. Gold lighthouse beam cutting through rain. Tiny warm village lights in distance against dark cliffs.",
+      "platform_test_targets": {
+        "T1": "Leonardo, Flux, Stability",
+        "T3": "DALL-E, Ideogram",
+        "T4": "Canva, Runway"
+      }
+    },
+    {
+      "scene_id": "trafalgar-square-12-category",
+      "concept": "Dense 12-category urban night scene with weather, camera specs, and technical photography terms",
+      "gold_standard": {
+        "tier1": {
+          "text": "(Trafalgar Square night:1.4), (wet flagstones dust skittering:1.3), (warm and cool streetlamps:1.3), (wet pavement reflections:1.2), (humid summer air:1.2), (softly diffused atmosphere:1.1), (wide open square:1.1), masterpiece, best quality, photorealistic, highly detailed, sharp focus, 8k",
+          "reasoning": "Subject (Trafalgar Square night) highest at 1.4. Camera specs STRIPPED: no '35mm lens', no 'Leica SL2-S', no 'f/1.4', no 'ISO' — CLIP cannot use these. The VISUAL EFFECTS they produce (wide view, sharpness, depth) are expressed through the quality suffix and scene framing instead. Quality suffix trimmed to 6 core tokens — no duplicate families. 'South-westerly 15 km/h breeze' converted to the visual result: 'dust skittering'. 'balanced colors' dropped — redundant with quality tokens.",
+          "char_count": 290
+        },
+        "tier3": {
+          "text": "Dust skitters across wet flagstones in Trafalgar Square under a humid summer night sky, warm and cool streetlamps painting overlapping pools on glistening pavement while softly diffused air thickens the space between buildings. The wide open square stretches with sharp depth from rain-slicked stone to distant facades, every surface catching the mixed lamplight with pristine detail and natural tonal richness.",
+          "reasoning": "Opens with action (dust skittering), not the location — restructured. All visual elements survive. Technical conversions: 'south-westerly 15 km/h' → removed (the dust skittering IS the breeze). '35mm lens' → expressed as 'wide open square stretches'. 'Leica SL2-S' → 'pristine detail and natural tonal richness' (what a Leica produces, not what it is). 'f/1.4' → implicit in 'sharp depth from stone to facades'. 'deep focus' → 'sharp depth from rain-slicked stone to distant facades'. No raw jargon survives. 2 sentences, 405 chars.",
+          "char_count": 405
+        },
+        "tier4": {
+          "text": "Dust blows across wet stone in Trafalgar Square on a warm summer night. Streetlamps cast warm and cool light on the glistening pavement while the thick humid air softens everything in the distance. The wide square stretches sharply from the wet ground to the buildings far away, every detail crisp and clear.",
+          "reasoning": "Zero jargon. Zero camera terms. Zero measurements. Every technical spec converted to what the casual user would SEE: 'deep focus' → 'sharply from wet ground to buildings far away'. 'Leica' → 'every detail crisp and clear'. 'f/1.4' → not mentioned (conflicted with deep focus anyway). 'south-westerly 15 km/h' → 'dust blows'. Plain, vivid, under 325 chars.",
+          "char_count": 308
+        }
+      },
+      "image_expectation": "Night scene in Trafalgar Square. Wet flagstones. Mixed warm/cool streetlamp light reflecting on pavement. Humid atmospheric haze. Sharp detail throughout. Wide composition showing the full square.",
+      "platform_test_targets": {
+        "T1": "Leonardo, Flux, Stability",
+        "T3": "DALL-E, Ideogram",
+        "T4": "Canva, Runway"
+      }
+    },
+    {
+      "scene_id": "rainy-bookstore-window-cat",
+      "concept": "Cosy interior with multiple subjects — interaction preservation test",
+      "gold_standard": {
+        "tier1": {
+          "text": "(cat on windowsill:1.4), (cosy bookshop interior:1.3), (rainy street outside:1.2), (amber lamplight:1.2), (stacked novels worn shelves:1.1), (steaming mug:1.1), (blurred headlights umbrellas:1.0), masterpiece, best quality, intimate interior, highly detailed, sharp focus, 8k, warm tones",
+          "reasoning": "Subject (cat on windowsill) highest at 1.4. The cat-windowsill interaction is kept as one phrase — never split. Interior warmth elements grouped. Outside elements at lowest scene weight. Interaction preserved: 'staring out at the rainy street' is implicit in 'rainy street outside' plus the windowsill position. 'Quietly inviting' is mood — expressed through quality suffix 'warm tones' not as a literal.",
+          "char_count": 318
+        },
+        "tier3": {
+          "text": "Amber lamplight pools across stacked novels and worn wooden shelves inside a second-hand bookshop where a cat sits watching the rainy street from the windowsill, a steaming mug beside the glass catching the glow. Beyond the window, blurred headlights and umbrellas drift through the wet evening while everything inside remains still and sheltered.",
+          "reasoning": "Opens with the interior atmosphere (lamplight), not the cat — restructured from input. Cat arrives naturally in the first sentence. Key interaction preserved: cat watching rain from windowsill (not 'cat' + 'windowsill' + 'rain' as separate fragments). Interior/exterior contrast maintained: warm inside, wet outside. 'Quietly inviting' converted to visual: 'still and sheltered'. 2 sentences, 346 chars.",
+          "char_count": 346
+        },
+        "tier4": {
+          "text": "A cat watches the rainy street from the windowsill of a warm old bookshop. Golden lamplight falls over stacked books and worn shelves while a hot drink steams beside the glass. Outside, car lights and umbrellas blur in the wet evening, but inside everything feels still and cosy.",
+          "reasoning": "Every word plain. 'Second-hand bookshop' → 'warm old bookshop'. 'Amber lamplight' → 'golden lamplight'. 'Steaming mug' → 'hot drink steams'. All interactions preserved in natural language. The inside/outside contrast is clear without any technical framing. 3 sentences, 278 chars.",
+          "char_count": 278
+        }
+      },
+      "image_expectation": "Interior scene. Cat on windowsill looking out at rain. Warm amber light. Old bookshop with stacked books. Steaming mug. Rainy street visible through window with blurred lights.",
+      "platform_test_targets": {
+        "T1": "Leonardo, Flux",
+        "T3": "DALL-E, Ideogram",
+        "T4": "Canva, Runway"
+      }
+    },
+    {
+      "scene_id": "astronaut-floating-earth-view",
+      "concept": "Iconic isolated subject, vast background — anchor triage extreme",
+      "gold_standard": {
+        "tier1": {
+          "text": "(astronaut EVA tether:1.4), (Earth curve below:1.3), (extended gloved hand:1.2), (cloud bands oceans:1.2), (thin atmosphere glow:1.1), (sun glare across visor:1.2), (hard white highlights on suit:1.1), (vast black space:1.1), masterpiece, best quality, wide orbital view, highly detailed, sharp focus, 8k",
+          "reasoning": "Subject (astronaut on tether) highest at 1.4. Earth and its features at 1.2-1.3. Light interactions (sun glare on visor, highlights on suit) kept as paired phrases — never split. 'Immense isolation' is mood, expressed through 'vast black space' not as a literal. Scale conveyed by 'Earth curve below' and 'wide orbital view'.",
+          "char_count": 347
+        },
+        "tier3": {
+          "text": "High above the curving Earth, an astronaut drifts at the end of an EVA tether with one gloved hand reaching into open space, cloud bands and ocean blue filling the immense planet below. Sun glare flashes hard across the visor while the suit catches sharp white highlights against the surrounding blackness, the thin atmospheric glow edging the horizon beneath them.",
+          "reasoning": "Opens with scale (high above the curving Earth), not the subject — restructured. Subject arrives immediately in the first clause. Interaction preserved: 'sun glare flashes across the visor' (light-on-surface). 'Immense' used for the planet, conveying scale without being a standalone mood word. Atmospheric glow as the visual horizon detail. 2 sentences, 361 chars.",
+          "char_count": 361
+        },
+        "tier4": {
+          "text": "An astronaut floats on a tether high above Earth, one gloved hand stretched out into the darkness. The blue planet fills the view below with clouds and oceans while sunlight flashes off the helmet visor and the white spacesuit stands out against pure black space.",
+          "reasoning": "Zero jargon. 'EVA tether' → 'tether'. 'Atmosphere glow' → implicit in the scene. Every visual anchor present. The scale comes through naturally: 'high above Earth', 'fills the view below', 'pure black space'. 2 sentences, 263 chars.",
+          "char_count": 263
+        }
+      },
+      "image_expectation": "Astronaut on tether above Earth. Extended gloved hand. Earth fills background with clouds and oceans. Sun glare on visor. White suit highlights. Vast black space surrounding.",
+      "platform_test_targets": {
+        "T1": "Leonardo, Flux, Stability",
+        "T3": "DALL-E, Ideogram",
+        "T4": "Canva, Runway"
+      }
+    },
+    {
+      "scene_id": "deep-sea-diver-with-coral",
+      "concept": "Colour-rich underwater scene, action, depth — colour weight rule test",
+      "gold_standard": {
+        "tier1": {
+          "text": "(scuba diver reaching coral:1.4), (vibrant coral reef:1.3), (clear tropical water:1.2), (shafts of sunlight from surface:1.2), (schools of small fish:1.1), (blue depth:1.1), (saturated reds golds violets turquoise:1.2), masterpiece, best quality, wide underwater view, highly detailed, sharp focus, 8k",
+          "reasoning": "Subject (diver reaching coral) highest at 1.4 — interaction preserved as one phrase. Colours grouped as one weighted phrase at 1.2 (not four separate colour weights which would waste budget and violate the isolated-colour-weights rule). 'Branching coral' merged into 'vibrant coral reef' to save tokens. 'Flickering fish' simplified to 'schools of small fish'. Blue depth at 1.1 — supports the scene but doesn't compete with subject.",
+          "char_count": 340
+        },
+        "tier3": {
+          "text": "Shafts of sunlight angle down through clear tropical water onto a vibrant coral reef where a diver reaches one hand toward a wall of branching coral, schools of small fish flickering through the blue depth around them. The reef glows with saturated reds, golds, violets and turquoise while the diver remains the sharpest figure in the wide underwater frame.",
+          "reasoning": "Opens with light (sunlight through water), not the diver — restructured. Diver arrives in the first sentence. Key interaction: 'diver reaches toward coral' preserved as one action. Colour list preserved exactly as the user wrote it — these are specific creative choices, not generic terms. 'Without losing the diver as the main subject' converted to 'the diver remains the sharpest figure'. 2 sentences, 356 chars.",
+          "char_count": 356
+        },
+        "tier4": {
+          "text": "A scuba diver glides alongside a colourful coral reef in clear tropical water, reaching one hand toward the coral as sunlight streams down from the bright surface above. Small fish dart through the blue water around them, and the reef glows with vivid reds, golds, purples and turquoise.",
+          "reasoning": "'Vibrant' → 'colourful'. 'Shafts of sunlight angle down' → 'sunlight streams down'. 'Branching coral' → 'coral' (casual users don't need the detail). 'Violets' → 'purples' (more accessible word). 'Flickering' → 'dart' (simpler verb). Every visual anchor present. 2 sentences, 286 chars.",
+          "char_count": 286
+        }
+      },
+      "image_expectation": "Underwater scene. Diver reaching toward coral reef. Sunlight beams from above. Colourful coral (reds, golds, violets, turquoise). Small fish. Clear blue water. Diver is the focal subject.",
+      "platform_test_targets": {
+        "T1": "Leonardo, Flux",
+        "T3": "DALL-E, Ideogram",
+        "T4": "Canva, Runway"
+      }
+    }
+  ]
+}

@@ -1,0 +1,249 @@
+{
+  "schema_version": "1.0.0",
+  "authority": "api-call-2-v2_1_0.md §8",
+  "purpose": "Fixed-rubric scoring protocol for manual quality assessment. Each criterion has concrete descriptions of what a 9, 5, and 2 look like. Used on gold-standard scenes to calibrate harness accuracy.",
+  "scoring_rules": {
+    "method": "Score each criterion independently on the scale below. Do not adjust for scene difficulty — the scene-class separator handles that.",
+    "scale": "1-10 per criterion. 9 = excellent, 5 = mediocre, 2 = failing.",
+    "assessors": "Minimum dual assessment (Claude + ChatGPT). Three-assessor (+ Grok) for system-wide changes.",
+    "comparison": "Always compare against the gold-standard reference output for that scene. If the harness output matches the reference, the harness is scoring too harshly (measurement_failure). If it deviates clearly, it is a real quality fault."
+  },
+  "aim_rubrics": [
+    {
+      "aim_id": "aim_1",
+      "aim_name": "Preserve approved content",
+      "criteria": [
+        {
+          "id": "aim1_critical_anchor",
+          "name": "Critical anchor survival",
+          "max_score": 10,
+          "rubric": {
+            "9": "Every named subject, action, and primary setting element appears in recognisable form. Nothing important is missing.",
+            "5": "Subject and primary setting survive, but 1-2 secondary elements are missing or vaguely summarised.",
+            "2": "Subject is present but multiple scene-defining elements are gone or replaced with generic language."
+          }
+        },
+        {
+          "id": "aim1_compression",
+          "name": "Compression quality",
+          "max_score": 10,
+          "rubric": {
+            "9": "Compressed elements retain their specific meaning. 'Purple-and-copper sky' becomes 'warm-toned evening sky', not 'colourful sky'.",
+            "5": "Some compressions are specific, others are vague umbrella phrases that lose the original detail.",
+            "2": "Compression turned specific content into generic mush. Multiple elements lost their identity."
+          }
+        },
+        {
+          "id": "aim1_technical_survival",
+          "name": "Technical-term survival",
+          "max_score": 10,
+          "rubric": {
+            "9": "Every camera/lens/focus spec survives as either the raw term (T1) or a valid visual conversion (T3/T4). No specs are simply dropped.",
+            "5": "Most specs survive but 1-2 were dropped entirely or survived as awkward raw jargon in the wrong tier.",
+            "2": "Multiple specs dropped or leaked as raw jargon where they don't belong."
+          }
+        }
+      ],
+      "total_possible": 30,
+      "pass_line": 24
+    },
+    {
+      "aim_id": "aim_2",
+      "aim_name": "Match native platform family format",
+      "criteria": [
+        {
+          "id": "aim2_t1_nativeness",
+          "name": "T1 nativeness",
+          "max_score": 10,
+          "rubric": {
+            "9": "Reads like a professional CLIP prompt. Clean weighted keywords, no prose, no orphans, no wasted tokens.",
+            "5": "Structure is right but contains some orphaned words, redundant quality terms, or non-visual literals.",
+            "2": "Contains prose fragments, sentence-like structures, or significant wasted budget."
+          }
+        },
+        {
+          "id": "aim2_t3_nativeness",
+          "name": "T3 nativeness",
+          "max_score": 10,
+          "rubric": {
+            "9": "Reads like a visual director describing a shot. Natural flow, sensory language, no technical jargon, no meta-commentary.",
+            "5": "Generally reads well but contains some awkward phrasing, raw measurements, or minor jargon leaks.",
+            "2": "Reads like a rewritten version of the input, not like a visual director. Contains meta-language, raw specs, or flat prose."
+          }
+        },
+        {
+          "id": "aim2_t4_nativeness",
+          "name": "T4 nativeness",
+          "max_score": 10,
+          "rubric": {
+            "9": "A casual user with zero prompt experience would understand every word and picture the scene immediately.",
+            "5": "Mostly accessible but contains 1-2 terms a casual user wouldn't understand.",
+            "2": "Contains multiple technical terms, awkward phrasing, or reads like a cut-down version of T3."
+          }
+        },
+        {
+          "id": "aim2_tier_separation",
+          "name": "Tier separation",
+          "max_score": 10,
+          "rubric": {
+            "9": "Each tier is clearly different in structure and voice. You could not confuse T1, T3, and T4 if they were unlabelled.",
+            "5": "Tiers are somewhat different but T3 and T4 are too similar in phrasing or T1 contains prose-like elements.",
+            "2": "Two or more tiers are near-identical or one tier has adopted the wrong format entirely."
+          }
+        }
+      ],
+      "total_possible": 40,
+      "pass_line": 32
+    },
+    {
+      "aim_id": "aim_6",
+      "aim_name": "Convert technical inputs correctly",
+      "criteria": [
+        {
+          "id": "aim6_t3_conversion",
+          "name": "T3 conversion quality",
+          "max_score": 10,
+          "rubric": {
+            "9": "Every camera/lens spec has been converted to a vivid visual effect. 'f/1.4' became 'soft background separation', not just dropped.",
+            "5": "Some conversions are good, but 1-2 specs were dropped entirely or survived as raw strings.",
+            "2": "Multiple raw specs present, or conversions are awkward/incorrect."
+          }
+        },
+        {
+          "id": "aim6_t4_conversion",
+          "name": "T4 conversion quality",
+          "max_score": 10,
+          "rubric": {
+            "9": "Every technical term has been converted to plain language a casual user would understand. Short, natural phrasing.",
+            "5": "Most conversions work but 1-2 terms survived as jargon or were converted to overly long explanations.",
+            "2": "Raw camera jargon visible to user. '35mm Leica' or 'f/1.4' appears in T4 output."
+          }
+        },
+        {
+          "id": "aim6_no_jargon_leak",
+          "name": "No jargon leakage",
+          "max_score": 10,
+          "rubric": {
+            "9": "Zero raw camera/lens/measurement terms in T3 or T4. All converted or appropriately handled.",
+            "5": "1 minor raw term survives (e.g. a compass direction).",
+            "2": "Multiple raw technical strings visible."
+          }
+        }
+      ],
+      "total_possible": 30,
+      "pass_line": 24
+    },
+    {
+      "aim_id": "aim_5",
+      "aim_name": "Prevent invention and semantic drift",
+      "criteria": [
+        {
+          "id": "aim5_no_invention",
+          "name": "No content invention",
+          "max_score": 10,
+          "rubric": {
+            "9": "Every element in the output can be traced to something in the input. Nothing was added that the user did not describe or clearly imply.",
+            "5": "1-2 minor additions that are reasonable inferences (e.g. adding 'cobblestones' to a Paris bridge scene) but were not in the input.",
+            "2": "Multiple invented objects, settings, or style elements that the user did not provide."
+          }
+        },
+        {
+          "id": "aim5_verb_fidelity",
+          "name": "Verb and action fidelity",
+          "max_score": 10,
+          "rubric": {
+            "9": "The user's specific verbs survive in meaning. 'Gripping' stays as gripping or holding tightly, not 'standing by'.",
+            "5": "Most verbs survive but 1-2 are weakened or replaced with less specific alternatives.",
+            "2": "Multiple user verbs replaced with generic actions or dropped entirely."
+          }
+        },
+        {
+          "id": "aim5_mood_fidelity",
+          "name": "Mood and emotional fidelity",
+          "max_score": 10,
+          "rubric": {
+            "9": "The emotional tone of the input is preserved as visual equivalents. A 'quietly inviting' scene still feels warm and sheltered, not clinical.",
+            "5": "The general mood survives but some emotional nuance is flattened or lost.",
+            "2": "The emotional character of the scene has changed significantly from the input."
+          }
+        }
+      ],
+      "total_possible": 30,
+      "pass_line": 24
+    },
+    {
+      "aim_id": "aim_8",
+      "aim_name": "Restructure without echo",
+      "criteria": [
+        {
+          "id": "aim8_opening_freshness",
+          "name": "Opening freshness",
+          "max_score": 10,
+          "rubric": {
+            "9": "T3 and T4 both open with a different element than the input. The restructuring feels intentional and adds visual impact.",
+            "5": "One tier opens fresh but the other echoes the input's opening closely.",
+            "2": "Both T3 and T4 open with the same subject/clause as the input, just lightly reworded."
+          }
+        },
+        {
+          "id": "aim8_restructure_quality",
+          "name": "Restructure quality",
+          "max_score": 10,
+          "rubric": {
+            "9": "The restructured order makes visual sense — opening with atmosphere, light, or action before naming the subject creates a cinematic reveal.",
+            "5": "Restructuring is present but feels random rather than purposeful.",
+            "2": "No meaningful restructuring. The output follows the input order with minor edits."
+          }
+        }
+      ],
+      "total_possible": 20,
+      "pass_line": 16
+    },
+    {
+      "aim_id": "aim_10",
+      "aim_name": "Preserve interactions and spatial relationships",
+      "criteria": [
+        {
+          "id": "aim10_interaction_integrity",
+          "name": "Interaction token integrity",
+          "max_score": 10,
+          "rubric": {
+            "9": "Interactions survive as unified concepts. 'Waves crashing against rocks' stays together. 'Salt spray rises into the sky' stays together. No interaction is fragmented.",
+            "5": "Most interactions survive but 1-2 are split into disconnected fragments.",
+            "2": "Multiple interactions broken apart. Elements that act on each other appear as isolated items."
+          }
+        },
+        {
+          "id": "aim10_light_preservation",
+          "name": "Light-on-surface preservation",
+          "max_score": 10,
+          "rubric": {
+            "9": "Every light interaction survives: lamp glow on pavement, beam through rain, sunlight on visor. The light TOUCHES the surface in the output.",
+            "5": "Light sources survive but 1-2 lose their surface interaction. 'Lamplight on pavement' becomes 'lamplight' alone.",
+            "2": "Multiple light-surface interactions lost. Light sources mentioned without their targets."
+          }
+        },
+        {
+          "id": "aim10_spatial_depth",
+          "name": "Spatial depth preservation",
+          "max_score": 10,
+          "rubric": {
+            "9": "Foreground/background relationships are clear. The reader can locate elements at different distances in the scene.",
+            "5": "Some depth survives but the scene feels flatter than the input. Near and far elements are listed but not spatially ordered.",
+            "2": "The scene reads as a flat list of objects with no spatial relationship between them."
+          }
+        }
+      ],
+      "total_possible": 30,
+      "pass_line": 24
+    }
+  ],
+  "protocol": {
+    "step_1": "Select a canonical scene from the gold-standard list.",
+    "step_2": "Run the harness on that scene (or use the latest run output for that scene ID).",
+    "step_3": "Read the Stage D output for T1, T3, and T4.",
+    "step_4": "Score each applicable criterion using the rubrics above. Record the score and a one-line justification.",
+    "step_5": "Compare total scores against the gold-standard reference. If the harness output matches the reference quality, any harness rule failures on that scene are measurement_failure, not quality faults.",
+    "step_6": "Record discrepancies between harness score and manual score in the fault register with fault_class: measurement_failure or measurement_gap."
+  }
+}

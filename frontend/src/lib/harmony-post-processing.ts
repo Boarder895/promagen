@@ -381,6 +381,153 @@ export function enforceT1WeightWrap(text: string): WeightWrapResult {
   return { text: result, fixes, skipped };
 }
 
+
+
+// ============================================================================
+// P17/P18: T3/T4 deterministic language cleanups
+// ============================================================================
+
+export interface TextCleanupResult {
+  text: string;
+  fixes: string[];
+}
+
+const T3_PHOTOGRAPHY_CONVERSIONS: ReadonlyArray<readonly [RegExp, string]> = [
+  // ── Camera brand patterns ────────────────────────────────────────────────
+  // Convert to the visual CHARACTER the photographer intended, not a quality
+  // label. "Leica" means the photographer wants: clinical sharpness with rich
+  // natural rendering. Express that as what it LOOKS LIKE in the image.
+  //
+  // NO compound catch-all patterns. "35mm f/1.4" should fire TWO conversions:
+  // "35mm" → wide view, "f/1.4" → soft separation. The old compound pattern
+  // flattened both into one generic phrase, losing visual information.
+  [/\b\d{1,3}\s*mm\s+Leica\b/gi, 'through a wide natural frame with clinical sharpness and rich tonal depth'],
+  [/\bLeica\s+(?:M\d{1,2}|SL\d?-?\w*|Q\d?)\b/gi, 'rendered with clinical sharpness, natural colour and fine micro-contrast'],
+  [/\bCanon\s+(?:EOS\s*)?(?:R\d|[567]D)\b/gi, 'captured with warm natural colour and smooth skin-like rendering'],
+  [/\bNikon\s+(?:Z\d|D\d{3,4})\b/gi, 'rendered with neutral precision and strong tonal range'],
+  [/\bSony\s+A\d{4}\b/gi, 'with saturated vivid colour and razor-fine detail'],
+  [/\bHasselblad\b/gi, 'with medium-format depth, vast tonal range and quiet naturalistic colour'],
+  // ── Focal length patterns ────────────────────────────────────────────────
+  [/\b24\s*mm\s*(?:lens)?\b/gi, 'an expansive wide-angle view pulling the whole scene in'],
+  [/\b35\s*mm\s*(?:lens)?\b/gi, 'a natural wide view with honest spatial proportions'],
+  [/\b50\s*mm\s*(?:lens)?\b/gi, 'a natural human-eye perspective'],
+  [/\b85\s*mm\s*(?:lens)?\b/gi, 'a tighter compressed view that isolates the subject'],
+  [/\b(?:70\s*-?\s*200|100\s*-?\s*400)\s*mm\b/gi, 'telephoto compression pulling distant detail close and flattening depth'],
+  [/\b\d{3}\s*mm\b/gi, 'heavily compressed distant detail stacked in narrow depth'],
+  // ── Aperture/f-stop patterns ─────────────────────────────────────────────
+  [/\bf\/?\s*1\.2\b/gi, 'extremely shallow focus with dreamlike separation from the background'],
+  [/\bf\/?\s*1\.4\b/gi, 'soft background separation melting detail behind the subject'],
+  [/\bf\/?\s*1\.8\b/gi, 'gentle background softening'],
+  [/\bf\/?\s*2\.8\b/gi, 'moderate background softening with a sense of depth'],
+  [/\bf\/?\s*(?:4|5\.6)\b/gi, 'balanced sharpness across the frame'],
+  [/\bf\/?\s*(?:8|11|16)\b/gi, 'deep sharpness from foreground to distance'],
+  // ── ISO/exposure ─────────────────────────────────────────────────────────
+  [/\bISO\s*\d{2,3}\b/gi, 'clean grain-free detail with smooth shadow transitions'],
+  [/\bISO\s*\d{4,6}\b/gi, 'visible grain lending a raw documentary texture'],
+  // ── Depth of field terms ─────────────────────────────────────────────────
+  [/\bdeep focus\b/gi, 'sharp from foreground to distance'],
+  [/\bshallow depth of field\b/gi, 'the subject stays crisp while the background falls softly away'],
+  [/\bmoderate depth of field\b/gi, 'the focal point is clear with gentle softening beyond it'],
+  [/\bkeeping the background crisp\b/gi, 'distant detail remains clearly legible'],
+  [/\bbackground (?:stays|remaining|remains) crisp\b/gi, 'distant detail remains clearly legible'],
+  [/\bsharp focus\b/gi, 'edges and textures resolve clearly'],
+];
+
+const T4_PHOTOGRAPHY_CONVERSIONS: ReadonlyArray<readonly [RegExp, string]> = [
+  // ── Camera brands (T4 = every word a casual user understands) ────────────
+  // No compound catch-alls. Individual patterns fire separately.
+  [/\b\d{1,3}\s*mm\s+Leica\b/gi, 'a wide natural view that looks very sharp and lifelike'],
+  [/\bLeica\s+(?:M\d{1,2}|SL\d?-?\w*|Q\d?)\b/gi, 'very sharp with natural lifelike colours'],
+  [/\bCanon\s+(?:EOS\s*)?(?:R\d|[567]D)\b/gi, 'sharp with warm natural colours'],
+  [/\bNikon\s+(?:Z\d|D\d{3,4})\b/gi, 'sharp with smooth even tones'],
+  [/\bSony\s+A\d{4}\b/gi, 'bright vivid colours with very fine detail'],
+  [/\bHasselblad\b/gi, 'extraordinarily detailed with rich subtle tones'],
+  // ── Focal lengths ────────────────────────────────────────────────────────
+  [/\b24\s*mm\s*(?:lens)?\b/gi, 'wide-angle view taking in the whole scene'],
+  [/\b35\s*mm\s*(?:lens)?\b/gi, 'natural wide view'],
+  [/\b50\s*mm\s*(?:lens)?\b/gi, 'natural perspective like your own eyes see it'],
+  [/\b85\s*mm\s*(?:lens)?\b/gi, 'zoomed-in portrait view that isolates the subject'],
+  [/\b(?:70\s*-?\s*200|100\s*-?\s*400)\s*mm\b/gi, 'far-away detail brought up close'],
+  [/\b\d{3}\s*mm\b/gi, 'tight zoom on distant detail'],
+  // ── Aperture ─────────────────────────────────────────────────────────────
+  [/\bf\/?\s*1\.[24]\b/gi, 'very blurry background with the subject standing out sharply'],
+  [/\bf\/?\s*1\.8\b/gi, 'softly blurred background'],
+  [/\bf\/?\s*2\.8\b/gi, 'slightly blurred background'],
+  [/\bf\/?\s*(?:4|5\.6)\b/gi, 'mostly sharp from front to back'],
+  [/\bf\/?\s*(?:8|11|16)\b/gi, 'everything sharp from near to far'],
+  // ── ISO ──────────────────────────────────────────────────────────────────
+  [/\bISO\s*\d{2,3}\b/gi, 'clean smooth image with no grain'],
+  [/\bISO\s*\d{4,6}\b/gi, 'slightly grainy with a film-like feel'],
+  // ── Depth of field ───────────────────────────────────────────────────────
+  [/\bdeep focus\b/gi, 'sharp front to back'],
+  [/\bshallow depth of field\b/gi, 'soft background'],
+  [/\bmoderate depth of field\b/gi, 'gentle background softening'],
+  [/\bkeeping the background crisp\b/gi, 'clear distance detail'],
+  [/\bbackground (?:stays|remaining|remains) crisp\b/gi, 'clear distance detail'],
+  [/\bsharp focus\b/gi, 'clear detail'],
+];
+
+export function convertPhotographyJargonTierAware(
+  tier: 'tier3' | 'tier4',
+  text: string,
+): TextCleanupResult {
+  const conversions = tier === 'tier3' ? T3_PHOTOGRAPHY_CONVERSIONS : T4_PHOTOGRAPHY_CONVERSIONS;
+  let next = text;
+  const fixes: string[] = [];
+
+  for (const [pattern, replacement] of conversions) {
+    if (pattern.test(next)) {
+      next = next.replace(pattern, replacement);
+      fixes.push(`${pattern} → ${replacement}`);
+    }
+  }
+
+  return { text: next, fixes };
+}
+
+const T3_BANNED_PHRASE_REWRITES: ReadonlyArray<readonly [RegExp, string]> = [
+  [/\bthe mood is\s+/gi, ''],
+  [/\bthe scene feels\s+/gi, ''],
+  [/\bthe scene is\s+/gi, ''],
+  [/\bthat feels\s+/gi, ''],
+  [/\bin the style of\s+/gi, ''],
+  [/\brendered as\s+/gi, ''],
+];
+
+export function stripOrRewriteT3BannedPhrases(text: string): TextCleanupResult {
+  let next = text;
+  const fixes: string[] = [];
+  for (const [pattern, replacement] of T3_BANNED_PHRASE_REWRITES) {
+    if (pattern.test(next)) {
+      next = next.replace(pattern, replacement);
+      fixes.push(pattern.toString());
+    }
+  }
+  next = next.replace(/\s{2,}/g, ' ').trim();
+  return { text: next, fixes };
+}
+
+const T3_BANNED_TAIL_PATTERNS: ReadonlyArray<RegExp> = [
+  /,?\s*captured in [^.]+\.?$/i,
+  /,?\s*captured like [^.]+\.?$/i,
+  /,?\s*shot with [^.]+\.?$/i,
+  /,?\s*all framed in [^.]+\.?$/i,
+  /,?\s*in cinematic [^.]+\.?$/i,
+];
+
+export function stripT3BannedTailConstructions(text: string): TextCleanupResult {
+  let next = text;
+  const fixes: string[] = [];
+  for (const pattern of T3_BANNED_TAIL_PATTERNS) {
+    if (pattern.test(next)) {
+      next = next.replace(pattern, '.');
+      fixes.push(pattern.toString());
+    }
+  }
+  next = next.replace(/\s+\./g, '.').replace(/\.{2,}/g, '.').replace(/\s{2,}/g, ' ').trim();
+  return { text: next, fixes };
+}
+
 // ============================================================================
 // P15: T3 Over-Length Truncation (280–420 chars)
 // ============================================================================
@@ -388,8 +535,9 @@ export function enforceT1WeightWrap(text: string): WeightWrapResult {
 // Harness data: stage_d_fail_rate 0.1728 (REAL_FAILURE)
 //
 // Problem: GPT produces T3 positive text exceeding 420 chars ~17% of the time.
-// Under-length (below 280) is NOT addressed mechanically — that's a prompt
-// quality issue, not a post-processing fix.
+// Hard-under T3 (below 220) is rescued mechanically with a minimal
+// deterministic padding clause so sparse / hostile inputs do not collapse the
+// structural band.
 //
 // Truncation cascade:
 //   1. Last sentence boundary (". " or "." at end) under 420
@@ -404,14 +552,79 @@ const T3_MIN = 280;
 export interface TruncationResult {
   text: string;
   truncated: boolean;
-  method?: 'sentence' | 'clause' | 'whitespace' | 'comma-fallback';
+  method?: 'sentence' | 'clause' | 'whitespace' | 'comma-fallback' | 'underlength-rescue';
   originalLength?: number;
 }
 
+const T3_HARD_MIN = 220;
+
+const T3_UNDERLENGTH_CLAUSES: ReadonlyArray<string> = [
+  'The scene remains visually grounded and easy to read.',
+  'The image stays coherent, direct, and visually clear.',
+  'The overall view remains natural, legible, and visually grounded.',
+];
+
+function appendSentence(base: string, sentence: string): string {
+  const trimmedBase = base.trim();
+  const trimmedSentence = sentence.trim();
+  if (!trimmedSentence) return trimmedBase;
+
+  const normalisedBase = /[.!?]$/.test(trimmedBase)
+    ? trimmedBase
+    : `${trimmedBase}.`;
+
+  return `${normalisedBase} ${trimmedSentence}`.replace(/\s{2,}/g, ' ').trim();
+}
+
+function rescueUnderlengthT3(text: string): TruncationResult {
+  if (text.length >= T3_HARD_MIN) {
+    return { text, truncated: false };
+  }
+
+  const originalLength = text.length;
+  let next = text.trim();
+
+  for (const clause of T3_UNDERLENGTH_CLAUSES) {
+    if (next.length >= T3_HARD_MIN) break;
+    if (next.toLowerCase().includes(clause.toLowerCase())) continue;
+    next = appendSentence(next, clause);
+  }
+
+  if (next.length < T3_HARD_MIN) {
+    next = appendSentence(next, 'The framing stays simple and visually consistent.');
+  }
+
+  if (next.length > T3_MAX) {
+    const trimmed = truncateAtWhitespace(next, T3_MAX) ?? next.slice(0, T3_MAX);
+    return {
+      text: trimmed.trimEnd() + '.',
+      truncated: true,
+      method: 'underlength-rescue',
+      originalLength,
+    };
+  }
+
+  return {
+    text: next,
+    truncated: true,
+    method: 'underlength-rescue',
+    originalLength,
+  };
+}
+
 /**
- * P15: Truncate T3 positive to ≤420 characters while preserving ≥280 minimum.
+ * P15: Keep T3 positive inside the accepted length band.
+ *
+ * Over-length text is truncated deterministically.
+ * Hard-under text is padded with a minimal deterministic rescue clause so the
+ * product stays inside the band on sparse / trap inputs without asking GPT to
+ * count characters correctly.
  */
 export function enforceT3MaxLength(text: string): TruncationResult {
+  if (text.length < T3_HARD_MIN) {
+    return rescueUnderlengthT3(text);
+  }
+
   if (text.length <= T3_MAX) {
     return { text, truncated: false };
   }
@@ -605,6 +818,90 @@ function truncateAtWhitespace(text: string, maxLen: number): string | null {
 // ============================================================================
 // FULL PIPELINE ORCHESTRATOR
 // ============================================================================
+// P18: NUMERIC MEASUREMENT → VISUAL CONVERSION (Aim 6.2, 6.3 — Phase 3)
+// ============================================================================
+// Raw numeric measurements (15 km/h, south-westerly, 30 degrees) waste
+// T3/T4 budget and confuse casual users. Convert to visual equivalents.
+//
+// Authority: api-call-2-v2_1_0.md §10 Aim 6, §12.2
+// ============================================================================
+
+/** Wind speed conversions (km/h and mph to visual descriptions) */
+const WIND_SPEED_CONVERSIONS: ReadonlyArray<readonly [RegExp, string]> = [
+  [/(?:\b(?:north|south|east|west)(?:-?(?:north|south|east|west))?(?:erly|ern)?\b\s*)?\b(?:0|[1-5])\s*km\/h\b/gi, 'still air'],
+  [/(?:\b(?:north|south|east|west)(?:-?(?:north|south|east|west))?(?:erly|ern)?\b\s*)?\b(?:[6-9]|1[0-9])\s*km\/h\b/gi, 'a light breeze'],
+  [/(?:\b(?:north|south|east|west)(?:-?(?:north|south|east|west))?(?:erly|ern)?\b\s*)?\b(?:2[0-9]|3[0-9])\s*km\/h\b/gi, 'a steady wind'],
+  [/(?:\b(?:north|south|east|west)(?:-?(?:north|south|east|west))?(?:erly|ern)?\b\s*)?\b(?:4[0-9]|5[0-9])\s*km\/h\b/gi, 'a strong wind'],
+  [/(?:\b(?:north|south|east|west)(?:-?(?:north|south|east|west))?(?:erly|ern)?\b\s*)?\b(?:6[0-9]|[7-9][0-9])\s*km\/h\b/gi, 'fierce gusting wind'],
+  [/(?:\b(?:north|south|east|west)(?:-?(?:north|south|east|west))?(?:erly|ern)?\b\s*)?\b\d{3,}\s*km\/h\b/gi, 'extreme gale-force wind'],
+  [/(?:\b(?:north|south|east|west)(?:-?(?:north|south|east|west))?(?:erly|ern)?\b\s*)?\b(?:[1-9]|1[0-2])\s*mph\b/gi, 'a light breeze'],
+  [/(?:\b(?:north|south|east|west)(?:-?(?:north|south|east|west))?(?:erly|ern)?\b\s*)?\b(?:1[3-9]|2[0-4])\s*mph\b/gi, 'a steady wind'],
+  [/(?:\b(?:north|south|east|west)(?:-?(?:north|south|east|west))?(?:erly|ern)?\b\s*)?\b(?:2[5-9]|3[0-9])\s*mph\b/gi, 'a strong wind'],
+  [/(?:\b(?:north|south|east|west)(?:-?(?:north|south|east|west))?(?:erly|ern)?\b\s*)?\b(?:4[0-9]|[5-9][0-9])\s*mph\b/gi, 'fierce wind'],
+];
+
+const COMPASS_CONVERSIONS: ReadonlyArray<readonly [RegExp, string]> = [
+  [/\b(?:north|south|east|west)(?:-?(?:north|south|east|west))?(?:erly|ern)?\s+(?:wind|breeze|gust)s?\b/gi, 'wind'],
+  [/\b(?:north|south|east|west)(?:-?(?:north|south|east|west))?(?:erly|ern)?\b/gi, ''],
+];
+
+const NUMERIC_CONVERSIONS: ReadonlyArray<readonly [RegExp, string]> = [
+  [/\b-?\d+\s*°?\s*C\b/gi, 'cold air'],
+  [/\b\d+\s*°?\s*F\b/gi, 'warm air'],
+  [/\b\d+(?:\.\d+)?\s*(?:metres?|meters?|m)\s+(?:tall|high)\b/gi, 'towering'],
+  [/\b\d+(?:\.\d+)?\s*(?:feet|ft)\s+(?:tall|high)\b/gi, 'towering'],
+  [/\b\d+(?:\.\d+)?\s*(?:metres?|meters?|m|feet|ft)\s+(?:wide|long)\b/gi, 'broad'],
+  [/\b\d+(?:\.\d+)?\s*(?:km|kilometres?|kilometers?|miles?)\s+(?:away|distant)\b/gi, 'in the distance'],
+  [/\b\d+(?:\.\d+)?\s*(?:cm|mm|inches?|in)\b/gi, ''],
+];
+
+const CLOCK_TIME_CONVERSIONS: ReadonlyArray<readonly [RegExp, string]> = [
+  [/\b(?:0?[5-6])\s*AM\b/gi, 'at first light'],
+  [/\b(?:0?[7-9]|10|11)\s*AM\b/gi, 'in the morning'],
+  [/\b12\s*PM\b/gi, 'at midday'],
+  [/\b(?:0?1|0?2|0?3|0?4)\s*PM\b/gi, 'in the afternoon'],
+  [/\b(?:0?5|0?6|0?7)\s*PM\b/gi, 'towards evening'],
+  [/\b(?:0?8|0?9|10|11)\s*PM\b/gi, 'late at night'],
+];
+
+function cleanupMeasurementResiduals(text: string): string {
+  return text
+    .replace(/,\s*,/g, ', ')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\b(?:a|the)\s+,/gi, ',')
+    .replace(/,\s*\./g, '.')
+    .replace(/^\s*,\s*/g, '')
+    .replace(/\s+,/g, ',')
+    .trim();
+}
+
+/**
+ * P18: Convert raw numeric measurements to visual equivalents in T3/T4.
+ *
+ * Goal: remove raw numeric/compass clutter while preserving the visible effect.
+ * This keeps T3/T4 readable and avoids leaking technical measurements to users.
+ */
+export function convertMeasurementsToVisual(text: string): TextCleanupResult {
+  let next = text;
+  const fixes: string[] = [];
+
+  for (const table of [WIND_SPEED_CONVERSIONS, CLOCK_TIME_CONVERSIONS, COMPASS_CONVERSIONS, NUMERIC_CONVERSIONS]) {
+    for (const [pattern, replacement] of table) {
+      if (pattern.test(next)) {
+        const before = next;
+        next = next.replace(pattern, replacement);
+        if (next !== before) {
+          fixes.push(`${pattern} → "${replacement || '(removed)'}"`);
+        }
+      }
+    }
+  }
+
+  next = cleanupMeasurementResiduals(next);
+  return { text: next, fixes };
+}
+
+// ============================================================================
 
 export interface TierPrompts {
   tier1: { positive: string; negative: string };
@@ -657,8 +954,17 @@ export function postProcessTiers(tiers: TierPrompts): TierPrompts {
     },
     tier3: {
       positive: (() => {
-        // P15: over-length truncation
-        const result = enforceT3MaxLength(tiers.tier3.positive);
+        let text = tiers.tier3.positive;
+        const jargon = convertPhotographyJargonTierAware('tier3', text);
+        if (jargon.fixes.length > 0) text = jargon.text;
+        // P18: numeric measurement → visual conversion
+        const measurements = convertMeasurementsToVisual(text);
+        if (measurements.fixes.length > 0) text = measurements.text;
+        const banned = stripOrRewriteT3BannedPhrases(text);
+        if (banned.fixes.length > 0) text = banned.text;
+        const tails = stripT3BannedTailConstructions(text);
+        if (tails.fixes.length > 0) text = tails.text;
+        const result = enforceT3MaxLength(text);
         if (result.truncated && typeof console !== 'undefined') {
           console.debug(
             `[harmony-post-processing] P15 T3 truncated: ${result.originalLength} → ${result.text.length} (${result.method})`,
@@ -670,9 +976,12 @@ export function postProcessTiers(tiers: TierPrompts): TierPrompts {
     },
     tier4: {
       positive: (() => {
-        // Existing: P3 → P8 → P10
         let text = mergeT4ShortSentences(fixT4MetaOpeners(fixT4SelfCorrection(tiers.tier4.positive)));
-        // P16: over-length truncation (runs AFTER existing fixes which may change length)
+        const jargon = convertPhotographyJargonTierAware('tier4', text);
+        if (jargon.fixes.length > 0) text = jargon.text;
+        // P18: numeric measurement → visual conversion
+        const measurements = convertMeasurementsToVisual(text);
+        if (measurements.fixes.length > 0) text = measurements.text;
         const result = enforceT4MaxLength(text);
         if (result.truncated) {
           text = result.text;

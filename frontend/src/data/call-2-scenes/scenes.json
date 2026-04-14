@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.1.0",
+  "schema_version": "1.2.0",
   "generated_from": "call-2-harness-scenes-brief-completed.xlsx",
   "generated_at": "2026-04-10",
   "count": 42,
@@ -28,7 +28,10 @@
         "T2.weight_clauses_min_3",
         "T3.sentence_count_2_to_3",
         "T3.verb_fidelity",
-        "T4.anchor_triage"
+        "T4.anchor_triage",
+        "T1.no_orphaned_adjectives",
+        "T1.no_duplicate_quality_families",
+        "T1.generic_quality_not_above_scene"
       ],
       "perturbation_seeds": [
         "punctuation",
@@ -52,7 +55,8 @@
         "fishing village",
         "orange windows",
         "dark cliffs"
-      ]
+      ],
+      "input_class": "canonical"
     },
     {
       "id": "golden-hour-cyclist",
@@ -74,7 +78,10 @@
         "T3.verb_fidelity",
         "T1.subject_highest_weight",
         "T4.anchor_triage",
-        "T1.scale_modifier_preservation"
+        "T1.scale_modifier_preservation",
+        "T1.no_orphaned_adjectives",
+        "T1.no_duplicate_quality_families",
+        "T1.generic_quality_not_above_scene"
       ],
       "perturbation_seeds": [
         "punctuation",
@@ -95,7 +102,8 @@
         "spinning wheels",
         "dust",
         "evening air"
-      ]
+      ],
+      "input_class": "canonical"
     },
     {
       "id": "busy-tokyo-crosswalk",
@@ -118,7 +126,10 @@
         "T1.subject_highest_weight",
         "T2.flowing_prose",
         "T4.anchor_triage",
-        "T4.value_add_conversion"
+        "T4.value_add_conversion",
+        "T1.no_orphaned_adjectives",
+        "T1.no_duplicate_quality_families",
+        "T1.generic_quality_not_above_scene"
       ],
       "perturbation_seeds": [
         "punctuation",
@@ -136,11 +147,11 @@
         "magenta",
         "cyan",
         "reflections",
-        "zebra stripes",
         "umbrellas",
         "traffic lights",
-        "drizzle"
-      ]
+        "wet zebra stripes"
+      ],
+      "input_class": "canonical"
     },
     {
       "id": "single-tear-on-cheek",
@@ -162,7 +173,10 @@
         "T4.anti_paraphrase",
         "T4.value_add_conversion",
         "T3.verb_fidelity",
-        "T1.subject_highest_weight"
+        "T1.subject_highest_weight",
+        "T1.no_orphaned_adjectives",
+        "T1.no_duplicate_quality_families",
+        "T1.generic_quality_not_above_scene"
       ],
       "perturbation_seeds": [
         "punctuation",
@@ -170,7 +184,18 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "input_class": "canonical",
+      "expected_elements": [
+        "tear",
+        "cheek",
+        "close-up",
+        "skin texture",
+        "glistening",
+        "soft light",
+        "eye",
+        "moisture"
+      ]
     },
     {
       "id": "abandoned-soviet-spaceport",
@@ -192,7 +217,10 @@
         "T3.mood_conversion",
         "T4.anchor_triage",
         "T1.quality_prefix_present",
-        "T2.weight_clauses_min_3"
+        "T2.weight_clauses_min_3",
+        "T1.no_orphaned_adjectives",
+        "T1.no_duplicate_quality_families",
+        "T1.generic_quality_not_above_scene"
       ],
       "perturbation_seeds": [
         "punctuation",
@@ -201,7 +229,18 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "input_class": "canonical",
+      "expected_elements": [
+        "cosmodrome",
+        "rocket",
+        "concrete",
+        "snow",
+        "overgrown weeds",
+        "launch gantry",
+        "faded paint",
+        "empty sky"
+      ]
     },
     {
       "id": "child-feeding-pigeons",
@@ -223,7 +262,10 @@
         "T3.verb_fidelity",
         "T1.weight_wrap_4_words_max",
         "T4.plain_language_fidelity",
-        "T1.subject_highest_weight"
+        "T1.subject_highest_weight",
+        "T1.no_orphaned_adjectives",
+        "T1.no_duplicate_quality_families",
+        "T1.generic_quality_not_above_scene"
       ],
       "perturbation_seeds": [
         "punctuation",
@@ -232,7 +274,18 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "input_class": "canonical",
+      "expected_elements": [
+        "child",
+        "pigeons",
+        "breadcrumbs",
+        "city square",
+        "pale stone paving",
+        "fluttering birds",
+        "outstretched hand",
+        "cool morning light"
+      ]
     },
     {
       "id": "deep-sea-diver-with-coral",
@@ -254,7 +307,10 @@
         "T1.no_isolated_colour_weights",
         "T2.weight_clauses_min_3",
         "T2.flowing_prose",
-        "T1.scale_modifier_preservation"
+        "T1.scale_modifier_preservation",
+        "T1.no_orphaned_adjectives",
+        "T1.no_duplicate_quality_families",
+        "T1.generic_quality_not_above_scene"
       ],
       "perturbation_seeds": [
         "synonym",
@@ -274,7 +330,8 @@
         "reds",
         "golds",
         "turquoise"
-      ]
+      ],
+      "input_class": "canonical"
     },
     {
       "id": "medieval-blacksmith-forge",
@@ -296,7 +353,10 @@
         "T1.weight_steps_0_1",
         "T3.sentence_count_2_to_3",
         "T3.verb_fidelity",
-        "T1.subject_highest_weight"
+        "T1.subject_highest_weight",
+        "T1.no_orphaned_adjectives",
+        "T1.no_duplicate_quality_families",
+        "T1.generic_quality_not_above_scene"
       ],
       "perturbation_seeds": [
         "punctuation",
@@ -305,7 +365,22 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "input_class": "canonical",
+      "expected_elements": [
+        "blacksmith",
+        "forge",
+        "anvil",
+        "hammer",
+        "sparks",
+        "molten metal",
+        "fire",
+        "leather apron",
+        "sweat",
+        "stone walls",
+        "bellows",
+        "glowing iron"
+      ]
     },
     {
       "id": "astronaut-floating-earth-view",
@@ -327,7 +402,10 @@
         "T4.anchor_triage",
         "T1.subject_highest_weight",
         "T2.flowing_prose",
-        "T3.mood_conversion"
+        "T3.mood_conversion",
+        "T1.no_orphaned_adjectives",
+        "T1.no_duplicate_quality_families",
+        "T1.generic_quality_not_above_scene"
       ],
       "perturbation_seeds": [
         "punctuation",
@@ -347,9 +425,9 @@
         "sun glare",
         "visor",
         "white highlights",
-        "blackness",
-        "isolation"
-      ]
+        "blackness"
+      ],
+      "input_class": "canonical"
     },
     {
       "id": "rainy-bookstore-window-cat",
@@ -371,7 +449,10 @@
         "T1.interaction_preservation",
         "T3.mood_conversion",
         "T4.plain_language_fidelity",
-        "T2.weight_clauses_min_3"
+        "T2.weight_clauses_min_3",
+        "T1.no_orphaned_adjectives",
+        "T1.no_duplicate_quality_families",
+        "T1.generic_quality_not_above_scene"
       ],
       "perturbation_seeds": [
         "punctuation",
@@ -392,7 +473,8 @@
         "steaming mug",
         "headlights",
         "umbrellas"
-      ]
+      ],
+      "input_class": "canonical"
     },
     {
       "id": "storm-chaser-tornado-distance",
@@ -414,7 +496,10 @@
         "T1.scale_modifier_preservation",
         "T3.mood_conversion",
         "T2.flowing_prose",
-        "T4.anchor_triage"
+        "T4.anchor_triage",
+        "T1.no_orphaned_adjectives",
+        "T1.no_duplicate_quality_families",
+        "T1.generic_quality_not_above_scene"
       ],
       "perturbation_seeds": [
         "punctuation",
@@ -434,7 +519,8 @@
         "wind",
         "storm base",
         "solitary figure"
-      ]
+      ],
+      "input_class": "canonical"
     },
     {
       "id": "monk-meditating-temple-courtyard",
@@ -456,7 +542,10 @@
         "T3.verb_fidelity",
         "T4.plain_language_fidelity",
         "T3.mood_conversion",
-        "T1.subject_highest_weight"
+        "T1.subject_highest_weight",
+        "T1.no_orphaned_adjectives",
+        "T1.no_duplicate_quality_families",
+        "T1.generic_quality_not_above_scene"
       ],
       "perturbation_seeds": [
         "punctuation",
@@ -465,7 +554,18 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "input_class": "canonical",
+      "expected_elements": [
+        "monk",
+        "lotus position",
+        "temple courtyard",
+        "weathered paving",
+        "incense smoke",
+        "moss-dark walls",
+        "pale light",
+        "cold morning air"
+      ]
     },
     {
       "id": "violinist-on-paris-bridge-dusk",
@@ -487,7 +587,10 @@
         "T1.subject_highest_weight",
         "T3.verb_fidelity",
         "T2.flowing_prose",
-        "T4.anchor_triage"
+        "T4.anchor_triage",
+        "T1.no_orphaned_adjectives",
+        "T1.no_duplicate_quality_families",
+        "T1.generic_quality_not_above_scene"
       ],
       "perturbation_seeds": [
         "punctuation",
@@ -496,7 +599,18 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "input_class": "canonical",
+      "expected_elements": [
+        "violinist",
+        "violin",
+        "Pont des Arts",
+        "dusk",
+        "river",
+        "warm city lights",
+        "breeze-lifted coat",
+        "rippling reflections"
+      ]
     },
     {
       "id": "firefighter-rescuing-dog",
@@ -518,7 +632,10 @@
         "T1.interaction_preservation",
         "T3.verb_fidelity",
         "T4.anti_paraphrase",
-        "T1.subject_highest_weight"
+        "T1.subject_highest_weight",
+        "T1.no_orphaned_adjectives",
+        "T1.no_duplicate_quality_families",
+        "T1.generic_quality_not_above_scene"
       ],
       "perturbation_seeds": [
         "punctuation",
@@ -531,14 +648,14 @@
       "expected_elements": [
         "firefighter",
         "dog",
+        "burning building",
         "smoke",
-        "ash",
-        "orange emergency light",
-        "darkened gear",
-        "debris",
-        "rescue",
-        "swirling smoke"
-      ]
+        "embers",
+        "protective gear",
+        "carried dog",
+        "night"
+      ],
+      "input_class": "canonical"
     },
     {
       "id": "vintage-car-on-route-66-sunset",
@@ -560,7 +677,10 @@
         "T1.subject_highest_weight",
         "T2.flowing_prose",
         "T4.anchor_triage",
-        "T1.quality_prefix_present"
+        "T1.quality_prefix_present",
+        "T1.no_orphaned_adjectives",
+        "T1.no_duplicate_quality_families",
+        "T1.generic_quality_not_above_scene"
       ],
       "perturbation_seeds": [
         "punctuation",
@@ -569,7 +689,18 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "input_class": "canonical",
+      "expected_elements": [
+        "vintage car",
+        "Route 66 diner",
+        "sunset",
+        "desert horizon",
+        "warm light",
+        "chrome",
+        "forecourt",
+        "heat haze"
+      ]
     },
     {
       "id": "stress-sparse-20-words",
@@ -597,7 +728,8 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "input_class": "sparse"
     },
     {
       "id": "stress-dense-400-words",
@@ -628,7 +760,8 @@
       "status": "approved",
       "tag_provenance": "manual",
       "dev_only": true,
-      "dev_only_reason": "Input is 1528 chars; exceeds production sentence cap of 1000."
+      "dev_only_reason": "Input is 1528 chars; exceeds production sentence cap of 1000.",
+      "input_class": "dense"
     },
     {
       "id": "stress-all-adjectives-no-nouns",
@@ -655,7 +788,8 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "input_class": "malformed"
     },
     {
       "id": "stress-all-verbs-no-subject",
@@ -681,7 +815,8 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "input_class": "malformed"
     },
     {
       "id": "stress-pure-colour-palette",
@@ -708,7 +843,8 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "input_class": "canonical"
     },
     {
       "id": "stress-foreign-loanwords",
@@ -735,7 +871,8 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "input_class": "malformed"
     },
     {
       "id": "stress-frozen-motion",
@@ -763,7 +900,8 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "input_class": "canonical"
     },
     {
       "id": "stress-negative-space",
@@ -798,7 +936,8 @@
         "blank sky",
         "negative space",
         "colour"
-      ]
+      ],
+      "input_class": "sparse"
     },
     {
       "id": "stress-non-photoreal-explicit",
@@ -825,7 +964,8 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "input_class": "canonical"
     },
     {
       "id": "stress-multi-subject-coequal",
@@ -853,7 +993,8 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "input_class": "canonical"
     },
     {
       "id": "trap-contradictory-instructions",
@@ -879,7 +1020,8 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "input_class": "contradictory"
     },
     {
       "id": "trap-soft-violence",
@@ -906,7 +1048,8 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "input_class": "hostile"
     },
     {
       "id": "trap-brand-name-injection",
@@ -942,7 +1085,8 @@
         "glass",
         "reflection",
         "varnished surface"
-      ]
+      ],
+      "input_class": "hostile"
     },
     {
       "id": "trap-celebrity-likeness",
@@ -968,7 +1112,8 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "input_class": "hostile"
     },
     {
       "id": "trap-prompt-injection",
@@ -994,7 +1139,8 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "input_class": "hostile"
     },
     {
       "id": "trap-broken-grammar",
@@ -1021,7 +1167,8 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "input_class": "malformed"
     },
     {
       "id": "trap-rule-override-attempt",
@@ -1047,7 +1194,8 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "input_class": "hostile"
     },
     {
       "id": "trap-negative-only-input",
@@ -1074,7 +1222,8 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "input_class": "hostile"
     },
     {
       "id": "human-typo-laden",
@@ -1099,7 +1248,8 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "input_class": "malformed"
     },
     {
       "id": "human-esl-non-native",
@@ -1125,7 +1275,8 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "input_class": "malformed"
     },
     {
       "id": "human-single-noun",
@@ -1152,7 +1303,8 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "input_class": "single_word"
     },
     {
       "id": "human-all-caps",
@@ -1177,7 +1329,8 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "input_class": "malformed"
     },
     {
       "id": "human-emoji-mixed",
@@ -1203,7 +1356,8 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "input_class": "malformed"
     },
     {
       "id": "alien-abstract-concept",
@@ -1230,7 +1384,8 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "input_class": "canonical"
     },
     {
       "id": "alien-synesthesia",
@@ -1257,7 +1412,8 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "input_class": "canonical"
     },
     {
       "id": "cellist-abandoned-cathedral",
@@ -1289,7 +1445,10 @@
         "T3.mood_conversion",
         "T3.sentence_count_2_to_3",
         "T4.anchor_triage",
-        "T4.value_add_conversion"
+        "T4.value_add_conversion",
+        "T1.no_orphaned_adjectives",
+        "T1.no_duplicate_quality_families",
+        "T1.generic_quality_not_above_scene"
       ],
       "perturbation_seeds": [
         "synonym",
@@ -1299,7 +1458,19 @@
       ],
       "holdout": false,
       "status": "approved",
-      "tag_provenance": "manual"
+      "tag_provenance": "manual",
+      "input_class": "canonical",
+      "expected_elements": [
+        "cellist",
+        "bow poised above strings",
+        "abandoned cathedral",
+        "shattered rose windows",
+        "golden light",
+        "dust motes",
+        "cracked marble floor",
+        "ivy",
+        "collapsed stonework"
+      ]
     },
     {
       "id": "trafalgar-square-12-category",
@@ -1328,7 +1499,16 @@
         "T4.input_element_coverage",
         "T1.weight_wrap_4_words_max",
         "T3.char_count_in_range",
-        "T1.subject_highest_weight"
+        "T1.subject_highest_weight",
+        "T1.no_orphaned_adjectives",
+        "T1.no_duplicate_quality_families",
+        "T1.generic_quality_not_above_scene",
+        "T1.no_clip_unusable_jargon",
+        "T1.no_non_visual_literals",
+        "T3.no_raw_camera_jargon",
+        "T3.no_raw_numeric_measurements",
+        "T4.no_raw_camera_jargon",
+        "T4.no_raw_numeric_measurements"
       ],
       "perturbation_seeds": [
         "remove-camera-specs",
@@ -1357,7 +1537,8 @@
         "Leica SL2-S",
         "f/1.4",
         "balanced colors"
-      ]
+      ],
+      "input_class": "technical"
     }
   ],
   "cluster_schema_version": "v1",

@@ -58,7 +58,15 @@ import { z } from "zod";
 
 import { env } from "@/lib/env";
 import { rateLimit } from "@/lib/rate-limit";
-import { enforceT1Syntax } from "@/lib/harmony-compliance";
+import {
+  deduplicateQualityTokens,
+  demoteGenericQualityWeights,
+  enforceSubjectHighestWeight,
+  enforceT1Syntax,
+  ensureT1QualitySuffix,
+  normaliseT1Ordering,
+  stripT1CameraJargon,
+} from "@/lib/harmony-compliance";
 import type { ComplianceContext } from "@/lib/harmony-compliance";
 import { postProcessTiers } from "@/lib/harmony-post-processing";
 import { normaliseTierBundle } from "@/lib/call-2-normalise-schema";
@@ -694,6 +702,38 @@ export async function POST(req: NextRequest): Promise<Response> {
           t1Result.fixes.join("; "),
         );
       }
+    }
+
+    // Call 2 code-enforcement pivot (v6.1 baseline + deterministic quality gates)
+    // P17 (stripT1CameraJargon) runs first — remove junk before weight analysis
+    const t1Passes = [
+      stripT1CameraJargon,
+      enforceSubjectHighestWeight,
+      demoteGenericQualityWeights,
+      deduplicateQualityTokens,
+      ensureT1QualitySuffix,
+      normaliseT1Ordering,
+    ] as const;
+
+    let t1Text = compliant.tier1.positive;
+    const t1Fixes: string[] = [];
+    for (const pass of t1Passes) {
+      const result = pass(t1Text);
+      if (result.wasFixed) {
+        t1Text = result.text;
+        t1Fixes.push(...result.fixes);
+      }
+    }
+
+    if (t1Fixes.length > 0) {
+      compliant = {
+        ...compliant,
+        tier1: { ...compliant.tier1, positive: t1Text },
+      };
+      console.debug(
+        "[generate-tier-prompts] Call 2 code-enforcement fixes:",
+        t1Fixes.join("; "),
+      );
     }
 
     // P5: T2 MJ parameter compliance — REMOVED (Phase B).

@@ -1,10 +1,10 @@
 // scripts/run-harness.ts
 // ============================================================================
-// Call 2 Quality Harness — Proof-of-Life Runner (Phase E milestone)
+// Call 2 Quality Harness — Runner (Phase 1: Aim Circuit Board)
 // ============================================================================
-// Wires Phases A through E together for the first real press-the-button run
-// against Call 2 v4.5. Per build plan §9, this is the proof-of-life vehicle:
-// it is meant to surface what the harness sees, not yet to make decisions.
+// Wires Phases A through E together plus the new Phase 1 aim circuit board.
+// After mechanical scoring + inventory, the runner computes aim-level rollups
+// and prints the full circuit board to console.
 //
 // File location: top-level `scripts/` (not `src/scripts/`). Matches the
 // project convention used by lint-venues.ts and verify-analytics-env.ts.
@@ -18,21 +18,22 @@
 //             runMechanicalScorerAllStages()         ← Phase C
 //      buildInventory(run, { ruleIdsExercisedByScenes })   ← Phase D
 //      diffInventories(previous, current) + attachDiff()   ← Phase E
-//      writeInventoryToDisk()
-//      printSummary()
+//      buildAimCircuitBoard(inventory.by_rule)              ← Phase 1 NEW
+//      writeInventoryToDisk() — includes by_aim             ← Phase 1 NEW
+//      printCircuitBoard()                                  ← Phase 1 NEW
 //
 // USAGE (PowerShell, run from C:\Users\Proma\Projects\promagen\frontend\):
 //
 //   # First, drop the snapshot file:
-//   #   harness-snapshots\call-2-system-prompt-v4.5.txt
+//   #   harness-snapshots\call-2-system-prompt-v6.1.txt
 //   # Then start the dev server in another terminal so the dev endpoint is up:
 //   pnpm dev
 //   # Then in this terminal:
 //   $env:CALL2_HARNESS_DEV_AUTH = "<the long secret from .env.local>"
-//   pnpm exec tsx scripts/run-harness.ts --version v4.5 --run-class smoke_alarm
+//   pnpm exec tsx scripts/run-harness.ts --version v6.1 --run-class smoke_alarm
 //
 // FLAGS:
-//   --version <string>             Required. Call 2 version label, e.g. v4.5
+//   --version <string>             Required. Call 2 version label, e.g. v6.1
 //   --run-class <smoke_alarm|...>  Default smoke_alarm. See run-classes.ts.
 //   --previous <path>              Optional. Previous inventory file to diff against.
 //   --out-dir <path>               Default generated/call-2-harness/runs
@@ -52,9 +53,10 @@
 //   5. Refuses if the snapshot loader throws (missing file, truncation).
 //
 // Authority:
+//   - api-call-2-v2_1_0.md §13, §14, §15 Phase 1
 //   - call-2-harness-build-plan-v1.md §9 (proof-of-life)
 //   - call-2-quality-architecture-v0.3.1.md §11, §14, §16
-// Existing features preserved: Yes (this is a new script).
+// Existing features preserved: Yes — all existing run logic unchanged.
 // ============================================================================
 
  
@@ -77,12 +79,19 @@ import type { SampleStageResults } from '@/lib/call-2-harness/rescue-dependency'
 import {
   buildInventory,
   writeInventoryToDisk,
+  writeTierTextsToDisk,
   loadInventory,
   inventoryFilename,
+  tierTextFilename,
   attachDiff,
+  attachAimCircuitBoard,
+  attachStabilityBands,
+  attachSceneClassBreakdown,
   DEFAULT_HARNESS_RUNS_DIR,
   type HarnessRun,
   type FailureModeInventory,
+  type TierTextEntry,
+  type TierTextCapture,
 } from '@/lib/call-2-harness/inventory-writer';
 import { diffInventories } from '@/lib/call-2-harness/diff';
 import {
@@ -91,6 +100,10 @@ import {
   type RunClass,
 } from '@/lib/call-2-harness/run-classes';
 import { loadSystemPrompt } from '@/lib/call-2-harness/system-prompt-loader';
+import { buildAimCircuitBoard, type AimCircuitBoard } from '@/lib/call-2-harness/aim-rollup';
+import { printCircuitBoard } from '@/lib/call-2-harness/circuit-printer';
+import { computeStabilityBands, type StabilityReport } from '@/lib/call-2-harness/stability-tracker';
+import { separateBySceneClass, type SceneClassBreakdown } from '@/lib/call-2-harness/scene-class-separator';
 
 // ============================================================================
 // CLI ARGUMENT PARSING
@@ -115,7 +128,25 @@ interface ParsedArgs {
 }
 
 const DEFAULT_ENDPOINT = 'http://localhost:3000/api/dev/generate-tier-prompts';
-const HARNESS_VERSION = '0.3.1';
+const HARNESS_VERSION = '1.0.0';
+
+function normaliseExpectedElements(value: unknown): readonly string[] {
+  if (Array.isArray(value)) {
+    return Object.freeze(
+      value
+        .filter((item): item is string => typeof item === 'string')
+        .map((item) => item.trim())
+        .filter((item) => item.length > 0),
+    );
+  }
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return Object.freeze(trimmed.length > 0 ? [trimmed] : []);
+  }
+
+  return Object.freeze([]);
+}
 
 function parseArgs(argv: readonly string[]): ParsedArgs {
   const args = {
@@ -203,7 +234,7 @@ function parseArgs(argv: readonly string[]): ParsedArgs {
   }
 
   if (!args.version) {
-    throw new Error('[run-harness] --version is required (e.g. --version v4.5)');
+    throw new Error('[run-harness] --version is required (e.g. --version v6.1)');
   }
   return args;
 }
@@ -214,7 +245,7 @@ function printHelpAndExit(code: number): never {
       'Usage: tsx scripts/run-harness.ts --version <v> [options]',
       '',
       'Required:',
-      '  --version <string>            Call 2 version label, e.g. v4.5',
+      '  --version <string>            Call 2 version label, e.g. v6.1',
       '',
       'Optional:',
       '  --run-class <class>           smoke_alarm (default) | decision_support |',
@@ -327,7 +358,7 @@ async function main(): Promise<void> {
   const runStartedAt = new Date();
   const runStartedAtIso = runStartedAt.toISOString();
 
-  header(`Call 2 Quality Harness — Proof-of-Life Runner`);
+  header(`Call 2 Quality Harness — Aim Circuit Board Runner`);
   info(`harness version : ${HARNESS_VERSION}`);
   info(`call 2 version  : ${args.version}`);
   info(`run class       : ${args.runClass}`);
@@ -354,7 +385,7 @@ async function main(): Promise<void> {
     process.exit(2);
   }
 
-  // ── Load the system prompt snapshot (Phase E system-prompt-loader) ────────
+  // ── Load the system prompt snapshot ───────────────────────────────────────
   sub('Loading system prompt snapshot');
   let snapshot: Awaited<ReturnType<typeof loadSystemPrompt>>;
   try {
@@ -422,9 +453,6 @@ async function main(): Promise<void> {
   }
 
   // Build the exercised-rules set up front so we can pass it to buildInventory.
-  // Architecture §14: coverage_gaps is a SCENE LIBRARY traceability concept,
-  // not a "this rule didn't fail" check. The runner is the only place that
-  // knows which rules the scenes claim to exercise.
   const ruleIdsExercisedByScenes = new Set<string>();
   for (const scene of filteredScenes) {
     for (const ruleId of scene.exercises_rules) {
@@ -443,15 +471,12 @@ async function main(): Promise<void> {
   sub(`Running ${totalCalls} samples (concurrency ${args.concurrency})`);
 
   const samples: SampleStageResults[] = [];
+  const tierTextCaptures: TierTextEntry[] = [];
   const failures: Array<{ sceneId: string; sampleIndex: number; error: string }> = [];
   const t0 = performance.now();
   let modelVersionSeen = 'gpt-5.4-mini';
   let completed = 0;
 
-  // The work plan is a flat list of (scene, sampleIndex) pairs. The
-  // concurrency loop pulls from this queue. Serial mode (concurrency=1) is
-  // recommended for the first run — easier to read the output, easier to
-  // Ctrl-C if something goes sideways.
   type WorkItem = { scene: Scene; sampleIndex: number };
   const queue: WorkItem[] = [];
   for (const scene of filteredScenes) {
@@ -469,6 +494,15 @@ async function main(): Promise<void> {
         snapshot.prompt,
         scene.input,
       );
+      modelVersionSeen = data.metadata.model_version ?? modelVersionSeen;
+
+      if (sampleIndex === 0 && completed < 3) {
+        info(
+          `[sample] ${scene.id} #${sampleIndex}  ` +
+          `latency=${data.metadata.latency_ms}ms  ` +
+          `stages=${data.metadata.stages_applied.join(',')}`,
+        );
+      }
       modelVersionSeen = data.metadata.model_version;
 
       const allStages = runMechanicalScorerAllStages(
@@ -478,13 +512,22 @@ async function main(): Promise<void> {
           c: data.stage_c_compliance_enforced,
           d: data.stage_d_final,
         },
-        { input: scene.input, expectedElements: scene.expected_elements },
+        { input: scene.input, expectedElements: normaliseExpectedElements(scene.expected_elements) },
       );
 
       samples.push({
         sceneId: scene.id,
         sampleIndex,
         stages: allStages,
+      });
+
+      // Capture Stage A + Stage D tier text for the sidecar file.
+      // Stage A = what GPT produced. Stage D = product truth.
+      tierTextCaptures.push({
+        scene_id: scene.id,
+        sample_index: sampleIndex,
+        stage_a: data.stage_a_raw_model,
+        stage_d: data.stage_d_final,
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -497,9 +540,7 @@ async function main(): Promise<void> {
     }
   }
 
-  // Concurrency pool. Default 1 (strictly serial). Higher values run N
-  // parallel workers off the same queue. Per build plan §9 the first run
-  // SHOULD be serial — readable output is more valuable than speed.
+  // Concurrency pool.
   const workers: Promise<void>[] = [];
   let cursor = 0;
   for (let w = 0; w < args.concurrency; w++) {
@@ -568,111 +609,90 @@ async function main(): Promise<void> {
     info('no --previous given. Skipping diff (this is the first run).');
   }
 
-  // ── Write to disk ─────────────────────────────────────────────────────────
+  // ── Aim Circuit Board (Phase 1) ─────────────────────────────────────────
+  sub('Computing aim circuit board');
+  const circuitBoard: AimCircuitBoard = buildAimCircuitBoard(inventory.by_rule);
+  inventory = attachAimCircuitBoard(inventory, circuitBoard);
+  info(`aims            : ${circuitBoard.summary.total_aims}`);
+  info(`bright          : ${circuitBoard.summary.bright_count}`);
+  info(`dim             : ${circuitBoard.summary.dim_count}`);
+  info(`out             : ${circuitBoard.summary.out_count}`);
+  info(`not wired       : ${circuitBoard.summary.not_wired_count}`);
+  info(`faults          : ${circuitBoard.fault_register.length}`);
+
+  // ── Stability Bands (Phase 2) ─────────────────────────────────────────
+  sub('Computing stability bands');
+  let stabilityReport: StabilityReport | null = null;
+  try {
+    stabilityReport = await computeStabilityBands(
+      inventory.by_rule,
+      resolve(process.cwd(), args.outDir),
+    );
+    inventory = attachStabilityBands(inventory, stabilityReport);
+    info(`runs analysed   : ${stabilityReport.runs_analysed}`);
+    info(`stable rules    : ${stabilityReport.stable_count}`);
+    info(`real changes    : ${stabilityReport.real_change_count}`);
+    info(`insufficient    : ${stabilityReport.insufficient_data_count}`);
+  } catch (err) {
+    warn(`stability bands failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn('continuing without stability data.');
+  }
+
+  // ── Scene-Class Separation (Phase 2) ──────────────────────────────────
+  sub('Separating scores by scene class');
+  let sceneClassBreakdown: SceneClassBreakdown | null = null;
+  try {
+    sceneClassBreakdown = separateBySceneClass(samples, filteredScenes);
+    inventory = attachSceneClassBreakdown(inventory, sceneClassBreakdown);
+    info(`input classes   : ${sceneClassBreakdown.class_count}`);
+    for (const [className, classResult] of Object.entries(sceneClassBreakdown.classes)) {
+      info(`  ${className.padEnd(16)}: ${classResult.scene_count} scenes, ${(classResult.stage_d_fail_rate * 100).toFixed(1)}% fail`);
+    }
+  } catch (err) {
+    warn(`scene-class separation failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn('continuing without scene-class data.');
+  }
+
+  // ── Write to disk ─────────────────────────────────────────────────────
   sub('Writing inventory to disk');
   const filename = inventoryFilename(inventory);
   const outPath = resolve(process.cwd(), args.outDir, filename);
   await writeInventoryToDisk(inventory, outPath);
   info(`written to      : ${outPath}`);
 
-  // ── Loud summary (LAST so it stays on screen) ─────────────────────────────
-  printSummary(inventory, failures);
-  process.exit(failures.length > 0 ? 1 : 0);
-}
+  // ── Write tier text sidecar ─────────────────────────────────────────────
+  const tierTextData: TierTextCapture = {
+    version: args.version,
+    run_timestamp: runStartedAtIso,
+    run_class: args.runClass,
+    scene_count: filteredScenes.length,
+    samples_per_scene: cfg.samplesPerScene,
+    sample_count: tierTextCaptures.length,
+    samples: tierTextCaptures,
+  };
+  const ttFilename = tierTextFilename(inventory);
+  const ttOutPath = resolve(process.cwd(), args.outDir, ttFilename);
+  await writeTierTextsToDisk(tierTextData, ttOutPath);
+  info(`tier texts      : ${ttOutPath}`);
 
-// ============================================================================
-// SUMMARY PRINTER
-// ============================================================================
-//
-// Order matters: top-level warnings FIRST (loud), then improved/regressed
-// counts, then coverage_gaps, then sample-level failures last. This is the
-// order Martin will scan the terminal in.
-//
-function printSummary(
-  inventory: FailureModeInventory,
-  sampleFailures: ReadonlyArray<{ sceneId: string; sampleIndex: number; error: string }>,
-): void {
-  header('SUMMARY');
+  // ── Print circuit board (FIRST — this is what you read) ───────────────────
+  printCircuitBoard(circuitBoard, args.version, args.runClass, runStartedAtIso, {
+    stability: stabilityReport ?? undefined,
+    sceneClasses: sceneClassBreakdown ?? undefined,
+  });
 
-  // Warnings first — these are the things the runner most wants Martin to see.
-  const diff = inventory.diff_vs_previous;
-  if (diff && diff.warnings.length > 0) {
-    sub(`Top-level warnings (${diff.warnings.length})`);
-    for (const w of diff.warnings) {
-      warn(`${w.type}: ${w.message}`);
-    }
-  } else if (diff) {
-    info('no top-level diff warnings.');
-  }
-
-  // Improved / regressed / unchanged
-  if (diff) {
-    sub('Diff vs previous');
-    info(`improved        : ${diff.rules_improved.length}`);
-    info(`regressed       : ${diff.rules_regressed.length}`);
-    info(`unchanged       : ${diff.rules_unchanged}`);
-
-    if (diff.rules_regressed.length > 0) {
-      sub('Top regressions (sorted by Stage D delta)');
-      for (const r of diff.rules_regressed.slice(0, 10)) {
-        const sign = r.stage_d_delta >= 0 ? '+' : '';
-        const noteSuffix = r.note ? `  — ${r.note}` : '';
-        warn(`${r.rule}  Δ${sign}${r.stage_d_delta.toFixed(4)}  [${r.decision_class}]${noteSuffix}`);
-      }
-    }
-    if (diff.rules_improved.length > 0) {
-      sub('Top improvements (sorted by Stage D delta)');
-      for (const r of diff.rules_improved.slice(0, 10)) {
-        const noteSuffix = r.note ? `  — ${r.note}` : '';
-        info(`${r.rule}  Δ${r.stage_d_delta.toFixed(4)}  [${r.decision_class}]${noteSuffix}`);
-      }
-    }
-  }
-
-  // Coverage gaps — the scene library doing its job
-  sub(`Coverage gaps (${inventory.coverage_gaps.length})`);
-  if (inventory.coverage_gaps.length === 0) {
-    info('every mechanical rule is exercised by at least one scene. Nice.');
-  } else {
-    info('the following mechanical rules have NO scene exercising them.');
-    info('this is editorial work for the scene library, not a code bug:');
-    for (const gap of inventory.coverage_gaps.slice(0, 30)) {
-      console.log(`        ${gap}`);
-    }
-    if (inventory.coverage_gaps.length > 30) {
-      console.log(`        ... and ${inventory.coverage_gaps.length - 30} more`);
-    }
-  }
-
-  // Per-rule headline counts (rolled up to health classes)
-  sub('Rule health rollup');
-  const healthCounts: Record<string, number> = {};
-  for (const entry of Object.values(inventory.by_rule)) {
-    healthCounts[entry.health] = (healthCounts[entry.health] ?? 0) + 1;
-  }
-  for (const [health, count] of Object.entries(healthCounts)) {
-    info(`${health.padEnd(20)}: ${count}`);
-  }
-
-  // Cluster fail rates
-  sub('Cluster fail rates');
-  for (const [cluster, entry] of Object.entries(inventory.by_cluster)) {
-    const pct = (entry.fail_rate * 100).toFixed(2);
-    info(`${cluster.padEnd(28)}: ${pct}%  (${entry.stage_d_fail_count} fails / ${entry.rule_count} rules)`);
-  }
-
-  // Sample-level failures last (least important if non-zero is small)
-  if (sampleFailures.length > 0) {
-    sub(`Sample-level failures (${sampleFailures.length})`);
-    for (const f of sampleFailures.slice(0, 20)) {
+  // ── Sample-level failures last ────────────────────────────────────────────
+  if (failures.length > 0) {
+    sub(`Sample-level failures (${failures.length})`);
+    for (const f of failures.slice(0, 20)) {
       fail(`${f.sceneId}#${f.sampleIndex}: ${f.error}`);
     }
-    if (sampleFailures.length > 20) {
-      fail(`... and ${sampleFailures.length - 20} more`);
+    if (failures.length > 20) {
+      fail(`... and ${failures.length - 20} more`);
     }
   }
 
-  console.log(`\n${HEADER_BAR}\n`);
+  process.exit(failures.length > 0 ? 1 : 0);
 }
 
 // ============================================================================

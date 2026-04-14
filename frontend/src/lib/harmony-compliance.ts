@@ -81,18 +81,18 @@ export function parentheticalToDoubleColon(prompt: string): string {
 export function doubleColonToParenthetical(prompt: string): string {
   // Split on commas, process each segment
   return prompt
-    .split(',')
+    .split(",")
     .map((segment) => {
       const trimmed = segment.trim();
       // Match "anything::number" pattern
       const match = trimmed.match(/^(.+?)::(\d+\.?\d*)(.*)$/);
       if (match) {
         const [, term, weight, rest] = match;
-        return ` (${term?.trim()}:${weight})${rest ?? ''}`;
+        return ` (${term?.trim()}:${weight})${rest ?? ""}`;
       }
       return segment;
     })
-    .join(',')
+    .join(",")
     .trim();
 }
 
@@ -103,11 +103,11 @@ export function doubleColonToParenthetical(prompt: string): string {
 export function stripAllWeights(prompt: string): string {
   let result = prompt;
   // Remove parenthetical: (term:1.3) → term
-  result = result.replace(/\(([^()]+):\d+\.?\d*\)/g, '$1');
+  result = result.replace(/\(([^()]+):\d+\.?\d*\)/g, "$1");
   // Remove double-colon: term::1.3 → term
-  result = result.replace(/::\d+\.?\d*/g, '');
+  result = result.replace(/::\d+\.?\d*/g, "");
   // Clean up any double spaces
-  result = result.replace(/\s{2,}/g, ' ').trim();
+  result = result.replace(/\s{2,}/g, " ").trim();
   return result;
 }
 
@@ -127,8 +127,8 @@ export function enforceT1Syntax(
   const fixes: string[] = [];
   let text = prompt;
 
-  const isDoubleColonProvider = ctx.weightingSyntax?.includes('::') ?? false;
-  const isParentheticalProvider = ctx.weightingSyntax?.includes('(') ?? false;
+  const isDoubleColonProvider = ctx.weightingSyntax?.includes("::") ?? false;
+  const isParentheticalProvider = ctx.weightingSyntax?.includes("(") ?? false;
 
   if (!ctx.supportsWeighting) {
     // Provider doesn't support weighting — strip all weights
@@ -136,19 +136,28 @@ export function enforceT1Syntax(
     const hasDoubleColon = DOUBLE_COLON_WEIGHT_RE.test(text);
     if (hasParenthetical || hasDoubleColon) {
       text = stripAllWeights(text);
-      fixes.push(`Stripped weight syntax — ${ctx.providerName} does not support weighting`);
+      fixes.push(
+        `Stripped weight syntax — ${ctx.providerName} does not support weighting`,
+      );
     }
   } else if (isDoubleColonProvider) {
     // Provider expects double-colon (e.g., Leonardo)
     if (PARENTHETICAL_WEIGHT_RE.test(text)) {
       text = parentheticalToDoubleColon(text);
-      fixes.push(`Converted parenthetical weights to double-colon for ${ctx.providerName}`);
+      fixes.push(
+        `Converted parenthetical weights to double-colon for ${ctx.providerName}`,
+      );
     }
   } else if (isParentheticalProvider) {
     // Provider expects parenthetical (e.g., Stability AI)
-    if (DOUBLE_COLON_WEIGHT_RE.test(text) && !PARENTHETICAL_WEIGHT_RE.test(text)) {
+    if (
+      DOUBLE_COLON_WEIGHT_RE.test(text) &&
+      !PARENTHETICAL_WEIGHT_RE.test(text)
+    ) {
       text = doubleColonToParenthetical(text);
-      fixes.push(`Converted double-colon weights to parenthetical for ${ctx.providerName}`);
+      fixes.push(
+        `Converted double-colon weights to parenthetical for ${ctx.providerName}`,
+      );
     }
   }
 
@@ -176,9 +185,7 @@ const MJ_PARAM_PATTERNS = {
  * Execution order: dedup first → then check for missing → add if needed.
  * This means it catches duplicates even if P7 in the route didn't run.
  */
-export function enforceMjParameters(
-  prompt: string,
-): MjComplianceResult {
+export function enforceMjParameters(prompt: string): MjComplianceResult {
   const fixes: string[] = [];
   const missingParams: string[] = [];
   let text = prompt;
@@ -196,28 +203,44 @@ export function enforceMjParameters(
     const noBlocks = [...paramSection.matchAll(/--no\s+([^-]+?)(?=\s+--|$)/g)];
 
     const hasDuplicates =
-      arMatches.length > 1 || vMatches.length > 1 ||
-      sMatches.length > 1 || noBlocks.length > 1;
+      arMatches.length > 1 ||
+      vMatches.length > 1 ||
+      sMatches.length > 1 ||
+      noBlocks.length > 1;
 
     if (hasDuplicates) {
       // Keep last occurrence of --ar, --v, --s (usually more complete)
-      const ar = arMatches.length > 0 ? arMatches[arMatches.length - 1]?.[1] ?? '' : '';
-      const v = vMatches.length > 0 ? vMatches[vMatches.length - 1]?.[1] ?? '' : '';
-      const s = sMatches.length > 0 ? sMatches[sMatches.length - 1]?.[1] ?? '' : '';
+      const ar =
+        arMatches.length > 0
+          ? (arMatches[arMatches.length - 1]?.[1] ?? "")
+          : "";
+      const v =
+        vMatches.length > 0 ? (vMatches[vMatches.length - 1]?.[1] ?? "") : "";
+      const s =
+        sMatches.length > 0 ? (sMatches[sMatches.length - 1]?.[1] ?? "") : "";
 
       // Merge ALL --no terms, deduplicate
       const allNoTerms: string[] = [];
       const seen = new Set<string>();
       for (const block of noBlocks) {
-        const terms = (block[1] ?? '').split(',').map(t => t.trim()).filter(Boolean);
+        const terms = (block[1] ?? "")
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean);
         for (const term of terms) {
           // Strip consecutive duplicate words within a term: "blurry blurry" → "blurry"
-          const dedupedWords = term.split(/\s+/).reduce<string[]>((acc, word) => {
-            if (acc.length === 0 || acc[acc.length - 1]!.toLowerCase() !== word.toLowerCase()) {
-              acc.push(word);
-            }
-            return acc;
-          }, []).join(' ');
+          const dedupedWords = term
+            .split(/\s+/)
+            .reduce<string[]>((acc, word) => {
+              if (
+                acc.length === 0 ||
+                acc[acc.length - 1]!.toLowerCase() !== word.toLowerCase()
+              ) {
+                acc.push(word);
+              }
+              return acc;
+            }, [])
+            .join(" ");
           const lower = dedupedWords.toLowerCase();
           if (!seen.has(lower)) {
             seen.add(lower);
@@ -230,7 +253,9 @@ export function enforceMjParameters(
       if (allNoTerms.length > 0) {
         const last = allNoTerms[allNoTerms.length - 1];
         if (last) {
-          allNoTerms[allNoTerms.length - 1] = last.replace(/[.!?]+$/, '').trim();
+          allNoTerms[allNoTerms.length - 1] = last
+            .replace(/[.!?]+$/, "")
+            .trim();
         }
       }
 
@@ -239,10 +264,12 @@ export function enforceMjParameters(
       if (ar) parts.push(`--ar ${ar}`);
       if (v) parts.push(`--v ${v}`);
       if (s) parts.push(`--s ${s}`);
-      if (allNoTerms.length > 0) parts.push(`--no ${allNoTerms.join(', ')}`);
+      if (allNoTerms.length > 0) parts.push(`--no ${allNoTerms.join(", ")}`);
 
-      text = parts.join(' ');
-      fixes.push(`Deduplicated MJ parameters (${arMatches.length} --ar, ${vMatches.length} --v, ${sMatches.length} --s, ${noBlocks.length} --no blocks → 1 each)`);
+      text = parts.join(" ");
+      fixes.push(
+        `Deduplicated MJ parameters (${arMatches.length} --ar, ${vMatches.length} --v, ${sMatches.length} --s, ${noBlocks.length} --no blocks → 1 each)`,
+      );
     }
   }
 
@@ -253,18 +280,27 @@ export function enforceMjParameters(
   // TERMS within a single block.
   const noMatch = text.match(/--no\s+(.+)$/);
   if (noMatch && noMatch[1]) {
-    const beforeNo = text.slice(0, text.indexOf('--no')).trimEnd();
-    const rawTerms = noMatch[1].split(',').map(t => t.trim()).filter(Boolean);
+    const beforeNo = text.slice(0, text.indexOf("--no")).trimEnd();
+    const rawTerms = noMatch[1]
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
     const seen = new Set<string>();
     const uniqueTerms: string[] = [];
     for (const term of rawTerms) {
       // Strip consecutive duplicate words: "blurry blurry" → "blurry"
-      const dedupedWords = term.split(/\s+/).reduce<string[]>((acc, word) => {
-        if (acc.length === 0 || acc[acc.length - 1]!.toLowerCase() !== word.toLowerCase()) {
-          acc.push(word);
-        }
-        return acc;
-      }, []).join(' ');
+      const dedupedWords = term
+        .split(/\s+/)
+        .reduce<string[]>((acc, word) => {
+          if (
+            acc.length === 0 ||
+            acc[acc.length - 1]!.toLowerCase() !== word.toLowerCase()
+          ) {
+            acc.push(word);
+          }
+          return acc;
+        }, [])
+        .join(" ");
       const lower = dedupedWords.toLowerCase();
       if (lower && !seen.has(lower)) {
         seen.add(lower);
@@ -275,7 +311,9 @@ export function enforceMjParameters(
     if (uniqueTerms.length > 0) {
       const last = uniqueTerms[uniqueTerms.length - 1];
       if (last) {
-        uniqueTerms[uniqueTerms.length - 1] = last.replace(/[.!?]+$/, '').trim();
+        uniqueTerms[uniqueTerms.length - 1] = last
+          .replace(/[.!?]+$/, "")
+          .trim();
       }
     }
 
@@ -284,7 +322,7 @@ export function enforceMjParameters(
     // If a multi-word term ends with words that match a standalone term already
     // in the list, strip the suffix. If what remains is also already in the list,
     // the fused term is entirely redundant — remove it.
-    const lowerSet = new Set(uniqueTerms.map(t => t.toLowerCase()));
+    const lowerSet = new Set(uniqueTerms.map((t) => t.toLowerCase()));
     const fusionFixed: string[] = [];
     for (const term of uniqueTerms) {
       const words = term.split(/\s+/);
@@ -294,9 +332,13 @@ export function enforceMjParameters(
       }
       // Check if trailing 1 or 2 words match a standalone term in the list
       let wasFused = false;
-      for (let suffixLen = 1; suffixLen <= Math.min(2, words.length - 1); suffixLen++) {
-        const suffix = words.slice(-suffixLen).join(' ').toLowerCase();
-        const prefix = words.slice(0, -suffixLen).join(' ').toLowerCase();
+      for (
+        let suffixLen = 1;
+        suffixLen <= Math.min(2, words.length - 1);
+        suffixLen++
+      ) {
+        const suffix = words.slice(-suffixLen).join(" ").toLowerCase();
+        const prefix = words.slice(0, -suffixLen).join(" ").toLowerCase();
         if (lowerSet.has(suffix) && suffix !== term.toLowerCase()) {
           // The suffix is already a standalone term — this is a fusion
           if (lowerSet.has(prefix)) {
@@ -305,7 +347,7 @@ export function enforceMjParameters(
             break;
           } else {
             // Prefix is unique — keep it without the suffix
-            fusionFixed.push(words.slice(0, -suffixLen).join(' '));
+            fusionFixed.push(words.slice(0, -suffixLen).join(" "));
             wasFused = true;
             break;
           }
@@ -328,33 +370,35 @@ export function enforceMjParameters(
     }
 
     if (finalTerms.length < rawTerms.length) {
-      text = `${beforeNo} --no ${finalTerms.join(', ')}`;
-      fixes.push(`Deduplicated --no terms: ${rawTerms.length} → ${finalTerms.length}`);
+      text = `${beforeNo} --no ${finalTerms.join(", ")}`;
+      fixes.push(
+        `Deduplicated --no terms: ${rawTerms.length} → ${finalTerms.length}`,
+      );
     }
   }
 
   // ── STEP 2: ADD — check for missing params and append ──────────
   if (!MJ_PARAM_PATTERNS.ar.test(text)) {
-    missingParams.push('--ar');
+    missingParams.push("--ar");
   }
   if (!MJ_PARAM_PATTERNS.v.test(text)) {
-    missingParams.push('--v');
+    missingParams.push("--v");
   }
   if (!MJ_PARAM_PATTERNS.s.test(text)) {
-    missingParams.push('--s');
+    missingParams.push("--s");
   }
   if (!MJ_PARAM_PATTERNS.no.test(text)) {
-    missingParams.push('--no');
+    missingParams.push("--no");
   }
 
   if (missingParams.length > 0) {
-    const noIndex = text.indexOf('--no ');
+    const noIndex = text.indexOf("--no ");
     const defaults: string[] = [];
-    if (missingParams.includes('--ar')) defaults.push('--ar 16:9');
-    if (missingParams.includes('--v')) defaults.push('--v 7');
-    if (missingParams.includes('--s')) defaults.push('--s 500');
+    if (missingParams.includes("--ar")) defaults.push("--ar 16:9");
+    if (missingParams.includes("--v")) defaults.push("--v 7");
+    if (missingParams.includes("--s")) defaults.push("--s 500");
 
-    const paramBlock = defaults.join(' ');
+    const paramBlock = defaults.join(" ");
 
     if (noIndex !== -1 && paramBlock) {
       const beforeNo = text.slice(0, noIndex).trimEnd();
@@ -364,13 +408,15 @@ export function enforceMjParameters(
       text = `${text.trimEnd()} ${paramBlock}`;
     }
 
-    if (missingParams.includes('--no')) {
+    if (missingParams.includes("--no")) {
       text = `${text.trimEnd()} --no text, watermark, logo, blurry`;
-      fixes.push('Added default --no block (scene-specific negatives recommended)');
+      fixes.push(
+        "Added default --no block (scene-specific negatives recommended)",
+      );
     }
 
     if (defaults.length > 0) {
-      fixes.push(`Added missing MJ parameters: ${defaults.join(', ')}`);
+      fixes.push(`Added missing MJ parameters: ${defaults.join(", ")}`);
     }
   }
 
@@ -407,7 +453,12 @@ export function enforceWeightCap(
 ): ComplianceResult {
   // Find all (term:weight) matches with their positions
   const weightPattern = /\(([^()]+):(\d+\.?\d*)\)/g;
-  const matches: Array<{ full: string; term: string; weight: number; index: number }> = [];
+  const matches: Array<{
+    full: string;
+    term: string;
+    weight: number;
+    index: number;
+  }> = [];
 
   let match: RegExpExecArray | null;
   while ((match = weightPattern.exec(prompt)) !== null) {
@@ -432,14 +483,19 @@ export function enforceWeightCap(
   // Process in reverse order of string position to preserve indices
   const toStripByPosition = [...toStrip].sort((a, b) => b.index - a.index);
   for (const item of toStripByPosition) {
-    result = result.slice(0, item.index) + item.term + result.slice(item.index + item.full.length);
+    result =
+      result.slice(0, item.index) +
+      item.term +
+      result.slice(item.index + item.full.length);
     strippedTerms.push(`${item.term} (was :${item.weight})`);
   }
 
   return {
     text: result,
     wasFixed: true,
-    fixes: [`Capped weighted terms: ${matches.length} → ${maxWeights}. Unweighted: ${strippedTerms.join(', ')}`],
+    fixes: [
+      `Capped weighted terms: ${matches.length} → ${maxWeights}. Unweighted: ${strippedTerms.join(", ")}`,
+    ],
   };
 }
 
@@ -458,13 +514,48 @@ export function enforceWeightCap(
 /** Orphaned verbs that commonly survive in CLIP keyword prompts.
  *  Only matches standalone comma-separated terms — not words inside phrases. */
 const ORPHAN_VERB_TERMS = new Set([
-  'stands', 'standing', 'sits', 'sitting', 'walks', 'walking',
-  'reflects', 'reflecting', 'flows', 'flowing', 'glows', 'glowing',
-  'falls', 'falling', 'rises', 'rising', 'leaves', 'leaving',
-  'crashes', 'crashing', 'sends', 'sending', 'cuts', 'cutting',
-  'grips', 'gripping', 'hangs', 'hanging', 'drifts', 'drifting',
-  'hovers', 'hovering', 'shines', 'shining', 'burns', 'burning',
-  'melts', 'melting', 'fades', 'fading', 'stretches', 'stretching',
+  "stands",
+  "standing",
+  "sits",
+  "sitting",
+  "walks",
+  "walking",
+  "reflects",
+  "reflecting",
+  "flows",
+  "flowing",
+  "glows",
+  "glowing",
+  "falls",
+  "falling",
+  "rises",
+  "rising",
+  "leaves",
+  "leaving",
+  "crashes",
+  "crashing",
+  "sends",
+  "sending",
+  "cuts",
+  "cutting",
+  "grips",
+  "gripping",
+  "hangs",
+  "hanging",
+  "drifts",
+  "drifting",
+  "hovers",
+  "hovering",
+  "shines",
+  "shining",
+  "burns",
+  "burning",
+  "melts",
+  "melting",
+  "fades",
+  "fading",
+  "stretches",
+  "stretching",
 ]);
 
 /**
@@ -479,7 +570,10 @@ export function enforceClipKeywordCleanup(prompt: string): ComplianceResult {
   const fixes: string[] = [];
 
   // Split by commas, process each term
-  const terms = prompt.split(',').map(t => t.trim()).filter(Boolean);
+  const terms = prompt
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean);
   const cleaned: string[] = [];
   const strippedVerbs: string[] = [];
   const strippedArticles: string[] = [];
@@ -500,7 +594,7 @@ export function enforceClipKeywordCleanup(prompt: string): ComplianceResult {
     }
 
     // Strip leading articles from unweighted terms: "a lighthouse" → "lighthouse"
-    const withoutArticle = trimmed.replace(/^(?:a|an|the)\s+/i, '');
+    const withoutArticle = trimmed.replace(/^(?:a|an|the)\s+/i, "");
     if (withoutArticle !== trimmed) {
       strippedArticles.push(`"${trimmed}" → "${withoutArticle}"`);
       cleaned.push(withoutArticle);
@@ -511,14 +605,276 @@ export function enforceClipKeywordCleanup(prompt: string): ComplianceResult {
   }
 
   if (strippedVerbs.length > 0) {
-    fixes.push(`Stripped orphan verbs: ${strippedVerbs.join(', ')}`);
+    fixes.push(`Stripped orphan verbs: ${strippedVerbs.join(", ")}`);
   }
   if (strippedArticles.length > 0) {
-    fixes.push(`Stripped leading articles: ${strippedArticles.join(', ')}`);
+    fixes.push(`Stripped leading articles: ${strippedArticles.join(", ")}`);
   }
 
-  const text = cleaned.join(', ');
+  const text = cleaned.join(", ");
   return { text, wasFixed: fixes.length > 0, fixes };
+}
+
+// ============================================================================
+// T1 CAMERA JARGON STRIPPING (Aim 6.1 — Phase 3)
+// ============================================================================
+// Camera body names, lens focal lengths, f-stops, ISO values, and exposure
+// specs waste T1 token budget because CLIP cannot interpret them visually.
+// "Leica SL2-S" and "ISO 3200" produce no meaningful CLIP activation.
+//
+// This function strips or demotes these terms from T1 weighted tokens.
+// The visual EFFECTS of these specs (bokeh, compression, clarity) should
+// have been converted by GPT in the system prompt — this catches what GPT
+// missed.
+//
+// Authority: api-call-2-v2_1_0.md §10 Aim 6, §12.2
+// ============================================================================
+
+/** Camera body names and brand+model combos */
+const CAMERA_BODY_PATTERNS: readonly RegExp[] = [
+  /\bCanon\s*(?:EOS\s*)?(?:R(?:[35678]|P|X)?|[567]D|1D(?:X)?|80D|90D)\b/gi,
+  /\bNikon\s*(?:Z(?:[56789f]|fc)?|D\d{3,4})\b/gi,
+  /\bSony\s*(?:A\d{4}|A[79](?:R?\s*(?:II|III|IV|V))?|FX\d|ZV-E\d)\b/gi,
+  /\bFuji(?:film)?\s*(?:X-[TESH]\d+|X100\w*|GFX\s*\d+\w*)\b/gi,
+  /\bLeica\s*(?:M\d{1,2}|SL\d(?:-S)?|Q\d?|M(?:10|11))\b/gi,
+  /\bHasselblad\s*(?:X\dD?(?:\s*100C)?|907X|H\d(?:D)?|X2D)\b/gi,
+  /\bPanasonic\s*(?:GH\d|S\d(?:R)?|G\d)\b/gi,
+  /\bOlympus\s*(?:OM-?\d|E-M\d)\b/gi,
+  /\bPentax\s*(?:K-?\d|645)\b/gi,
+  /\bPhase\s*One\b/gi,
+  /\bRicoh\s*GR(?:\s*[123])?\b/gi,
+  /\bSigma\s*fp\s*[LH]?\b/gi,
+  /\b(?:DSLR|mirrorless)\b/gi,
+];
+
+const LENS_SPEC_PATTERNS: readonly RegExp[] = [
+  /\b\d{1,3}(?:\s*-\s*\d{1,3})?\s*mm(?:\s*lens|\s*look)?\s*(?:f\/?\d+(?:\.\d+)?)?\b/gi,
+  /\bf\/?\d+(?:\.\d+)?\b/gi,
+  /\bf-?stop\s*(?:of\s*)?\d+(?:\.\d+)?\b/gi,
+  /\bfocal\s*length\s*\d+(?:\.\d+)?\b/gi,
+  /\baperture\s*(?:of\s*)?\d+(?:\.\d+)?\b/gi,
+  /\b(?:telephoto|prime|zoom|portrait)\s+lens\b/gi,
+];
+
+const EXPOSURE_PATTERNS: readonly RegExp[] = [
+  /\bISO\s*\d{2,6}\b/gi,
+  /\b1\/\d{2,5}\s*(?:s|sec(?:ond)?s?)?\b/gi,
+  /\bshutter\s*speed\b/gi,
+  /\bexposure\s*(?:time|value|compensation)\b/gi,
+];
+
+const T1_TARGETED_TECH_LITERAL_PATTERNS: readonly RegExp[] = [
+  /\bLeica\s*SL2-S\b/gi,
+  /\b\d{1,3}\s*mm\s*lens\b/gi,
+  /\b\d{1,3}\s*mm\b/gi,
+  /\bf\/?\d+(?:\.\d+)?\b/gi,
+];
+
+const T1_POST_TECH_RESIDUE_PATTERNS: readonly RegExp[] = [
+  /^(?:clarity|sharp\s*focus|background\s*in\s*sharp\s*focus|balanced\s*colou?rs?|clean\s*image|unmarked)$/i,
+];
+
+function stripTargetedT1TechLiterals(text: string): string {
+  let out = text;
+  for (const pattern of T1_TARGETED_TECH_LITERAL_PATTERNS) {
+    pattern.lastIndex = 0;
+    out = out.replace(pattern, " ");
+  }
+  return normaliseResidual(out);
+}
+
+function isOnlyTargetedT1Residue(text: string): boolean {
+  const cleaned = normaliseResidual(text);
+  return (
+    cleaned.length === 0 ||
+    T1_POST_TECH_RESIDUE_PATTERNS.some((pattern) => pattern.test(cleaned))
+  );
+}
+
+function resetRegex(pattern: RegExp): RegExp {
+  pattern.lastIndex = 0;
+  return pattern;
+}
+
+function matchesAnyPattern(text: string, patterns: readonly RegExp[]): boolean {
+  return patterns.some((pattern) => resetRegex(pattern).test(text));
+}
+
+function stripFullMatches(text: string, patterns: readonly RegExp[]): string {
+  let out = text;
+  for (const pattern of patterns) {
+    resetRegex(pattern);
+    out = out.replace(pattern, " ");
+  }
+  return out;
+}
+
+function normaliseResidual(text: string): string {
+  return text
+    .replace(/[()]/g, " ")
+    .replace(/\b(?:shot\s+on|captured\s+on|taken\s+with|using|with)\b/gi, " ")
+    .replace(/\b(?:lens|look)\b/gi, " ")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+([,.;:])/g, "$1")
+    .replace(/(^|\s)[-–—]+(?=\s|$)/g, " ")
+    .trim();
+}
+
+function convertFocalLengthPhrase(phrase: string): string {
+  const rangeMatch = phrase.match(
+    /\b(\d{1,3})(?:\s*-\s*(\d{1,3}))?\s*mm(?:\s*lens|\s*look)?\b/i,
+  );
+  if (!rangeMatch) return phrase;
+
+  const a = Number.parseInt(rangeMatch[1] ?? "0", 10);
+  const b = Number.parseInt(rangeMatch[2] ?? rangeMatch[1] ?? "0", 10);
+  const mid = Number.isFinite(a) && Number.isFinite(b) ? (a + b) / 2 : a;
+
+  let replacement = "natural perspective";
+  if (mid <= 24) replacement = "ultra-wide perspective";
+  else if (mid <= 40) replacement = "wide-angle perspective";
+  else if (mid <= 65) replacement = "natural perspective";
+  else if (mid <= 135) replacement = "compressed perspective";
+  else replacement = "strong telephoto compression";
+
+  return phrase.replace(
+    /\b\d{1,3}(?:\s*-\s*\d{1,3})?\s*mm(?:\s*lens|\s*look)?\b/gi,
+    replacement,
+  );
+}
+
+function convertAperturePhrase(phrase: string): string {
+  const apertureMatch = phrase.match(/\bf\/?(\d+(?:\.\d+)?)\b/i);
+  if (!apertureMatch) return phrase;
+  const value = Number.parseFloat(apertureMatch[1] ?? "0");
+  if (!Number.isFinite(value) || value <= 0) return phrase;
+
+  let replacement = "balanced scene sharpness";
+  if (value <= 2) replacement = "soft background blur";
+  else if (value <= 4) replacement = "gentle depth separation";
+  else if (value <= 8) replacement = "balanced scene sharpness";
+  else replacement = "deep scene sharpness";
+
+  return phrase.replace(/\bf\/?\d+(?:\.\d+)?\b/gi, replacement);
+}
+
+function convertTechnicalToVisual(phrase: string): string {
+  let out = phrase;
+  out = convertFocalLengthPhrase(out);
+  out = convertAperturePhrase(out);
+  out = stripFullMatches(out, CAMERA_BODY_PATTERNS);
+  out = stripFullMatches(out, EXPOSURE_PATTERNS);
+  out = out
+    .replace(/\bf-?stop\s*(?:of\s*)?\d+(?:\.\d+)?\b/gi, "depth separation")
+    .replace(/\bfocal\s*length\s*\d+(?:\.\d+)?\b/gi, "perspective")
+    .replace(/\baperture\s*(?:of\s*)?\d+(?:\.\d+)?\b/gi, "depth separation")
+    .replace(/\b(?:prime|zoom|portrait)\s+lens\b/gi, "lens perspective");
+  return normaliseResidual(out);
+}
+
+function isLikelyOnlyTechnical(phrase: string): boolean {
+  const stripped = normaliseResidual(
+    stripFullMatches(convertAperturePhrase(convertFocalLengthPhrase(phrase)), [
+      ...CAMERA_BODY_PATTERNS,
+      ...LENS_SPEC_PATTERNS,
+      ...EXPOSURE_PATTERNS,
+    ]),
+  );
+  return stripped.length === 0;
+}
+
+/**
+ * P17: Strip or convert camera jargon in T1.
+ *
+ * Tier 1 should not waste budget on raw body names, focal lengths, apertures,
+ * ISO values, or shutter speeds. Where possible, convert lens/aperture literals
+ * into compact visual tokens CLIP can still use. Where the token is just raw
+ * hardware, remove it entirely.
+ */
+export function stripT1CameraJargon(prompt: string): ComplianceResult {
+  const fixes: string[] = [];
+  const terms = prompt
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean);
+  const cleaned: string[] = [];
+
+  for (const term of terms) {
+    const parenMatch = term.match(/^\(([^):]+):(\d+\.?\d*)\)$/);
+    const dcMatch = term.match(/^([^,:()]+?)::(\d+\.?\d*)$/);
+
+    const phrase = parenMatch
+      ? (parenMatch[1] ?? "").trim()
+      : dcMatch
+        ? (dcMatch[1] ?? "").trim()
+        : term.trim();
+
+    const hasBody = matchesAnyPattern(phrase, CAMERA_BODY_PATTERNS);
+    const hasLens = matchesAnyPattern(phrase, LENS_SPEC_PATTERNS);
+    const hasExposure = matchesAnyPattern(phrase, EXPOSURE_PATTERNS);
+
+    if (!hasBody && !hasLens && !hasExposure) {
+      cleaned.push(term);
+      continue;
+    }
+
+    const targetedStripped = stripTargetedT1TechLiterals(phrase);
+    if (targetedStripped !== normaliseResidual(phrase)) {
+      if (isOnlyTargetedT1Residue(targetedStripped)) {
+        fixes.push(`Removed targeted T1 technical token: "${phrase}"`);
+        continue;
+      }
+      fixes.push(
+        `Stripped targeted T1 technical literals: "${phrase}" → "${targetedStripped}"`,
+      );
+      if (parenMatch) {
+        cleaned.push(`(${targetedStripped}:${parenMatch[2]})`);
+      } else if (dcMatch) {
+        cleaned.push(`${targetedStripped}::${dcMatch[2]}`);
+      } else {
+        cleaned.push(targetedStripped);
+      }
+      continue;
+    }
+
+    if (isLikelyOnlyTechnical(phrase)) {
+      const converted = convertTechnicalToVisual(phrase);
+      if (converted.length >= 3) {
+        fixes.push(
+          `Converted raw T1 technical token: "${phrase}" → "${converted}"`,
+        );
+        if (parenMatch) cleaned.push(`(${converted}:${parenMatch[2]})`);
+        else if (dcMatch) cleaned.push(`${converted}::${dcMatch[2]}`);
+        else cleaned.push(converted);
+      } else {
+        fixes.push(`Removed raw T1 hardware token: "${phrase}"`);
+      }
+      continue;
+    }
+
+    const converted = convertTechnicalToVisual(phrase);
+    if (converted.length < 3) {
+      fixes.push(`Removed technical residue from mixed token: "${phrase}"`);
+      continue;
+    }
+
+    if (converted !== phrase) {
+      fixes.push(
+        `Converted T1 technical residue: "${phrase}" → "${converted}"`,
+      );
+      if (parenMatch) cleaned.push(`(${converted}:${parenMatch[2]})`);
+      else if (dcMatch) cleaned.push(`${converted}::${dcMatch[2]}`);
+      else cleaned.push(converted);
+    } else {
+      cleaned.push(term);
+    }
+  }
+
+  return {
+    text: cleaned.join(", "),
+    wasFixed: fixes.length > 0,
+    fixes,
+  };
 }
 
 // ============================================================================
@@ -608,17 +964,17 @@ export function detectT4ShortSentences(prompt: string): string[] {
 // ============================================================================
 
 const T3_BANNED_PHRASES = [
-  'rendered as',
-  'in the style of',
-  'should feel like',
-  'meant to look like',
-  'designed to resemble',
-  'intended to appear as',
-  'the image should',
-  'the scene feels',
-  'the scene is',
-  'the mood is',
-  'that feels',
+  "rendered as",
+  "in the style of",
+  "should feel like",
+  "meant to look like",
+  "designed to resemble",
+  "intended to appear as",
+  "the image should",
+  "the scene feels",
+  "the scene is",
+  "the mood is",
+  "that feels",
 ] as const;
 
 /**
@@ -707,16 +1063,16 @@ export function runFullCompliance(
 function tokeniseForComparison(text: string): Set<string> {
   // Strip weight syntax: (term:1.3) → term, term::1.3 → term, {{{term}}} → term
   let cleaned = text;
-  cleaned = cleaned.replace(/\(([^()]+):\d+\.?\d*\)/g, '$1');        // parenthetical
-  cleaned = cleaned.replace(/(\w[\w\s-]*)::\d+\.?\d*/g, '$1');        // double-colon
-  cleaned = cleaned.replace(/\{+([^{}]+)\}+/g, '$1');                 // triple/double/single brace
-  cleaned = cleaned.replace(/--\w+\s*[^\s,]*/g, '');                  // MJ flags
+  cleaned = cleaned.replace(/\(([^()]+):\d+\.?\d*\)/g, "$1"); // parenthetical
+  cleaned = cleaned.replace(/(\w[\w\s-]*)::\d+\.?\d*/g, "$1"); // double-colon
+  cleaned = cleaned.replace(/\{+([^{}]+)\}+/g, "$1"); // triple/double/single brace
+  cleaned = cleaned.replace(/--\w+\s*[^\s,]*/g, ""); // MJ flags
 
   // Split on commas, then split multi-word terms into individual words
   const rawTerms = cleaned
     .split(/[,\n]+/)
-    .map(t => t.trim().toLowerCase())
-    .filter(t => t.length > 0);
+    .map((t) => t.trim().toLowerCase())
+    .filter((t) => t.length > 0);
 
   const tokens = new Set<string>();
   for (const term of rawTerms) {
@@ -761,15 +1117,18 @@ export function enforceNegativeContradiction(
   const removedTerms: string[] = [];
 
   // Split negative into comma-separated terms
-  const negTerms = negative.split(/,/).map(t => t.trim()).filter(t => t.length > 0);
+  const negTerms = negative
+    .split(/,/)
+    .map((t) => t.trim())
+    .filter((t) => t.length > 0);
 
   const survivingTerms: string[] = [];
 
   for (const term of negTerms) {
     const lower = term.toLowerCase();
     // Check if the full term or its significant words conflict
-    const words = lower.split(/\s+/).filter(w => w.length > 2);
-    const conflicts = words.filter(w => positiveTokens.has(w));
+    const words = lower.split(/\s+/).filter((w) => w.length > 2);
+    const conflicts = words.filter((w) => positiveTokens.has(w));
 
     // A term contradicts if >50% of its significant words are in the positive
     // This avoids stripping "calm sea" just because "sea" appears — but DOES
@@ -785,13 +1144,363 @@ export function enforceNegativeContradiction(
     return { negative, wasFixed: false, fixes: [], removedTerms: [] };
   }
 
-  const cleanedNegative = survivingTerms.join(', ');
+  const cleanedNegative = survivingTerms.join(", ");
   return {
     negative: cleanedNegative,
     wasFixed: true,
-    fixes: [`Removed ${removedTerms.length} contradicting term${removedTerms.length !== 1 ? 's' : ''} from negative: ${removedTerms.join(', ')}`],
+    fixes: [
+      `Removed ${removedTerms.length} contradicting term${removedTerms.length !== 1 ? "s" : ""} from negative: ${removedTerms.join(", ")}`,
+    ],
     removedTerms,
   };
+}
+
+// ============================================================================
+// CALL 2 QUALITY ENFORCERS (v6.1 rollback + code enforcement pivot)
+// ============================================================================
+
+const T1_QUALITY_PREFIX_TERMS = [
+  "masterpiece",
+  "best quality",
+  "highly detailed",
+] as const;
+const T1_QUALITY_SUFFIX_TERMS = [
+  "sharp focus",
+  "8K",
+  "intricate textures",
+] as const;
+
+const QUALITY_FAMILIES: ReadonlyArray<readonly string[]> = [
+  [
+    "sharp focus",
+    "background in sharp focus",
+    "crisp detail",
+    "clear detail",
+    "crisp tonal rendering",
+  ],
+  ["8k", "high resolution"],
+  [
+    "highly detailed",
+    "intricate textures",
+    "premium photoreal clarity",
+    "professional photography",
+  ],
+  ["clean image", "unmarked"],
+  ["balanced colours", "balanced colors"],
+];
+
+const GENERIC_QUALITY_WEIGHT_TERMS = new Set([
+  "8k",
+  "photorealistic",
+  "deep focus landscape",
+  "sharp focus",
+  "intricate textures",
+  "highly detailed",
+  "best quality",
+  "masterpiece",
+  "clean image",
+  "balanced colours",
+  "balanced colors",
+]);
+
+const SCENE_ACTION_HINTS = [
+  " across ",
+  " through ",
+  " against ",
+  " into ",
+  " onto ",
+  " over ",
+  " under ",
+  " on ",
+  "reflect",
+  "reflecting",
+  "reflections",
+  "skitter",
+  "skittering",
+  "crash",
+  "crashing",
+  "glow",
+  "glowing",
+  "fall",
+  "falling",
+  "drift",
+  "drifting",
+  "sweep",
+  "sweeping",
+  "lash",
+  "lashing",
+  "burn",
+  "burning",
+  "explode",
+  "exploding",
+  "smear",
+  "smearing",
+  "jostling",
+  "poised",
+  "glaring",
+  "lifting",
+  "curling",
+  "whip",
+  "whipping",
+];
+
+function parseParentheticalWeights(
+  prompt: string,
+): Array<{ full: string; term: string; weight: number; index: number }> {
+  const pattern = /\(([^()]+):(\d+\.?\d*)\)/g;
+  const matches: Array<{
+    full: string;
+    term: string;
+    weight: number;
+    index: number;
+  }> = [];
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(prompt)) !== null) {
+    matches.push({
+      full: match[0],
+      term: match[1]!.trim(),
+      weight: parseFloat(match[2]!),
+      index: match.index,
+    });
+  }
+  return matches;
+}
+
+function splitCommaTerms(prompt: string): string[] {
+  return prompt
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean);
+}
+
+function normaliseQualityTerm(term: string): string {
+  return term
+    .toLowerCase()
+    .replace(/\([^()]+:(\d+\.?\d*)\)/g, (_m, _w) => "")
+    .trim();
+}
+
+function qualityFamilyIndex(term: string): number {
+  const lower = term.toLowerCase();
+  return QUALITY_FAMILIES.findIndex((family) =>
+    family.some((entry) => lower.includes(entry)),
+  );
+}
+
+function isSceneActionTerm(term: string): boolean {
+  const lower = term.toLowerCase();
+  return SCENE_ACTION_HINTS.some((hint) => lower.includes(hint));
+}
+
+function weightToString(weight: number): string {
+  return Number(weight.toFixed(1)).toFixed(1);
+}
+
+/**
+ * Ensure the first weighted non-quality token remains uniquely highest.
+ */
+export function enforceSubjectHighestWeight(prompt: string): ComplianceResult {
+  const matches = parseParentheticalWeights(prompt);
+  if (matches.length === 0) return { text: prompt, wasFixed: false, fixes: [] };
+
+  const subject = matches.find((m) => qualityFamilyIndex(m.term) === -1);
+  if (!subject) return { text: prompt, wasFixed: false, fixes: [] };
+
+  const desiredSubjectWeight = Math.max(subject.weight, 1.3);
+  let result = prompt;
+  const fixes: string[] = [];
+
+  // Process later tokens right-to-left so indices remain valid.
+  const offenders = matches
+    .filter(
+      (m) => m.index !== subject.index && m.weight >= desiredSubjectWeight,
+    )
+    .sort((a, b) => b.index - a.index);
+
+  for (const offender of offenders) {
+    const newWeight = Math.max(1.1, desiredSubjectWeight - 0.1);
+    const replacement = `(${offender.term}:${weightToString(newWeight)})`;
+    result =
+      result.slice(0, offender.index) +
+      replacement +
+      result.slice(offender.index + offender.full.length);
+    fixes.push(
+      `${offender.term}: ${weightToString(offender.weight)} → ${weightToString(newWeight)}`,
+    );
+  }
+
+  // If subject itself is below 1.3, gently lift it unless impossible.
+  if (subject.weight < 1.3) {
+    const replacement = `(${subject.term}:${weightToString(1.3)})`;
+    result =
+      result.slice(0, subject.index) +
+      replacement +
+      result.slice(subject.index + subject.full.length);
+    fixes.push(`${subject.term}: ${weightToString(subject.weight)} → 1.3`);
+  }
+
+  return {
+    text: result,
+    wasFixed: fixes.length > 0,
+    fixes:
+      fixes.length > 0
+        ? [`Enforced subject-highest weight: ${fixes.join("; ")}`]
+        : [],
+  };
+}
+
+/**
+ * Demote weighted generic quality tokens below scene-action tokens.
+ */
+export function demoteGenericQualityWeights(prompt: string): ComplianceResult {
+  const matches = parseParentheticalWeights(prompt);
+  if (matches.length === 0) return { text: prompt, wasFixed: false, fixes: [] };
+
+  const sceneActionWeights = matches.filter((m) => isSceneActionTerm(m.term));
+  if (sceneActionWeights.length === 0)
+    return { text: prompt, wasFixed: false, fixes: [] };
+  const minSceneActionWeight = Math.min(
+    ...sceneActionWeights.map((m) => m.weight),
+  );
+
+  let result = prompt;
+  const fixes: string[] = [];
+  const genericMatches = matches
+    .filter((m) => GENERIC_QUALITY_WEIGHT_TERMS.has(m.term.toLowerCase()))
+    .sort((a, b) => b.index - a.index);
+
+  for (const item of genericMatches) {
+    if (item.weight >= minSceneActionWeight) {
+      const newWeight = Math.max(1.1, minSceneActionWeight - 0.1);
+      const replacement = `(${item.term}:${weightToString(newWeight)})`;
+      result =
+        result.slice(0, item.index) +
+        replacement +
+        result.slice(item.index + item.full.length);
+      fixes.push(
+        `${item.term}: ${weightToString(item.weight)} → ${weightToString(newWeight)}`,
+      );
+    }
+  }
+
+  return {
+    text: result,
+    wasFixed: fixes.length > 0,
+    fixes:
+      fixes.length > 0
+        ? [`Demoted generic quality weights: ${fixes.join("; ")}`]
+        : [],
+  };
+}
+
+/**
+ * Deduplicate overlapping quality language families while preserving first occurrence.
+ */
+export function deduplicateQualityTokens(prompt: string): ComplianceResult {
+  const terms = splitCommaTerms(prompt);
+  const seenFamilies = new Set<number>();
+  const seenExact = new Set<string>();
+  const kept: string[] = [];
+  const removed: string[] = [];
+
+  for (const term of terms) {
+    const exact = normaliseQualityTerm(term);
+    const family = qualityFamilyIndex(exact);
+
+    if (family !== -1) {
+      if (seenFamilies.has(family) || seenExact.has(exact)) {
+        removed.push(term);
+        continue;
+      }
+      seenFamilies.add(family);
+      seenExact.add(exact);
+    }
+
+    kept.push(term);
+  }
+
+  return {
+    text: kept.join(", "),
+    wasFixed: removed.length > 0,
+    fixes:
+      removed.length > 0
+        ? [`Deduplicated quality tokens: ${removed.join("; ")}`]
+        : [],
+  };
+}
+
+/**
+ * Guarantee a non-empty T1 quality suffix after deduplication.
+ */
+export function ensureT1QualitySuffix(prompt: string): ComplianceResult {
+  const terms = splitCommaTerms(prompt);
+  const lowerTerms = terms.map((t) => t.toLowerCase());
+  const present = T1_QUALITY_SUFFIX_TERMS.filter((suffix) =>
+    lowerTerms.some((term) => term.includes(suffix.toLowerCase())),
+  );
+
+  if (present.length >= 2) {
+    return { text: prompt, wasFixed: false, fixes: [] };
+  }
+
+  const additions: string[] = [];
+  for (const suffix of T1_QUALITY_SUFFIX_TERMS) {
+    if (present.includes(suffix)) continue;
+    additions.push(suffix);
+    if (present.length + additions.length >= 2) break;
+  }
+
+  if (additions.length === 0) {
+    return { text: prompt, wasFixed: false, fixes: [] };
+  }
+
+  const text = [...terms, ...additions].join(", ");
+  return {
+    text,
+    wasFixed: true,
+    fixes: [`Restored T1 quality suffix with: ${additions.join(", ")}`],
+  };
+}
+
+/**
+ * Reorder T1 into canonical sequence: quality prefix -> weighted subject -> weighted scene -> support -> suffix.
+ */
+export function normaliseT1Ordering(prompt: string): ComplianceResult {
+  const terms = splitCommaTerms(prompt);
+  if (terms.length < 4) return { text: prompt, wasFixed: false, fixes: [] };
+
+  const prefixes: string[] = [];
+  const suffixes: string[] = [];
+  const weighted: string[] = [];
+  const support: string[] = [];
+
+  for (const term of terms) {
+    const lower = term.toLowerCase();
+    if (T1_QUALITY_PREFIX_TERMS.some((p) => lower === p.toLowerCase())) {
+      prefixes.push(term);
+    } else if (T1_QUALITY_SUFFIX_TERMS.some((s) => lower === s.toLowerCase())) {
+      suffixes.push(term);
+    } else if (/^\([^()]+:\d+\.?\d*\)$/.test(term)) {
+      weighted.push(term);
+    } else {
+      support.push(term);
+    }
+  }
+
+  if (weighted.length === 0)
+    return { text: prompt, wasFixed: false, fixes: [] };
+
+  const subject = weighted[0];
+  const restWeighted = weighted.slice(1);
+  const reordered = [
+    ...prefixes,
+    subject,
+    ...restWeighted,
+    ...support,
+    ...suffixes,
+  ].join(", ");
+  if (reordered === prompt) return { text: prompt, wasFixed: false, fixes: [] };
+  return { text: reordered, wasFixed: true, fixes: ["Normalised T1 ordering"] };
 }
 
 // ============================================================================
@@ -824,10 +1533,45 @@ export const CURRENT_RULE_COUNT = 30;
 
 export const RULE_INVENTORY = {
   // Tier-specific rules (embedded in tier sections)
-  tier1: ['T1-1 syntax', 'T1-2 subject weight', 'T1-3 colour pairing', 'T1-4 literal language + sensory', 'T1-5 composition', 'T1-6 ordering', 'T1-7 no punctuation', 'T1-8 semantic clustering'],
-  tier2: ['T2-1 subject weight', 'T2-2 clause placement', 'T2-3 no flag', 'T2-4 scene negatives', 'T2-5 abstract-to-visual', 'T2-6 mandatory params'],
-  tier3: ['T3-1 no paraphrase', 'T3-2 banned phrases', 'T3-3 composition cue', 'T3-4 mood preservation', 'T3-5 opening diversity'],
-  tier4: ['T4-1 explicit setting', 'T4-2 no self-correction', 'T4-3 meta-language ban', 'T4-4 sentence minimum', 'T4-5 scene depth'],
+  tier1: [
+    "T1-1 syntax",
+    "T1-2 subject weight",
+    "T1-3 colour pairing",
+    "T1-4 literal language + sensory",
+    "T1-5 composition",
+    "T1-6 ordering",
+    "T1-7 no punctuation",
+    "T1-8 semantic clustering",
+  ],
+  tier2: [
+    "T2-1 subject weight",
+    "T2-2 clause placement",
+    "T2-3 no flag",
+    "T2-4 scene negatives",
+    "T2-5 abstract-to-visual",
+    "T2-6 mandatory params",
+  ],
+  tier3: [
+    "T3-1 no paraphrase",
+    "T3-2 banned phrases",
+    "T3-3 composition cue",
+    "T3-4 mood preservation",
+    "T3-5 opening diversity",
+  ],
+  tier4: [
+    "T4-1 explicit setting",
+    "T4-2 no self-correction",
+    "T4-3 meta-language ban",
+    "T4-4 sentence minimum",
+    "T4-5 scene depth",
+  ],
   // Global rules (in Rules section)
-  global: ['G1 preserve intent', 'G2 expert value-add', 'G3 native per tier', 'G4 weight hierarchy', 'G5 provider syntax', 'G6 abstract-to-visual'],
+  global: [
+    "G1 preserve intent",
+    "G2 expert value-add",
+    "G3 native per tier",
+    "G4 weight hierarchy",
+    "G5 provider syntax",
+    "G6 abstract-to-visual",
+  ],
 } as const;

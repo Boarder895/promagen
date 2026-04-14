@@ -1,10 +1,14 @@
 // src/lib/call-2-harness/mechanical-scorer/index.ts
 // ============================================================================
-// Call 2 Quality Harness — Mechanical Scorer Coordinator (Phase C)
+// Call 2 Quality Harness — Mechanical Scorer Coordinator
 // ============================================================================
 // Public entry point for the mechanical scorer. Runs every rule from
-// t1-rules, t2-rules, t3-rules, t4-rules against a single tier bundle and
-// returns a MechanicalResult tagged with the route stage ID.
+// t1-rules, t2-rules, t3-rules, t4-rules, coverage-rules, and quality-rules
+// against a single tier bundle and returns a MechanicalResult tagged with
+// the route stage ID.
+//
+// v2.0.0: Added 9 quality rules from quality-rules.ts (Phase 1).
+//         ALL_RULES now contains 38 rules (29 structural + 9 quality).
 //
 // Usage from the harness runner:
 //
@@ -19,9 +23,8 @@
 //     if (!r.passed) console.log(`${r.ruleId} (${r.cluster}): ${r.details}`);
 //   }
 //
-// Authority: call-2-harness-build-plan-v1.md Phase C,
-//            call-2-quality-architecture-v0.3.1.md §5, §10, §11
-// Existing features preserved: Yes (this is a new module).
+// Authority: api-call-2-v2_1_0.md §11, §15 Phase 1
+// Existing features preserved: Yes — all 29 existing rules unchanged.
 // ============================================================================
 
 import { T1_RULES } from './t1-rules';
@@ -29,6 +32,7 @@ import { T2_RULES } from './t2-rules';
 import { T3_RULES } from './t3-rules';
 import { T4_RULES } from './t4-rules';
 import { COVERAGE_RULES } from './coverage-rules';
+import { QUALITY_RULES } from './quality-rules';
 import {
   ALL_CLUSTERS,
   CLUSTER_SCHEMA_VERSION,
@@ -59,10 +63,13 @@ export { T2_RULES } from './t2-rules';
 export { T3_RULES } from './t3-rules';
 export { T4_RULES } from './t4-rules';
 export { COVERAGE_RULES } from './coverage-rules';
+export { QUALITY_RULES } from './quality-rules';
 
 /**
  * The full ordered list of mechanical rules across all tiers.
  * Frozen at module load.
+ *
+ * v2.0.0: 38 rules (29 structural + 9 quality).
  */
 export const ALL_RULES: readonly RuleDefinition[] = Object.freeze([
   ...T1_RULES,
@@ -70,6 +77,7 @@ export const ALL_RULES: readonly RuleDefinition[] = Object.freeze([
   ...T3_RULES,
   ...T4_RULES,
   ...COVERAGE_RULES,
+  ...QUALITY_RULES,
 ]);
 
 /**

@@ -30,6 +30,7 @@ import {
   ALL_RULES,
   CLUSTER_SCHEMA_VERSION,
   type Cluster,
+  type TierBundle,
 } from './mechanical-scorer';
 import {
   calculateFailRate,
@@ -44,6 +45,9 @@ import type { RunClass } from './run-classes';
 // FailureModeInventory from this file. Both sides use `import type` so the
 // cycle is erased at compile time and never reaches the runtime module graph.
 import type { DiffReport } from './diff';
+import type { AimCircuitBoard, FaultEntry } from './aim-rollup';
+import type { StabilityReport } from './stability-tracker';
+import type { SceneClassBreakdown } from './scene-class-separator';
 
 // Runtime browser guard — see "Server-only guard" comment block above the
 // imports. Throws at module load time if this file is somehow loaded into
@@ -148,13 +152,21 @@ export interface FailureModeInventory {
   readonly coverage_gaps: readonly string[];
   readonly diff_vs_previous: DiffReport | null; // Phase E (populated by attachDiff)
   readonly holdout_run: null; // populated when --include-holdout
+
+  // Phase 1 — Aim Circuit Board (populated by attachAimCircuitBoard)
+  readonly by_aim: AimCircuitBoard | null;
+  readonly fault_register: readonly FaultEntry[] | null;
+
+  // Phase 2 — Stability & Scene Class (populated by attach functions)
+  readonly stability_bands: StabilityReport | null;
+  readonly scene_class_breakdown: SceneClassBreakdown | null;
 }
 
 // ============================================================================
 // CORE BUILDER
 // ============================================================================
 
-const INVENTORY_SCHEMA_VERSION = '1.0.0' as const;
+const INVENTORY_SCHEMA_VERSION = '2.0.0' as const;
 
 /**
  * Options for buildInventory. Optional parameters allow callers to enrich the
@@ -355,6 +367,10 @@ export function buildInventory(
     coverage_gaps: Object.freeze(coverageGaps),
     diff_vs_previous: null,
     holdout_run: null,
+    by_aim: null,
+    fault_register: null,
+    stability_bands: null,
+    scene_class_breakdown: null,
   };
 }
 
@@ -476,4 +492,154 @@ export function attachDiff(
     ...inventory,
     diff_vs_previous: diff,
   });
+}
+
+// ============================================================================
+// PHASE 1 — AIM CIRCUIT BOARD ATTACHMENT
+// ============================================================================
+
+/**
+ * Return a NEW inventory with the aim circuit board data populated.
+ * Same pattern as attachDiff — no mutation, no cycles.
+ */
+export function attachAimCircuitBoard(
+  inventory: FailureModeInventory,
+  circuitBoard: AimCircuitBoard,
+): FailureModeInventory {
+  return Object.freeze({
+    ...inventory,
+    by_aim: circuitBoard,
+    fault_register: circuitBoard.fault_register,
+  });
+}
+
+// ============================================================================
+// PHASE 2 — STABILITY BANDS ATTACHMENT
+// ============================================================================
+
+/**
+ * Return a NEW inventory with stability band data populated.
+ */
+export function attachStabilityBands(
+  inventory: FailureModeInventory,
+  stabilityReport: StabilityReport,
+): FailureModeInventory {
+  return Object.freeze({
+    ...inventory,
+    stability_bands: stabilityReport,
+  });
+}
+
+// ============================================================================
+// PHASE 2 — SCENE CLASS BREAKDOWN ATTACHMENT
+// ============================================================================
+
+/**
+ * Return a NEW inventory with scene-class breakdown data populated.
+ */
+export function attachSceneClassBreakdown(
+  inventory: FailureModeInventory,
+  breakdown: SceneClassBreakdown,
+): FailureModeInventory {
+  return Object.freeze({
+    ...inventory,
+    scene_class_breakdown: breakdown,
+  });
+}
+
+// ============================================================================
+// TIER TEXT CAPTURE — Stage A + D raw tier strings per sample
+// ============================================================================
+//
+// The harness scores tier output but until now discarded the actual text.
+// This sidecar captures Stage A (what GPT produced) and Stage D (product
+// truth) so engineers can inspect the exact strings that passed or failed.
+//
+// Written as a separate file alongside the inventory to keep diagnostic
+// aggregation (inventory) separate from raw output inspection (tier texts).
+//
+// Authority: build_plan_efficiency_review_api-2.md §2.2 — "Stage D truth
+// is the review standard" — and the operational need to read actual output
+// for surgical prompt/code fixes.
+// ============================================================================
+
+/**
+ * All four captured stage bundles for one sample.
+ *
+ * A = raw GPT output
+ * B = post-processed
+ * C = compliance-enforced
+ * D = final product truth
+ */
+export interface TierTextStages {
+  readonly a: TierBundle;
+  readonly b: TierBundle;
+  readonly c: TierBundle;
+  readonly d: TierBundle;
+}
+
+/**
+ * Minimal endpoint metadata useful for debugging without bloating the scorer
+ * inventory JSON. Stored in the sidecar only.
+ */
+export interface TierTextMetadata {
+  readonly model_version: string;
+  readonly latency_ms: number;
+  readonly tokens_used: {
+    readonly prompt: number | null;
+    readonly completion: number | null;
+  };
+  readonly stages_applied: readonly string[];
+  readonly provider_context_present: boolean;
+}
+
+/**
+ * One sample's captured tier text plus enough context to debug it.
+ */
+export interface TierTextEntry {
+  readonly scene_id: string;
+  readonly sample_index: number;
+  readonly input: string;
+  readonly expected_elements: readonly string[];
+  readonly metadata: TierTextMetadata;
+  readonly stages: TierTextStages;
+}
+
+/**
+ * The full sidecar file shape. One per harness run, written alongside
+ * the inventory JSON.
+ */
+export interface TierTextCapture {
+  readonly version: string;
+  readonly run_timestamp: string;
+  readonly run_class: RunClass;
+  readonly scene_count: number;
+  readonly samples_per_scene: number;
+  readonly sample_count: number;
+  readonly samples: readonly TierTextEntry[];
+}
+
+/**
+ * Build the sidecar filename from an inventory. Same pattern as the
+ * inventory filename but with `.tier-texts.json` suffix.
+ *
+ * Example: v6.2-smoke_alarm-2026-04-13T21-40-10-257Z.tier-texts.json
+ */
+export function tierTextFilename(inventory: FailureModeInventory): string {
+  const safeTimestamp = inventory.run_timestamp.replace(/[:.]/g, '-');
+  return `${inventory.version}-${inventory.run_class}-${safeTimestamp}.tier-texts.json`;
+}
+
+/**
+ * Write captured tier texts to disk as pretty-printed JSON. Creates parent
+ * directories if they don't exist.
+ */
+export async function writeTierTextsToDisk(
+  capture: TierTextCapture,
+  filePath: string,
+): Promise<void> {
+  const parent = dirname(filePath);
+  await mkdir(parent, { recursive: true });
+  const content = JSON.stringify(capture, null, 2);
+  await writeFile(filePath, content, 'utf8');
 }
