@@ -1,0 +1,3579 @@
+{
+  "schema_version": "2.0.0",
+  "version": "v6.2",
+  "harness_version": "1.0.0",
+  "cluster_schema_version": "v2",
+  "model_version": "gpt-5.4-mini-2026-03-17",
+  "run_timestamp": "2026-04-14T14:00:35.568Z",
+  "scene_count": 42,
+  "samples_per_scene": 5,
+  "wall_clock_seconds": 788,
+  "run_class": "smoke_alarm",
+  "by_rule": {
+    "T1.weight_syntax_correct": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840
+    },
+    "T1.weight_steps_0_1": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840
+    },
+    "T1.weight_wrap_4_words_max": {
+      "stage_a_fail_rate": 0.0476,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0.0476,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840
+    },
+    "T1.quality_prefix_present": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840
+    },
+    "T1.quality_suffix_present": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840
+    },
+    "T1.comma_separated_format": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840
+    },
+    "T1.no_trailing_punctuation": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840
+    },
+    "T1.no_isolated_colour_weights": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840
+    },
+    "T1.subject_highest_weight": {
+      "stage_a_fail_rate": 0.0571,
+      "stage_b_fail_rate": 0.0476,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0.0571,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840
+    },
+    "T2.ar_param_present": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840
+    },
+    "T2.v_param_present": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840
+    },
+    "T2.s_param_present": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840
+    },
+    "T2.no_param_present": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840
+    },
+    "T2.no_exactly_once": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840
+    },
+    "T2.weight_clauses_min_3": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840
+    },
+    "T2.no_mid_phrase_weights": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840
+    },
+    "T2.empty_negative_json_field": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840
+    },
+    "T3.char_count_in_range": {
+      "stage_a_fail_rate": 0.119,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0.119,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840
+    },
+    "T3.sentence_count_2_to_3": {
+      "stage_a_fail_rate": 0.0048,
+      "stage_b_fail_rate": 0.0048,
+      "stage_c_fail_rate": 0.0048,
+      "stage_d_fail_rate": 0.0048,
+      "rescue_dependency": 0.0048,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840,
+      "stage_d_scene_detail": {
+        "trap-rule-override-attempt": {
+          "fail_count": 1,
+          "sample_count": 5,
+          "details": [
+            "T3 has 4 sentences, expected 2-3"
+          ]
+        }
+      }
+    },
+    "T3.no_banned_phrases": {
+      "stage_a_fail_rate": 0.0048,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0.0048,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840
+    },
+    "T3.no_banned_tail_constructions": {
+      "stage_a_fail_rate": 0.0048,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0.0048,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840
+    },
+    "T3.first_8_words_no_echo": {
+      "stage_a_fail_rate": 0.019,
+      "stage_b_fail_rate": 0.019,
+      "stage_c_fail_rate": 0.019,
+      "stage_d_fail_rate": 0.019,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840,
+      "stage_d_scene_detail": {
+        "golden-hour-cyclist": {
+          "fail_count": 1,
+          "sample_count": 5,
+          "details": [
+            "T3 first 8 words echo input (7/8 positional matches): \"a lone cyclist drives hard along a narrow\""
+          ]
+        },
+        "astronaut-floating-earth-view": {
+          "fail_count": 1,
+          "sample_count": 5,
+          "details": [
+            "T3 first 8 words echo input (8/8 positional matches): \"an astronaut floats on an eva tether above\""
+          ]
+        },
+        "stress-negative-space": {
+          "fail_count": 2,
+          "sample_count": 5,
+          "details": [
+            "T3 first 8 words echo input (6/8 positional matches): \"a single red poppy rises from a vast\"",
+            "T3 first 8 words echo input (6/8 positional matches): \"a single red poppy rises from a vast\""
+          ]
+        }
+      }
+    },
+    "T4.char_count_under_325": {
+      "stage_a_fail_rate": 0.1048,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0.1048,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840
+    },
+    "T4.min_10_words_per_sentence": {
+      "stage_a_fail_rate": 0.019,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0.019,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840
+    },
+    "T4.no_banned_openers": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840
+    },
+    "T4.no_meta_language": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840
+    },
+    "T4.first_8_words_no_echo": {
+      "stage_a_fail_rate": 0.0429,
+      "stage_b_fail_rate": 0.0429,
+      "stage_c_fail_rate": 0.0429,
+      "stage_d_fail_rate": 0.0429,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840,
+      "stage_d_scene_detail": {
+        "storm-chaser-tornado-distance": {
+          "fail_count": 1,
+          "sample_count": 5,
+          "details": [
+            "T4 first 8 words echo input (8/8 positional matches): \"a lone storm chaser photographs a distant tornado\""
+          ]
+        },
+        "stress-pure-colour-palette": {
+          "fail_count": 3,
+          "sample_count": 5,
+          "details": [
+            "T4 first 8 words echo input (8/8 positional matches): \"deep cobalt blue, burnt orange, soft cream, pale\"",
+            "T4 first 8 words echo input (8/8 positional matches): \"deep cobalt blue, burnt orange, soft cream, pale\"",
+            "T4 first 8 words echo input (8/8 positional matches): \"deep cobalt blue, burnt orange, soft cream, pale\""
+          ]
+        },
+        "stress-negative-space": {
+          "fail_count": 5,
+          "sample_count": 5,
+          "details": [
+            "T4 first 8 words echo input (8/8 positional matches): \"a single red poppy stands in a vast\"",
+            "T4 first 8 words echo input (8/8 positional matches): \"a single red poppy stands in a vast\"",
+            "T4 first 8 words echo input (8/8 positional matches): \"a single red poppy stands in a vast\"",
+            "T4 first 8 words echo input (8/8 positional matches): \"a single red poppy stands in a vast\"",
+            "T4 first 8 words echo input (8/8 positional matches): \"a single red poppy stands in a vast\""
+          ]
+        }
+      }
+    },
+    "T3.input_element_coverage": {
+      "stage_a_fail_rate": 0.0714,
+      "stage_b_fail_rate": 0.0714,
+      "stage_c_fail_rate": 0.0714,
+      "stage_d_fail_rate": 0.0714,
+      "rescue_dependency": 0,
+      "health": "BORDERLINE",
+      "interpretation": "Stage D fails 7% of the time. Run a decision-support pass before acting.",
+      "evaluation_count": 840,
+      "stage_d_scene_detail": {
+        "abandoned-soviet-spaceport": {
+          "fail_count": 5,
+          "sample_count": 5,
+          "details": [
+            "T3 element coverage 63% (5/8). Missing: rocket, snow, overgrown weeds",
+            "T3 element coverage 63% (5/8). Missing: rocket, snow, overgrown weeds",
+            "T3 element coverage 63% (5/8). Missing: rocket, snow, overgrown weeds",
+            "T3 element coverage 63% (5/8). Missing: rocket, snow, overgrown weeds",
+            "T3 element coverage 63% (5/8). Missing: rocket, snow, overgrown weeds"
+          ]
+        },
+        "child-feeding-pigeons": {
+          "fail_count": 5,
+          "sample_count": 5,
+          "details": [
+            "T3 element coverage 75% (6/8). Missing: fluttering birds, outstretched hand",
+            "T3 element coverage 75% (6/8). Missing: fluttering birds, outstretched hand",
+            "T3 element coverage 75% (6/8). Missing: fluttering birds, outstretched hand",
+            "T3 element coverage 75% (6/8). Missing: fluttering birds, outstretched hand",
+            "T3 element coverage 75% (6/8). Missing: fluttering birds, outstretched hand"
+          ]
+        },
+        "firefighter-rescuing-dog": {
+          "fail_count": 5,
+          "sample_count": 5,
+          "details": [
+            "T3 element coverage 63% (5/8). Missing: burning building, embers, night",
+            "T3 element coverage 63% (5/8). Missing: burning building, embers, night",
+            "T3 element coverage 63% (5/8). Missing: burning building, embers, night",
+            "T3 element coverage 63% (5/8). Missing: burning building, embers, night",
+            "T3 element coverage 63% (5/8). Missing: burning building, embers, night"
+          ]
+        }
+      }
+    },
+    "T4.input_element_coverage": {
+      "stage_a_fail_rate": 0.0429,
+      "stage_b_fail_rate": 0.0524,
+      "stage_c_fail_rate": 0.0524,
+      "stage_d_fail_rate": 0.0524,
+      "rescue_dependency": 0,
+      "health": "BORDERLINE",
+      "interpretation": "Stage D fails 5% of the time. Run a decision-support pass before acting.",
+      "evaluation_count": 840,
+      "stage_d_scene_detail": {
+        "abandoned-soviet-spaceport": {
+          "fail_count": 5,
+          "sample_count": 5,
+          "details": [
+            "T4 element coverage 63% (5/8). Missing: rocket, snow, overgrown weeds",
+            "T4 element coverage 50% (4/8). Missing: rocket, snow, overgrown weeds, empty sky",
+            "T4 element coverage 63% (5/8). Missing: rocket, snow, empty sky",
+            "T4 element coverage 50% (4/8). Missing: rocket, snow, overgrown weeds, empty sky",
+            "T4 element coverage 50% (4/8). Missing: rocket, snow, overgrown weeds, empty sky"
+          ]
+        },
+        "deep-sea-diver-with-coral": {
+          "fail_count": 1,
+          "sample_count": 5,
+          "details": [
+            "T4 element coverage 40% (4/10). Missing: sunlight, fish, blue depth, reds, golds, turquoise"
+          ]
+        },
+        "firefighter-rescuing-dog": {
+          "fail_count": 5,
+          "sample_count": 5,
+          "details": [
+            "T4 element coverage 63% (5/8). Missing: burning building, embers, night",
+            "T4 element coverage 63% (5/8). Missing: burning building, embers, night",
+            "T4 element coverage 50% (4/8). Missing: burning building, embers, protective gear, night",
+            "T4 element coverage 63% (5/8). Missing: burning building, embers, night",
+            "T4 element coverage 50% (4/8). Missing: burning building, embers, protective gear, night"
+          ]
+        }
+      }
+    },
+    "T1.no_orphaned_adjectives": {
+      "stage_a_fail_rate": 0.0143,
+      "stage_b_fail_rate": 0.0143,
+      "stage_c_fail_rate": 0.0143,
+      "stage_d_fail_rate": 0.0143,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840,
+      "stage_d_scene_detail": {
+        "stress-all-adjectives-no-nouns": {
+          "fail_count": 3,
+          "sample_count": 5,
+          "details": [
+            "Orphaned adjectives: beautiful",
+            "Orphaned adjectives: beautiful",
+            "Orphaned adjectives: beautiful"
+          ]
+        }
+      }
+    },
+    "T1.no_clip_unusable_jargon": {
+      "stage_a_fail_rate": 0.0238,
+      "stage_b_fail_rate": 0.0238,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0.0238,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840
+    },
+    "T1.no_non_visual_literals": {
+      "stage_a_fail_rate": 0.0238,
+      "stage_b_fail_rate": 0.0238,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0.0238,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840
+    },
+    "T1.no_duplicate_quality_families": {
+      "stage_a_fail_rate": 0.0143,
+      "stage_b_fail_rate": 0.0143,
+      "stage_c_fail_rate": 0.019,
+      "stage_d_fail_rate": 0.019,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840,
+      "stage_d_scene_detail": {
+        "trafalgar-square-12-category": {
+          "fail_count": 4,
+          "sample_count": 5,
+          "details": [
+            "Duplicate quality families: sharpness: [sharp focus, background in sharp focus]",
+            "Duplicate quality families: resolution: [high resolution, 8k]",
+            "Duplicate quality families: sharpness: [sharp focus, background in sharp focus]",
+            "Duplicate quality families: sharpness: [background in sharp focus, sharp focus]; resolution: [high resolution, 8k]"
+          ]
+        }
+      }
+    },
+    "T1.generic_quality_not_above_scene": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840
+    },
+    "T3.no_raw_camera_jargon": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840
+    },
+    "T3.no_raw_numeric_measurements": {
+      "stage_a_fail_rate": 0.0238,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0.0238,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840
+    },
+    "T4.no_raw_camera_jargon": {
+      "stage_a_fail_rate": 0,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840
+    },
+    "T4.no_raw_numeric_measurements": {
+      "stage_a_fail_rate": 0.019,
+      "stage_b_fail_rate": 0,
+      "stage_c_fail_rate": 0,
+      "stage_d_fail_rate": 0,
+      "rescue_dependency": 0.019,
+      "health": "HEALTHY",
+      "interpretation": "Model produces this rule correctly on its own.",
+      "evaluation_count": 840
+    }
+  },
+  "by_cluster": {
+    "subject_salience_loss": {
+      "fail_rate": 0,
+      "contributing_rules": [
+        "T1.subject_highest_weight",
+        "T1.generic_quality_not_above_scene"
+      ],
+      "stage_d_fail_count": 0,
+      "rule_count": 2
+    },
+    "interaction_flattening": {
+      "fail_rate": 0,
+      "contributing_rules": [],
+      "stage_d_fail_count": 0,
+      "rule_count": 0
+    },
+    "paraphrase_echo_collapse": {
+      "fail_rate": 0.0103,
+      "contributing_rules": [
+        "T3.no_banned_phrases",
+        "T3.no_banned_tail_constructions",
+        "T3.first_8_words_no_echo",
+        "T4.no_banned_openers",
+        "T4.no_meta_language",
+        "T4.first_8_words_no_echo"
+      ],
+      "stage_d_fail_count": 13,
+      "rule_count": 6
+    },
+    "syntax_leak": {
+      "fail_rate": 0,
+      "contributing_rules": [
+        "T1.weight_syntax_correct",
+        "T1.weight_steps_0_1",
+        "T1.weight_wrap_4_words_max",
+        "T1.quality_prefix_present",
+        "T1.quality_suffix_present",
+        "T1.no_trailing_punctuation",
+        "T1.no_isolated_colour_weights",
+        "T2.ar_param_present",
+        "T2.v_param_present",
+        "T2.s_param_present",
+        "T2.weight_clauses_min_3",
+        "T2.no_mid_phrase_weights"
+      ],
+      "stage_d_fail_count": 0,
+      "rule_count": 12
+    },
+    "negative_handling_leak": {
+      "fail_rate": 0,
+      "contributing_rules": [
+        "T2.no_param_present",
+        "T2.no_exactly_once",
+        "T2.empty_negative_json_field"
+      ],
+      "stage_d_fail_count": 0,
+      "rule_count": 3
+    },
+    "value_add_filler": {
+      "fail_rate": 0.0083,
+      "contributing_rules": [
+        "T1.no_orphaned_adjectives",
+        "T1.no_clip_unusable_jargon",
+        "T1.no_non_visual_literals",
+        "T1.no_duplicate_quality_families"
+      ],
+      "stage_d_fail_count": 7,
+      "rule_count": 4
+    },
+    "tier_drift": {
+      "fail_rate": 0.0005,
+      "contributing_rules": [
+        "T1.comma_separated_format",
+        "T3.char_count_in_range",
+        "T3.sentence_count_2_to_3",
+        "T4.char_count_under_325",
+        "T4.min_10_words_per_sentence",
+        "T3.no_raw_camera_jargon",
+        "T3.no_raw_numeric_measurements",
+        "T4.no_raw_camera_jargon",
+        "T4.no_raw_numeric_measurements"
+      ],
+      "stage_d_fail_count": 1,
+      "rule_count": 9
+    },
+    "constraint_collision": {
+      "fail_rate": 0,
+      "contributing_rules": [],
+      "stage_d_fail_count": 0,
+      "rule_count": 0
+    },
+    "content_fidelity_loss": {
+      "fail_rate": 0.0619,
+      "contributing_rules": [
+        "T3.input_element_coverage",
+        "T4.input_element_coverage"
+      ],
+      "stage_d_fail_count": 26,
+      "rule_count": 2
+    }
+  },
+  "by_judge": null,
+  "metamorphic_stability": null,
+  "spot_audit": null,
+  "coverage_gaps": [
+    "T1.weight_syntax_correct: no scene in the library exercises this rule",
+    "T1.quality_suffix_present: no scene in the library exercises this rule",
+    "T1.comma_separated_format: no scene in the library exercises this rule",
+    "T1.no_trailing_punctuation: no scene in the library exercises this rule",
+    "T2.ar_param_present: no scene in the library exercises this rule",
+    "T2.v_param_present: no scene in the library exercises this rule",
+    "T2.s_param_present: no scene in the library exercises this rule",
+    "T2.no_param_present: no scene in the library exercises this rule",
+    "T2.no_mid_phrase_weights: no scene in the library exercises this rule",
+    "T3.no_banned_tail_constructions: no scene in the library exercises this rule",
+    "T3.first_8_words_no_echo: no scene in the library exercises this rule",
+    "T4.min_10_words_per_sentence: no scene in the library exercises this rule",
+    "T4.no_banned_openers: no scene in the library exercises this rule",
+    "T4.no_meta_language: no scene in the library exercises this rule",
+    "T4.first_8_words_no_echo: no scene in the library exercises this rule"
+  ],
+  "diff_vs_previous": null,
+  "holdout_run": null,
+  "by_aim": {
+    "aims": [
+      {
+        "aim_id": "aim_3",
+        "name": "Obey hard structural constraints",
+        "level": 0,
+        "priority": "P0",
+        "production_risk": "high",
+        "status": "BRIGHT",
+        "purpose": "Hard rules must hold every time regardless of scene content.",
+        "anti_aims": [
+          "Do not rely on GPT usually doing the right thing for mechanical rules",
+          "Do not allow preventable schema or syntax breakage into final output"
+        ],
+        "done_definition": "Valid JSON every time. Correct weight syntax. Weight steps in 0.1 increments. No phrase wraps over 4 words. Character ceilings respected. Quality prefix and suffix blocks present.",
+        "harness_pass_line": "All P0 structure rules HEALTHY",
+        "manual_pass_line": null,
+        "hard_fail": "Any final-output schema failure",
+        "dependency_satisfied": true,
+        "sub_aims": [
+          {
+            "sub_aim_id": "3.1",
+            "name": "JSON/schema integrity",
+            "description": "Valid 3-tier JSON object returned",
+            "status": "NOT_WIRED",
+            "harness_rules": [],
+            "code_enforcement": [
+              {
+                "function_name": "Zod validation",
+                "status": "ACTIVE"
+              },
+              {
+                "function_name": "empty tier2 injection",
+                "status": "ACTIVE"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "3.2",
+            "name": "Weight syntax correctness",
+            "description": "Matches provider format",
+            "status": "BRIGHT",
+            "harness_rules": [
+              {
+                "rule_id": "T1.weight_syntax_correct",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0
+              }
+            ],
+            "code_enforcement": [
+              {
+                "function_name": "enforceT1Syntax",
+                "status": "ACTIVE"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "3.3",
+            "name": "Weight-step correctness",
+            "description": "0.1 increments only",
+            "status": "BRIGHT",
+            "harness_rules": [
+              {
+                "rule_id": "T1.weight_steps_0_1",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0
+              }
+            ],
+            "code_enforcement": [
+              {
+                "function_name": "enforceT1Syntax",
+                "status": "ACTIVE"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "3.4",
+            "name": "Wrapper-length correctness",
+            "description": "No >4 word wraps",
+            "status": "BRIGHT",
+            "harness_rules": [
+              {
+                "rule_id": "T1.weight_wrap_4_words_max",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0.0476
+              }
+            ],
+            "code_enforcement": [
+              {
+                "function_name": "enforceT1WeightWrap",
+                "status": "ACTIVE"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0.0476,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0.0476,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "3.5",
+            "name": "Character-limit compliance",
+            "description": "T3 280-420, T4 ≤325",
+            "status": "BRIGHT",
+            "harness_rules": [
+              {
+                "rule_id": "T3.char_count_in_range",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0.119
+              },
+              {
+                "rule_id": "T4.char_count_under_325",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0.1048
+              }
+            ],
+            "code_enforcement": [
+              {
+                "function_name": "enforceT3MaxLength",
+                "status": "ACTIVE"
+              },
+              {
+                "function_name": "enforceT4MaxLength",
+                "status": "ACTIVE"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0.1119,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0.1119,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "3.6",
+            "name": "Required block presence",
+            "description": "Quality prefix/suffix present",
+            "status": "BRIGHT",
+            "harness_rules": [
+              {
+                "rule_id": "T1.quality_prefix_present",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0
+              },
+              {
+                "rule_id": "T1.quality_suffix_present",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0
+              }
+            ],
+            "code_enforcement": [
+              {
+                "function_name": "ensureT1QualitySuffix",
+                "status": "ACTIVE"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          }
+        ],
+        "harness_score": 100,
+        "wired_rule_count": 7,
+        "failing_rule_count": 0
+      },
+      {
+        "aim_id": "aim_12",
+        "name": "Maintain measurement truth",
+        "level": 0,
+        "priority": "P0",
+        "production_risk": "none",
+        "status": "NOT_WIRED",
+        "purpose": "The harness must score real behaviour accurately.",
+        "anti_aims": [
+          "Do not treat valid converted equivalents as missing content",
+          "Do not let adversarial scenes distort canonical-scene judgement",
+          "Do not celebrate a harness number that contradicts manual quality"
+        ],
+        "done_definition": "No known false-negative cluster unresolved. Manual audit 16/20+.",
+        "harness_pass_line": "No known false-negative cluster unresolved; manual audit 16/20+",
+        "manual_pass_line": null,
+        "hard_fail": null,
+        "dependency_satisfied": true,
+        "sub_aims": [
+          {
+            "sub_aim_id": "12.1",
+            "name": "Conversion-aware coverage",
+            "description": "Coverage checker recognises converted camera/lens terms via CONVERSION_EQUIVALENTS map",
+            "status": "NOT_WIRED",
+            "harness_rules": [],
+            "code_enforcement": [
+              {
+                "function_name": "CONVERSION_EQUIVALENTS",
+                "status": "ACTIVE"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "12.2",
+            "name": "Scene-rule applicability",
+            "description": "Rules only fire on scenes where they are meaningful via exercises_rules annotations",
+            "status": "NOT_WIRED",
+            "harness_rules": [],
+            "code_enforcement": [
+              {
+                "function_name": "exercises_rules annotations",
+                "status": "ACTIVE"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "12.3",
+            "name": "False-positive control",
+            "description": "Harness does not flag correct behaviour as failures",
+            "status": "NOT_WIRED",
+            "harness_rules": [],
+            "code_enforcement": [
+              {
+                "function_name": "QUALITY_FAMILIES alignment",
+                "status": "ACTIVE"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "12.4",
+            "name": "False-negative control",
+            "description": "Harness catches real failures and does not miss them",
+            "status": "NOT_WIRED",
+            "harness_rules": [],
+            "code_enforcement": [
+              {
+                "function_name": "scene expected_elements",
+                "status": "ACTIVE"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "12.5",
+            "name": "Scene-class separation",
+            "description": "Edge-case scores do not distort production judgement",
+            "status": "NOT_WIRED",
+            "harness_rules": [],
+            "code_enforcement": [
+              {
+                "function_name": "scene-class-separator",
+                "status": "ACTIVE"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          }
+        ],
+        "harness_score": 0,
+        "wired_rule_count": 0,
+        "failing_rule_count": 0
+      },
+      {
+        "aim_id": "aim_2",
+        "name": "Match native platform family format",
+        "level": 1,
+        "priority": "P0",
+        "production_risk": "high",
+        "status": "BRIGHT",
+        "purpose": "Each tier must sound like it belongs to its platform family.",
+        "anti_aims": [
+          "Do not let T1 drift into prose",
+          "Do not let T3 and T4 collapse into near-identical outputs",
+          "Do not leak syntax or style from one family into another"
+        ],
+        "done_definition": "T1 reads like weighted CLIP keywords. T3 reads like visual-director prose. T4 reads like plain-language scene description. Each tier is clearly distinct in structure and voice.",
+        "harness_pass_line": "All format rules HEALTHY",
+        "manual_pass_line": "Average 32/40 or better",
+        "hard_fail": null,
+        "dependency_satisfied": true,
+        "sub_aims": [
+          {
+            "sub_aim_id": "2.1",
+            "name": "T1 nativeness",
+            "description": "T1 is comma-separated weighted keywords, not prose",
+            "status": "BRIGHT",
+            "harness_rules": [
+              {
+                "rule_id": "T1.comma_separated_format",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0
+              },
+              {
+                "rule_id": "T1.no_trailing_punctuation",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0
+              },
+              {
+                "rule_id": "T1.no_orphaned_adjectives",
+                "status": "BRIGHT",
+                "fail_rate": 0.0143,
+                "rescue": 0
+              },
+              {
+                "rule_id": "T1.no_clip_unusable_jargon",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0.0238
+              },
+              {
+                "rule_id": "T1.no_non_visual_literals",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0.0238
+              }
+            ],
+            "code_enforcement": [
+              {
+                "function_name": "stripTrailingPunctuation",
+                "status": "ACTIVE"
+              },
+              {
+                "function_name": "enforceT1WeightWrap",
+                "status": "ACTIVE"
+              },
+              {
+                "function_name": "stripT1CameraJargon",
+                "status": "ACTIVE"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0.01238,
+              "b_fail_rate": 0.01238,
+              "c_fail_rate": 0.00286,
+              "d_fail_rate": 0.00286
+            },
+            "rescue_dependency": 0.00952,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "2.2",
+            "name": "T3 nativeness",
+            "description": "T3 reads like a visual director",
+            "status": "BRIGHT",
+            "harness_rules": [
+              {
+                "rule_id": "T3.sentence_count_2_to_3",
+                "status": "BRIGHT",
+                "fail_rate": 0.0048,
+                "rescue": 0.0048
+              },
+              {
+                "rule_id": "T3.no_banned_phrases",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0.0048
+              },
+              {
+                "rule_id": "T3.no_banned_tail_constructions",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0.0048
+              },
+              {
+                "rule_id": "T3.no_raw_camera_jargon",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0
+              },
+              {
+                "rule_id": "T3.no_raw_numeric_measurements",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0.0238
+              }
+            ],
+            "code_enforcement": [
+              {
+                "function_name": "stripOrRewriteT3BannedPhrases",
+                "status": "ACTIVE"
+              },
+              {
+                "function_name": "stripT3BannedTailConstructions",
+                "status": "ACTIVE"
+              },
+              {
+                "function_name": "convertPhotographyJargonTierAware",
+                "status": "ACTIVE"
+              },
+              {
+                "function_name": "convertMeasurementsToVisual",
+                "status": "ACTIVE"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0.007639999999999999,
+              "b_fail_rate": 0.0009599999999999999,
+              "c_fail_rate": 0.0009599999999999999,
+              "d_fail_rate": 0.0009599999999999999
+            },
+            "rescue_dependency": 0.007639999999999999,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "2.3",
+            "name": "T4 nativeness",
+            "description": "T4 is plain language a casual user understands",
+            "status": "BRIGHT",
+            "harness_rules": [
+              {
+                "rule_id": "T4.no_banned_openers",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0
+              },
+              {
+                "rule_id": "T4.no_meta_language",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0
+              },
+              {
+                "rule_id": "T4.min_10_words_per_sentence",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0.019
+              },
+              {
+                "rule_id": "T4.no_raw_camera_jargon",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0
+              },
+              {
+                "rule_id": "T4.no_raw_numeric_measurements",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0.019
+              }
+            ],
+            "code_enforcement": [
+              {
+                "function_name": "fixT4MetaOpeners",
+                "status": "ACTIVE"
+              },
+              {
+                "function_name": "mergeT4ShortSentences",
+                "status": "ACTIVE"
+              },
+              {
+                "function_name": "fixT4SelfCorrection",
+                "status": "ACTIVE"
+              },
+              {
+                "function_name": "convertPhotographyJargonTierAware",
+                "status": "ACTIVE"
+              },
+              {
+                "function_name": "convertMeasurementsToVisual",
+                "status": "ACTIVE"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0.0076,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0.0076,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "2.4",
+            "name": "Tier separation",
+            "description": "T1, T3, T4 are clearly distinct outputs",
+            "status": "NOT_WIRED",
+            "harness_rules": [],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": true,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "2.5",
+            "name": "Syntax-family purity",
+            "description": "No weight syntax leaking into T3/T4, no prose leaking into T1",
+            "status": "BRIGHT",
+            "harness_rules": [
+              {
+                "rule_id": "T1.weight_syntax_correct",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0
+              }
+            ],
+            "code_enforcement": [
+              {
+                "function_name": "enforceT1Syntax",
+                "status": "ACTIVE"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          }
+        ],
+        "harness_score": 100,
+        "wired_rule_count": 16,
+        "failing_rule_count": 0
+      },
+      {
+        "aim_id": "aim_4",
+        "name": "Preserve emphasis hierarchy",
+        "level": 1,
+        "priority": "P1",
+        "production_risk": "medium",
+        "status": "BRIGHT",
+        "purpose": "Subject first, then distinctive scene content, then supporting details, then boilerplate.",
+        "anti_aims": [
+          "Do not let generic quality tokens outrank scene content",
+          "Do not let scene actions overpower the subject",
+          "Do not flatten all content to equal importance"
+        ],
+        "done_definition": "Subject carries highest weight. Scene actions outrank boilerplate. Quality tokens demoted below scene content.",
+        "harness_pass_line": "Subject and quality rules HEALTHY",
+        "manual_pass_line": "Average 24/30 or better",
+        "hard_fail": null,
+        "dependency_satisfied": true,
+        "sub_aims": [
+          {
+            "sub_aim_id": "4.1",
+            "name": "Subject dominance",
+            "description": "Subject carries highest weight",
+            "status": "BRIGHT",
+            "harness_rules": [
+              {
+                "rule_id": "T1.subject_highest_weight",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0.0571
+              }
+            ],
+            "code_enforcement": [
+              {
+                "function_name": "enforceSubjectHighestWeight",
+                "status": "ACTIVE"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0.0571,
+              "b_fail_rate": 0.0476,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0.0571,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "4.2",
+            "name": "Scene-action prominence",
+            "description": "Scene actions outrank boilerplate",
+            "status": "BRIGHT",
+            "harness_rules": [
+              {
+                "rule_id": "T1.generic_quality_not_above_scene",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0
+              }
+            ],
+            "code_enforcement": [
+              {
+                "function_name": "demoteGenericQualityWeights",
+                "status": "ACTIVE"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "4.3",
+            "name": "Quality-token demotion",
+            "description": "Generic quality tokens not over-weighted",
+            "status": "BRIGHT",
+            "harness_rules": [
+              {
+                "rule_id": "T1.generic_quality_not_above_scene",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0
+              }
+            ],
+            "code_enforcement": [
+              {
+                "function_name": "demoteGenericQualityWeights",
+                "status": "ACTIVE"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "4.4",
+            "name": "Supporting-detail restraint",
+            "description": "Low-priority tokens don't steal focus",
+            "status": "NOT_WIRED",
+            "harness_rules": [],
+            "code_enforcement": [
+              {
+                "function_name": "normaliseT1Ordering",
+                "status": "ACTIVE"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": true,
+            "fault_path": null
+          }
+        ],
+        "harness_score": 100,
+        "wired_rule_count": 3,
+        "failing_rule_count": 0
+      },
+      {
+        "aim_id": "aim_1",
+        "name": "Preserve approved content",
+        "level": 2,
+        "priority": "P0",
+        "production_risk": "high",
+        "status": "DIM",
+        "purpose": "If the user explicitly provided an element, Call 2 must preserve it in some recognisable form.",
+        "anti_aims": [
+          "Do not silently discard major user-provided content",
+          "Do not collapse multiple concrete elements into vague umbrella wording",
+          "Do not invent new positive content to fill gaps"
+        ],
+        "done_definition": "Main subject survives in every tier. Critical scene anchors survive. Secondary elements survive unless hard limits force compression. Compression preserves specific meaning. Technical terms survive literally or as valid conversions.",
+        "harness_pass_line": "Both coverage rules HEALTHY",
+        "manual_pass_line": "Average 24/30 or better",
+        "hard_fail": "Primary subject missing from any tier",
+        "dependency_satisfied": true,
+        "sub_aims": [
+          {
+            "sub_aim_id": "1.1",
+            "name": "Subject survival",
+            "description": "Primary subject present in all tiers",
+            "status": "DIM",
+            "harness_rules": [
+              {
+                "rule_id": "T3.input_element_coverage",
+                "status": "DIM",
+                "fail_rate": 0.0714,
+                "rescue": 0
+              },
+              {
+                "rule_id": "T4.input_element_coverage",
+                "status": "DIM",
+                "fail_rate": 0.0524,
+                "rescue": 0
+              }
+            ],
+            "code_enforcement": [
+              {
+                "function_name": "coverage checker",
+                "status": "ACTIVE"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0.057150000000000006,
+              "b_fail_rate": 0.061900000000000004,
+              "c_fail_rate": 0.061900000000000004,
+              "d_fail_rate": 0.061900000000000004
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": {
+              "fault_class": "run_variance",
+              "root_cause": "D=6.2%: borderline, likely run variance",
+              "symptom_location": "1.1",
+              "fix_type": "accepted_no_action",
+              "confidence": "low",
+              "owner": "Nobody (noise)",
+              "fix": "Code function for T3.input_element_coverage (7.1% fail, 0.0% rescue)",
+              "stage_diagnosis": "D=6.2%: borderline, likely run variance"
+            }
+          },
+          {
+            "sub_aim_id": "1.2",
+            "name": "Critical anchor survival",
+            "description": "Key scene elements survive",
+            "status": "DIM",
+            "harness_rules": [
+              {
+                "rule_id": "T3.input_element_coverage",
+                "status": "DIM",
+                "fail_rate": 0.0714,
+                "rescue": 0
+              },
+              {
+                "rule_id": "T4.input_element_coverage",
+                "status": "DIM",
+                "fail_rate": 0.0524,
+                "rescue": 0
+              }
+            ],
+            "code_enforcement": [
+              {
+                "function_name": "coverage checker",
+                "status": "ACTIVE"
+              },
+              {
+                "function_name": "conversion aliases",
+                "status": "ACTIVE"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0.057150000000000006,
+              "b_fail_rate": 0.061900000000000004,
+              "c_fail_rate": 0.061900000000000004,
+              "d_fail_rate": 0.061900000000000004
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": {
+              "fault_class": "run_variance",
+              "root_cause": "D=6.2%: borderline, likely run variance",
+              "symptom_location": "1.2",
+              "fix_type": "accepted_no_action",
+              "confidence": "low",
+              "owner": "Nobody (noise)",
+              "fix": "Code function for T3.input_element_coverage (7.1% fail, 0.0% rescue)",
+              "stage_diagnosis": "D=6.2%: borderline, likely run variance"
+            }
+          },
+          {
+            "sub_aim_id": "1.3",
+            "name": "Secondary detail survival",
+            "description": "Non-critical elements survive when budget allows",
+            "status": "DIM",
+            "harness_rules": [
+              {
+                "rule_id": "T4.input_element_coverage",
+                "status": "DIM",
+                "fail_rate": 0.0524,
+                "rescue": 0
+              }
+            ],
+            "code_enforcement": [
+              {
+                "function_name": "enforceT4MaxLength",
+                "status": "ACTIVE"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0.0429,
+              "b_fail_rate": 0.0524,
+              "c_fail_rate": 0.0524,
+              "d_fail_rate": 0.0524
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": {
+              "fault_class": "run_variance",
+              "root_cause": "D=5.2%: borderline, likely run variance",
+              "symptom_location": "1.3",
+              "fix_type": "accepted_no_action",
+              "confidence": "low",
+              "owner": "Nobody (noise)",
+              "fix": "Code function for T4.input_element_coverage (5.2% fail, 0.0% rescue)",
+              "stage_diagnosis": "D=5.2%: borderline, likely run variance"
+            }
+          },
+          {
+            "sub_aim_id": "1.4",
+            "name": "Compression integrity",
+            "description": "Compressed content retains specific meaning",
+            "status": "NOT_WIRED",
+            "harness_rules": [],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": true,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "1.5",
+            "name": "Technical-term survival",
+            "description": "Camera/lens/focus specs survive in tier-appropriate form",
+            "status": "DIM",
+            "harness_rules": [
+              {
+                "rule_id": "T3.input_element_coverage",
+                "status": "DIM",
+                "fail_rate": 0.0714,
+                "rescue": 0
+              },
+              {
+                "rule_id": "T4.input_element_coverage",
+                "status": "DIM",
+                "fail_rate": 0.0524,
+                "rescue": 0
+              }
+            ],
+            "code_enforcement": [
+              {
+                "function_name": "convertPhotographyJargonTierAware",
+                "status": "ACTIVE"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0.057150000000000006,
+              "b_fail_rate": 0.061900000000000004,
+              "c_fail_rate": 0.061900000000000004,
+              "d_fail_rate": 0.061900000000000004
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": {
+              "fault_class": "run_variance",
+              "root_cause": "D=6.2%: borderline, likely run variance",
+              "symptom_location": "1.5",
+              "fix_type": "accepted_no_action",
+              "confidence": "low",
+              "owner": "Nobody (noise)",
+              "fix": "Code function for T3.input_element_coverage (7.1% fail, 0.0% rescue)",
+              "stage_diagnosis": "D=6.2%: borderline, likely run variance"
+            }
+          },
+          {
+            "sub_aim_id": "1.6",
+            "name": "No silent discard",
+            "description": "System does not unexplainably drop content",
+            "status": "DIM",
+            "harness_rules": [
+              {
+                "rule_id": "T3.input_element_coverage",
+                "status": "DIM",
+                "fail_rate": 0.0714,
+                "rescue": 0
+              },
+              {
+                "rule_id": "T4.input_element_coverage",
+                "status": "DIM",
+                "fail_rate": 0.0524,
+                "rescue": 0
+              }
+            ],
+            "code_enforcement": [
+              {
+                "function_name": "coverage checker",
+                "status": "ACTIVE"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0.057150000000000006,
+              "b_fail_rate": 0.061900000000000004,
+              "c_fail_rate": 0.061900000000000004,
+              "d_fail_rate": 0.061900000000000004
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": {
+              "fault_class": "run_variance",
+              "root_cause": "D=6.2%: borderline, likely run variance",
+              "symptom_location": "1.6",
+              "fix_type": "accepted_no_action",
+              "confidence": "low",
+              "owner": "Nobody (noise)",
+              "fix": "Code function for T3.input_element_coverage (7.1% fail, 0.0% rescue)",
+              "stage_diagnosis": "D=6.2%: borderline, likely run variance"
+            }
+          }
+        ],
+        "harness_score": 0,
+        "wired_rule_count": 9,
+        "failing_rule_count": 9
+      },
+      {
+        "aim_id": "aim_6",
+        "name": "Convert technical inputs correctly",
+        "level": 2,
+        "priority": "P0",
+        "production_risk": "high",
+        "status": "BRIGHT",
+        "purpose": "Camera, lens, focus inputs must survive in tier-appropriate form.",
+        "anti_aims": [
+          "Do not drop technical inputs entirely",
+          "Do not leak operator jargon into T4",
+          "Do not over-expand tiny terms in tight budgets",
+          "Do not weight camera hardware strings in T1"
+        ],
+        "done_definition": "No raw camera jargon in T3/T4 final output. No CLIP-unusable jargon in T1 weighted tokens.",
+        "harness_pass_line": "No raw camera jargon in T3/T4 final output; no CLIP-unusable jargon in T1 weighted tokens",
+        "manual_pass_line": "Average 24/30 or better",
+        "hard_fail": null,
+        "dependency_satisfied": true,
+        "sub_aims": [
+          {
+            "sub_aim_id": "6.1",
+            "name": "T1 technical-token handling",
+            "description": "Camera jargon stripped or demoted from T1 weights",
+            "status": "BRIGHT",
+            "harness_rules": [
+              {
+                "rule_id": "T1.no_clip_unusable_jargon",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0.0238
+              }
+            ],
+            "code_enforcement": [
+              {
+                "function_name": "stripT1CameraJargon",
+                "status": "ACTIVE"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0.0238,
+              "b_fail_rate": 0.0238,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0.0238,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "6.2",
+            "name": "T3 visible-effect conversion",
+            "description": "Raw specs converted to visual descriptions in T3",
+            "status": "BRIGHT",
+            "harness_rules": [
+              {
+                "rule_id": "T3.no_raw_camera_jargon",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0
+              },
+              {
+                "rule_id": "T3.no_raw_numeric_measurements",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0.0238
+              }
+            ],
+            "code_enforcement": [
+              {
+                "function_name": "convertPhotographyJargonTierAware",
+                "status": "PARTIAL"
+              },
+              {
+                "function_name": "convertMeasurementsToVisual",
+                "status": "PARTIAL"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0.0119,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0.0119,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "6.3",
+            "name": "T4 compact plain-language conversion",
+            "description": "Raw specs converted to short plain language in T4",
+            "status": "BRIGHT",
+            "harness_rules": [
+              {
+                "rule_id": "T4.no_raw_camera_jargon",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0
+              },
+              {
+                "rule_id": "T4.no_raw_numeric_measurements",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0.019
+              }
+            ],
+            "code_enforcement": [
+              {
+                "function_name": "convertPhotographyJargonTierAware",
+                "status": "PARTIAL"
+              },
+              {
+                "function_name": "convertMeasurementsToVisual",
+                "status": "PARTIAL"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0.0095,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0.0095,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "6.4",
+            "name": "Conversion-budget discipline",
+            "description": "Conversions don't cause T4 to exceed char limit",
+            "status": "BRIGHT",
+            "harness_rules": [
+              {
+                "rule_id": "T4.char_count_under_325",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0.1048
+              }
+            ],
+            "code_enforcement": [
+              {
+                "function_name": "enforceT4MaxLength",
+                "status": "ACTIVE"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0.1048,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0.1048,
+            "manual_only": false,
+            "fault_path": null
+          }
+        ],
+        "harness_score": 100,
+        "wired_rule_count": 6,
+        "failing_rule_count": 0
+      },
+      {
+        "aim_id": "aim_5",
+        "name": "Prevent invention and semantic drift",
+        "level": 2,
+        "priority": "P1",
+        "production_risk": "medium",
+        "status": "NOT_WIRED",
+        "purpose": "Call 2 must not add new positive content or mutate the user's meaning.",
+        "anti_aims": [
+          "Do not add objects, settings, actions, or style cues the user did not provide",
+          "Do not replace exact user actions with weaker or different meanings",
+          "Do not change the user's emotional intent"
+        ],
+        "done_definition": "No new objects invented. No settings invented. No style cues invented. Verbs preserved. Mood preserved. Specific meaning preserved.",
+        "harness_pass_line": "No clear invention detected in coverage checks",
+        "manual_pass_line": "Average 32/40 or better",
+        "hard_fail": null,
+        "dependency_satisfied": true,
+        "sub_aims": [
+          {
+            "sub_aim_id": "5.1",
+            "name": "No new object invention",
+            "description": "No objects appear that weren't in input",
+            "status": "NOT_WIRED",
+            "harness_rules": [],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": true,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "5.2",
+            "name": "No new setting invention",
+            "description": "No settings appear that weren't in input",
+            "status": "NOT_WIRED",
+            "harness_rules": [],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": true,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "5.3",
+            "name": "No style invention",
+            "description": "No composition/lighting/style cues invented",
+            "status": "NOT_WIRED",
+            "harness_rules": [],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": true,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "5.4",
+            "name": "Verb fidelity",
+            "description": "User's specific verbs preserved",
+            "status": "NOT_WIRED",
+            "harness_rules": [],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": true,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "5.5",
+            "name": "Mood fidelity",
+            "description": "Emotional intent preserved as visual equivalents",
+            "status": "NOT_WIRED",
+            "harness_rules": [],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": true,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "5.6",
+            "name": "Specific-meaning preservation",
+            "description": "Purple-and-copper sky stays specific, not colourful sky",
+            "status": "NOT_WIRED",
+            "harness_rules": [],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": true,
+            "fault_path": null
+          }
+        ],
+        "harness_score": 0,
+        "wired_rule_count": 0,
+        "failing_rule_count": 0
+      },
+      {
+        "aim_id": "aim_7",
+        "name": "Avoid redundancy and wasted budget",
+        "level": 3,
+        "priority": "P1",
+        "production_risk": "medium",
+        "status": "BRIGHT",
+        "purpose": "Every token should earn its place.",
+        "anti_aims": [
+          "Do not duplicate quality cues within the same family",
+          "Do not produce orphan tokens with no visual context",
+          "Do not repeat the same concept in multiple weak forms"
+        ],
+        "done_definition": "No duplicate quality family tokens. No bare adjective orphans. Good token economy.",
+        "harness_pass_line": "Dedup and orphan rules HEALTHY",
+        "manual_pass_line": "Average 24/30 or better",
+        "hard_fail": null,
+        "dependency_satisfied": true,
+        "sub_aims": [
+          {
+            "sub_aim_id": "7.1",
+            "name": "Quality deduplication",
+            "description": "No duplicate quality family tokens",
+            "status": "BRIGHT",
+            "harness_rules": [
+              {
+                "rule_id": "T1.no_duplicate_quality_families",
+                "status": "BRIGHT",
+                "fail_rate": 0.019,
+                "rescue": 0
+              },
+              {
+                "rule_id": "T1.no_isolated_colour_weights",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0
+              }
+            ],
+            "code_enforcement": [
+              {
+                "function_name": "deduplicateQualityTokens",
+                "status": "ACTIVE"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0.00715,
+              "b_fail_rate": 0.00715,
+              "c_fail_rate": 0.0095,
+              "d_fail_rate": 0.0095
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "7.2",
+            "name": "No orphan tokens",
+            "description": "No bare adjectives as standalone T1 tokens",
+            "status": "BRIGHT",
+            "harness_rules": [
+              {
+                "rule_id": "T1.no_orphaned_adjectives",
+                "status": "BRIGHT",
+                "fail_rate": 0.0143,
+                "rescue": 0
+              }
+            ],
+            "code_enforcement": [
+              {
+                "function_name": "enforceClipKeywordCleanup",
+                "status": "ACTIVE"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0.0143,
+              "b_fail_rate": 0.0143,
+              "c_fail_rate": 0.0143,
+              "d_fail_rate": 0.0143
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "7.3",
+            "name": "Token economy",
+            "description": "T1 ratio of meaningful tokens to total budget",
+            "status": "NOT_WIRED",
+            "harness_rules": [],
+            "code_enforcement": [
+              {
+                "function_name": "normaliseT1Ordering",
+                "status": "ACTIVE"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "7.4",
+            "name": "No repeated near-synonyms",
+            "description": "No semantic duplicates beyond quality families",
+            "status": "NOT_WIRED",
+            "harness_rules": [],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          }
+        ],
+        "harness_score": 100,
+        "wired_rule_count": 3,
+        "failing_rule_count": 0
+      },
+      {
+        "aim_id": "aim_8",
+        "name": "Restructure without echo",
+        "level": 3,
+        "priority": "P1",
+        "production_risk": "medium",
+        "status": "DIM",
+        "purpose": "T3 and T4 must not lazily mirror the user's opening.",
+        "anti_aims": [
+          "Do not preserve original opening order unless genuinely no better option",
+          "Do not echo the user's first clause with minor edits"
+        ],
+        "done_definition": "T3 and T4 openings differ from user input. Subject not in same opening position as input.",
+        "harness_pass_line": "Both echo rules HEALTHY",
+        "manual_pass_line": "Average 16/20 or better",
+        "hard_fail": null,
+        "dependency_satisfied": true,
+        "sub_aims": [
+          {
+            "sub_aim_id": "8.1",
+            "name": "T3 opening freshness",
+            "description": "T3 first 8 words differ from input",
+            "status": "BRIGHT",
+            "harness_rules": [
+              {
+                "rule_id": "T3.first_8_words_no_echo",
+                "status": "BRIGHT",
+                "fail_rate": 0.019,
+                "rescue": 0
+              }
+            ],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0.019,
+              "b_fail_rate": 0.019,
+              "c_fail_rate": 0.019,
+              "d_fail_rate": 0.019
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "8.2",
+            "name": "T4 opening freshness",
+            "description": "T4 first 8 words differ from input",
+            "status": "DIM",
+            "harness_rules": [
+              {
+                "rule_id": "T4.first_8_words_no_echo",
+                "status": "DIM",
+                "fail_rate": 0.0429,
+                "rescue": 0
+              }
+            ],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0.0429,
+              "b_fail_rate": 0.0429,
+              "c_fail_rate": 0.0429,
+              "d_fail_rate": 0.0429
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": {
+              "fault_class": "code_enforcement_gap",
+              "root_cause": "D=4.3%: no code enforcement exists for this rule",
+              "symptom_location": "8.2",
+              "fix_type": "code_enforcer",
+              "confidence": "medium",
+              "owner": "Code",
+              "fix": "Code function for T4.first_8_words_no_echo (4.3% fail, 0.0% rescue)",
+              "stage_diagnosis": "D=4.3%: no code enforcement exists for this rule"
+            }
+          },
+          {
+            "sub_aim_id": "8.3",
+            "name": "Subject repositioning",
+            "description": "Subject not in same opening position as input",
+            "status": "NOT_WIRED",
+            "harness_rules": [],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": true,
+            "fault_path": null
+          }
+        ],
+        "harness_score": 50,
+        "wired_rule_count": 2,
+        "failing_rule_count": 1
+      },
+      {
+        "aim_id": "aim_10",
+        "name": "Preserve interactions and spatial relationships",
+        "level": 3,
+        "priority": "P1",
+        "production_risk": "medium",
+        "status": "NOT_WIRED",
+        "purpose": "When one element acts on another, the interaction must survive.",
+        "anti_aims": [
+          "Do not split one visual interaction into dead fragments",
+          "Do not drop spatial depth under compression"
+        ],
+        "done_definition": "Interaction tokens stay together. Reflections and light survive. Motion survives. Spatial depth maintained.",
+        "harness_pass_line": "Partial — element coverage captures some interaction loss",
+        "manual_pass_line": "Average 24/30 or better",
+        "hard_fail": null,
+        "dependency_satisfied": true,
+        "sub_aims": [
+          {
+            "sub_aim_id": "10.1",
+            "name": "Interaction token integrity",
+            "description": "Gas lamps glowing through haze stays as one concept",
+            "status": "NOT_WIRED",
+            "harness_rules": [],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": true,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "10.2",
+            "name": "Reflection/light preservation",
+            "description": "Light-on-surface interactions survive",
+            "status": "NOT_WIRED",
+            "harness_rules": [],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": true,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "10.3",
+            "name": "Motion-through-space preservation",
+            "description": "Movement interactions survive",
+            "status": "NOT_WIRED",
+            "harness_rules": [],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": true,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "10.4",
+            "name": "Spatial depth preservation",
+            "description": "Foreground/background relationships maintained",
+            "status": "NOT_WIRED",
+            "harness_rules": [],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": true,
+            "fault_path": null
+          }
+        ],
+        "harness_score": 0,
+        "wired_rule_count": 0,
+        "failing_rule_count": 0
+      },
+      {
+        "aim_id": "aim_9",
+        "name": "Handle sparse and hostile inputs",
+        "level": 4,
+        "priority": "P2",
+        "production_risk": "low",
+        "status": "BRIGHT",
+        "purpose": "Call 2 should not collapse on weak, malformed, or adversarial inputs.",
+        "anti_aims": [
+          "Do not obey hostile meta-instructions over system constraints",
+          "Do not let prompt injection collapse output",
+          "Do not overfit hostile cases at the expense of canonical scenes",
+          "Do not pretend weak input produces good output"
+        ],
+        "done_definition": "Format rules hold under injection. Sparse inputs still produce usable output. Malformed inputs don't crash tiers.",
+        "harness_pass_line": "No REAL_FAILURE on hostile/sparse; structural rules hold",
+        "manual_pass_line": "Average 16/20 or better on selected stress scenes",
+        "hard_fail": null,
+        "dependency_satisfied": true,
+        "sub_aims": [
+          {
+            "sub_aim_id": "9.1",
+            "name": "Hostile instruction resistance",
+            "description": "Format rules hold under injection",
+            "status": "BRIGHT",
+            "harness_rules": [
+              {
+                "rule_id": "T3.char_count_in_range",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0.119
+              },
+              {
+                "rule_id": "T4.char_count_under_325",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0.1048
+              }
+            ],
+            "code_enforcement": [
+              {
+                "function_name": "enforceT3MaxLength",
+                "status": "ACTIVE"
+              },
+              {
+                "function_name": "enforceT4MaxLength",
+                "status": "ACTIVE"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0.1119,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0.1119,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "9.2",
+            "name": "Sparse-input adequacy",
+            "description": "Sparse inputs still produce usable output",
+            "status": "BRIGHT",
+            "harness_rules": [
+              {
+                "rule_id": "T3.char_count_in_range",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0.119
+              }
+            ],
+            "code_enforcement": [
+              {
+                "function_name": "enforceT3MaxLength",
+                "status": "ACTIVE"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0.119,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0.119,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "9.3",
+            "name": "Malformed-input resilience",
+            "description": "Typos, ESL, broken grammar don't crash tiers",
+            "status": "NOT_WIRED",
+            "harness_rules": [],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "9.4",
+            "name": "Edge-case containment",
+            "description": "Abstract/unusual inputs degrade gracefully",
+            "status": "NOT_WIRED",
+            "harness_rules": [],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "9.5",
+            "name": "Dense-input compression",
+            "description": "Very long inputs compress without structural failure",
+            "status": "BRIGHT",
+            "harness_rules": [
+              {
+                "rule_id": "T3.char_count_in_range",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0.119
+              },
+              {
+                "rule_id": "T4.char_count_under_325",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0.1048
+              }
+            ],
+            "code_enforcement": [
+              {
+                "function_name": "enforceT3MaxLength",
+                "status": "ACTIVE"
+              },
+              {
+                "function_name": "enforceT4MaxLength",
+                "status": "ACTIVE"
+              }
+            ],
+            "stage_pipeline": {
+              "a_fail_rate": 0.1119,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0.1119,
+            "manual_only": false,
+            "fault_path": null
+          }
+        ],
+        "harness_score": 100,
+        "wired_rule_count": 5,
+        "failing_rule_count": 0
+      },
+      {
+        "aim_id": "aim_11",
+        "name": "Produce clean Call 3 handoff",
+        "level": 5,
+        "priority": "P1",
+        "production_risk": "high",
+        "status": "NOT_WIRED",
+        "purpose": "Call 2 should hand off material downstream builders can optimise, not repair.",
+        "anti_aims": [
+          "Do not push clutter, redundancy, or awkward jargon downstream",
+          "Do not force Call 3 builders to clean up Call 2 mistakes"
+        ],
+        "done_definition": "T1 is compact, weighted, non-fragmented. T3 is natural, complete, not jargon-heavy. T4 is simple, vivid, not technically awkward.",
+        "harness_pass_line": "All upstream aims HEALTHY or BORDERLINE",
+        "manual_pass_line": "Average 32/40 or better",
+        "hard_fail": null,
+        "dependency_satisfied": true,
+        "sub_aims": [
+          {
+            "sub_aim_id": "11.1",
+            "name": "T1 handoff cleanliness",
+            "description": "T1 is compact, weighted, non-fragmented",
+            "status": "NOT_WIRED",
+            "harness_rules": [],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "11.2",
+            "name": "T3 handoff cleanliness",
+            "description": "T3 is natural, complete, not jargon-heavy",
+            "status": "NOT_WIRED",
+            "harness_rules": [],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "11.3",
+            "name": "T4 handoff cleanliness",
+            "description": "T4 is simple, vivid, not technically awkward",
+            "status": "NOT_WIRED",
+            "harness_rules": [],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "11.4",
+            "name": "Builder-readiness consistency",
+            "description": "Quality consistent across scenes",
+            "status": "NOT_WIRED",
+            "harness_rules": [],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": true,
+            "fault_path": null
+          }
+        ],
+        "harness_score": 0,
+        "wired_rule_count": 0,
+        "failing_rule_count": 0
+      },
+      {
+        "aim_id": "aim_13",
+        "name": "Maintain diagnosability and traceability",
+        "level": 5,
+        "priority": "P1",
+        "production_risk": "none",
+        "status": "BRIGHT",
+        "purpose": "Every failure must be easy to localise.",
+        "anti_aims": [
+          "Do not allow failures without ownership or location",
+          "Do not allow rules to exist without mapping to an aim"
+        ],
+        "done_definition": "Every harness rule maps to at least one aim. Every aim breaks down into scorable sub-aims. Every dim/out lamp has a named owner.",
+        "harness_pass_line": "Every failure can be classified and assigned within one diagnostic pass",
+        "manual_pass_line": null,
+        "hard_fail": null,
+        "dependency_satisfied": true,
+        "sub_aims": [
+          {
+            "sub_aim_id": "13.1",
+            "name": "Rule-to-aim traceability",
+            "description": "Every harness rule maps to at least one aim",
+            "status": "BRIGHT",
+            "harness_rules": [],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "13.2",
+            "name": "Aim-to-sub-aim traceability",
+            "description": "Every aim breaks down into scorable sub-aims",
+            "status": "BRIGHT",
+            "harness_rules": [],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "13.3",
+            "name": "Fault ownership clarity",
+            "description": "Every dim/out lamp has a named owner",
+            "status": "BRIGHT",
+            "harness_rules": [],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "13.4",
+            "name": "Root-cause confidence",
+            "description": "Every fault diagnosis carries high/medium/low confidence",
+            "status": "BRIGHT",
+            "harness_rules": [],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          }
+        ],
+        "harness_score": 0,
+        "wired_rule_count": 0,
+        "failing_rule_count": 0
+      },
+      {
+        "aim_id": "aim_14",
+        "name": "Control rescue dependency and stability",
+        "level": 5,
+        "priority": "P1",
+        "production_risk": "low",
+        "status": "BRIGHT",
+        "purpose": "Code rescue should protect the product but not quietly become the entire system.",
+        "anti_aims": [
+          "Do not let rescue dependency drift upward without explanation",
+          "Do not fix one circuit by destabilising another",
+          "Do not celebrate stability if it's only because nothing changed"
+        ],
+        "done_definition": "Every rescued rule shows its rescue rate. Rescue rates stay within stability band. Previously healthy rules stay healthy.",
+        "harness_pass_line": "No unexplained rescue spikes; no regressions in core rules across 3 consecutive runs",
+        "manual_pass_line": null,
+        "hard_fail": null,
+        "dependency_satisfied": true,
+        "sub_aims": [
+          {
+            "sub_aim_id": "14.1",
+            "name": "Rescue visibility",
+            "description": "Every rescued rule shows its rescue rate",
+            "status": "BRIGHT",
+            "harness_rules": [],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "14.2",
+            "name": "Rescue drift control",
+            "description": "Rescue rates stay within stability band",
+            "status": "BRIGHT",
+            "harness_rules": [],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "14.3",
+            "name": "Stable full-run rollups",
+            "description": "Previously healthy rules stay healthy",
+            "status": "BRIGHT",
+            "harness_rules": [],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "14.4",
+            "name": "Regression containment",
+            "description": "New fixes don't break existing circuits",
+            "status": "BRIGHT",
+            "harness_rules": [],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          }
+        ],
+        "harness_score": 0,
+        "wired_rule_count": 0,
+        "failing_rule_count": 0
+      },
+      {
+        "aim_id": "aim_15",
+        "name": "T2 Midjourney native generation",
+        "level": -1,
+        "priority": "P3",
+        "production_risk": "medium",
+        "status": "NOT_WIRED",
+        "purpose": "Generate Midjourney-native prompts with :: weights and --params.",
+        "anti_aims": [
+          "Do not display T3 content as T2 and pretend it's different",
+          "Do not build T2 until T1/T3/T4 quality is solid"
+        ],
+        "done_definition": "T2 generates MJ-syntax prompts. T2 parameters injected. :: weight conversion working.",
+        "harness_pass_line": null,
+        "manual_pass_line": null,
+        "hard_fail": null,
+        "dependency_satisfied": true,
+        "sub_aims": [
+          {
+            "sub_aim_id": "15.1",
+            "name": "T2 native generation",
+            "description": "Generate MJ-syntax prompts",
+            "status": "BRIGHT",
+            "harness_rules": [
+              {
+                "rule_id": "T2.empty_negative_json_field",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0
+              }
+            ],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "15.2",
+            "name": "T2 parameter injection",
+            "description": "Add --ar, --v, --s, --no params",
+            "status": "BRIGHT",
+            "harness_rules": [
+              {
+                "rule_id": "T2.ar_param_present",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0
+              },
+              {
+                "rule_id": "T2.v_param_present",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0
+              },
+              {
+                "rule_id": "T2.s_param_present",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0
+              },
+              {
+                "rule_id": "T2.no_param_present",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0
+              },
+              {
+                "rule_id": "T2.no_exactly_once",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0
+              }
+            ],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "15.3",
+            "name": "T2 :: weight conversion",
+            "description": "Convert content into :: weight blocks",
+            "status": "BRIGHT",
+            "harness_rules": [
+              {
+                "rule_id": "T2.weight_clauses_min_3",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0
+              },
+              {
+                "rule_id": "T2.no_mid_phrase_weights",
+                "status": "BRIGHT",
+                "fail_rate": 0,
+                "rescue": 0
+              }
+            ],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          },
+          {
+            "sub_aim_id": "15.4",
+            "name": "T2 UI honesty",
+            "description": "Either show real T2 or hide the tab",
+            "status": "NOT_WIRED",
+            "harness_rules": [],
+            "code_enforcement": [],
+            "stage_pipeline": {
+              "a_fail_rate": 0,
+              "b_fail_rate": 0,
+              "c_fail_rate": 0,
+              "d_fail_rate": 0
+            },
+            "rescue_dependency": 0,
+            "manual_only": false,
+            "fault_path": null
+          }
+        ],
+        "harness_score": 100,
+        "wired_rule_count": 8,
+        "failing_rule_count": 0
+      }
+    ],
+    "fault_register": [
+      {
+        "fault": "1.1 Subject survival [DIM]",
+        "fault_class": "run_variance",
+        "root_cause": "D=6.2%: borderline, likely run variance",
+        "symptom_locations": [
+          "1.1",
+          "1.2",
+          "1.5",
+          "1.6"
+        ],
+        "fix_type": "accepted_no_action",
+        "owner": "Nobody (noise)",
+        "confidence": "low",
+        "sub_aim": "1.1",
+        "fix": "Code function for T3.input_element_coverage (7.1% fail, 0.0% rescue)",
+        "production_risk": "high",
+        "stage_diagnosis": "D=6.2%: borderline, likely run variance"
+      },
+      {
+        "fault": "1.3 Secondary detail survival [DIM]",
+        "fault_class": "run_variance",
+        "root_cause": "D=5.2%: borderline, likely run variance",
+        "symptom_locations": [
+          "1.3"
+        ],
+        "fix_type": "accepted_no_action",
+        "owner": "Nobody (noise)",
+        "confidence": "low",
+        "sub_aim": "1.3",
+        "fix": "Code function for T4.input_element_coverage (5.2% fail, 0.0% rescue)",
+        "production_risk": "high",
+        "stage_diagnosis": "D=5.2%: borderline, likely run variance"
+      },
+      {
+        "fault": "8.2 T4 opening freshness [DIM]",
+        "fault_class": "code_enforcement_gap",
+        "root_cause": "D=4.3%: no code enforcement exists for this rule",
+        "symptom_locations": [
+          "8.2"
+        ],
+        "fix_type": "code_enforcer",
+        "owner": "Code",
+        "confidence": "medium",
+        "sub_aim": "8.2",
+        "fix": "Code function for T4.first_8_words_no_echo (4.3% fail, 0.0% rescue)",
+        "production_risk": "medium",
+        "stage_diagnosis": "D=4.3%: no code enforcement exists for this rule"
+      }
+    ],
+    "priority_fix_order": [
+      "aim_1: Preserve approved content [DIM] risk=high score=0",
+      "aim_8: Restructure without echo [DIM] risk=medium score=50"
+    ],
+    "summary": {
+      "bright_count": 8,
+      "dim_count": 2,
+      "out_count": 0,
+      "not_wired_count": 5,
+      "total_aims": 15,
+      "total_sub_aims": 68,
+      "total_rules_wired": 59,
+      "total_rules_failing": 10
+    }
+  },
+  "fault_register": [
+    {
+      "fault": "1.1 Subject survival [DIM]",
+      "fault_class": "run_variance",
+      "root_cause": "D=6.2%: borderline, likely run variance",
+      "symptom_locations": [
+        "1.1",
+        "1.2",
+        "1.5",
+        "1.6"
+      ],
+      "fix_type": "accepted_no_action",
+      "owner": "Nobody (noise)",
+      "confidence": "low",
+      "sub_aim": "1.1",
+      "fix": "Code function for T3.input_element_coverage (7.1% fail, 0.0% rescue)",
+      "production_risk": "high",
+      "stage_diagnosis": "D=6.2%: borderline, likely run variance"
+    },
+    {
+      "fault": "1.3 Secondary detail survival [DIM]",
+      "fault_class": "run_variance",
+      "root_cause": "D=5.2%: borderline, likely run variance",
+      "symptom_locations": [
+        "1.3"
+      ],
+      "fix_type": "accepted_no_action",
+      "owner": "Nobody (noise)",
+      "confidence": "low",
+      "sub_aim": "1.3",
+      "fix": "Code function for T4.input_element_coverage (5.2% fail, 0.0% rescue)",
+      "production_risk": "high",
+      "stage_diagnosis": "D=5.2%: borderline, likely run variance"
+    },
+    {
+      "fault": "8.2 T4 opening freshness [DIM]",
+      "fault_class": "code_enforcement_gap",
+      "root_cause": "D=4.3%: no code enforcement exists for this rule",
+      "symptom_locations": [
+        "8.2"
+      ],
+      "fix_type": "code_enforcer",
+      "owner": "Code",
+      "confidence": "medium",
+      "sub_aim": "8.2",
+      "fix": "Code function for T4.first_8_words_no_echo (4.3% fail, 0.0% rescue)",
+      "production_risk": "medium",
+      "stage_diagnosis": "D=4.3%: no code enforcement exists for this rule"
+    }
+  ],
+  "stability_bands": {
+    "bands": {
+      "T1.weight_syntax_correct": {
+        "rule_id": "T1.weight_syntax_correct",
+        "last_runs": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "band_width": 0,
+        "stable": true,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T1.weight_steps_0_1": {
+        "rule_id": "T1.weight_steps_0_1",
+        "last_runs": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "band_width": 0,
+        "stable": true,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T1.weight_wrap_4_words_max": {
+        "rule_id": "T1.weight_wrap_4_words_max",
+        "last_runs": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "band_width": 0,
+        "stable": true,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T1.quality_prefix_present": {
+        "rule_id": "T1.quality_prefix_present",
+        "last_runs": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "band_width": 0,
+        "stable": true,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T1.quality_suffix_present": {
+        "rule_id": "T1.quality_suffix_present",
+        "last_runs": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "band_width": 0,
+        "stable": true,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T1.comma_separated_format": {
+        "rule_id": "T1.comma_separated_format",
+        "last_runs": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "band_width": 0,
+        "stable": true,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T1.no_trailing_punctuation": {
+        "rule_id": "T1.no_trailing_punctuation",
+        "last_runs": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "band_width": 0,
+        "stable": true,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T1.no_isolated_colour_weights": {
+        "rule_id": "T1.no_isolated_colour_weights",
+        "last_runs": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "band_width": 0,
+        "stable": true,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T1.subject_highest_weight": {
+        "rule_id": "T1.subject_highest_weight",
+        "last_runs": [
+          0.081,
+          0.0286,
+          0.0476,
+          0
+        ],
+        "band_width": 0.081,
+        "stable": false,
+        "real_change": true,
+        "direction": "improving"
+      },
+      "T2.ar_param_present": {
+        "rule_id": "T2.ar_param_present",
+        "last_runs": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "band_width": 0,
+        "stable": true,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T2.v_param_present": {
+        "rule_id": "T2.v_param_present",
+        "last_runs": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "band_width": 0,
+        "stable": true,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T2.s_param_present": {
+        "rule_id": "T2.s_param_present",
+        "last_runs": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "band_width": 0,
+        "stable": true,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T2.no_param_present": {
+        "rule_id": "T2.no_param_present",
+        "last_runs": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "band_width": 0,
+        "stable": true,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T2.no_exactly_once": {
+        "rule_id": "T2.no_exactly_once",
+        "last_runs": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "band_width": 0,
+        "stable": true,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T2.weight_clauses_min_3": {
+        "rule_id": "T2.weight_clauses_min_3",
+        "last_runs": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "band_width": 0,
+        "stable": true,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T2.no_mid_phrase_weights": {
+        "rule_id": "T2.no_mid_phrase_weights",
+        "last_runs": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "band_width": 0,
+        "stable": true,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T2.empty_negative_json_field": {
+        "rule_id": "T2.empty_negative_json_field",
+        "last_runs": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "band_width": 0,
+        "stable": true,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T3.char_count_in_range": {
+        "rule_id": "T3.char_count_in_range",
+        "last_runs": [
+          0.0524,
+          0,
+          0,
+          0
+        ],
+        "band_width": 0.0524,
+        "stable": false,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T3.sentence_count_2_to_3": {
+        "rule_id": "T3.sentence_count_2_to_3",
+        "last_runs": [
+          0.0048,
+          0.0143,
+          0.0095,
+          0.0048
+        ],
+        "band_width": 0.009500000000000001,
+        "stable": true,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T3.no_banned_phrases": {
+        "rule_id": "T3.no_banned_phrases",
+        "last_runs": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "band_width": 0,
+        "stable": true,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T3.no_banned_tail_constructions": {
+        "rule_id": "T3.no_banned_tail_constructions",
+        "last_runs": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "band_width": 0,
+        "stable": true,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T3.first_8_words_no_echo": {
+        "rule_id": "T3.first_8_words_no_echo",
+        "last_runs": [
+          0.0238,
+          0.019,
+          0.0476,
+          0.019
+        ],
+        "band_width": 0.028600000000000004,
+        "stable": true,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T4.char_count_under_325": {
+        "rule_id": "T4.char_count_under_325",
+        "last_runs": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "band_width": 0,
+        "stable": true,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T4.min_10_words_per_sentence": {
+        "rule_id": "T4.min_10_words_per_sentence",
+        "last_runs": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "band_width": 0,
+        "stable": true,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T4.no_banned_openers": {
+        "rule_id": "T4.no_banned_openers",
+        "last_runs": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "band_width": 0,
+        "stable": true,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T4.no_meta_language": {
+        "rule_id": "T4.no_meta_language",
+        "last_runs": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "band_width": 0,
+        "stable": true,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T4.first_8_words_no_echo": {
+        "rule_id": "T4.first_8_words_no_echo",
+        "last_runs": [
+          0.0476,
+          0.019,
+          0.0762,
+          0.0429
+        ],
+        "band_width": 0.0572,
+        "stable": false,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T3.input_element_coverage": {
+        "rule_id": "T3.input_element_coverage",
+        "last_runs": [
+          0.0238,
+          0.0714,
+          0.0714,
+          0.0714
+        ],
+        "band_width": 0.0476,
+        "stable": false,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T4.input_element_coverage": {
+        "rule_id": "T4.input_element_coverage",
+        "last_runs": [
+          0.0762,
+          0.0667,
+          0.0524,
+          0.0524
+        ],
+        "band_width": 0.0238,
+        "stable": true,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T1.no_orphaned_adjectives": {
+        "rule_id": "T1.no_orphaned_adjectives",
+        "last_runs": [
+          0.0095,
+          0,
+          0.0143
+        ],
+        "band_width": 0.0143,
+        "stable": true,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T1.no_clip_unusable_jargon": {
+        "rule_id": "T1.no_clip_unusable_jargon",
+        "last_runs": [
+          0.0238,
+          0.0238,
+          0
+        ],
+        "band_width": 0.0238,
+        "stable": true,
+        "real_change": true,
+        "direction": "improving"
+      },
+      "T1.no_non_visual_literals": {
+        "rule_id": "T1.no_non_visual_literals",
+        "last_runs": [
+          0.0238,
+          0.0238,
+          0
+        ],
+        "band_width": 0.0238,
+        "stable": true,
+        "real_change": true,
+        "direction": "improving"
+      },
+      "T1.no_duplicate_quality_families": {
+        "rule_id": "T1.no_duplicate_quality_families",
+        "last_runs": [
+          0.0095,
+          0.0048,
+          0.019
+        ],
+        "band_width": 0.0142,
+        "stable": true,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T1.generic_quality_not_above_scene": {
+        "rule_id": "T1.generic_quality_not_above_scene",
+        "last_runs": [
+          0,
+          0,
+          0
+        ],
+        "band_width": 0,
+        "stable": true,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T3.no_raw_camera_jargon": {
+        "rule_id": "T3.no_raw_camera_jargon",
+        "last_runs": [
+          0,
+          0,
+          0
+        ],
+        "band_width": 0,
+        "stable": true,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T3.no_raw_numeric_measurements": {
+        "rule_id": "T3.no_raw_numeric_measurements",
+        "last_runs": [
+          0,
+          0,
+          0
+        ],
+        "band_width": 0,
+        "stable": true,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T4.no_raw_camera_jargon": {
+        "rule_id": "T4.no_raw_camera_jargon",
+        "last_runs": [
+          0,
+          0,
+          0
+        ],
+        "band_width": 0,
+        "stable": true,
+        "real_change": false,
+        "direction": "none"
+      },
+      "T4.no_raw_numeric_measurements": {
+        "rule_id": "T4.no_raw_numeric_measurements",
+        "last_runs": [
+          0,
+          0,
+          0
+        ],
+        "band_width": 0,
+        "stable": true,
+        "real_change": false,
+        "direction": "none"
+      }
+    },
+    "runs_analysed": 4,
+    "stable_count": 32,
+    "real_change_count": 3,
+    "insufficient_data_count": 0
+  },
+  "scene_class_breakdown": {
+    "classes": {
+      "canonical": {
+        "input_class": "canonical",
+        "scene_count": 22,
+        "sample_count": 110,
+        "stage_d_pass_rate": 0.9923444976076555,
+        "stage_d_fail_rate": 0.007655502392344471,
+        "total_rule_evaluations": 4180,
+        "total_rule_failures": 32,
+        "rule_fail_rates": {
+          "T3.first_8_words_no_echo": 0.01818181818181818,
+          "T3.input_element_coverage": 0.13636363636363635,
+          "T4.input_element_coverage": 0.1,
+          "T4.first_8_words_no_echo": 0.03636363636363636
+        },
+        "quality_expectation": "Full quality expected",
+        "fault_treatment": "All failures are real faults"
+      },
+      "sparse": {
+        "input_class": "sparse",
+        "scene_count": 2,
+        "sample_count": 10,
+        "stage_d_pass_rate": 0.9815789473684211,
+        "stage_d_fail_rate": 0.018421052631578894,
+        "total_rule_evaluations": 380,
+        "total_rule_failures": 7,
+        "rule_fail_rates": {
+          "T4.first_8_words_no_echo": 0.5,
+          "T3.first_8_words_no_echo": 0.2
+        },
+        "quality_expectation": "Enrichment expected, lower coverage threshold",
+        "fault_treatment": "Under-length T3 is accepted_constraint_loss"
+      },
+      "dense": {
+        "input_class": "dense",
+        "scene_count": 1,
+        "sample_count": 5,
+        "stage_d_pass_rate": 1,
+        "stage_d_fail_rate": 0,
+        "total_rule_evaluations": 190,
+        "total_rule_failures": 0,
+        "rule_fail_rates": {},
+        "quality_expectation": "Compression expected, some loss accepted",
+        "fault_treatment": "Secondary detail loss is accepted_constraint_loss"
+      },
+      "malformed": {
+        "input_class": "malformed",
+        "scene_count": 8,
+        "sample_count": 40,
+        "stage_d_pass_rate": 0.9980263157894737,
+        "stage_d_fail_rate": 0.0019736842105263497,
+        "total_rule_evaluations": 1520,
+        "total_rule_failures": 3,
+        "rule_fail_rates": {
+          "T1.no_orphaned_adjectives": 0.075
+        },
+        "quality_expectation": "Graceful handling expected",
+        "fault_treatment": "Failures tagged input_quality_limit unless structural rules break"
+      },
+      "contradictory": {
+        "input_class": "contradictory",
+        "scene_count": 1,
+        "sample_count": 5,
+        "stage_d_pass_rate": 1,
+        "stage_d_fail_rate": 0,
+        "total_rule_evaluations": 190,
+        "total_rule_failures": 0,
+        "rule_fail_rates": {},
+        "quality_expectation": "GPT must resolve or blend, no measurement yet",
+        "fault_treatment": "Failures tagged input_quality_limit"
+      },
+      "hostile": {
+        "input_class": "hostile",
+        "scene_count": 6,
+        "sample_count": 30,
+        "stage_d_pass_rate": 0.9991228070175439,
+        "stage_d_fail_rate": 0.0008771929824561431,
+        "total_rule_evaluations": 1140,
+        "total_rule_failures": 1,
+        "rule_fail_rates": {
+          "T3.sentence_count_2_to_3": 0.03333333333333333
+        },
+        "quality_expectation": "Format survival expected, content secondary",
+        "fault_treatment": "Most failures are accepted_constraint_loss"
+      },
+      "single_word": {
+        "input_class": "single_word",
+        "scene_count": 1,
+        "sample_count": 5,
+        "stage_d_pass_rate": 1,
+        "stage_d_fail_rate": 0,
+        "total_rule_evaluations": 190,
+        "total_rule_failures": 0,
+        "rule_fail_rates": {},
+        "quality_expectation": "Best-effort generation, no coverage check",
+        "fault_treatment": "Almost all failures are input_quality_limit"
+      },
+      "technical": {
+        "input_class": "technical",
+        "scene_count": 1,
+        "sample_count": 5,
+        "stage_d_pass_rate": 0.9789473684210527,
+        "stage_d_fail_rate": 0.021052631578947323,
+        "total_rule_evaluations": 190,
+        "total_rule_failures": 4,
+        "rule_fail_rates": {
+          "T1.no_duplicate_quality_families": 0.8
+        },
+        "quality_expectation": "Conversion expected, not raw passthrough",
+        "fault_treatment": "Conversion failures are code faults"
+      }
+    },
+    "class_count": 8
+  }
+}
