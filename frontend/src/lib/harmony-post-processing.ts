@@ -11,13 +11,21 @@
 // Pipeline per tier:
 //   T1: P13 (weight cap 8) → P2 (strip punctuation) → P14 (weight wrap ≤4 words)
 //   T2: P1 (dedup MJ params)
-//   T3: P15 (over-length truncation 280–420)
-//   T4: P3 (self-correction) → P8 (meta-openers) → P10 (short sentence merge) → P16 (over-length truncation ≤325)
+//   T3: P17/P18 (jargon + measurement conversion) → P19 (opening freshness) → P15 (length)
+//   T4: P3 (self-correction) → P8 (meta-openers) → P10 (short sentence merge)
+//       → P17/P18 (jargon + measurement conversion) → P19 (opening freshness)
+//       → P16 (over-length truncation ≤325) → P21 (retention safety) → P22 (sentence floor)
 //
 // v4.5.1 additions (10 Apr 2026):
 //   P14 — T1 weight-wrap enforcement (4-word limit, 2-word-tail heuristic)
 //   P15 — T3 over-length truncation (280–420 char range)
 //   P16 — T4 over-length truncation (≤325 chars)
+//
+// v6.2 additions:
+//   P19 — T3-first opening freshness enforcer v2 (shared deterministic anti-echo)
+//   P20 — Critical-anchor retention enforcer for T3/T4 before truncation
+//   P21 — T4 retention safety guard
+//   P22 — T4 final sentence-floor guard
 //
 // Removed (prompt now handles these — tested and confirmed no regression):
 //   P11 (T3 meta-commentary opener fixer) — removed 28 Mar 2026
@@ -649,6 +657,454 @@ export function stripT3BannedTailConstructions(
     .replace(/\s{2,}/g, " ")
     .trim();
   return { text: next, fixes };
+}
+
+// ============================================================================
+// P19: T3-first opening freshness enforcer v2
+// ============================================================================
+
+export type FreshnessTier = "tier3" | "tier4";
+
+export interface OpeningFreshnessResult {
+  text: string;
+  wasFixed: boolean;
+  fixes: string[];
+}
+
+const OPENING_WORD_WINDOW = 8;
+const OPENING_SENTENCE_SPLIT_REGEX = /(?<=[.!?])\s+/;
+const OPENING_CLAUSE_SPLIT_REGEX = /\s*(?:,|;|—|–)\s*/;
+const HIGH_OVERLAP_RATIO = 0.75;
+
+const DECLARATIVE_OPENING_SUBJECT_HINTS = new Set([
+  "a",
+  "an",
+  "the",
+  "one",
+  "two",
+  "three",
+  "four",
+  "five",
+  "several",
+  "many",
+  "lone",
+  "single",
+  "solitary",
+  "packed",
+]);
+
+const DECLARATIVE_OPENING_VERB_HINTS = new Set([
+  "stands",
+  "standing",
+  "sits",
+  "sitting",
+  "walks",
+  "walking",
+  "runs",
+  "running",
+  "drives",
+  "driving",
+  "glides",
+  "gliding",
+  "floats",
+  "floating",
+  "surges",
+  "surging",
+  "rises",
+  "rising",
+  "falls",
+  "falling",
+  "burns",
+  "burning",
+  "watches",
+  "watching",
+  "leans",
+  "leaning",
+  "holds",
+  "holding",
+  "waits",
+  "waiting",
+  "pedals",
+  "pedalling",
+  "rides",
+  "riding",
+  "crowds",
+  "crowding",
+  "jostles",
+  "jostling",
+  "reflects",
+  "reflecting",
+  "cuts",
+  "cutting",
+  "sweeps",
+  "sweeping",
+]);
+
+const STRONG_NON_SUBJECT_LEAD_PATTERNS: ReadonlyArray<RegExp> = [
+  /^(?:at|inside|under|beneath|beyond|across|along|through|within|against|near|amid|among)\b/i,
+  /^(?:in|on)\s+(?:the\s+)?(?:distance|foreground|background|street|square|platform|coast|shore|water|harbour|bookshop|station|hangar|valley|reef|cathedral|workshop|market|alley|bridge)\b/i,
+  /^(?:warm|cold|cool|pale|soft|hard|golden|silver|blue|orange|crimson|violet|white|smoky|misty|foggy|rain-soaked|wind-blown)\b/i,
+  /^(?:gas|neon|signal|sunlight|lamplight|shadow|mist|haze|spray|snow|rain|embers|smoke|twilight|first light|golden hour)\b/i,
+];
+
+function splitOpeningSentences(text: string): string[] {
+  return text
+    .split(OPENING_SENTENCE_SPLIT_REGEX)
+    .map((sentence) => sentence.trim())
+    .filter((sentence) => sentence.length > 0);
+}
+
+function normaliseOpeningWords(
+  text: string,
+  count = OPENING_WORD_WINDOW,
+): string[] {
+  return text
+    .toLowerCase()
+    .replace(/['’]/g, "")
+    .replace(/[^a-z0-9\s-]/g, " ")
+    .split(/\s+/)
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0)
+    .slice(0, count);
+}
+
+function capitaliseFirst(text: string): string {
+  return text.replace(/^\s*([a-z])/, (match) => match.toUpperCase());
+}
+
+function lowercaseFirst(text: string): string {
+  return text.replace(/^\s*([A-Z])/, (match) => match.toLowerCase());
+}
+
+function ensureSentencePunctuation(text: string): string {
+  const trimmed = text.trim();
+  if (trimmed.length === 0) return trimmed;
+  if (/[.!?]$/.test(trimmed)) return trimmed;
+  return `${trimmed}.`;
+}
+
+function exactOpeningEcho(source: string, candidate: string): boolean {
+  const sourceWords = normaliseOpeningWords(source);
+  const candidateWords = normaliseOpeningWords(candidate);
+
+  const sampleSize = Math.min(
+    OPENING_WORD_WINDOW,
+    sourceWords.length,
+    candidateWords.length,
+  );
+
+  if (sampleSize < 3) return false;
+
+  return (
+    sourceWords.slice(0, sampleSize).join(" ") ===
+    candidateWords.slice(0, sampleSize).join(" ")
+  );
+}
+
+function openingOverlapRatio(source: string, candidate: string): number {
+  const sourceWords = normaliseOpeningWords(source);
+  const candidateWords = normaliseOpeningWords(candidate);
+  const sampleSize = Math.min(
+    OPENING_WORD_WINDOW,
+    sourceWords.length,
+    candidateWords.length,
+  );
+
+  if (sampleSize < 3) return 0;
+
+  let positionalMatches = 0;
+  for (let i = 0; i < sampleSize; i += 1) {
+    if (sourceWords[i] === candidateWords[i]) {
+      positionalMatches += 1;
+    }
+  }
+
+  return positionalMatches / sampleSize;
+}
+
+function isDeclarativeSubjectLedOpening(text: string): boolean {
+  const words = normaliseOpeningWords(text, 6);
+  if (words.length < 3) return false;
+
+  const first = words[0] ?? "";
+  const second = words[1] ?? "";
+  const third = words[2] ?? "";
+  const fourth = words[3] ?? "";
+
+  if (DECLARATIVE_OPENING_SUBJECT_HINTS.has(first)) {
+    return (
+      DECLARATIVE_OPENING_VERB_HINTS.has(third) ||
+      DECLARATIVE_OPENING_VERB_HINTS.has(fourth)
+    );
+  }
+
+  if (
+    DECLARATIVE_OPENING_SUBJECT_HINTS.has(first) ||
+    DECLARATIVE_OPENING_SUBJECT_HINTS.has(second)
+  ) {
+    return (
+      DECLARATIVE_OPENING_VERB_HINTS.has(fourth) ||
+      DECLARATIVE_OPENING_VERB_HINTS.has(third)
+    );
+  }
+
+  return false;
+}
+
+function hasStrongNonSubjectLead(text: string): boolean {
+  const trimmed = text.trim();
+  return STRONG_NON_SUBJECT_LEAD_PATTERNS.some((pattern) =>
+    pattern.test(trimmed),
+  );
+}
+
+function needsOpeningFreshnessRepair(
+  source: string,
+  candidate: string,
+): boolean {
+  if (exactOpeningEcho(source, candidate)) return true;
+  if (openingOverlapRatio(source, candidate) >= HIGH_OVERLAP_RATIO) return true;
+  if (
+    isDeclarativeSubjectLedOpening(source) &&
+    isDeclarativeSubjectLedOpening(candidate)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function reorderBySentencePriority(
+  source: string,
+  text: string,
+  tier: FreshnessTier,
+): OpeningFreshnessResult {
+  const sentences = splitOpeningSentences(text);
+  if (sentences.length < 2) {
+    return { text, wasFixed: false, fixes: [] };
+  }
+
+  const minimumLeadWords = tier === "tier3" ? 6 : 5;
+
+  for (let i = 1; i < sentences.length; i += 1) {
+    const candidateLead = sentences[i];
+    if (candidateLead === undefined) continue;
+    if (countWords(candidateLead) < minimumLeadWords) continue;
+
+    const reorderedParts = [
+      candidateLead,
+      ...sentences.slice(0, i),
+      ...sentences.slice(i + 1),
+    ];
+
+    const reordered = reorderedParts
+      .filter((sentence): sentence is string => typeof sentence === "string")
+      .map((sentence) => sentence.trim())
+      .join(" ")
+      .trim();
+
+    if (!needsOpeningFreshnessRepair(source, reordered)) {
+      return {
+        text: reordered,
+        wasFixed: true,
+        fixes: [`${tier}:sentence_reordered_to_freshen_opening_v2`],
+      };
+    }
+  }
+
+  return { text, wasFixed: false, fixes: [] };
+}
+
+function rotateFirstSentenceClauses(
+  source: string,
+  text: string,
+  tier: FreshnessTier,
+): OpeningFreshnessResult {
+  const sentences = splitOpeningSentences(text);
+  const firstSentence = sentences[0];
+  if (firstSentence === undefined) {
+    return { text, wasFixed: false, fixes: [] };
+  }
+
+  const clauses = firstSentence
+    .split(OPENING_CLAUSE_SPLIT_REGEX)
+    .map((clause) => clause.trim())
+    .filter((clause) => clause.length > 0);
+
+  if (clauses.length < 2) {
+    return { text, wasFixed: false, fixes: [] };
+  }
+
+  const firstClause = clauses[0];
+  if (firstClause === undefined) {
+    return { text, wasFixed: false, fixes: [] };
+  }
+
+  const minimumLeadWords = tier === "tier3" ? 5 : 4;
+
+  for (let i = 1; i < clauses.length; i += 1) {
+    const leadClause = clauses[i];
+    if (leadClause === undefined) continue;
+    if (countWords(leadClause) < minimumLeadWords) continue;
+
+    const remainingClauses = [
+      lowercaseFirst(firstClause),
+      ...clauses.slice(1, i),
+      ...clauses.slice(i + 1),
+    ].filter((clause): clause is string => clause.trim().length > 0);
+
+    const rebuiltFirstSentence = ensureSentencePunctuation(
+      [capitaliseFirst(leadClause), ...remainingClauses].join(", "),
+    );
+
+    const rebuiltText = [rebuiltFirstSentence, ...sentences.slice(1)]
+      .filter((sentence): sentence is string => typeof sentence === "string")
+      .map((sentence) => sentence.trim())
+      .join(" ")
+      .trim();
+
+    if (!needsOpeningFreshnessRepair(source, rebuiltText)) {
+      return {
+        text: rebuiltText,
+        wasFixed: true,
+        fixes: [`${tier}:clause_rotated_to_freshen_opening_v2`],
+      };
+    }
+  }
+
+  return { text, wasFixed: false, fixes: [] };
+}
+
+function frontInternalSceneLead(
+  source: string,
+  text: string,
+  tier: FreshnessTier,
+): OpeningFreshnessResult {
+  const sentences = splitOpeningSentences(text);
+  const firstSentence = sentences[0];
+  if (!firstSentence) {
+    return { text, wasFixed: false, fixes: [] };
+  }
+
+  const clauses = firstSentence
+    .split(OPENING_CLAUSE_SPLIT_REGEX)
+    .map((clause) => clause.trim())
+    .filter(Boolean);
+
+  if (clauses.length < 2) {
+    return { text, wasFixed: false, fixes: [] };
+  }
+
+  const minimumLeadWords = tier === "tier3" ? 4 : 3;
+
+  for (let i = 1; i < clauses.length; i += 1) {
+    const leadClause = clauses[i];
+    if (!leadClause) continue;
+    if (countWords(leadClause) < minimumLeadWords) continue;
+    if (!hasStrongNonSubjectLead(leadClause)) continue;
+
+    const firstClause = clauses[0] ?? "";
+    const remainingClauses = [
+      lowercaseFirst(firstClause),
+      ...clauses.slice(1, i),
+      ...clauses.slice(i + 1),
+    ].filter((clause) => clause.trim().length > 0);
+
+    const rebuiltFirstSentence = ensureSentencePunctuation(
+      [capitaliseFirst(leadClause), ...remainingClauses].join(", "),
+    );
+
+    const rebuiltText = [rebuiltFirstSentence, ...sentences.slice(1)]
+      .map((sentence) => sentence.trim())
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+
+    if (!needsOpeningFreshnessRepair(source, rebuiltText)) {
+      return {
+        text: rebuiltText,
+        wasFixed: true,
+        fixes: [`${tier}:internal_scene_lead_fronted_v2`],
+      };
+    }
+  }
+
+  return { text, wasFixed: false, fixes: [] };
+}
+
+function promoteLaterStrongLead(
+  source: string,
+  text: string,
+  tier: FreshnessTier,
+): OpeningFreshnessResult {
+  const sentences = splitOpeningSentences(text);
+  if (sentences.length < 2) {
+    return { text, wasFixed: false, fixes: [] };
+  }
+
+  for (let i = 1; i < sentences.length; i += 1) {
+    const candidateLead = sentences[i];
+    if (!candidateLead) continue;
+    if (!hasStrongNonSubjectLead(candidateLead)) continue;
+
+    const reordered = [
+      candidateLead,
+      ...sentences.slice(0, i),
+      ...sentences.slice(i + 1),
+    ]
+      .map((sentence) => sentence.trim())
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+
+    if (!needsOpeningFreshnessRepair(source, reordered)) {
+      return {
+        text: reordered,
+        wasFixed: true,
+        fixes: [`${tier}:later_strong_lead_promoted_v2`],
+      };
+    }
+  }
+
+  return { text, wasFixed: false, fixes: [] };
+}
+
+export function enforceOpeningFreshness(
+  source: string,
+  text: string,
+  tier: FreshnessTier,
+): OpeningFreshnessResult {
+  const trimmedSource = source.trim();
+  const trimmedText = text.trim();
+
+  if (trimmedSource.length === 0 || trimmedText.length === 0) {
+    return { text, wasFixed: false, fixes: [] };
+  }
+
+  if (!needsOpeningFreshnessRepair(trimmedSource, trimmedText)) {
+    return { text, wasFixed: false, fixes: [] };
+  }
+
+  const sentenceReorder = reorderBySentencePriority(
+    trimmedSource,
+    trimmedText,
+    tier,
+  );
+  if (sentenceReorder.wasFixed) return sentenceReorder;
+
+  const clauseRotation = rotateFirstSentenceClauses(
+    trimmedSource,
+    trimmedText,
+    tier,
+  );
+  if (clauseRotation.wasFixed) return clauseRotation;
+
+  const internalLead = frontInternalSceneLead(trimmedSource, trimmedText, tier);
+  if (internalLead.wasFixed) return internalLead;
+
+  const laterLead = promoteLaterStrongLead(trimmedSource, trimmedText, tier);
+  if (laterLead.wasFixed) return laterLead;
+
+  return { text, wasFixed: false, fixes: [] };
 }
 
 // ============================================================================
@@ -1480,7 +1936,10 @@ export interface TierPrompts {
   tier4: { positive: string; negative: string };
 }
 
-export function postProcessTiers(tiers: TierPrompts): TierPrompts {
+export function postProcessTiers(
+  tiers: TierPrompts,
+  sourceText?: string,
+): TierPrompts {
   return {
     tier1: {
       positive: (() => {
@@ -1535,6 +1994,19 @@ export function postProcessTiers(tiers: TierPrompts): TierPrompts {
         const tails = stripT3BannedTailConstructions(text);
         if (tails.fixes.length > 0) text = tails.text;
 
+        if (sourceText?.trim()) {
+          const freshness = enforceOpeningFreshness(sourceText, text, "tier3");
+          if (freshness.wasFixed) {
+            text = freshness.text;
+            if (typeof console !== "undefined") {
+              console.debug(
+                "[harmony-post-processing] P19 T3 opening freshness fixes:",
+                freshness.fixes.join("; "),
+              );
+            }
+          }
+        }
+
         const result = enforceT3MaxLength(text);
         if (result.truncated && typeof console !== "undefined") {
           console.debug(
@@ -1563,6 +2035,19 @@ export function postProcessTiers(tiers: TierPrompts): TierPrompts {
         const measurements = convertMeasurementsToVisual(text);
         if (measurements.fixes.length > 0) {
           text = measurements.text;
+        }
+
+        if (sourceText?.trim()) {
+          const freshness = enforceOpeningFreshness(sourceText, text, "tier4");
+          if (freshness.wasFixed) {
+            text = freshness.text;
+            if (typeof console !== "undefined") {
+              console.debug(
+                "[harmony-post-processing] P19 T4 opening freshness fixes:",
+                freshness.fixes.join("; "),
+              );
+            }
+          }
         }
 
         const truncationResult = enforceT4MaxLength(text);
