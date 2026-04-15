@@ -12,26 +12,12 @@
 //   T1: P13 (weight cap 8) → P2 (strip punctuation) → P14 (weight wrap ≤4 words)
 //   T2: P1 (dedup MJ params)
 //   T3: P15 (over-length truncation 280–420)
-//   T4: P3 (self-correction) → P8 (meta-openers) → P10 (short sentence merge)
-//       → P16 (over-length truncation ≤325) → P19 (retention safety guard)
+//   T4: P3 (self-correction) → P8 (meta-openers) → P10 (short sentence merge) → P16 (over-length truncation ≤325)
 //
 // v4.5.1 additions (10 Apr 2026):
 //   P14 — T1 weight-wrap enforcement (4-word limit, 2-word-tail heuristic)
 //   P15 — T3 over-length truncation (280–420 char range)
 //   P16 — T4 over-length truncation (≤325 chars)
-//
-// v4.5.2 additions (14 Apr 2026):
-//   P19 — T4 retention safety guard
-//     - repairs weak retained openers ("And", "While", "With")
-//     - merges sub-10-word trailing fragments after retention
-//     - trims fragment-like tails created by compression
-//     - preserves anchor-rich wording rather than redesigning T4
-//
-// v4.5.3 additions (14 Apr 2026):
-//   P20 — Priority-aware retention pass for T3/T4 before truncation
-//     - protects anchor-bearing clauses before length reduction
-//     - preserves subject, action, environment, interaction, lighting
-//     - trims lower-value filler before scene anchors
 //
 // Removed (prompt now handles these — tested and confirmed no regression):
 //   P11 (T3 meta-commentary opener fixer) — removed 28 Mar 2026
@@ -45,6 +31,57 @@
 import { enforceWeightCap } from "@/lib/harmony-compliance";
 
 // ============================================================================
+// Shared sentence helpers
+// ============================================================================
+
+const T4_MIN_SENTENCE_WORDS = 10;
+
+function splitSentencesPreserve(text: string): string[] {
+  return (
+    text
+      .match(/[^.!?]+[.!?]?/g)
+      ?.map((sentence) => sentence.trim())
+      .filter(Boolean) ?? []
+  );
+}
+
+function ensureSentenceStop(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed) return "";
+  return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
+}
+
+function capitaliseSentence(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed) return "";
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+}
+
+function normaliseJoinedSentence(text: string): string {
+  return text
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+([,.;!?])/g, "$1")
+    .trim();
+}
+
+function countWords(text: string): number {
+  return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function mergeIntoPreviousSentence(previous: string, current: string): string {
+  const prevCore = previous.replace(/[.!?]+$/, "").trim();
+  const currentCore = current.replace(/[.!?]+$/, "").trim();
+
+  if (!prevCore) return ensureSentenceStop(capitaliseSentence(currentCore));
+  if (!currentCore) return ensureSentenceStop(capitaliseSentence(prevCore));
+
+  const loweredCurrent =
+    currentCore.charAt(0).toLowerCase() + currentCore.slice(1);
+
+  return ensureSentenceStop(`${prevCore}, ${loweredCurrent}`.trim());
+}
+
+// ============================================================================
 // P1+P7: T2 Midjourney Parameter Deduplication
 // ============================================================================
 
@@ -55,7 +92,7 @@ import { enforceWeightCap } from "@/lib/harmony-compliance";
  * 1. Entire parameter block duplicated: ...prose --ar 16:9 --v 7 --no X --ar 16:9 --v 7 --no Y
  * 2. Single --no block with internally duplicated terms: --no X, Y, X, Y
  *
- * Also detects fusion artifacts where GPT omits separator between duplicate blocks.
+ * Also detects fusion artefacts where GPT omits separator between duplicate blocks.
  */
 export function deduplicateMjParams(prompt: string): string {
   const paramStart = prompt.search(/\s--(?:ar|v|s|no)\s/);
@@ -79,11 +116,13 @@ export function deduplicateMjParams(prompt: string): string {
   const noBlocks = [...paramSection.matchAll(/--no\s+([^-]+?)(?=\s+--|$)/g)];
   const allNoTerms: string[] = [];
   const seen = new Set<string>();
+
   for (const block of noBlocks) {
     const terms = (block[1] ?? "")
       .split(",")
       .map((t) => t.trim())
       .filter(Boolean);
+
     for (const term of terms) {
       const lower = term.toLowerCase();
       if (!seen.has(lower)) {
@@ -95,9 +134,11 @@ export function deduplicateMjParams(prompt: string): string {
 
   const termSetLower = new Set(allNoTerms.map((t) => t.toLowerCase()));
   const fusionIndices: number[] = [];
+
   for (let i = 0; i < allNoTerms.length; i++) {
     const words = allNoTerms[i]!.toLowerCase().split(/\s+/);
     if (words.length <= 2) continue;
+
     for (let splitAt = 1; splitAt < words.length; splitAt++) {
       const firstPart = words.slice(0, splitAt).join(" ");
       const secondPart = words.slice(splitAt).join(" ");
@@ -107,6 +148,7 @@ export function deduplicateMjParams(prompt: string): string {
       }
     }
   }
+
   for (let i = fusionIndices.length - 1; i >= 0; i--) {
     allNoTerms.splice(fusionIndices[i]!, 1);
   }
@@ -133,7 +175,7 @@ export function deduplicateMjParams(prompt: string): string {
 
 /**
  * P2: Strip trailing sentence punctuation from CLIP prompts.
- * CLIP prompts are comma-separated keyword lists — no periods.
+ * CLIP prompts are comma-separated keyword lists — no full stops.
  */
 export function stripTrailingPunctuation(prompt: string): string {
   return prompt.replace(/[.!?]+\s*$/, "").trimEnd();
@@ -148,8 +190,8 @@ export function stripTrailingPunctuation(prompt: string): string {
  * "...sentence? No, it is <corrected>." → remove the question + correction,
  * keep the corrected content.
  *
- * Operates on the full string (not sentence-split) because the "?" and "No"
- * often span a sentence boundary that the splitter would separate.
+ * Operates on the full string because the "?" and "No"
+ * often span a sentence boundary.
  */
 export function fixT4SelfCorrection(prompt: string): string {
   const cleaned = prompt.replace(/[^.!?]*\?\s*No[,—–\s]+it\s+is\s+/gi, "");
@@ -167,10 +209,9 @@ export function fixT4SelfCorrection(prompt: string): string {
 }
 
 // ============================================================================
-// P8: T4 Meta-Language Opener Fixer (broadened)
+// P8: T4 Meta-Language Opener Fixer
 // ============================================================================
 
-/** Abstract nouns GPT uses as meta-language sentence subjects in T4 */
 export const T4_ABSTRACT_NOUNS = new Set([
   "scene",
   "room",
@@ -197,7 +238,6 @@ export const T4_ABSTRACT_NOUNS = new Set([
   "view",
 ]);
 
-/** Meta-verbs GPT pairs with abstract nouns in T4 */
 export const T4_META_VERBS = new Set([
   "is",
   "was",
@@ -225,7 +265,6 @@ export const T4_META_VERBS = new Set([
 /**
  * P8: Auto-fix T4 meta-language openers.
  * "The room feels quiet and wistful." → "Quiet and wistful."
- * "The atmosphere carries a sense of awe." → "A sense of awe."
  */
 export function fixT4MetaOpeners(prompt: string): string {
   const sentences = prompt.split(/(?<=[.!?])\s+/).filter(Boolean);
@@ -256,9 +295,7 @@ export function fixT4MetaOpeners(prompt: string): string {
 // ============================================================================
 
 /**
- * P10: Merge T4 short sentences into the previous sentence via em-dash.
- * "...footprints lead away. Crisp, cinematic, and realistic."
- * → "...footprints lead away — crisp, cinematic, and realistic."
+ * P10: Merge T4 short trailing sentences into the previous sentence.
  */
 export function mergeT4ShortSentences(prompt: string): string {
   const sentences = prompt.split(/(?<=[.!?])\s+/).filter(Boolean);
@@ -266,7 +303,7 @@ export function mergeT4ShortSentences(prompt: string): string {
   if (sentences.length < 2) return prompt;
 
   const lastSentence = sentences[sentences.length - 1]!;
-  const wordCount = lastSentence.split(/\s+/).filter(Boolean).length;
+  const wordCount = lastSentence.split(/\s+/).length;
 
   if (wordCount >= 10) return prompt;
 
@@ -556,7 +593,6 @@ export function convertPhotographyJargonTierAware(
   const fixes: string[] = [];
 
   for (const [pattern, replacement] of conversions) {
-    pattern.lastIndex = 0;
     if (pattern.test(next)) {
       next = next.replace(pattern, replacement);
       fixes.push(`${pattern} → ${replacement}`);
@@ -579,7 +615,6 @@ export function stripOrRewriteT3BannedPhrases(text: string): TextCleanupResult {
   let next = text;
   const fixes: string[] = [];
   for (const [pattern, replacement] of T3_BANNED_PHRASE_REWRITES) {
-    pattern.lastIndex = 0;
     if (pattern.test(next)) {
       next = next.replace(pattern, replacement);
       fixes.push(pattern.toString());
@@ -603,7 +638,6 @@ export function stripT3BannedTailConstructions(
   let next = text;
   const fixes: string[] = [];
   for (const pattern of T3_BANNED_TAIL_PATTERNS) {
-    pattern.lastIndex = 0;
     if (pattern.test(next)) {
       next = next.replace(pattern, ".");
       fixes.push(pattern.toString());
@@ -623,66 +657,6 @@ export function stripT3BannedTailConstructions(
 
 const T3_MAX = 420;
 const T3_MIN = 280;
-const T3_HARD_MIN = 220;
-
-const T3_UNDERLENGTH_CLAUSES: ReadonlyArray<string> = [
-  "The scene remains visually grounded and easy to read.",
-  "The image stays coherent, direct, and visually clear.",
-  "The overall view remains natural, legible, and visually grounded.",
-];
-
-type AnchorClass =
-  | "subject"
-  | "action"
-  | "environment"
-  | "interaction"
-  | "lighting";
-
-interface RetentionClause {
-  sentenceIndex: number;
-  clauseIndex: number;
-  globalIndex: number;
-  text: string;
-  lowered: string;
-  score: number;
-  tags: Set<AnchorClass>;
-}
-
-const ACTION_PATTERNS: ReadonlyArray<RegExp> = [
-  /\b(?:stand|stands|standing|sit|sits|sitting|walk|walks|walking|run|runs|running|pedal|pedals|pedalling|drive|drives|driving|glide|glides|gliding|float|floats|floating|hammer|hammers|hammering|reach|reaches|reaching|grip|grips|gripping|hold|holds|holding|lean|leans|leaning|scatter|scatters|scattering|laugh|laughs|laughing|surge|surges|surging|smash|smashes|smashing|crash|crashes|crashing|slam|slams|slamming|cut|cuts|cutting|slice|slices|slicing|glow|glows|glowing|rise|rises|rising|fall|falls|falling|push|pushes|pushing|crowd|crowds|crowding|jostle|jostles|jostling|flicker|flickers|flickering|spray|sprays|spraying|fly|flies|flying)\b/i,
-];
-
-const ENVIRONMENT_PATTERNS: ReadonlyArray<RegExp> = [
-  /\b(?:sky|street|lane|square|intersection|deck|gallery|village|cliff|cliffs|rock|rocks|reef|coral|tower|forge|anvil|asphalt|paving|water|ocean|wave|waves|surface|space|planet|earth|building|buildings|pad|cosmodrome|concrete|window|windows|depth|night|twilight|morning|evening|overcast|rain|mist|drizzle|wind|storm|fire|embers|smoke|smoky|city|road|harbour|shore|sea)\b/i,
-];
-
-const INTERACTION_PATTERNS: ReadonlyArray<RegExp> = [
-  /\b(?:through|toward|towards|against|around|across|between|above|below|beside|alongside|under|over)\b/i,
-  /\b(?:crowd|crowds|crowding|jostle|jostles|jostling|grip|grips|gripping|reach|reaches|reaching|cut|cuts|slice|slices|smash|smashes|smashing|crash|crashes|crashing|slam|slams|slamming|push|pushes|pushing|force|forces|forcing|trail|trails|trailing|scatter|scatters|scattering|flicker|flickers|flickering)\b/i,
-];
-
-const LIGHTING_PATTERNS: ReadonlyArray<RegExp> = [
-  /\b(?:light|sunlight|sun|glow|beam|lit|lighting|shadow|shadows|bright|dark|orange|gold|golden|blue|magenta|cyan|violet|purple|misty|gloom|firelit|overcast|twilight|morning|evening|night)\b/i,
-];
-
-const LOW_VALUE_RETENTION_PATTERNS: ReadonlyArray<readonly [RegExp, string]> = [
-  [/^\s*(?:and|while|with)\s+/i, ""],
-  [
-    /^\s*the whole (?:site|scene|moment|place|view|image) (?:feels|stays|remains)\s+/i,
-    "",
-  ],
-  [/^\s*the frame (?:stays|keeps)\s+/i, ""],
-  [/^\s*the overall view (?:stays|remains)\s+/i, ""],
-  [/^\s*in a wide [^,]+ view,?\s*/i, ""],
-  [/^\s*from a [^,]+ view,?\s*/i, ""],
-  [/\bthe whole (?:site|scene|moment|place) feels\b/gi, "feels"],
-  [/\bthe whole (?:moment|site|scene|place) stays\b/gi, "stays"],
-  [/\bwide desolate view\b/gi, "desolate view"],
-  [/\bwide underwater view\b/gi, "underwater view"],
-  [/\beye-level documentary view\b/gi, "eye-level view"],
-  [/\bsmall schools of fish\b/gi, "small fish"],
-  [/\s{2,}/g, " "],
-];
 
 export interface TruncationResult {
   text: string;
@@ -696,6 +670,14 @@ export interface TruncationResult {
     | "priority-retention";
   originalLength?: number;
 }
+
+const T3_HARD_MIN = 220;
+
+const T3_UNDERLENGTH_CLAUSES: ReadonlyArray<string> = [
+  "The scene remains visually grounded and easy to read.",
+  "The image stays coherent, direct, and visually clear.",
+  "The overall view remains natural, legible, and visually grounded.",
+];
 
 function appendSentence(base: string, sentence: string): string {
   const trimmedBase = base.trim();
@@ -733,7 +715,7 @@ function rescueUnderlengthT3(text: string): TruncationResult {
   if (next.length > T3_MAX) {
     const trimmed = truncateAtWhitespace(next, T3_MAX) ?? next.slice(0, T3_MAX);
     return {
-      text: `${trimmed.trimEnd()}.`,
+      text: trimmed.trimEnd() + ".",
       truncated: true,
       method: "underlength-rescue",
       originalLength,
@@ -747,6 +729,156 @@ function rescueUnderlengthT3(text: string): TruncationResult {
     originalLength,
   };
 }
+
+export function enforceT3MaxLength(text: string): TruncationResult {
+  if (text.length < T3_HARD_MIN) {
+    return rescueUnderlengthT3(text);
+  }
+
+  if (text.length <= T3_MAX) {
+    return { text, truncated: false };
+  }
+
+  const originalLength = text.length;
+
+  const retentionVariant = buildCriticalAnchorRetentionVariant(
+    text,
+    T3_MAX,
+    T3_MIN,
+  );
+  if (retentionVariant) {
+    return {
+      text: retentionVariant,
+      truncated: true,
+      method: "priority-retention",
+      originalLength,
+    };
+  }
+
+  const sentenceResult = truncateAtBoundary(text, T3_MAX, /\.\s/g, 1);
+  if (sentenceResult && sentenceResult.length >= T3_MIN) {
+    return {
+      text: sentenceResult.trimEnd(),
+      truncated: true,
+      method: "sentence",
+      originalLength,
+    };
+  }
+
+  const clauseResult = truncateAtBoundary(text, T3_MAX, /[;]\s|(?:\s—\s)/g, 0);
+  if (clauseResult && clauseResult.length >= T3_MIN) {
+    return {
+      text: clauseResult.trimEnd() + ".",
+      truncated: true,
+      method: "clause",
+      originalLength,
+    };
+  }
+
+  const commaResult = truncateAtBoundary(text, T3_MAX, /,\s/g, 0);
+  if (commaResult && commaResult.length >= T3_MIN) {
+    return {
+      text: commaResult.trimEnd() + ".",
+      truncated: true,
+      method: "comma-fallback",
+      originalLength,
+    };
+  }
+
+  const whitespaceResult = truncateAtWhitespace(text, T3_MAX);
+  if (whitespaceResult && whitespaceResult.length >= T3_MIN) {
+    return {
+      text: whitespaceResult.trimEnd() + ".",
+      truncated: true,
+      method: "whitespace",
+      originalLength,
+    };
+  }
+
+  if (commaResult) {
+    return {
+      text: commaResult.trimEnd() + ".",
+      truncated: true,
+      method: "comma-fallback",
+      originalLength,
+    };
+  }
+
+  if (whitespaceResult) {
+    return {
+      text: whitespaceResult.trimEnd() + ".",
+      truncated: true,
+      method: "whitespace",
+      originalLength,
+    };
+  }
+
+  return {
+    text: text.slice(0, T3_MAX).trimEnd() + ".",
+    truncated: true,
+    method: "whitespace",
+    originalLength,
+  };
+}
+
+// ============================================================================
+// P20: Critical-Anchor Retention Enforcer for T3/T4
+// ============================================================================
+
+type AnchorClass =
+  | "subject"
+  | "action"
+  | "environment"
+  | "interaction"
+  | "lighting"
+  | "detail";
+
+interface RetentionClause {
+  sentenceIndex: number;
+  clauseIndex: number;
+  globalIndex: number;
+  text: string;
+  score: number;
+  tags: Set<AnchorClass>;
+}
+
+const RETENTION_ACTION_PATTERNS: ReadonlyArray<RegExp> = [
+  /\b(?:stand|stands|standing|sit|sits|sitting|walk|walks|walking|run|runs|running|pedal|pedals|pedalling|drive|drives|driving|glide|glides|gliding|float|floats|floating|hammer|hammers|hammering|reach|reaches|reaching|grip|grips|gripping|hold|holds|holding|lean|leans|leaning|scatter|scatters|scattering|laugh|laughs|laughing|surge|surges|surging|smash|smashes|smashing|crash|crashes|crashing|slam|slams|slamming|cut|cuts|cutting|slice|slices|slicing|glow|glows|glowing|rise|rises|rising|fall|falls|falling|push|pushes|pushing|crowd|crowds|crowding|jostle|jostles|jostling|flicker|flickers|flickering|spray|sprays|spraying|fly|flies|flying|rescue|rescues|rescuing|burn|burns|burning)\b/i,
+];
+
+const RETENTION_ENVIRONMENT_PATTERNS: ReadonlyArray<RegExp> = [
+  /\b(?:sky|street|lane|square|intersection|deck|gallery|village|cliff|cliffs|rock|rocks|reef|coral|tower|forge|anvil|asphalt|paving|water|ocean|wave|waves|surface|space|planet|earth|building|buildings|pad|cosmodrome|concrete|window|windows|depth|night|twilight|morning|evening|overcast|rain|mist|drizzle|wind|storm|fire|embers|smoke|smoky|city|road|harbour|shore|sea|snow|weeds?|paint|puddles?|shoes?|hand|hands|birds?|pigeons?)\b/i,
+];
+
+const RETENTION_INTERACTION_PATTERNS: ReadonlyArray<RegExp> = [
+  /\b(?:through|toward|towards|against|around|across|between|above|below|beside|alongside|under|over)\b/i,
+  /\b(?:crowd|crowds|crowding|jostle|jostles|jostling|grip|grips|gripping|reach|reaches|reaching|cut|cuts|slice|slices|smash|smashes|smashing|crash|crashes|crashing|slam|slams|slamming|push|pushes|pushing|force|forces|forcing|trail|trails|trailing|scatter|scatters|scattering|flicker|flickers|flickering|rescue|rescues|rescuing)\b/i,
+];
+
+const RETENTION_LIGHTING_PATTERNS: ReadonlyArray<RegExp> = [
+  /\b(?:light|sunlight|sun|glow|beam|lit|lighting|shadow|shadows|bright|dark|orange|gold|golden|blue|magenta|cyan|violet|purple|misty|gloom|firelit|overcast|twilight|morning|evening|night)\b/i,
+];
+
+const RETENTION_DETAIL_PATTERNS: ReadonlyArray<RegExp> = [
+  /\b(?:rocket|launch tower|tower|pad|puddles?|asphalt|concrete|weeds?|paint|service buildings?|snow|embers?|helmet|gear|hose|dog|birds?|pigeons?|shoes?|feathers?|breadcrumbs?|windows?|cliffs?|rocks?|waves?|umbrellas?|traffic lights?|zebra stripes?)\b/i,
+];
+
+const LOW_VALUE_RETENTION_PATTERNS: ReadonlyArray<readonly [RegExp, string]> = [
+  [/^\s*(?:and|while|with)\s+/i, ""],
+  [
+    /^\s*the whole (?:site|scene|moment|place|view|image) (?:feels|stays|remains)\s+/i,
+    "",
+  ],
+  [/^\s*the frame (?:stays|keeps)\s+/i, ""],
+  [/^\s*the overall view (?:stays|remains)\s+/i, ""],
+  [/^\s*in a wide [^,]+ view,?\s*/i, ""],
+  [/^\s*from a [^,]+ view,?\s*/i, ""],
+  [/\bthe whole (?:site|scene|moment|place) feels\b/gi, "feels"],
+  [/\bthe whole (?:moment|site|scene|place) stays\b/gi, "stays"],
+  [/\bwide desolate view\b/gi, "desolate view"],
+  [/\beye-level documentary view\b/gi, "eye-level view"],
+  [/\s{2,}/g, " "],
+];
 
 function sentenceSplit(text: string): string[] {
   return (
@@ -764,71 +896,80 @@ function clauseSplit(sentence: string): string[] {
     .filter(Boolean);
 }
 
+function concreteDetailScore(clause: string): number {
+  const words = clause.toLowerCase().match(/[a-z]+(?:-[a-z]+)*/g) ?? [];
+  let score = 0;
+
+  for (const pattern of RETENTION_DETAIL_PATTERNS) {
+    if (pattern.test(clause)) score += 1.5;
+  }
+
+  for (const word of words) {
+    if (word.length <= 3) continue;
+    if (/(?:ing|ed|ly)$/.test(word)) continue;
+    if (/(?:tion|sion|ness|ment|hood|ship|tude|ance|ence)$/.test(word))
+      continue;
+    score += 0.12;
+  }
+
+  return score;
+}
+
 function classifyRetentionClause(
   clause: string,
   sentenceIndex: number,
   clauseIndex: number,
   globalIndex: number,
 ): RetentionClause {
-  const lowered = clause.toLowerCase();
   const tags = new Set<AnchorClass>();
 
-  if (sentenceIndex === 0 || globalIndex === 0) {
-    tags.add("subject");
-  }
+  if (sentenceIndex === 0 || globalIndex === 0) tags.add("subject");
 
-  for (const pattern of ACTION_PATTERNS) {
+  for (const pattern of RETENTION_ACTION_PATTERNS) {
     if (pattern.test(clause)) {
       tags.add("action");
       break;
     }
   }
-
-  for (const pattern of ENVIRONMENT_PATTERNS) {
+  for (const pattern of RETENTION_ENVIRONMENT_PATTERNS) {
     if (pattern.test(clause)) {
       tags.add("environment");
       break;
     }
   }
-
-  for (const pattern of INTERACTION_PATTERNS) {
+  for (const pattern of RETENTION_INTERACTION_PATTERNS) {
     if (pattern.test(clause)) {
       tags.add("interaction");
       break;
     }
   }
-
-  for (const pattern of LIGHTING_PATTERNS) {
+  for (const pattern of RETENTION_LIGHTING_PATTERNS) {
     if (pattern.test(clause)) {
       tags.add("lighting");
       break;
     }
   }
 
-  let score = 0;
+  const detailScore = concreteDetailScore(clause);
+  if (detailScore >= 1.5) tags.add("detail");
 
+  let score = 0;
   if (globalIndex === 0) score += 12;
   if (sentenceIndex === 0) score += 4;
+  if (sentenceIndex > 0) score += 3;
   if (tags.has("subject")) score += 8;
   if (tags.has("action")) score += 7;
   if (tags.has("environment")) score += 6;
   if (tags.has("interaction")) score += 5;
   if (tags.has("lighting")) score += 4;
-
+  if (tags.has("detail")) score += 7;
   score += Math.min(
     4,
     Math.floor(clause.split(/\s+/).filter(Boolean).length / 5),
   );
+  score += Math.min(3, Math.floor(detailScore));
 
-  return {
-    sentenceIndex,
-    clauseIndex,
-    globalIndex,
-    text: clause,
-    lowered,
-    score,
-    tags,
-  };
+  return { sentenceIndex, clauseIndex, globalIndex, text: clause, score, tags };
 }
 
 function buildRetentionClauses(text: string): RetentionClause[] {
@@ -854,11 +995,9 @@ function buildRetentionClauses(text: string): RetentionClause[] {
 
 function tightenRetentionClause(clause: string): string {
   let next = clause.trim();
-
   for (const [pattern, replacement] of LOW_VALUE_RETENTION_PATTERNS) {
     next = next.replace(pattern, replacement);
   }
-
   return next
     .replace(/^\s*[,-]\s*/, "")
     .replace(/\s{2,}/g, " ")
@@ -876,13 +1015,12 @@ function renderRetentionText(
       ? tightenRetentionClause(clause.text)
       : clause.text.trim();
     if (!rendered) continue;
-
     const existing = grouped.get(clause.sentenceIndex) ?? [];
     existing.push(rendered);
     grouped.set(clause.sentenceIndex, existing);
   }
 
-  const sentences = [...grouped.entries()]
+  return [...grouped.entries()]
     .sort((a, b) => a[0] - b[0])
     .map(([, parts]) => {
       const sentence = parts
@@ -890,19 +1028,16 @@ function renderRetentionText(
         .replace(/\s{2,}/g, " ")
         .trim();
       if (!sentence) return "";
-
       const capped = sentence.charAt(0).toUpperCase() + sentence.slice(1);
       return /[.!?]$/.test(capped) ? capped : `${capped}.`;
     })
-    .filter(Boolean);
-
-  return sentences
+    .filter(Boolean)
     .join(" ")
     .replace(/\s{2,}/g, " ")
     .trim();
 }
 
-function buildPriorityRetentionVariant(
+function buildCriticalAnchorRetentionVariant(
   text: string,
   maxLen: number,
   minLen = 0,
@@ -915,14 +1050,13 @@ function buildPriorityRetentionVariant(
     return a.globalIndex - b.globalIndex;
   });
 
-  const selected = new Set<number>();
-  selected.add(0);
-
+  const selected = new Set<number>([0]);
   const requiredTags: AnchorClass[] = [
     "action",
     "environment",
     "interaction",
     "lighting",
+    "detail",
   ];
 
   for (const tag of requiredTags) {
@@ -930,140 +1064,66 @@ function buildPriorityRetentionVariant(
     if (match) selected.add(match.globalIndex);
   }
 
-  const buildSelectedClauses = (): RetentionClause[] =>
+  const lateAnchor = byPriority.find(
+    (clause) =>
+      clause.sentenceIndex > 0 &&
+      (clause.tags.has("detail") ||
+        clause.tags.has("environment") ||
+        clause.tags.has("lighting")),
+  );
+  if (lateAnchor) selected.add(lateAnchor.globalIndex);
+
+  const buildSelected = (): RetentionClause[] =>
     clauses.filter((clause) => selected.has(clause.globalIndex));
 
-  let candidate = renderRetentionText(buildSelectedClauses(), false);
+  let candidate = renderRetentionText(buildSelected(), false);
+  const optional = byPriority
+    .filter((clause) => !selected.has(clause.globalIndex))
+    .sort((a, b) => {
+      const aLate = a.sentenceIndex > 0 ? 1 : 0;
+      const bLate = b.sentenceIndex > 0 ? 1 : 0;
+      if (bLate !== aLate) return bLate - aLate;
+      if (b.score !== a.score) return b.score - a.score;
+      return a.globalIndex - b.globalIndex;
+    });
 
-  const optional = byPriority.filter(
-    (clause) => !selected.has(clause.globalIndex),
+  const selectedSentenceSet = new Set(
+    buildSelected().map((clause) => clause.sentenceIndex),
   );
+  const sentenceCount = new Set(clauses.map((clause) => clause.sentenceIndex))
+    .size;
 
-  for (const clause of optional) {
-    selected.add(clause.globalIndex);
-    const nextCandidate = renderRetentionText(buildSelectedClauses(), false);
-
-    if (nextCandidate.length <= maxLen) {
-      candidate = nextCandidate;
-      if (candidate.length >= minLen) break;
-      continue;
-    }
-
-    selected.delete(clause.globalIndex);
-  }
-
-  if (candidate.length > maxLen || candidate.length < minLen) {
-    candidate = renderRetentionText(buildSelectedClauses(), true);
-  }
-
-  if (candidate.length > maxLen || candidate.length < minLen) {
+  if (selectedSentenceSet.size < sentenceCount) {
     for (const clause of optional) {
-      if (selected.has(clause.globalIndex)) continue;
-
+      if (selectedSentenceSet.has(clause.sentenceIndex)) continue;
       selected.add(clause.globalIndex);
-      const nextCandidate = renderRetentionText(buildSelectedClauses(), true);
-
+      const nextCandidate = renderRetentionText(buildSelected(), false);
       if (nextCandidate.length <= maxLen) {
         candidate = nextCandidate;
-        if (candidate.length >= minLen) break;
+        selectedSentenceSet.add(clause.sentenceIndex);
       } else {
         selected.delete(clause.globalIndex);
       }
     }
   }
 
+  for (const clause of optional) {
+    selected.add(clause.globalIndex);
+    const nextCandidate = renderRetentionText(buildSelected(), false);
+    if (nextCandidate.length <= maxLen) {
+      candidate = nextCandidate;
+      if (candidate.length >= minLen) break;
+      continue;
+    }
+    selected.delete(clause.globalIndex);
+  }
+
   if (candidate.length > maxLen || candidate.length < minLen) {
-    return null;
+    candidate = renderRetentionText(buildSelected(), true);
   }
 
+  if (candidate.length > maxLen || candidate.length < minLen) return null;
   return candidate.length < text.length ? candidate : null;
-}
-
-export function enforceT3MaxLength(text: string): TruncationResult {
-  if (text.length < T3_HARD_MIN) {
-    return rescueUnderlengthT3(text);
-  }
-
-  if (text.length <= T3_MAX) {
-    return { text, truncated: false };
-  }
-
-  const originalLength = text.length;
-
-  const retentionVariant = buildPriorityRetentionVariant(text, T3_MAX, T3_MIN);
-  if (retentionVariant) {
-    return {
-      text: retentionVariant,
-      truncated: true,
-      method: "priority-retention",
-      originalLength,
-    };
-  }
-
-  const sentenceResult = truncateAtBoundary(text, T3_MAX, /\.\s/g, 1);
-  if (sentenceResult && sentenceResult.length >= T3_MIN) {
-    return {
-      text: sentenceResult.trimEnd(),
-      truncated: true,
-      method: "sentence",
-      originalLength,
-    };
-  }
-
-  const clauseResult = truncateAtBoundary(text, T3_MAX, /[;]\s|(?:\s—\s)/g, 0);
-  if (clauseResult && clauseResult.length >= T3_MIN) {
-    return {
-      text: `${clauseResult.trimEnd()}.`,
-      truncated: true,
-      method: "clause",
-      originalLength,
-    };
-  }
-
-  const commaResult = truncateAtBoundary(text, T3_MAX, /,\s/g, 0);
-  if (commaResult && commaResult.length >= T3_MIN) {
-    return {
-      text: `${commaResult.trimEnd()}.`,
-      truncated: true,
-      method: "comma-fallback",
-      originalLength,
-    };
-  }
-
-  const whitespaceResult = truncateAtWhitespace(text, T3_MAX);
-  if (whitespaceResult && whitespaceResult.length >= T3_MIN) {
-    return {
-      text: `${whitespaceResult.trimEnd()}.`,
-      truncated: true,
-      method: "whitespace",
-      originalLength,
-    };
-  }
-
-  if (commaResult) {
-    return {
-      text: `${commaResult.trimEnd()}.`,
-      truncated: true,
-      method: "comma-fallback",
-      originalLength,
-    };
-  }
-
-  if (whitespaceResult) {
-    return {
-      text: `${whitespaceResult.trimEnd()}.`,
-      truncated: true,
-      method: "whitespace",
-      originalLength,
-    };
-  }
-
-  return {
-    text: `${text.slice(0, T3_MAX).trimEnd()}.`,
-    truncated: true,
-    method: "whitespace",
-    originalLength,
-  };
 }
 
 // ============================================================================
@@ -1079,7 +1139,7 @@ export function enforceT4MaxLength(text: string): TruncationResult {
 
   const originalLength = text.length;
 
-  const retentionVariant = buildPriorityRetentionVariant(text, T4_MAX);
+  const retentionVariant = buildCriticalAnchorRetentionVariant(text, T4_MAX);
   if (retentionVariant) {
     return {
       text: retentionVariant,
@@ -1102,7 +1162,7 @@ export function enforceT4MaxLength(text: string): TruncationResult {
   const commaResult = truncateAtBoundary(text, T4_MAX, /,\s/g, 0);
   if (commaResult) {
     return {
-      text: `${commaResult.trimEnd()}.`,
+      text: commaResult.trimEnd() + ".",
       truncated: true,
       method: "comma-fallback",
       originalLength,
@@ -1112,7 +1172,7 @@ export function enforceT4MaxLength(text: string): TruncationResult {
   const whitespaceResult = truncateAtWhitespace(text, T4_MAX);
   if (whitespaceResult) {
     return {
-      text: `${whitespaceResult.trimEnd()}.`,
+      text: whitespaceResult.trimEnd() + ".",
       truncated: true,
       method: "whitespace",
       originalLength,
@@ -1120,7 +1180,7 @@ export function enforceT4MaxLength(text: string): TruncationResult {
   }
 
   return {
-    text: `${text.slice(0, T4_MAX).trimEnd()}.`,
+    text: text.slice(0, T4_MAX).trimEnd() + ".",
     truncated: true,
     method: "whitespace",
     originalLength,
@@ -1128,7 +1188,140 @@ export function enforceT4MaxLength(text: string): TruncationResult {
 }
 
 // ============================================================================
-// SHARED TRUNCATION HELPERS
+// P21: T4 retention safety guard
+// ============================================================================
+
+export interface T4RetentionSafetyResult {
+  text: string;
+  fixes: string[];
+}
+
+function stripSentenceStop(text: string): string {
+  return text.replace(/[.!?]+$/, "").trim();
+}
+
+function hasStrongOpeningAnchor(text: string): boolean {
+  const stripped = stripSentenceStop(text).toLowerCase();
+
+  return (
+    /\b(?:man|woman|child|girl|boy|worker|driver|cyclist|pilot|firefighter|soldier|chef|dog|cat|horse|bird|rocket|tower|ship|boat|car|train|tram|bus|crane|bridge|lighthouse|warehouse|forge|anvil|market|street|square|beach|cliff|reef|planet|earth)\b/.test(
+      stripped,
+    ) ||
+    /\b(?:standing|sitting|walking|running|driving|gliding|floating|hammering|reaching|gripping|holding|burning|rising|falling|surging|smashing|crowding)\b/.test(
+      stripped,
+    )
+  );
+}
+
+export function applyT4RetentionSafetyGuard(
+  text: string,
+): T4RetentionSafetyResult {
+  const fixes: string[] = [];
+  const sentences = splitSentencesPreserve(text);
+
+  if (sentences.length < 2) {
+    return { text, fixes };
+  }
+
+  const first = sentences[0]!;
+  const second = sentences[1]!;
+
+  const firstWordCount = countWords(stripSentenceStop(first));
+  const firstHasStrongAnchor = hasStrongOpeningAnchor(first);
+
+  if (firstWordCount < T4_MIN_SENTENCE_WORDS && !firstHasStrongAnchor) {
+    sentences[0] = mergeIntoPreviousSentence(first, second);
+    sentences.splice(1, 1);
+    fixes.push("Merged weak short T4 opening into sentence 2");
+  }
+
+  return {
+    text: sentences
+      .join(" ")
+      .replace(/\s{2,}/g, " ")
+      .trim(),
+    fixes,
+  };
+}
+
+// ============================================================================
+// P22: T4 final sentence-floor guard
+// ============================================================================
+
+export interface T4SentenceFloorResult {
+  text: string;
+  fixes: string[];
+}
+
+function lowercaseFirstChar(text: string): string {
+  if (!text) return text;
+  return text.charAt(0).toLowerCase() + text.slice(1);
+}
+
+function mergeLeadingSentenceIntoNext(leading: string, next: string): string {
+  const leadCore = stripSentenceStop(leading);
+  const nextCore = stripSentenceStop(next);
+
+  if (!leadCore) return ensureSentenceStop(capitaliseSentence(nextCore));
+  if (!nextCore) return ensureSentenceStop(capitaliseSentence(leadCore));
+
+  const merged = `${leadCore}, ${lowercaseFirstChar(nextCore)}`;
+  return ensureSentenceStop(capitaliseSentence(merged));
+}
+
+/**
+ * P22: Final T4 sentence-floor guard.
+ *
+ * After retention/truncation, no final T4 sentence should remain under 10 words.
+ * Repair short opening fragments by merging them forward, then merge any
+ * remaining short later fragments back into the previous sentence.
+ */
+export function enforceT4SentenceFloor(text: string): T4SentenceFloorResult {
+  const fixes: string[] = [];
+  const sentences = splitSentencesPreserve(text).map((s) =>
+    ensureSentenceStop(normaliseJoinedSentence(s)),
+  );
+
+  if (sentences.length === 0) {
+    return { text, fixes };
+  }
+
+  if (sentences.length >= 2) {
+    const firstWordCount = countWords(stripSentenceStop(sentences[0]!));
+    if (firstWordCount < T4_MIN_SENTENCE_WORDS) {
+      sentences[1] = mergeLeadingSentenceIntoNext(sentences[0]!, sentences[1]!);
+      sentences.shift();
+      fixes.push("Merged short opening T4 sentence into sentence 2");
+    }
+  }
+
+  for (let i = 1; i < sentences.length; ) {
+    const currentWordCount = countWords(stripSentenceStop(sentences[i]!));
+
+    if (currentWordCount < T4_MIN_SENTENCE_WORDS) {
+      sentences[i - 1] = mergeIntoPreviousSentence(
+        sentences[i - 1]!,
+        sentences[i]!,
+      );
+      sentences.splice(i, 1);
+      fixes.push(`Merged short T4 sentence ${i + 1} into previous sentence`);
+      continue;
+    }
+
+    i += 1;
+  }
+
+  const finalText = sentences
+    .map((sentence) => ensureSentenceStop(normaliseJoinedSentence(sentence)))
+    .join(" ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  return { text: finalText, fixes };
+}
+
+// ============================================================================
+// Shared truncation helpers
 // ============================================================================
 
 function truncateAtBoundary(
@@ -1158,7 +1351,7 @@ function truncateAtWhitespace(text: string, maxLen: number): string | null {
 }
 
 // ============================================================================
-// P18: NUMERIC MEASUREMENT → VISUAL CONVERSION (Aim 6.2, 6.3 — Phase 3)
+// P18: Numeric measurement → visual conversion
 // ============================================================================
 
 const WIND_SPEED_CONVERSIONS: ReadonlyArray<readonly [RegExp, string]> = [
@@ -1262,7 +1455,6 @@ export function convertMeasurementsToVisual(text: string): TextCleanupResult {
     NUMERIC_CONVERSIONS,
   ]) {
     for (const [pattern, replacement] of table) {
-      pattern.lastIndex = 0;
       if (pattern.test(next)) {
         const before = next;
         next = next.replace(pattern, replacement);
@@ -1278,457 +1470,7 @@ export function convertMeasurementsToVisual(text: string): TextCleanupResult {
 }
 
 // ============================================================================
-// P19: T4 Retention Safety Guard
-// ============================================================================
-
-export interface T4SafetyGuardResult {
-  text: string;
-  fixes: string[];
-}
-
-const T4_WEAK_OPENERS = /^(?:and|while|with|as)\b[\s,]*/i;
-const T4_FRAGMENT_STARTERS =
-  /^(?:and|while|with|as|under|over|through|across|towards?|into|onto|beneath|inside|outside)\b/i;
-const T4_MIN_SENTENCE_WORDS = 10;
-
-function splitSentencesPreserve(text: string): string[] {
-  return (
-    text
-      .match(/[^.!?]+[.!?]?/g)
-      ?.map((s) => s.trim())
-      .filter(Boolean) ?? [text.trim()]
-  );
-}
-
-function countWords(text: string): number {
-  return text.split(/\s+/).filter(Boolean).length;
-}
-
-function capitaliseSentence(text: string): string {
-  const trimmed = text.trim();
-  if (!trimmed) return trimmed;
-  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
-}
-
-function ensureSentenceStop(text: string): string {
-  const trimmed = text.trim();
-  if (!trimmed) return trimmed;
-  return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
-}
-
-function normaliseJoinedSentence(text: string): string {
-  return ensureSentenceStop(
-    capitaliseSentence(
-      text
-        .replace(/\s{2,}/g, " ")
-        .replace(/\s+([,.;!?])/g, "$1")
-        .replace(/^[,;:\-–—\s]+/, "")
-        .trim(),
-    ),
-  );
-}
-
-function stripWeakSentenceOpener(sentence: string): {
-  text: string;
-  changed: boolean;
-} {
-  const trimmed = sentence.trim();
-  const next = trimmed
-    .replace(T4_WEAK_OPENERS, "")
-    .replace(/^\s*[,-]\s*/, "")
-    .trim();
-  return {
-    text:
-      next.length > 0 ? capitaliseSentence(next) : capitaliseSentence(trimmed),
-    changed: next.length > 0 && next !== trimmed,
-  };
-}
-
-function mergeIntoPreviousSentence(previous: string, current: string): string {
-  const prevCore = previous.replace(/[.!?]+$/, "").trim();
-  let currentCore = current.replace(/[.!?]+$/, "").trim();
-
-  currentCore = currentCore
-    .replace(T4_WEAK_OPENERS, "")
-    .replace(/^\s*[,-]\s*/, "")
-    .trim();
-  if (!currentCore) {
-    return ensureSentenceStop(prevCore);
-  }
-
-  const lowered = currentCore.charAt(0).toLowerCase() + currentCore.slice(1);
-
-  return `${prevCore}, ${lowered}.`
-    .replace(/\s{2,}/g, " ")
-    .replace(/\s+([,.;!?])/g, "$1")
-    .trim();
-}
-
-function cleanT4TailFragment(sentence: string): {
-  text: string;
-  changed: boolean;
-} {
-  const trimmed = sentence.trim();
-  const core = trimmed.replace(/[.!?]+$/, "").trim();
-
-  if (countWords(core) >= T4_MIN_SENTENCE_WORDS) {
-    return {
-      text: ensureSentenceStop(capitaliseSentence(core)),
-      changed: false,
-    };
-  }
-
-  if (!T4_FRAGMENT_STARTERS.test(core)) {
-    return {
-      text: ensureSentenceStop(capitaliseSentence(core)),
-      changed: false,
-    };
-  }
-
-  const stripped = core
-    .replace(T4_FRAGMENT_STARTERS, "")
-    .replace(/^\s*[,-]\s*/, "")
-    .trim();
-  if (!stripped) {
-    return {
-      text: ensureSentenceStop(capitaliseSentence(core)),
-      changed: false,
-    };
-  }
-
-  return {
-    text: ensureSentenceStop(capitaliseSentence(stripped)),
-    changed: true,
-  };
-}
-
-/**
- * P19: Final Tier 4 safety guard after retention/truncation.
- *
- * Goal:
- * - keep the retention logic
- * - prevent broken plain-language output caused by retention fragments
- * - avoid a redesign of T4 generation strategy
- */
-export function applyT4RetentionSafetyGuard(text: string): T4SafetyGuardResult {
-  const fixes: string[] = [];
-  const sentences = splitSentencesPreserve(text);
-
-  if (sentences.length === 0) {
-    return { text, fixes };
-  }
-
-  {
-    const cleaned = stripWeakSentenceOpener(sentences[0]!);
-    if (cleaned.changed) {
-      sentences[0] = ensureSentenceStop(cleaned.text);
-      fixes.push("Stripped weak T4 opener from first sentence");
-    } else {
-      sentences[0] = ensureSentenceStop(cleaned.text);
-    }
-  }
-
-  for (let i = 1; i < sentences.length; i++) {
-    const cleaned = cleanT4TailFragment(sentences[i]!);
-    if (cleaned.changed) {
-      fixes.push(`Cleaned fragment-like opener in sentence ${i + 1}`);
-    }
-    sentences[i] = cleaned.text;
-  }
-
-  for (let i = 1; i < sentences.length; ) {
-    const current = sentences[i]!;
-    const wordCount = countWords(current.replace(/[.!?]+$/, "").trim());
-
-    if (wordCount < T4_MIN_SENTENCE_WORDS) {
-      sentences[i - 1] = mergeIntoPreviousSentence(sentences[i - 1]!, current);
-      sentences.splice(i, 1);
-      fixes.push(`Merged short T4 sentence ${i + 1} into previous sentence`);
-      continue;
-    }
-
-    i += 1;
-  }
-
-  const finalText = sentences
-    .map((sentence) => normaliseJoinedSentence(sentence))
-    .join(" ")
-    .replace(/\s{2,}/g, " ")
-    .trim();
-
-  return { text: finalText, fixes };
-}
-
-// ============================================================================
-// P20: PRIORITY-AWARE RETENTION PASS FOR T3/T4
-// ============================================================================
-
-interface AnchorPresence {
-  subject: boolean;
-  action: boolean;
-  environment: boolean;
-  interaction: boolean;
-  lighting: boolean;
-}
-
-interface RetentionSentence {
-  index: number;
-  text: string;
-  words: number;
-  anchors: AnchorPresence;
-  score: number;
-}
-
-const SUBJECT_PATTERNS: ReadonlyArray<RegExp> = [
-  /\b(?:man|woman|child|children|girl|boy|person|people|cyclist|diver|blacksmith|astronaut|keeper|firefighter|dog|cat|bird|pigeons?|rocket|tower|village|reef|coral|cosmodrome|forge|crossing|beam|waves?|buildings?|service buildings?|launch tower)\b/i,
-  /^\s*(?:a|an|the)\s+[a-z][a-z'-]*(?:\s+[a-z][a-z'-]*){0,3}\b/i,
-];
-
-const ACTION_RETENTION_PATTERNS: ReadonlyArray<RegExp> = [
-  /\b(?:grip|grips|gripping|hold|holds|holding|reach|reaches|reaching|glide|glides|gliding|drive|drives|driving|pedal|pedals|pedalling|hammer|hammers|hammering|smash|smashes|smashing|slam|slams|slamming|crash|crashes|crashing|surge|surges|surging|scatter|scatters|scattering|laugh|laughs|laughing|glow|glows|glowing|cut|cuts|cutting|rise|rises|rising|fall|falls|falling|flicker|flickers|flickering|hang|hangs|hanging|burn|burns|burning|rescue|rescues|rescuing|photograph|photographs|photographing|stand|stands|standing|slide|slides|sliding|wash|washes|washing|stretch|stretches|stretching|lift|lifts|lifting|fly|flies|flying|move|moves|moving|stream|streams|streaming|lean|leans|leaning|float|floats|floating|feed|feeds|feeding)\b/i,
-];
-
-const ENVIRONMENT_RETENTION_PATTERNS: ReadonlyArray<RegExp> = [
-  /\b(?:sky|street|lane|square|reef|water|ocean|sea|gallery deck|deck|rocks?|cliffs?|village|forge|cosmodrome|tower|intersection|zebra stripes|paving|asphalt|concrete|pad|surface|road|walls?|city|buildings?|night|country lane|coral reef|stone paving|rain-soaked deck|wheel-rutted asphalt)\b/i,
-];
-
-const INTERACTION_RETENTION_PATTERNS: ReadonlyArray<RegExp> = [
-  /\b(?:through|across|against|below|above|beside|between|toward|towards|around|behind|under|over|into|onto)\b/i,
-  /\b(?:cuts? through|crowd around|rises above|glows against|reaching toward|reaching towards|catch(?:es)? the sun|mirror the lights|glow through|hangs from|push through|slam(?:s)? the|smash(?:es)? the)\b/i,
-];
-
-const LIGHTING_RETENTION_PATTERNS: ReadonlyArray<RegExp> = [
-  /\b(?:light|sunlight|sun glare|glow|glows?|beam|shadows?|twilight|night|golden hour|window light|furnace light|orange|purple|copper|mist|misty|drizzle|rain|spray|atmosphere|air|gloom|overcast|bright surface|warm|cool|blue depth|reflections?|embers|driving rain|soft early light|hard white highlights)\b/i,
-];
-
-const LOW_VALUE_FILLER_PATTERNS: ReadonlyArray<RegExp> = [
-  /\b(?:the whole site feels|the whole place feels|the moment stays|the moment feels|everything beyond[^,.]*|keeping the diver as the main subject|keeping the diver as the clear focal point|keeping the diver as the main focus|from an eye-level documentary view|in an eye-level documentary view|in a wide underwater view|with deep city layers|with dense city depth[^,.]*|leaving the vast site[^,.]*|like history stepped away and never returned|for a quiet, emotional portrait|for quiet emotional detail)\b/gi,
-  /\b(?:far off|far away|in the distance)\b,?\s*/gi,
-];
-
-function normaliseRetentionWhitespace(text: string): string {
-  return text
-    .replace(/\s+,/g, ",")
-    .replace(/,\s*,/g, ", ")
-    .replace(/\s{2,}/g, " ")
-    .replace(/\.\s*,/g, ".")
-    .replace(/,\s*\./g, ".")
-    .replace(/^\s*[,.]\s*/g, "")
-    .trim();
-}
-
-function trimLowValueFiller(text: string): string {
-  let next = text;
-
-  for (const pattern of LOW_VALUE_FILLER_PATTERNS) {
-    next = next.replace(pattern, " ");
-  }
-
-  return normaliseRetentionWhitespace(next)
-    .replace(/\s+([.!?])/g, "$1")
-    .replace(/\bAnd\s+(?=[A-Z])/g, "")
-    .trim();
-}
-
-function splitIntoRetentionSentences(text: string): string[] {
-  return text
-    .split(/(?<=[.!?])\s+/)
-    .map((part) => normaliseRetentionWhitespace(part))
-    .filter(Boolean);
-}
-
-function hasAnyPattern(text: string, patterns: ReadonlyArray<RegExp>): boolean {
-  for (const pattern of patterns) {
-    pattern.lastIndex = 0;
-    if (pattern.test(text)) {
-      pattern.lastIndex = 0;
-      return true;
-    }
-    pattern.lastIndex = 0;
-  }
-  return false;
-}
-
-function classifyRetentionSentence(
-  sentence: string,
-  index: number,
-): RetentionSentence {
-  const anchors: AnchorPresence = {
-    subject: index === 0 || hasAnyPattern(sentence, SUBJECT_PATTERNS),
-    action: hasAnyPattern(sentence, ACTION_RETENTION_PATTERNS),
-    environment: hasAnyPattern(sentence, ENVIRONMENT_RETENTION_PATTERNS),
-    interaction: hasAnyPattern(sentence, INTERACTION_RETENTION_PATTERNS),
-    lighting: hasAnyPattern(sentence, LIGHTING_RETENTION_PATTERNS),
-  };
-
-  let score = 0;
-  if (anchors.subject) score += 10;
-  if (anchors.action) score += 8;
-  if (anchors.environment) score += 6;
-  if (anchors.interaction) score += 5;
-  if (anchors.lighting) score += 4;
-  if (index === 0) score += 3;
-
-  const words = sentence.split(/\s+/).filter(Boolean).length;
-  score += Math.min(4, Math.floor(words / 5));
-
-  return {
-    index,
-    text: sentence,
-    words,
-    anchors,
-    score,
-  };
-}
-
-function collectAnchorCoverageFromSentences(
-  sentences: ReadonlyArray<RetentionSentence>,
-): AnchorPresence {
-  return {
-    subject: sentences.some((s) => s.anchors.subject),
-    action: sentences.some((s) => s.anchors.action),
-    environment: sentences.some((s) => s.anchors.environment),
-    interaction: sentences.some((s) => s.anchors.interaction),
-    lighting: sentences.some((s) => s.anchors.lighting),
-  };
-}
-
-function joinRetentionSentences(
-  sentences: ReadonlyArray<RetentionSentence>,
-): string {
-  return sentences
-    .slice()
-    .sort((a, b) => a.index - b.index)
-    .map((s) => {
-      const clean = normaliseRetentionWhitespace(s.text);
-      if (!clean) return "";
-      return /[.!?]$/.test(clean) ? clean : `${clean}.`;
-    })
-    .filter(Boolean)
-    .join(" ")
-    .replace(/\s{2,}/g, " ")
-    .trim();
-}
-
-function buildPrioritySentenceRetentionCandidate(
-  originalText: string,
-  maxLen: number,
-): string | null {
-  const rawSentences = splitIntoRetentionSentences(originalText);
-  if (rawSentences.length <= 1) return null;
-
-  const sentences = rawSentences.map((sentence, index) =>
-    classifyRetentionSentence(sentence, index),
-  );
-
-  const originalCoverage = collectAnchorCoverageFromSentences(sentences);
-  const selected = new Map<number, RetentionSentence>();
-
-  const firstSentence = sentences[0];
-  if (firstSentence) {
-    selected.set(firstSentence.index, firstSentence);
-  }
-
-  const anchorOrder: ReadonlyArray<keyof AnchorPresence> = [
-    "subject",
-    "action",
-    "environment",
-    "interaction",
-    "lighting",
-  ];
-
-  for (const anchorKey of anchorOrder) {
-    if (!originalCoverage[anchorKey]) continue;
-
-    const candidate = sentences
-      .filter((sentence) => sentence.anchors[anchorKey])
-      .sort((a, b) => {
-        if (b.score !== a.score) return b.score - a.score;
-        return a.index - b.index;
-      })[0];
-
-    if (candidate) {
-      selected.set(candidate.index, candidate);
-    }
-  }
-
-  let candidateText = joinRetentionSentences([...selected.values()]);
-
-  const optional = sentences
-    .filter((sentence) => !selected.has(sentence.index))
-    .sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      return a.index - b.index;
-    });
-
-  for (const sentence of optional) {
-    const preview = joinRetentionSentences([...selected.values(), sentence]);
-    if (preview.length <= maxLen) {
-      selected.set(sentence.index, sentence);
-      candidateText = preview;
-    }
-  }
-
-  candidateText = trimLowValueFiller(candidateText);
-
-  if (candidateText.length > maxLen) {
-    const fallback = truncateAtBoundary(candidateText, maxLen, /\.\s/g, 1);
-    if (fallback) {
-      candidateText = normaliseRetentionWhitespace(fallback);
-      if (candidateText && !/[.!?]$/.test(candidateText)) {
-        candidateText += ".";
-      }
-    }
-  }
-
-  if (!candidateText || candidateText.length > maxLen) {
-    return null;
-  }
-
-  const candidateSentences = splitIntoRetentionSentences(candidateText).map(
-    (sentence, index) => classifyRetentionSentence(sentence, index),
-  );
-  const candidateCoverage =
-    collectAnchorCoverageFromSentences(candidateSentences);
-
-  const keepsCore =
-    (!originalCoverage.subject || candidateCoverage.subject) &&
-    (!originalCoverage.action || candidateCoverage.action);
-
-  const preservedAnchorCount = anchorOrder.filter(
-    (anchorKey) => !originalCoverage[anchorKey] || candidateCoverage[anchorKey],
-  ).length;
-
-  return keepsCore && preservedAnchorCount >= 3 ? candidateText : null;
-}
-
-function applyPriorityAwareRetention(
-  text: string,
-  maxLen: number,
-  _tier: "tier3" | "tier4",
-): string {
-  if (text.length <= maxLen) {
-    return text;
-  }
-
-  const fillerTrimmed = trimLowValueFiller(text);
-  if (fillerTrimmed.length <= maxLen) {
-    return fillerTrimmed;
-  }
-
-  const candidate = buildPrioritySentenceRetentionCandidate(
-    fillerTrimmed,
-    maxLen,
-  );
-  if (candidate && candidate.length <= maxLen) {
-    return candidate;
-  }
-
-  return fillerTrimmed;
-}
-
-// ============================================================================
-// FULL PIPELINE ORCHESTRATOR
+// Full pipeline orchestrator
 // ============================================================================
 
 export interface TierPrompts {
@@ -1738,17 +1480,12 @@ export interface TierPrompts {
   tier4: { positive: string; negative: string };
 }
 
-/**
- * Run the full post-processing pipeline on all 4 tiers.
- * Phase B: tier2 will be empty strings (MJ removed from Call 2).
- * Processing still runs — deduplicateMjParams on empty string is a no-op.
- * Mutates nothing — returns a new object.
- */
 export function postProcessTiers(tiers: TierPrompts): TierPrompts {
   return {
     tier1: {
       positive: (() => {
         let text = tiers.tier1.positive;
+
         const capResult = enforceWeightCap(text, 8);
         if (capResult.wasFixed) text = capResult.text;
 
@@ -1764,12 +1501,14 @@ export function postProcessTiers(tiers: TierPrompts): TierPrompts {
             );
           }
         }
+
         if (wrapResult.skipped.length > 0 && typeof console !== "undefined") {
           console.debug(
             "[harmony-post-processing] P14 T1 weight-wrap skipped:",
             wrapResult.skipped.join("; "),
           );
         }
+
         return text;
       })(),
       negative: stripTrailingPunctuation(tiers.tier1.negative),
@@ -1796,12 +1535,10 @@ export function postProcessTiers(tiers: TierPrompts): TierPrompts {
         const tails = stripT3BannedTailConstructions(text);
         if (tails.fixes.length > 0) text = tails.text;
 
-        text = applyPriorityAwareRetention(text, T3_MAX, "tier3");
-
         const result = enforceT3MaxLength(text);
         if (result.truncated && typeof console !== "undefined") {
           console.debug(
-            `[harmony-post-processing] P15/P20 T3 truncated: ${result.originalLength} → ${result.text.length} (${result.method})`,
+            `[harmony-post-processing] P15 T3 truncated: ${result.originalLength} → ${result.text.length} (${result.method})`,
           );
         }
 
@@ -1814,50 +1551,50 @@ export function postProcessTiers(tiers: TierPrompts): TierPrompts {
       positive: (() => {
         let text = tiers.tier4.positive;
 
-        text = mergeT4ShortSentences(
-          fixT4MetaOpeners(fixT4SelfCorrection(text)),
-        );
+        text = fixT4SelfCorrection(text);
+        text = fixT4MetaOpeners(text);
+        text = mergeT4ShortSentences(text);
 
         const jargon = convertPhotographyJargonTierAware("tier4", text);
-        if (jargon.fixes.length > 0) text = jargon.text;
+        if (jargon.fixes.length > 0) {
+          text = jargon.text;
+        }
 
         const measurements = convertMeasurementsToVisual(text);
-        if (measurements.fixes.length > 0) text = measurements.text;
-
-        text = applyPriorityAwareRetention(text, T4_MAX, "tier4");
-
-        const maxResult = enforceT4MaxLength(text);
-        if (maxResult.truncated) {
-          text = maxResult.text;
-          if (typeof console !== "undefined") {
-            console.debug(
-              `[harmony-post-processing] P16/P20 T4 truncated: ${maxResult.originalLength} → ${text.length} (${maxResult.method})`,
-            );
-          }
-        } else {
-          text = maxResult.text;
+        if (measurements.fixes.length > 0) {
+          text = measurements.text;
         }
 
-        const guardResult = applyT4RetentionSafetyGuard(text);
-        if (guardResult.fixes.length > 0) {
-          text = guardResult.text;
+        const truncationResult = enforceT4MaxLength(text);
+        if (truncationResult.truncated) {
+          text = truncationResult.text;
           if (typeof console !== "undefined") {
             console.debug(
-              `[harmony-post-processing] P19 T4 safety guard fixes: ${guardResult.fixes.join("; ")}`,
+              `[harmony-post-processing] P16 T4 truncated: ${truncationResult.originalLength} → ${text.length} (${truncationResult.method})`,
             );
           }
         }
 
-        const finalCap = enforceT4MaxLength(text);
-        if (finalCap.truncated) {
-          text = finalCap.text;
+        const retentionResult = applyT4RetentionSafetyGuard(text);
+        if (retentionResult.fixes.length > 0) {
+          text = retentionResult.text;
           if (typeof console !== "undefined") {
             console.debug(
-              `[harmony-post-processing] P16 T4 final cap: ${finalCap.originalLength} → ${text.length} (${finalCap.method})`,
+              "[harmony-post-processing] P21 T4 retention safety fixes:",
+              retentionResult.fixes.join("; "),
             );
           }
-        } else {
-          text = finalCap.text;
+        }
+
+        const sentenceFloorResult = enforceT4SentenceFloor(text);
+        if (sentenceFloorResult.fixes.length > 0) {
+          text = sentenceFloorResult.text;
+          if (typeof console !== "undefined") {
+            console.debug(
+              "[harmony-post-processing] P22 T4 sentence-floor fixes:",
+              sentenceFloorResult.fixes.join("; "),
+            );
+          }
         }
 
         return text;

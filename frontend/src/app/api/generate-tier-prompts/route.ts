@@ -169,10 +169,26 @@ const RequestSchema = z.object({
 const AnatomySegmentSchema = z.object({
   text: z.string().max(500),
   category: z.enum([
-    'subject', 'action', 'style', 'environment', 'composition', 'camera',
-    'lighting', 'colour', 'atmosphere', 'materials', 'fidelity', 'negative', 'structural',
+    "subject",
+    "action",
+    "style",
+    "environment",
+    "composition",
+    "camera",
+    "lighting",
+    "colour",
+    "atmosphere",
+    "materials",
+    "fidelity",
+    "negative",
+    "structural",
   ]),
-  source: z.enum(['human', 'user_addition', 'generated_negative', 'structural']),
+  source: z.enum([
+    "human",
+    "user_addition",
+    "generated_negative",
+    "structural",
+  ]),
   locked: z.boolean(),
 });
 
@@ -362,7 +378,7 @@ Plain does NOT mean flat. Keep it easy to understand, but still vivid.
 - WRONG: "A lone explorer stands at the edge of a frozen valley at first light, with visible breath, fine snow, and towering ice cliffs." (static checklist, echoes input, no value-add)
 - RIGHT: "At first light on a frozen valley's edge, an explorer's breath drifts through cold air as fine snow sweeps the ground. Towering ice cliffs and distant peaks glow pale blue under a vast, crystalline sky."
 
-CRITICAL SCHEMA REMINDER: Every tier value MUST be a JSON object with "positive" and "negative" fields. NEVER return a tier as a flat string. WRONG: "tier1": "masterpiece, ..." — RIGHT: "tier1": { "positive": "masterpiece, ...", "negative": "blurry, ..." }. If you catch yourself writing a bare string for any tier, STOP and wrap it in {"positive": "...", "negative": "..."}. Generate exactly 3 tiers: tier1, tier3, tier4. Do NOT generate tier2 — Midjourney is handled separately.
+CRITICAL SCHEMA REMINDER: Every tier value MUST be a JSON object with "positive" and "negative" fields. NEVER return a tier as a flat string. WRONG: "tier1": "masterpiece, ..." — RIGHT: "tier1": { "positive": "masterpiece, ...", "negative": "..." }. If you catch yourself writing a bare string for any tier, STOP and wrap it in {"positive": "...", "negative": "..."}. Generate exactly 3 tiers: tier1, tier3, tier4. Do NOT generate tier2 — Midjourney is handled separately.
 
 Return format:
 {
@@ -375,6 +391,235 @@ Return format:
 // ============================================================================
 // POST-PROCESSING — imported from @/lib/harmony-post-processing
 // ============================================================================
+
+// ============================================================================
+// OPENING FRESHNESS ENFORCEMENT (T3 / T4)
+// ============================================================================
+
+type FreshnessTier = "tier3" | "tier4";
+
+interface OpeningFreshnessResult {
+  text: string;
+  wasFixed: boolean;
+  fixes: string[];
+}
+
+const OPENING_WORD_WINDOW = 8;
+const SENTENCE_SPLIT_REGEX = /(?<=[.!?])\s+/;
+const CLAUSE_SPLIT_REGEX = /\s*(?:,|;|—|–)\s*/;
+
+function normaliseOpeningWords(
+  text: string,
+  count = OPENING_WORD_WINDOW,
+): string[] {
+  return text
+    .toLowerCase()
+    .replace(/['’]/g, "")
+    .replace(/[^a-z0-9\s-]/g, " ")
+    .split(/\s+/)
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0)
+    .slice(0, count);
+}
+
+function countWords(text: string): number {
+  return text
+    .trim()
+    .split(/\s+/)
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0).length;
+}
+
+function splitSentences(text: string): string[] {
+  return text
+    .split(SENTENCE_SPLIT_REGEX)
+    .map((sentence) => sentence.trim())
+    .filter((sentence) => sentence.length > 0);
+}
+
+function capitaliseFirst(text: string): string {
+  return text.replace(/^\s*([a-z])/, (match) => match.toUpperCase());
+}
+
+function lowercaseFirst(text: string): string {
+  return text.replace(/^\s*([A-Z])/, (match) => match.toLowerCase());
+}
+
+function ensureSentencePunctuation(text: string): string {
+  const trimmed = text.trim();
+  if (trimmed.length === 0) return trimmed;
+  if (/[.!?]$/.test(trimmed)) return trimmed;
+  return `${trimmed}.`;
+}
+
+function openingsEcho(source: string, candidate: string): boolean {
+  const sourceWords = normaliseOpeningWords(source);
+  const candidateWords = normaliseOpeningWords(candidate);
+
+  const sampleSize = Math.min(
+    OPENING_WORD_WINDOW,
+    sourceWords.length,
+    candidateWords.length,
+  );
+
+  if (sampleSize < 3) {
+    return false;
+  }
+
+  return (
+    sourceWords.slice(0, sampleSize).join(" ") ===
+    candidateWords.slice(0, sampleSize).join(" ")
+  );
+}
+
+function reorderBySentencePriority(
+  source: string,
+  text: string,
+  tier: FreshnessTier,
+): OpeningFreshnessResult {
+  const sentences = splitSentences(text);
+  if (sentences.length < 2) {
+    return { text, wasFixed: false, fixes: [] };
+  }
+
+  const minimumLeadWords = tier === "tier3" ? 6 : 5;
+
+  for (let i = 1; i < sentences.length; i += 1) {
+    const candidateLead = sentences[i];
+    if (candidateLead === undefined) {
+      continue;
+    }
+
+    if (countWords(candidateLead) < minimumLeadWords) {
+      continue;
+    }
+
+    const reorderedParts = [
+      candidateLead,
+      ...sentences.slice(0, i),
+      ...sentences.slice(i + 1),
+    ];
+
+    const reordered = reorderedParts
+      .filter((sentence): sentence is string => typeof sentence === "string")
+      .map((sentence) => sentence.trim())
+      .join(" ")
+      .trim();
+
+    if (!openingsEcho(source, reordered)) {
+      return {
+        text: reordered,
+        wasFixed: true,
+        fixes: [`${tier}:sentence_reordered_to_freshen_opening`],
+      };
+    }
+  }
+
+  return { text, wasFixed: false, fixes: [] };
+}
+
+function rotateFirstSentenceClauses(
+  source: string,
+  text: string,
+  tier: FreshnessTier,
+): OpeningFreshnessResult {
+  const sentences = splitSentences(text);
+  const firstSentence = sentences[0];
+
+  if (firstSentence === undefined) {
+    return { text, wasFixed: false, fixes: [] };
+  }
+
+  const clauses = firstSentence
+    .split(CLAUSE_SPLIT_REGEX)
+    .map((clause) => clause.trim())
+    .filter((clause) => clause.length > 0);
+
+  if (clauses.length < 2) {
+    return { text, wasFixed: false, fixes: [] };
+  }
+
+  const firstClause = clauses[0];
+  if (firstClause === undefined) {
+    return { text, wasFixed: false, fixes: [] };
+  }
+
+  const minimumLeadWords = tier === "tier3" ? 5 : 4;
+
+  for (let i = 1; i < clauses.length; i += 1) {
+    const leadClause = clauses[i];
+    if (leadClause === undefined) {
+      continue;
+    }
+
+    if (countWords(leadClause) < minimumLeadWords) {
+      continue;
+    }
+
+    const remainingClauses = [
+      lowercaseFirst(firstClause),
+      ...clauses.slice(1, i),
+      ...clauses.slice(i + 1),
+    ].filter((clause): clause is string => clause.trim().length > 0);
+
+    const rebuiltFirstSentence = ensureSentencePunctuation(
+      [capitaliseFirst(leadClause), ...remainingClauses].join(", "),
+    );
+
+    const rebuiltText = [rebuiltFirstSentence, ...sentences.slice(1)]
+      .filter((sentence): sentence is string => typeof sentence === "string")
+      .map((sentence) => sentence.trim())
+      .join(" ")
+      .trim();
+
+    if (!openingsEcho(source, rebuiltText)) {
+      return {
+        text: rebuiltText,
+        wasFixed: true,
+        fixes: [`${tier}:clause_rotated_to_freshen_opening`],
+      };
+    }
+  }
+
+  return { text, wasFixed: false, fixes: [] };
+}
+
+function enforceOpeningFreshness(
+  source: string,
+  text: string,
+  tier: FreshnessTier,
+): OpeningFreshnessResult {
+  const trimmedSource = source.trim();
+  const trimmedText = text.trim();
+
+  if (trimmedSource.length === 0 || trimmedText.length === 0) {
+    return { text, wasFixed: false, fixes: [] };
+  }
+
+  if (!openingsEcho(trimmedSource, trimmedText)) {
+    return { text, wasFixed: false, fixes: [] };
+  }
+
+  const sentenceReorder = reorderBySentencePriority(
+    trimmedSource,
+    trimmedText,
+    tier,
+  );
+  if (sentenceReorder.wasFixed) {
+    return sentenceReorder;
+  }
+
+  const clauseRotation = rotateFirstSentenceClauses(
+    trimmedSource,
+    trimmedText,
+    tier,
+  );
+  if (clauseRotation.wasFixed) {
+    return clauseRotation;
+  }
+
+  return { text, wasFixed: false, fixes: [] };
+}
 
 // ============================================================================
 // HANDLER
@@ -482,10 +727,15 @@ export async function POST(req: NextRequest): Promise<Response> {
   // polluting the user's creative description with metadata.
   const { coverageSeed } = parsed.data;
   if (coverageSeed && coverageSeed.length > 0) {
-    const coveredSeeds = coverageSeed.filter((s) => s.matchedPhrases.length > 0);
+    const coveredSeeds = coverageSeed.filter(
+      (s) => s.matchedPhrases.length > 0,
+    );
     if (coveredSeeds.length > 0) {
       const seedJson = JSON.stringify(
-        coveredSeeds.map((s) => ({ category: s.category, phrases: s.matchedPhrases })),
+        coveredSeeds.map((s) => ({
+          category: s.category,
+          phrases: s.matchedPhrases,
+        })),
       );
       userMessage += `\n\n<category_assessment>${seedJson}</category_assessment>`;
     }
@@ -651,15 +901,15 @@ export async function POST(req: NextRequest): Promise<Response> {
     // When GPT returns anatomy, the concatenation of all segment texts
     // must exactly equal the positive string. If not, discard the anatomy
     // (graceful fallback to substring matching — same as pre-Phase B).
-    const tierKeys = ['tier1', 'tier3', 'tier4'] as const;
+    const tierKeys = ["tier1", "tier3", "tier4"] as const;
     for (const key of tierKeys) {
       const tier = validated.data[key];
       if (tier.anatomy && tier.anatomy.length > 0) {
-        const concatenated = tier.anatomy.map((s) => s.text).join('');
+        const concatenated = tier.anatomy.map((s) => s.text).join("");
         if (concatenated !== tier.positive) {
           console.debug(
             `[generate-tier-prompts] Anatomy concat mismatch for ${key} — discarding anatomy. ` +
-            `Expected ${tier.positive.length} chars, got ${concatenated.length}.`,
+              `Expected ${tier.positive.length} chars, got ${concatenated.length}.`,
           );
           // Discard invalid anatomy — Zod already validated the shape,
           // but concatenation is a semantic rule Zod can't check.
@@ -674,7 +924,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     // deduplicateMjParams on empty string is a no-op — zero cost.
     const fullTiers = {
       ...validated.data,
-      tier2: { positive: '', negative: '' },
+      tier2: { positive: "", negative: "" },
     };
     const processed = postProcessTiers(fullTiers);
 
@@ -733,6 +983,40 @@ export async function POST(req: NextRequest): Promise<Response> {
       console.debug(
         "[generate-tier-prompts] Call 2 code-enforcement fixes:",
         t1Fixes.join("; "),
+      );
+    }
+
+    // ── Opening-freshness enforcement (T3 priority, then T4) ──────────
+    const openingFreshnessFixes: string[] = [];
+    let freshnessCompliant = compliant;
+
+    const tierFreshnessOrder: readonly FreshnessTier[] = ["tier3", "tier4"];
+
+    for (const tierKey of tierFreshnessOrder) {
+      const freshness = enforceOpeningFreshness(
+        sanitised,
+        freshnessCompliant[tierKey].positive,
+        tierKey,
+      );
+
+      if (freshness.wasFixed) {
+        freshnessCompliant = {
+          ...freshnessCompliant,
+          [tierKey]: {
+            ...freshnessCompliant[tierKey],
+            positive: freshness.text,
+          },
+        };
+        openingFreshnessFixes.push(...freshness.fixes);
+      }
+    }
+
+    compliant = freshnessCompliant;
+
+    if (openingFreshnessFixes.length > 0) {
+      console.debug(
+        "[generate-tier-prompts] Opening freshness fixes:",
+        openingFreshnessFixes.join("; "),
       );
     }
 
