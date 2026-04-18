@@ -1,7 +1,12 @@
 // src/components/nav/top-nav.tsx
 // ============================================================================
-// TOP NAV (v1.1.0)
+// TOP NAV (v1.2.0)
 // ============================================================================
+// v1.2.0 (current):
+// - Prompt Lab moved from /studio/playground → /prompt-lab (route swap
+//   with /inspire → /). Updated href + label accordingly; kept analytics
+//   label as "Prompt Lab" for clarity.
+//
 // v1.1.0 (10 Apr 2026):
 // - FIX: Import path changed from deleted @/lib/analytics/nav to events.ts.
 // - FIX: Broken className strings repaired (rounded-xl...-3 → proper classes).
@@ -29,12 +34,12 @@ export default function TopNav() {
 
         <div className="flex items-center gap-4 text-sm">
           <Link
-            href="/studio/playground"
-            onClick={() => trackNavClick({ label: 'Prompt Designer', href: '/studio/playground' })}
+            href="/prompt-lab"
+            onClick={() => trackNavClick({ label: 'Prompt Lab', href: '/prompt-lab' })}
             className="inline-flex items-center gap-2 rounded-xl border border-zinc-700 px-3 py-1.5 text-zinc-200 hover:border-zinc-600 hover:bg-zinc-800 cursor-pointer"
-            title="Prompt Designer — idea builder"
+            title="Prompt Lab — build prompts for 40 AI platforms"
           >
-            <BrainIcon /> Prompt Designer
+            <BrainIcon /> Prompt Lab
           </Link>
 
           <Link

@@ -12,12 +12,16 @@
 //
 // Schema version: 1.0.0
 //
+// Phase A additions:
+// - optional scene-truth metadata for richer coverage scoring
+// - optional handoff and calibration fields used by scorer calibration
+//
 // Authority: call-2-harness-build-plan-v1.md Phase B,
 //            call-2-quality-architecture-v0.3.1.md §4.3
-// Existing features preserved: Yes (this is a new module).
+// Existing features preserved: Yes.
 // ============================================================================
 
-import scenesData from '@/data/call-2-scenes/scenes.json';
+import scenesData from "@/data/call-2-scenes/scenes.json";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -26,16 +30,19 @@ import scenesData from '@/data/call-2-scenes/scenes.json';
  * for the production replay slice (Phase J — deferred until Sentinel ships).
  */
 export type SceneCategory =
-  | 'canonical'
-  | 'stress'
-  | 'trap'
-  | 'human_factors'
-  | 'alien'
-  | 'real_world';
+  | "canonical"
+  | "stress"
+  | "trap"
+  | "human_factors"
+  | "alien"
+  | "real_world";
 
-export type SceneStatus = 'approved' | 'drafted' | 'pending' | 'rejected';
-
-export type TagProvenance = 'manual' | 'generator_declared' | 'mechanical_inferred';
+export type SceneStatus = "approved" | "drafted" | "pending" | "rejected";
+export type TagProvenance =
+  | "manual"
+  | "generator_declared"
+  | "mechanical_inferred";
+export type CompressionTolerance = "low" | "medium" | "high";
 
 /**
  * A single scene in the harness library.
@@ -59,6 +66,14 @@ export interface Scene {
   readonly dev_only?: boolean;
   readonly dev_only_reason?: string;
   readonly expected_elements?: readonly string[];
+  readonly input_class?: string;
+  readonly primary_subject?: string;
+  readonly critical_anchors?: readonly string[];
+  readonly secondary_anchors?: readonly string[];
+  readonly forbidden_positive_inventions?: readonly string[];
+  readonly compression_tolerance?: CompressionTolerance;
+  readonly handoff_notes?: string;
+  readonly gold_review_required?: boolean;
 }
 
 export interface SceneLibraryMetadata {
@@ -82,11 +97,11 @@ const RAW = scenesData as unknown as RawScenesFile;
 
 // Defensive: deep-freeze on first load so consumers can't mutate the library.
 function deepFreeze<T>(obj: T): T {
-  if (obj && typeof obj === 'object') {
+  if (obj && typeof obj === "object") {
     Object.freeze(obj);
     for (const key of Object.keys(obj)) {
       const value = (obj as Record<string, unknown>)[key];
-      if (value && typeof value === 'object') {
+      if (value && typeof value === "object") {
         deepFreeze(value);
       }
     }
@@ -133,25 +148,20 @@ const SCENES_BY_ID: ReadonlyMap<string, Scene> = (() => {
  *   - includeDevOnly: true  (dev-only scenes included by default)
  *   - category: undefined (all categories)
  *   - status: 'approved' (only approved scenes by default)
- *
- * @example
- *   loadScenes()                                    // all approved, no holdout
- *   loadScenes({ includeHoldout: true })            // include holdout
- *   loadScenes({ category: 'canonical' })           // canonical only
- *   loadScenes({ includeDevOnly: false })           // production-safe only
- *   loadScenes({ status: undefined })               // any status
  */
-export function loadScenes(opts: {
-  includeHoldout?: boolean;
-  includeDevOnly?: boolean;
-  category?: SceneCategory;
-  status?: SceneStatus;
-} = {}): readonly Scene[] {
+export function loadScenes(
+  opts: {
+    includeHoldout?: boolean;
+    includeDevOnly?: boolean;
+    category?: SceneCategory;
+    status?: SceneStatus;
+  } = {},
+): readonly Scene[] {
   const {
     includeHoldout = false,
     includeDevOnly = true,
     category,
-    status = 'approved',
+    status = "approved",
   } = opts;
 
   return FROZEN_SCENES.filter((scene) => {
@@ -181,7 +191,9 @@ export function getSceneLibraryMetadata(): SceneLibraryMetadata {
  * Get scene counts grouped by category. Always counts ALL scenes regardless
  * of holdout/status — this is a library-shape introspection helper.
  */
-export function getSceneCountsByCategory(): Readonly<Record<SceneCategory, number>> {
+export function getSceneCountsByCategory(): Readonly<
+  Record<SceneCategory, number>
+> {
   const counts: Record<SceneCategory, number> = {
     canonical: 0,
     stress: 0,

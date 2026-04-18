@@ -409,7 +409,7 @@ export default function PlatformsHubPage() {
         {/* ── CTA ─────────────────────────────────────────────────── */}
         <section style={{ marginBottom: 'clamp(40px, 5vw, 72px)', textAlign: 'center' }}>
           <Link
-            href="/studio/playground"
+            href="/prompt-lab"
             className="inline-block rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold cursor-pointer transition-colors"
             style={{
               fontSize: 'clamp(14px, 1.1vw, 18px)',

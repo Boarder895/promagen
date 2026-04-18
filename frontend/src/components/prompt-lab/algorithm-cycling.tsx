@@ -14,7 +14,7 @@
 //   §3 Anticipatory Dopamine — three-phase pattern:
 //       Awareness (amber cycling → "something is being processed")
 //       Acceleration (deceleration phase → "it's almost done")
-//       Payoff (emerald landing → "✓ 97 algorithms applied")
+//       Payoff (emerald landing → family-specific completion message)
 //   §6 Temporal Compression — rapid text changes occupy working memory,
 //       making 2–4 second wait feel shorter than clock time.
 //   §17 Colour Psychology — amber = anticipation/warmth (cycling),
@@ -134,7 +134,7 @@ export interface AlgorithmCyclingProps {
 export function AlgorithmCycling({
   animationPhase,
   currentAlgorithm,
-  algorithmCount,
+  algorithmCount: _algorithmCount,
   className = '',
 }: AlgorithmCyclingProps) {
   // Don't render when idle or complete
@@ -196,7 +196,7 @@ export function AlgorithmCycling({
         aria-live="polite"
         aria-label={
           isLanding
-            ? `Optimisation complete. ${algorithmCount ?? 97} algorithms applied.`
+            ? `Optimisation complete. ${currentAlgorithm ?? 'Processing finished.'}`
             : `Processing: ${currentAlgorithm ?? 'Analysing prompt...'}`
         }
       >

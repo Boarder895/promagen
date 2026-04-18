@@ -23,7 +23,6 @@
 //
 // v6.2 additions:
 //   P19 — T3-first opening freshness enforcer v2 (shared deterministic anti-echo)
-//   P20 — Critical-anchor retention enforcer for T3/T4 before truncation
 //   P21 — T4 retention safety guard
 //   P22 — T4 final sentence-floor guard
 //
@@ -143,11 +142,11 @@ export function deduplicateMjParams(prompt: string): string {
   const termSetLower = new Set(allNoTerms.map((t) => t.toLowerCase()));
   const fusionIndices: number[] = [];
 
-  for (let i = 0; i < allNoTerms.length; i++) {
+  for (let i = 0; i < allNoTerms.length; i += 1) {
     const words = allNoTerms[i]!.toLowerCase().split(/\s+/);
     if (words.length <= 2) continue;
 
-    for (let splitAt = 1; splitAt < words.length; splitAt++) {
+    for (let splitAt = 1; splitAt < words.length; splitAt += 1) {
       const firstPart = words.slice(0, splitAt).join(" ");
       const secondPart = words.slice(splitAt).join(" ");
       if (termSetLower.has(firstPart) && termSetLower.has(secondPart)) {
@@ -157,7 +156,7 @@ export function deduplicateMjParams(prompt: string): string {
     }
   }
 
-  for (let i = fusionIndices.length - 1; i >= 0; i--) {
+  for (let i = fusionIndices.length - 1; i >= 0; i -= 1) {
     allNoTerms.splice(fusionIndices[i]!, 1);
   }
 
@@ -379,7 +378,7 @@ function findNounAnchorTail(
 ): { tail: string; prefixWords: string[] } | null {
   const maxTail = Math.min(4, words.length - 1);
 
-  for (let tailLen = 2; tailLen <= maxTail; tailLen++) {
+  for (let tailLen = 2; tailLen <= maxTail; tailLen += 1) {
     const tailStart = words.length - tailLen;
     const firstTailWord = words[tailStart];
 
@@ -1171,7 +1170,7 @@ function rescueUnderlengthT3(text: string): TruncationResult {
   if (next.length > T3_MAX) {
     const trimmed = truncateAtWhitespace(next, T3_MAX) ?? next.slice(0, T3_MAX);
     return {
-      text: trimmed.trimEnd() + ".",
+      text: `${trimmed.trimEnd()}.`,
       truncated: true,
       method: "underlength-rescue",
       originalLength,
@@ -1224,7 +1223,7 @@ export function enforceT3MaxLength(text: string): TruncationResult {
   const clauseResult = truncateAtBoundary(text, T3_MAX, /[;]\s|(?:\s—\s)/g, 0);
   if (clauseResult && clauseResult.length >= T3_MIN) {
     return {
-      text: clauseResult.trimEnd() + ".",
+      text: `${clauseResult.trimEnd()}.`,
       truncated: true,
       method: "clause",
       originalLength,
@@ -1234,7 +1233,7 @@ export function enforceT3MaxLength(text: string): TruncationResult {
   const commaResult = truncateAtBoundary(text, T3_MAX, /,\s/g, 0);
   if (commaResult && commaResult.length >= T3_MIN) {
     return {
-      text: commaResult.trimEnd() + ".",
+      text: `${commaResult.trimEnd()}.`,
       truncated: true,
       method: "comma-fallback",
       originalLength,
@@ -1244,7 +1243,7 @@ export function enforceT3MaxLength(text: string): TruncationResult {
   const whitespaceResult = truncateAtWhitespace(text, T3_MAX);
   if (whitespaceResult && whitespaceResult.length >= T3_MIN) {
     return {
-      text: whitespaceResult.trimEnd() + ".",
+      text: `${whitespaceResult.trimEnd()}.`,
       truncated: true,
       method: "whitespace",
       originalLength,
@@ -1253,7 +1252,7 @@ export function enforceT3MaxLength(text: string): TruncationResult {
 
   if (commaResult) {
     return {
-      text: commaResult.trimEnd() + ".",
+      text: `${commaResult.trimEnd()}.`,
       truncated: true,
       method: "comma-fallback",
       originalLength,
@@ -1262,7 +1261,7 @@ export function enforceT3MaxLength(text: string): TruncationResult {
 
   if (whitespaceResult) {
     return {
-      text: whitespaceResult.trimEnd() + ".",
+      text: `${whitespaceResult.trimEnd()}.`,
       truncated: true,
       method: "whitespace",
       originalLength,
@@ -1270,7 +1269,7 @@ export function enforceT3MaxLength(text: string): TruncationResult {
   }
 
   return {
-    text: text.slice(0, T3_MAX).trimEnd() + ".",
+    text: `${text.slice(0, T3_MAX).trimEnd()}.`,
     truncated: true,
     method: "whitespace",
     originalLength,
@@ -1278,7 +1277,7 @@ export function enforceT3MaxLength(text: string): TruncationResult {
 }
 
 // ============================================================================
-// P20: Critical-Anchor Retention Enforcer for T3/T4
+// Critical-anchor retention variant for truncation only
 // ============================================================================
 
 type AnchorClass =
@@ -1363,8 +1362,9 @@ function concreteDetailScore(clause: string): number {
   for (const word of words) {
     if (word.length <= 3) continue;
     if (/(?:ing|ed|ly)$/.test(word)) continue;
-    if (/(?:tion|sion|ness|ment|hood|ship|tude|ance|ence)$/.test(word))
+    if (/(?:tion|sion|ness|ment|hood|ship|tude|ance|ence)$/.test(word)) {
       continue;
+    }
     score += 0.12;
   }
 
@@ -1618,7 +1618,7 @@ export function enforceT4MaxLength(text: string): TruncationResult {
   const commaResult = truncateAtBoundary(text, T4_MAX, /,\s/g, 0);
   if (commaResult) {
     return {
-      text: commaResult.trimEnd() + ".",
+      text: `${commaResult.trimEnd()}.`,
       truncated: true,
       method: "comma-fallback",
       originalLength,
@@ -1628,7 +1628,7 @@ export function enforceT4MaxLength(text: string): TruncationResult {
   const whitespaceResult = truncateAtWhitespace(text, T4_MAX);
   if (whitespaceResult) {
     return {
-      text: whitespaceResult.trimEnd() + ".",
+      text: `${whitespaceResult.trimEnd()}.`,
       truncated: true,
       method: "whitespace",
       originalLength,
@@ -1636,7 +1636,7 @@ export function enforceT4MaxLength(text: string): TruncationResult {
   }
 
   return {
-    text: text.slice(0, T4_MAX).trimEnd() + ".",
+    text: `${text.slice(0, T4_MAX).trimEnd()}.`,
     truncated: true,
     method: "whitespace",
     originalLength,
@@ -1652,12 +1652,11 @@ export interface T4RetentionSafetyResult {
   fixes: string[];
 }
 
-function stripSentenceStop(text: string): string {
-  return text.replace(/[.!?]+$/, "").trim();
-}
-
 function hasStrongOpeningAnchor(text: string): boolean {
-  const stripped = stripSentenceStop(text).toLowerCase();
+  const stripped = text
+    .replace(/[.!?]+$/, "")
+    .trim()
+    .toLowerCase();
 
   return (
     /\b(?:man|woman|child|girl|boy|worker|driver|cyclist|pilot|firefighter|soldier|chef|dog|cat|horse|bird|rocket|tower|ship|boat|car|train|tram|bus|crane|bridge|lighthouse|warehouse|forge|anvil|market|street|square|beach|cliff|reef|planet|earth)\b/.test(
@@ -1682,7 +1681,7 @@ export function applyT4RetentionSafetyGuard(
   const first = sentences[0]!;
   const second = sentences[1]!;
 
-  const firstWordCount = countWords(stripSentenceStop(first));
+  const firstWordCount = countWords(first.replace(/[.!?]+$/, "").trim());
   const firstHasStrongAnchor = hasStrongOpeningAnchor(first);
 
   if (firstWordCount < T4_MIN_SENTENCE_WORDS && !firstHasStrongAnchor) {
@@ -1715,8 +1714,8 @@ function lowercaseFirstChar(text: string): string {
 }
 
 function mergeLeadingSentenceIntoNext(leading: string, next: string): string {
-  const leadCore = stripSentenceStop(leading);
-  const nextCore = stripSentenceStop(next);
+  const leadCore = leading.replace(/[.!?]+$/, "").trim();
+  const nextCore = next.replace(/[.!?]+$/, "").trim();
 
   if (!leadCore) return ensureSentenceStop(capitaliseSentence(nextCore));
   if (!nextCore) return ensureSentenceStop(capitaliseSentence(leadCore));
@@ -1743,7 +1742,9 @@ export function enforceT4SentenceFloor(text: string): T4SentenceFloorResult {
   }
 
   if (sentences.length >= 2) {
-    const firstWordCount = countWords(stripSentenceStop(sentences[0]!));
+    const firstWordCount = countWords(
+      sentences[0]!.replace(/[.!?]+$/, "").trim(),
+    );
     if (firstWordCount < T4_MIN_SENTENCE_WORDS) {
       sentences[1] = mergeLeadingSentenceIntoNext(sentences[0]!, sentences[1]!);
       sentences.shift();
@@ -1752,7 +1753,9 @@ export function enforceT4SentenceFloor(text: string): T4SentenceFloorResult {
   }
 
   for (let i = 1; i < sentences.length; ) {
-    const currentWordCount = countWords(stripSentenceStop(sentences[i]!));
+    const currentWordCount = countWords(
+      sentences[i]!.replace(/[.!?]+$/, "").trim(),
+    );
 
     if (currentWordCount < T4_MIN_SENTENCE_WORDS) {
       sentences[i - 1] = mergeIntoPreviousSentence(

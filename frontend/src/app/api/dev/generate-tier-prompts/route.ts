@@ -129,6 +129,11 @@ function authHeaderMatches(provided: string | null, expected: string): boolean {
 }
 
 // ============================================================================
+// ============================================================================
+// OPENING FRESHNESS / AIM 1 PRESERVATION ENFORCEMENT
+// handled centrally in @/lib/harmony-post-processing via postProcessTiers()
+// ============================================================================
+
 // HANDLER
 // ============================================================================
 

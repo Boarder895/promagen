@@ -34,7 +34,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { shuffleCategoryAware, getAlgorithmCount } from '@/data/algorithm-names';
+import { shuffleCategoryAware, getLandingMessage } from '@/data/algorithm-names';
 
 // ============================================================================
 // CO-LOCATED STYLES (code-standard.md §6.2)
@@ -131,7 +131,6 @@ export function TierGenerationCycling({
 }: TierGenerationCyclingProps) {
   const [phase, setPhase] = useState<CyclingPhase>('idle');
   const [currentName, setCurrentName] = useState<string | null>(null);
-  const [landingCount, setLandingCount] = useState<number | null>(null);
 
   const shuffledRef = useRef<string[]>([]);
   const indexRef = useRef(0);
@@ -180,7 +179,6 @@ export function TierGenerationCycling({
       // Build category-aware shuffled sequence
       shuffledRef.current = shuffleCategoryAware(activeCatsRef.current);
       indexRef.current = 0;
-      setLandingCount(null);
       setPhase('cycling');
 
       // Start ticking
@@ -197,9 +195,8 @@ export function TierGenerationCycling({
       }
 
       // Show landing message
-      const count = getAlgorithmCount();
-      setLandingCount(count);
-      setCurrentName(`✓ ${count} algorithms applied`);
+      const landing = getLandingMessage();
+      setCurrentName(landing.text);
       setPhase('landing');
 
       // Hold the landing for LANDING_DISPLAY_MS then go idle
@@ -207,7 +204,6 @@ export function TierGenerationCycling({
         if (!mountedRef.current) return;
         setPhase('idle');
         setCurrentName(null);
-        setLandingCount(null);
       }, LANDING_DISPLAY_MS);
       return;
     }
@@ -255,7 +251,7 @@ export function TierGenerationCycling({
         aria-live="polite"
         aria-label={
           isLanding
-            ? `Analysis complete. ${landingCount ?? 97} algorithms applied.`
+            ? `Analysis complete. ${currentName ?? 'Processing finished.'}`
             : `Processing: ${currentName}`
         }
       >

@@ -158,6 +158,25 @@ function BookmarkIcon(): React.ReactElement {
   );
 }
 
+function LabIcon(): React.ReactElement {
+  return (
+    <svg
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+        d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 00.659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082M5 14.5l-1.456 1.455A2.25 2.25 0 005.13 20h13.74a2.25 2.25 0 001.586-3.845L19 14.5M5 14.5h14"
+      />
+    </svg>
+  );
+}
+
 // ============================================================================
 // SHARED STYLES
 // ============================================================================
@@ -251,8 +270,8 @@ export type HomepageGridProps = {
   isStudioSubPage?: boolean;
   /** When true, Mission Control shows 3 buttons: Home | World Context | Pro (no My Prompts self-link) */
   isMyPromptsPage?: boolean;
-  /** When true, shows Home instead of Inspire (for /inspire page) */
-  isInspirePage?: boolean;
+  /** When true, shows Home instead of Prompt Lab (for /prompt-lab page) */
+  isPromptLabPage?: boolean;
   /** Controlled provider selection from Engine Bay (lifted state) */
   selectedProvider?: import('@/types/providers').Provider | null;
   /** Callback when user selects/deselects a provider in Engine Bay */
@@ -489,7 +508,7 @@ export default function HomepageGrid({
   isProPromagenPage = false,
   isStudioSubPage = false,
   isMyPromptsPage = false,
-  isInspirePage = false,
+  isPromptLabPage = false,
   selectedProvider,
   onProviderChange,
   leftRailClassName,
@@ -842,10 +861,10 @@ export default function HomepageGrid({
                       Home
                     </a>
                   )}
-                  {!isInspirePage && (
-                    <a href="/inspire" className={navButtonStyles}>
-                      <GlobeIcon />
-                      Inspire
+                  {!isPromptLabPage && (
+                    <a href="/prompt-lab" className={navButtonStyles}>
+                      <LabIcon />
+                      Prompt Lab
                     </a>
                   )}
                   {!isWorldContext && (
@@ -885,7 +904,7 @@ export default function HomepageGrid({
             {/* ── Build Your Prompt CTA — World Context, above leaderboard heading ── */}
             {!isTableExpanded && isWorldContext && (
               <a
-                href="/"
+                href="/prompt-lab"
                 className="group inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-sky-400/60 bg-gradient-to-r from-sky-400/40 via-emerald-300/40 to-indigo-400/40 font-semibold text-white shadow-sm no-underline cursor-pointer transition-all hover:from-sky-400/50 hover:via-emerald-300/50 hover:to-indigo-400/50 hover:border-sky-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/80"
                 style={{
                   padding: 'clamp(12px, 1.2vw, 18px) clamp(16px, 2vw, 28px)',
@@ -932,7 +951,7 @@ export default function HomepageGrid({
                   isStudioSubPage={isStudioSubPage}
                   isMyPromptsPage={isMyPromptsPage}
                   isWorldContextPage={isWorldContext}
-                  isInspirePage={isInspirePage}
+                  isPromptLabPage={isPromptLabPage}
                 />
               </div>
             )}

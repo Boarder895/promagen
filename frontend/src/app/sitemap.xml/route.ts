@@ -121,7 +121,7 @@ export async function GET() {
       { path: '/leaderboard', priority: 0.8, changeFrequency: 'daily' },
       { path: '/providers/trends', priority: 0.8, changeFrequency: 'daily' },
       { path: '/providers/compare', priority: 0.8, changeFrequency: 'daily' },
-      { path: '/inspire', priority: 0.7, changeFrequency: 'daily' },
+      { path: '/prompt-lab', priority: 0.9, changeFrequency: 'daily' },
       { path: '/studio/library', priority: 0.7, changeFrequency: 'weekly' },
       { path: '/world-context', priority: 0.7, changeFrequency: 'daily' },
       { path: '/macro', priority: 0.6, changeFrequency: 'daily' },

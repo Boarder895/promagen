@@ -63,8 +63,6 @@ export interface NewHomepageClientProps {
   initialRatings?: Record<string, SerializableProviderRating>;
   /** Server-resolved demo toggle for provider leaderboard UI */
   demoEnabled?: boolean;
-  /** When true, this is the /inspire page (not the homepage) */
-  isInspirePage?: boolean;
 }
 
 // ============================================================================
@@ -89,7 +87,6 @@ export default function NewHomepageClient({
   initialShowcaseData,
   initialRatings,
   demoEnabled = false,
-  isInspirePage = false,
 }: NewHomepageClientProps) {
   const { isAuthenticated, userTier, locationInfo, setReferenceFrame } = usePromagenAuth();
 
@@ -247,12 +244,12 @@ export default function NewHomepageClient({
         />
       )}
 
-      {/* ── Build Your Prompt CTA — Inspire page only (Improvement 1) ──
-          Creates the funnel: Inspire (browse) → Home (build) → Pro (pay).
+      {/* ── Build Your Prompt CTA — funnel into Prompt Lab (Improvement 1) ──
+          Creates the funnel: Home/Inspire (browse) → Prompt Lab (build) → Pro (pay).
           Gradient matches Engine Bay launch button for visual consistency. */}
-      {isInspirePage && !isTableExpanded && (
+      {!isTableExpanded && (
         <a
-          href="/"
+          href="/prompt-lab"
           className="group inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-sky-400/60 bg-gradient-to-r from-sky-400/40 via-emerald-300/40 to-indigo-400/40 font-semibold text-white shadow-sm no-underline cursor-pointer transition-all hover:from-sky-400/50 hover:via-emerald-300/50 hover:to-indigo-400/50 hover:border-sky-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/80"
           style={{
             padding: 'clamp(12px, 1.2vw, 18px) clamp(16px, 2vw, 28px)',
@@ -390,8 +387,8 @@ export default function NewHomepageClient({
 
   return (
     <HomepageGrid
-      mainLabel={isInspirePage ? 'Promagen — Inspire' : 'Promagen home'}
-      headingText={isInspirePage ? 'Promagen — Inspire' : undefined}
+      mainLabel="Promagen — Inspire"
+      headingText="Promagen — Inspire"
       leftContent={leftContent}
       centre={centreRail}
       rightContent={rightContent}
@@ -413,7 +410,6 @@ export default function NewHomepageClient({
       weatherIndex={effectiveWeatherIndex}
       selectedProvider={selectedProvider}
       onProviderChange={handleProviderChange}
-      isInspirePage={isInspirePage}
     />
   );
 }

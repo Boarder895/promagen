@@ -117,7 +117,7 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { href: '/', label: 'Home', icon: HomeIcon },
   { href: '/pro-promagen', label: 'Pro', icon: ProIcon },
-  { href: '/inspire', label: 'Inspire', icon: LabIcon },
+  { href: '/prompt-lab', label: 'Prompt Lab', icon: LabIcon },
   { href: '/studio/library', label: 'Saved', icon: SavedIcon },
 ];
 

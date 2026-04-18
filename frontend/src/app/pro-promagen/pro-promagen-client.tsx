@@ -3684,7 +3684,7 @@ function IntelligencePreviewPanel() {
           className="text-amber-400 font-semibold"
           style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}
         >
-          1 sentence → 40 platforms · 4 encoders · 17 algorithms
+          1 sentence → 40 platforms · 4 encoders · 6 dynamic binary algorithms
         </span>
       </div>
     </div>

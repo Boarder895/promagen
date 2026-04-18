@@ -9,7 +9,7 @@
 // Animation phases (ai-disguise.md §8):
 //   Phase 1 — Fast cycling (160–200ms) while waiting for API response
 //   Phase 2 — Deceleration (350→500→700→1000ms) after response arrives
-//   Phase 3 — Landing ("✓ 97 algorithms applied") then reveal
+//   Phase 3 — Landing (family-specific completion message) then reveal
 //
 // Human factors:
 //   §3 Anticipatory Dopamine — the cycling animation creates the
@@ -26,7 +26,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { shuffleAlgorithms, FINALE_NAMES, getAlgorithmCount } from '@/data/algorithm-names';
+import { shuffleAlgorithms, FINALE_NAMES, getLandingMessage } from '@/data/algorithm-names';
 
 // ============================================================================
 // TYPES
@@ -86,7 +86,7 @@ export interface UseAiOptimisationReturn {
   animationPhase: AnimationPhase;
   /** Current algorithm name being displayed (during cycling/decelerating) */
   currentAlgorithm: string | null;
-  /** The final "N algorithms applied" count (set during landing phase) */
+  /** The final process count (set during landing phase) */
   algorithmCount: number | null;
   /** Trigger optimisation */
   optimise: (
@@ -283,10 +283,10 @@ export function useAiOptimisation(): UseAiOptimisationReturn {
       await apiPromise;
 
       // ── Phase 3: Landing ───────────────────────────────────────────
-      const count = getAlgorithmCount();
-      setAlgorithmCount(count);
+      const landing = getLandingMessage();
+      setAlgorithmCount(landing.count);
       setAnimationPhase('landing');
-      setCurrentAlgorithm(`✓ ${count} algorithms applied`);
+      setCurrentAlgorithm(landing.text);
 
       await sleep(LANDING_PAUSE_MS);
 

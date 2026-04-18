@@ -10,6 +10,11 @@
 // v2.0.0: Added 9 quality rules from quality-rules.ts (Phase 1).
 //         ALL_RULES now contains 38 rules (29 structural + 9 quality).
 //
+// v2.1.0: Added 5 Phase A tiered coverage rules from coverage-rules.ts.
+//         ALL_RULES now contains 43 rules (29 structural + 9 quality + 5 tiered coverage).
+//         New rules: T3/T4.primary_subject_survival, T3/T4.critical_anchor_survival,
+//         T4.secondary_anchor_survival. Wired to Aim 1 sub-aims 1.1, 1.2, 1.3.
+//
 // Usage from the harness runner:
 //
 //   import { runMechanicalScorer, ALL_RULES } from '@/lib/call-2-harness/mechanical-scorer';
@@ -27,12 +32,12 @@
 // Existing features preserved: Yes — all 29 existing rules unchanged.
 // ============================================================================
 
-import { T1_RULES } from './t1-rules';
-import { T2_RULES } from './t2-rules';
-import { T3_RULES } from './t3-rules';
-import { T4_RULES } from './t4-rules';
-import { COVERAGE_RULES } from './coverage-rules';
-import { QUALITY_RULES } from './quality-rules';
+import { T1_RULES } from "./t1-rules";
+import { T2_RULES } from "./t2-rules";
+import { T3_RULES } from "./t3-rules";
+import { T4_RULES } from "./t4-rules";
+import { COVERAGE_RULES } from "./coverage-rules";
+import { QUALITY_RULES } from "./quality-rules";
 import {
   ALL_CLUSTERS,
   CLUSTER_SCHEMA_VERSION,
@@ -43,10 +48,11 @@ import {
   type RuleResult,
   type StageId,
   type TierBundle,
-} from './types';
+} from "./types";
 
 // Re-exports so consumers only need to import from this index file.
 export type {
+  AnchorClass,
   Cluster,
   MechanicalResult,
   ProviderContext,
@@ -56,20 +62,21 @@ export type {
   StageId,
   Tier,
   TierBundle,
-} from './types';
-export { ALL_CLUSTERS, CLUSTER_SCHEMA_VERSION } from './types';
-export { T1_RULES } from './t1-rules';
-export { T2_RULES } from './t2-rules';
-export { T3_RULES } from './t3-rules';
-export { T4_RULES } from './t4-rules';
-export { COVERAGE_RULES } from './coverage-rules';
-export { QUALITY_RULES } from './quality-rules';
+} from "./types";
+export { ALL_CLUSTERS, CLUSTER_SCHEMA_VERSION } from "./types";
+export { T1_RULES } from "./t1-rules";
+export { T2_RULES } from "./t2-rules";
+export { T3_RULES } from "./t3-rules";
+export { T4_RULES } from "./t4-rules";
+export { COVERAGE_RULES } from "./coverage-rules";
+export { QUALITY_RULES } from "./quality-rules";
 
 /**
  * The full ordered list of mechanical rules across all tiers.
  * Frozen at module load.
  *
  * v2.0.0: 38 rules (29 structural + 9 quality).
+ * v2.1.0: 43 rules (+5 Phase A tiered coverage: Aim 1.1, 1.2, 1.3).
  */
 export const ALL_RULES: readonly RuleDefinition[] = Object.freeze([
   ...T1_RULES,
@@ -163,16 +170,21 @@ export function runMechanicalScorer(
 /**
  * Run the scorer against ALL FOUR route stages of a single sample.
  * Returns four MechanicalResults — one per stage. This is the input shape
- * the rescue-dependency calculator (Phase D) expects.
+ * the rescue-dependency calculator expects.
  */
 export function runMechanicalScorerAllStages(
   stages: { a: TierBundle; b: TierBundle; c: TierBundle; d: TierBundle },
   ctx: RuleContext,
-): { a: MechanicalResult; b: MechanicalResult; c: MechanicalResult; d: MechanicalResult } {
+): {
+  a: MechanicalResult;
+  b: MechanicalResult;
+  c: MechanicalResult;
+  d: MechanicalResult;
+} {
   return {
-    a: runMechanicalScorer(stages.a, 'a', ctx),
-    b: runMechanicalScorer(stages.b, 'b', ctx),
-    c: runMechanicalScorer(stages.c, 'c', ctx),
-    d: runMechanicalScorer(stages.d, 'd', ctx),
+    a: runMechanicalScorer(stages.a, "a", ctx),
+    b: runMechanicalScorer(stages.b, "b", ctx),
+    c: runMechanicalScorer(stages.c, "c", ctx),
+    d: runMechanicalScorer(stages.d, "d", ctx),
   };
 }

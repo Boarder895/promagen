@@ -264,7 +264,7 @@ export default async function UseCaseRecommendationPage({ params }: { params: Pr
                     {rec.reasoning}
                   </p>
                   <Link
-                    href={`/studio/playground?provider=${rec.platformId}`}
+                    href={`/prompt-lab?provider=${rec.platformId}`}
                     className="text-amber-400 hover:text-amber-300 cursor-pointer transition-colors font-medium inline-block"
                     style={{ fontSize: 'clamp(11px, 0.85vw, 14px)', marginTop: 'clamp(6px, 0.6vw, 10px)' }}
                   >
@@ -323,7 +323,7 @@ export default async function UseCaseRecommendationPage({ params }: { params: Pr
         {/* ── CTA ─────────────────────────────────────────────────── */}
         <section style={{ marginBottom: 'clamp(40px, 5vw, 72px)', textAlign: 'center' }}>
           <Link
-            href="/studio/playground"
+            href="/prompt-lab"
             className="inline-block rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold cursor-pointer transition-colors"
             style={{
               fontSize: 'clamp(14px, 1.1vw, 18px)',

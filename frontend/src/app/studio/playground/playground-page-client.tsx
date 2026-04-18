@@ -1,9 +1,14 @@
 // src/app/studio/playground/playground-page-client.tsx
 // ============================================================================
-// PROMPT LAB CLIENT WRAPPER (v4.3.0)
+// PROMPT LAB CLIENT WRAPPER (v4.4.0)
 // ============================================================================
-// Client component for /studio/playground (Prompt Lab).
-// Same pattern as homepage-client.tsx and library-client.tsx.
+// Client component for the Prompt Lab. Mounted by /prompt-lab (canonical)
+// and /studio/playground (redirect target for back-compat).
+//
+// v4.4.0 (current):
+// - Passes isPromptLabPage flag to HomepageGrid so Mission Control shows
+//   the correct button set (Home | World Context | Pro | My Prompts) —
+//   no self-link back to Prompt Lab.
 //
 // v4.3.0 (5 Apr 2026):
 // - Bletchley Machine experiment reverted. PipelineXRay restored as
@@ -367,6 +372,8 @@ export default function PlaygroundPageClient({
       showEngineBay
       showMissionControl
       weatherIndex={weatherIndex}
+      // Prompt Lab is the current page — drop the self-link from Mission Control
+      isPromptLabPage
       // Glass Case styling for right rail panel (replaces standard ring-white/10)
       rightRailClassName={GLASS_CASE_CLASS}
     />

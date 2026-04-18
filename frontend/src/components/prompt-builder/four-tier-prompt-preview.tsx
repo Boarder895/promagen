@@ -833,7 +833,7 @@ export function FourTierPromptPreview({
       </div>
 
       {/* AI Disguise: Algorithm cycling during tier generation (Call 2) */}
-      {/* 101 algorithm names cycle rapidly in amber monospace — §3 Anticipatory Dopamine */}
+      {/* 6-family algorithm sub-variants cycle rapidly in amber monospace — §3 Anticipatory Dopamine */}
       <TierGenerationCycling isActive={isTierGenerating ?? false} activeCategories={activeCategories} />
 
       {/* Tier provider icons — all providers in the active tier family */}

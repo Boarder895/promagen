@@ -4,8 +4,12 @@
 // ============================================================================
 // Canonical types and the cluster-schema-v1 taxonomy from architecture §10.1.
 //
+// Phase A additions:
+// - richer scene-truth context for coverage scoring
+// - optional evidence payloads for future calibration tooling
+//
 // Authority: call-2-quality-architecture-v0.3.1.md §10.1, §11
-// Existing features preserved: Yes (this is a new module).
+// Existing features preserved: Yes.
 // ============================================================================
 
 /**
@@ -14,37 +18,49 @@
  * but never silently retire — see architecture §10.4.
  */
 export type Cluster =
-  | 'subject_salience_loss'
-  | 'interaction_flattening'
-  | 'paraphrase_echo_collapse'
-  | 'syntax_leak'
-  | 'negative_handling_leak'
-  | 'value_add_filler'
-  | 'tier_drift'
-  | 'constraint_collision'
-  | 'content_fidelity_loss';
+  | "subject_salience_loss"
+  | "interaction_flattening"
+  | "paraphrase_echo_collapse"
+  | "syntax_leak"
+  | "negative_handling_leak"
+  | "value_add_filler"
+  | "tier_drift"
+  | "constraint_collision"
+  | "content_fidelity_loss";
 
 export const ALL_CLUSTERS: readonly Cluster[] = Object.freeze([
-  'subject_salience_loss',
-  'interaction_flattening',
-  'paraphrase_echo_collapse',
-  'syntax_leak',
-  'negative_handling_leak',
-  'value_add_filler',
-  'tier_drift',
-  'constraint_collision',
-  'content_fidelity_loss',
+  "subject_salience_loss",
+  "interaction_flattening",
+  "paraphrase_echo_collapse",
+  "syntax_leak",
+  "negative_handling_leak",
+  "value_add_filler",
+  "tier_drift",
+  "constraint_collision",
+  "content_fidelity_loss",
 ]);
 
-export const CLUSTER_SCHEMA_VERSION = 'v2' as const;
+export const CLUSTER_SCHEMA_VERSION = "v2" as const;
 
 export type Tier = 1 | 2 | 3 | 4;
+
+/**
+ * Anchor classes used by richer coverage scoring and future calibration passes.
+ */
+export type AnchorClass =
+  | "primary_subject"
+  | "critical"
+  | "secondary"
+  | "interaction"
+  | "technical"
+  | "setting"
+  | "lighting";
 
 /**
  * The four route stages from architecture §11.1.
  * a = raw model output, b = post-processed, c = compliance-enforced, d = final.
  */
-export type StageId = 'a' | 'b' | 'c' | 'd';
+export type StageId = "a" | "b" | "c" | "d";
 
 /**
  * Provider context — drives provider-aware rules (e.g. T1 weight syntax).
@@ -60,11 +76,20 @@ export interface ProviderContext {
 /**
  * Per-rule run context. `input` is the original user message — required by
  * echo-detection rules that compare T3/T4 first-8-words against the input.
+ *
+ * Phase A adds optional scene-truth fields. These are intentionally optional
+ * so existing harness callers remain valid while richer scene annotations roll
+ * out incrementally.
  */
 export interface RuleContext {
   readonly input: string;
   readonly providerContext?: ProviderContext;
   readonly expectedElements?: readonly string[];
+  readonly primarySubject?: string;
+  readonly criticalAnchors?: readonly string[];
+  readonly secondaryAnchors?: readonly string[];
+  readonly forbiddenPositiveInventions?: readonly string[];
+  readonly inputClass?: string;
 }
 
 /**
@@ -89,6 +114,9 @@ export interface TierBundle {
 export interface RuleCheckOutput {
   readonly passed: boolean;
   readonly details?: string;
+  readonly evidence?: Readonly<Record<string, unknown>>;
+  readonly matchedVia?: "literal" | "alias" | "equivalent" | "mixed";
+  readonly reviewHint?: string;
 }
 
 /**
