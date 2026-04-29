@@ -121,8 +121,79 @@ Do not do any of the following unless explicitly authorised:
 - Add shims, placeholder code, boilerplate filler, temporary compatibility layers, or TODO-based implementations.
 - Make broad unrelated refactors or mass formatting unrelated to the task.
 - Touch `package.json`, `pnpm-lock.yaml`, `next.config.js`, `tsconfig.json`, `eslint.config.*`, Vercel config, or environment variable shape without explicit authorisation.
-- Run destructive Git commands (`reset --hard`, `push --force`, `branch -D`, `checkout --`, `clean -f`) without explicit instruction.
+- Run any remote GitHub or repository publishing command without Martin's exact explicit instruction, including `git push`, `git push --force`, `git push -f`, `gh pr create`, `gh pr merge`, `gh pr close`, `gh issue create`, `gh release create`, `git tag`, `git remote set-url`, or any deployment-triggering command. Normal completion, "ship it", passing checks, or Auto mode never authorises a push. See "## GitHub and remote repository control" for the full rule and the only push authorisation form.
+- Run destructive local Git commands (`reset --hard`, `branch -D`, `checkout --`, `clean -f`) without explicit instruction.
 - Skip hooks (`--no-verify`) or bypass signing.
+
+---
+
+## GitHub and remote repository control
+
+Claude Code does not push to GitHub or trigger deployments. Martin is the only person who pushes builds. This rule overrides Auto mode, "ship it", passing checks, and any prior pattern in this or earlier sessions.
+
+### Allowed without authorisation
+
+- Read-only Git inspection: `git status`, `git diff`, `git log`, `git branch`, `git show`, `git ls-files`, `git remote -v`, `git config --get`.
+- Preparing local changes (Edit, Write, Read).
+- Recommending a commit message.
+- Local builds, typecheck, lint, tests.
+- Producing a handoff with proposed commands for Martin to run.
+
+### Allowed only with explicit per-message instruction
+
+- A local commit. Only when Martin explicitly asks for a local commit ("commit locally" or equivalent unambiguous instruction). Default state is no commit.
+
+### Never run (no exceptions without the authorisation form below)
+
+- `git push`
+- `git push --force`
+- `git push -f`
+- `gh pr create`
+- `gh pr merge`
+- `gh pr close`
+- `gh issue create`
+- `gh release create`
+- `git tag`
+- `git remote set-url`
+- `git branch -D`
+- `git reset --hard`
+- `git clean -f`
+- `git checkout --`
+- Any command that triggers a production or preview deployment (Vercel CLI deploy, Fly deploy, Netlify deploy, etc.).
+
+### What does NOT authorise a push
+
+- Local checks passed (typecheck, lint, build, tests all green).
+- Martin saying "ship it". "Ship it" means finish the local implementation and report verification — it does not mean push to GitHub.
+- Auto mode being active.
+- A previous push having been authorised in this or any earlier session.
+- The change being trivial, low-risk, or "obviously safe".
+- The harness pre-approving a path or command.
+
+### The only push authorisation form
+
+A push is authorised only by Martin issuing this exact form, in a single message, naming the exact branch and exact command:
+
+> *"Claude, push branch `<branch-name>` to `<remote-name>` now using `<exact command>`."*
+
+Even with that instruction, before running the command, Claude must show:
+
+1. `git status`
+2. The current branch.
+3. The exact files changed (e.g. `git diff --stat`).
+4. The exact command Claude is about to run, verbatim.
+
+Then run the command, then report the result.
+
+### When work is push-ready
+
+When local implementation is complete and Martin has not given the exact authorisation form, end the response with:
+
+- `Ready to push: No — Martin must push manually unless he gives an exact push command.`
+- `Suggested commit message: <message>`
+- The exact `git push` command Martin can copy-paste if he chooses.
+
+Claude does not push, even if everything else is green.
 
 ---
 
@@ -286,6 +357,8 @@ Verification:
   - pnpm run lint: pass/fail
 Manual test steps:
 Deferred (not done this pass):
+Ready to push: No — Martin must push manually unless he gives an exact push command.
+Suggested commit message: <one-line subject; longer body if useful>
 ```
 
 `Decisions made` must list autonomous calls so Martin can override.
@@ -365,8 +438,14 @@ Pause for explicit input only when the call is irreversible or costly:
 - Changing public route URLs that already have inbound links
 - Removing or gating any of the 57 authority pages
 - `package.json` / `next.config.js` / Vercel config changes
-- Anything that triggers a redeploy of production state outside normal Git push
-- Force-push, branch deletion, or other destructive Git operations
+- Any `git push` (including `--force` / `-f`) — see "## GitHub and remote repository control" for the only authorisation form
+- Any PR creation, merge, or close (`gh pr create`, `gh pr merge`, `gh pr close`)
+- Any release or tag creation (`gh release create`, `git tag`)
+- Any remote change (`git remote set-url`, `git remote add`, `git push origin --delete <branch>`, etc.)
+- Any branch deletion (`git branch -D`, `git push origin --delete`)
+- Any deployment-triggering command (Vercel CLI deploy, Fly deploy, Netlify deploy, etc.)
+- Anything that triggers a redeploy of production state
+- Force-push, hard reset, or other destructive Git operations on shared history
 
 ---
 
