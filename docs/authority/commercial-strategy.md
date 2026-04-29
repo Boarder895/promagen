@@ -1,7 +1,7 @@
 # commercial-strategy.md — Promagen Commercial Strategy
 
-**Last updated:** 28 April 2026
-**Version:** 2.0.0
+**Last updated:** 29 April 2026
+**Version:** 2.1.0
 **Status:** AUTHORITATIVE. Supersedes `commercial-positioning.md` v1.0.0.
 **Owner:** Promagen Ltd
 **Authority:** This document defines what Promagen sells, to whom, on which surfaces, and the route map of the site. Code is the source of truth for current state; this doc is the source of truth for the destination.
@@ -10,10 +10,10 @@
 
 ## 1. The position in one paragraph
 
-Promagen is **two products on one domain**:
+Promagen is **two products on one domain, with distinct brand identities** (see §2.5):
 
-1. **Sentinel** — a B2B AI Visibility Intelligence service. Audits and monitoring that tell operators whether AI engines (ChatGPT, Claude, Perplexity, Gemini) can find, read, cite, and send traffic to their content. Snapshot £495 → Audit £1,950 → Fix Sprint £3,500 → Monitor £349/month.
-2. **The 40-platform AI Image Generator Leaderboard** — a consumer-facing buyer's guide that helps creators choose the right AI image platform by cost, quality, prompt format, capability, and use-case fit. Monetised by affiliate clicks routed through `/go/[providerId]`.
+1. **Sentinel by Promagen** — a B2B AI Visibility Intelligence service. Audits and monitoring that tell operators whether AI engines (ChatGPT, Claude, Perplexity, Gemini) can find, read, cite, and send traffic to their content. Snapshot £495 → Audit £1,950 → Fix Sprint £3,500 → Monitor £349/month.
+2. **The Promagen AI Image Platform Leaderboard** — a consumer-facing buyer's guide that helps creators choose the right AI image platform by cost, quality, prompt format, capability, and use-case fit. Monetised by affiliate clicks routed through `/go/[providerId]`.
 
 The leaderboard is also Sentinel's **flagship live proof exhibit** — a verifiable demonstration that we know how to make a site rank in AI engines, because we did it on our own asset.
 
@@ -116,6 +116,43 @@ The prompt builder is dead. The major LLMs and image platforms now rewrite promp
 
 This is the case study. It IS the bridge between Sentinel and the leaderboard.
 
+### 2.5 Brand architecture and canonical naming
+
+**Decision (29 Apr 2026):** Sentinel and the leaderboard are NOT one brand. They serve different buyers and must keep distinct identities.
+
+| Layer | Canonical name | Job |
+|-------|----------------|-----|
+| Umbrella company | **Promagen** | The company / domain |
+| B2B service | **Sentinel by Promagen** | AI visibility audits, fix sprints, monitoring |
+| Consumer / proof asset | **Promagen AI Image Platform Leaderboard** | 40-platform comparison, affiliate traffic, proof exhibit |
+| Category language for Sentinel | **AI Visibility Intelligence** | What Sentinel does |
+| Category language for the leaderboard | **AI Platform Intelligence** | What the leaderboard proves |
+
+**Public wording — Sentinel:**
+
+> **Sentinel by Promagen** — AI Visibility Intelligence for websites that need to be found, read and cited by AI engines.
+
+**Public wording — leaderboard:**
+
+> **Promagen AI Image Platform Leaderboard** — 40 AI image platforms compared by quality, cost, prompt format and use-case fit.
+
+**The bridge between them:**
+
+> The proof: Promagen's own AI Image Platform Leaderboard is the live case study for Sentinel.
+
+**Banned names — do not use:**
+
+- Sentinel Leaderboard
+- Promagen Sentinel Leaderboard
+- AI Visibility Leaderboard
+- Sentinel Platform Rankings
+
+These blur the offer. A Sentinel buyer wants visibility monitoring. A leaderboard visitor wants to compare image platforms. Keep the brands clean.
+
+**Rationale:** Sentinel and the leaderboard serve different buyers. Sentinel is the commercial B2B offer aimed at operators (CMO, founder, SEO lead) concerned with AI visibility. The leaderboard is the public proof asset and affiliate engine aimed at creators picking AI image platforms. Mixing the brand dilutes both messages.
+
+**Application surface:** any user-facing string — page metadata, schema.org descriptions, Open Graph copy, nav labels, footer text, marketing collateral, outreach emails, sales decks. Authority for naming is this section.
+
 ---
 
 ## 3. Route map (target state)
@@ -214,16 +251,17 @@ This is the only place on `/` where Platforms appears as a link. Discreet, SEO-s
 - The AuthButton white-text override in `frontend/src/components/layout/homepage-grid.tsx` (the `[&_button]:!text-white` wrapper) is critical and must not be removed.
 - All `<a>` and `<Link>` elements need explicit `text-{colour}` on child `<svg>` and `<span>` — the global `body { color: #020617 }` causes inheritance issues otherwise.
 - Promagen's internal engine must never be described to users as "AI", "GPT", "OpenAI", or "LLM". External AI engines (ChatGPT, Claude, Perplexity, Gemini) and AI image platforms can be named freely.
+- The brand split is non-negotiable. "Sentinel by Promagen" (B2B) and "Promagen AI Image Platform Leaderboard" (consumer) are distinct brands. Never merge into "Sentinel Leaderboard", "Promagen Sentinel Leaderboard", "AI Visibility Leaderboard", or "Sentinel Platform Rankings". See §2.5.
 
 ---
 
 ## 8. The selling story (compressed)
 
-For Sentinel:
+For **Sentinel by Promagen**:
 
-> "AI engines are becoming where buyers ask questions. ChatGPT, Claude, Perplexity, Gemini all cite specific sites in their answers. If your site isn't being cited — or worse, your competitor is — you're losing buyers you'll never even see. Sentinel tells you exactly where you stand, what's broken, and what to fix first. Then we monitor it weekly so you don't go backwards after a deploy. We did it on our own asset — Promagen's leaderboard — and you can verify it in 30 seconds by asking ChatGPT yourself."
+> "AI engines are becoming where buyers ask questions. ChatGPT, Claude, Perplexity, Gemini all cite specific sites in their answers. If your site isn't being cited — or worse, your competitor is — you're losing buyers you'll never even see. Sentinel tells you exactly where you stand, what's broken, and what to fix first. Then we monitor it weekly so you don't go backwards after a deploy. We did it on our own asset — the Promagen AI Image Platform Leaderboard — and you can verify it in 30 seconds by asking ChatGPT yourself."
 
-For the leaderboard:
+For the **Promagen AI Image Platform Leaderboard**:
 
 > "40 AI image platforms compared by cost, quality, prompt format, and use case. Independent scoring, transparent methodology. No editorial favouritism — affiliate links disclosed. Find the right platform for your workflow and budget in under five minutes."
 
@@ -231,5 +269,6 @@ For the leaderboard:
 
 ## 9. Changelog
 
+- **29 Apr 2026 (v2.1.0):** Added §2.5 "Brand architecture and canonical naming" locking in the Sentinel-vs-leaderboard brand split. Added non-regression rule (§7) banning merged brand forms ("Sentinel Leaderboard", "Promagen Sentinel Leaderboard", "AI Visibility Leaderboard", "Sentinel Platform Rankings"). Updated §1 and §8 to use canonical names. Decision: Sentinel and the leaderboard are not one brand — different buyers, different category language, different commercial purpose.
 - **28 Apr 2026 (v2.0.0):** Major revision. Captures the kill-the-prompt-builder decision, the leaderboard-as-consumer-hero decision, the bridge case study format, the strict top-nav (Sentinel / About / Contact only), the mobile-nav (Home / Sentinel / Audit / Contact), and the full pass plan. Supersedes v1.0.0.
 - **28 Apr 2026 (v1.0.0):** Initial commercial repositioning doc (was `commercial-positioning.md`). Established Sentinel-led hierarchy, demoted Lab to supporting role, defined homepage section order. Some content from v1.0.0 has been clarified or sharpened in v2.0.0 — particularly the kill call on the prompt builder (v1.0.0 said "demoted", v2.0.0 says "dead").
