@@ -65,6 +65,7 @@ The user has stated explicitly: *"Stop reading the docs, they are stale, the cod
 - Affiliate clicks must route through `/go/[providerId]` (see `frontend/src/app/go/[providerId]/route.ts`). UI must never link directly to a provider's `affiliateUrl` — that bypasses click attribution and partner sub-id tracking.
 - Authority pages (the 57 crawlable routes under `/platforms`, `/guides`, `/about`) must remain public, indexable, and SSR. They are the substrate Sentinel monitors and the SEO traffic engine.
 - Sentinel cron and library code (`frontend/src/lib/sentinel/`, `frontend/src/app/api/sentinel/`) is **read-only** with respect to the rest of the application. It crawls public pages as an external visitor; it must not modify any other page, component, or data file.
+- The brand split is non-negotiable. "Sentinel by Promagen" (B2B AI Visibility Intelligence) and "Promagen AI Image Platform Leaderboard" (consumer proof + affiliate) are distinct brands. Never merge into "Sentinel Leaderboard", "Promagen Sentinel Leaderboard", "AI Visibility Leaderboard", or "Sentinel Platform Rankings". See `docs/authority/commercial-strategy.md` §2.5.
 
 ---
 
