@@ -1,34 +1,15 @@
 // C:\Users\Proma\Projects\promagen\frontend\src\app\providers\page.tsx
+// ============================================================================
+// /providers REDIRECT (v10.4.0)
+// ============================================================================
+// This route used to be a bare unstyled duplicate of /providers/leaderboard
+// (`<main className="p-6"><ProvidersTable /></main>`). The styled leaderboard
+// page now lives at /providers/leaderboard with full hero, dark theme and
+// Footer. /providers redirects there.
+// ============================================================================
 
-import React from 'react';
-import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 
-import ProvidersTable from '@/components/providers/providers-table';
-import { env } from '@/lib/env';
-import { getProvidersWithPromagenUsers, getIndexRatingsRecord } from '@/lib/providers/api';
-
-export const metadata: Metadata = {
-  title: 'AI Providers Leaderboard • Promagen',
-  description:
-    'The Promagen AI providers leaderboard: sweet spots, visual styles, API/affiliate indicators, speed, affordability, and score.',
-  robots: { index: true, follow: true },
-};
-
-export default async function ProvidersPage() {
-  const providers = await getProvidersWithPromagenUsers();
-  const initialRatings = await getIndexRatingsRecord(providers.map((p) => p.id));
-  const demoEnabled = env.publicFlags.demoJitterEnabled;
-
-  return (
-    <main role="main" className="p-6">
-      <ProvidersTable
-        providers={providers}
-        title="AI Providers Leaderboard"
-        caption="Score stays far right; other columns follow the display contract."
-        showRank
-        initialRatings={initialRatings}
-        demoEnabled={demoEnabled}
-      />
-    </main>
-  );
+export default function ProvidersRedirect(): never {
+  redirect('/providers/leaderboard');
 }

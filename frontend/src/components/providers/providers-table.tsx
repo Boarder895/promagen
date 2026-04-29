@@ -980,7 +980,7 @@ export function ProvidersTable({
   isExpanded = false,
   onExpandToggle,
   weatherMap,
-  isPro = false,
+  isPro: _isPro,
   highlightTierId,
   tierFilter,
   initialRatings,
@@ -1319,7 +1319,6 @@ export function ProvidersTable({
                       rank={index + 1}
                       hasRankUp={p.indexRating?.hasRankUp ?? false}
                       weatherMap={weatherMap}
-                      isPro={isPro}
                     />
                   </td>
 

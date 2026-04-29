@@ -2,14 +2,22 @@
 
 > **30-Second Guide** | Start here to understand Promagen's full architecture
 > **Location:** `docs/authority/architecture.md`
-> **Version:** 3.0.0
-> **Last updated:** 6 April 2026
+> **Version:** 4.0.0
+> **Last updated:** 28 April 2026
 
 ---
 
 ## What Promagen Is
 
-Promagen is an AI image prompt optimisation platform. A user types a sentence describing an image, and Promagen generates platform-specific prompts for 40 AI image/video generation providers across 4 tiers. The core product is the **Prompt Lab** (`/studio/playground`).
+**As of v4.0.0 (commercial repositioning):** Promagen is an **AI Platform Intelligence and AI Visibility Intelligence** business. The headline product is **Sentinel** — a monitoring and audit service that tells operators whether AI systems can find, read, cite and send traffic to their content. Promagen runs Sentinel against itself as the live case study, and underneath sits a deep platform-intelligence layer covering 40 AI image generators.
+
+**Commercial hierarchy (v4.0.0+):**
+
+1. **Sentinel** — the main commercial product (audits, fix sprints, monitoring retainers). Public landing at `/sentinel`. Internal weekly digest dashboard at `/admin/sentinel`.
+2. **Platform intelligence** — the 40-platform hub, leaderboard, comparisons, use-case guides, methodology page. Authority assets that serve traffic, build trust, and feed Sentinel.
+3. **The Lab (Prompt Lab + Standard Builder)** — supporting layer. Demonstrates depth, captures email, drives engagement. **Demoted from primary commercial position** in v4.0.0; it remains technically intact and accessible at `/prompt-lab`, `/providers/[id]`, and `/studio/library`.
+
+The **Prompt Lab** itself remains a sophisticated piece of engineering (3-call AI engine, 40 builder files, 4-tier prompt generation) and is preserved verbatim — only its commercial framing changes. See `commercial-positioning.md` for the canonical positioning rules.
 
 The platform also maintains a **live AI provider leaderboard** with Elo-style Index Ratings, a **market data layer** (FX, indices, commodities, weather) served via a Fly.io gateway, and a **Builder Quality Intelligence** system for internal regression testing.
 
@@ -21,16 +29,18 @@ The platform also maintains a **live AI provider leaderboard** with Elo-style In
 
 Every page uses `HomepageGrid` — a three-column layout (left rail, centre, right rail) with Engine Bay and Mission Control CTAs.
 
-| Route                | Purpose                                 | Left Rail                                                  | Centre                                                               | Right Rail                                                 | Finance Ribbon |
-| -------------------- | --------------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------- | -------------- |
-| `/`                  | **Homepage** — prompt-focused landing   | SceneStartersPreview                                       | PromptShowcase + ProvidersTable                                      | CommunityPulse                                             | **No**         |
-| `/studio/playground` | **Prompt Lab** — the core product       | LeaderboardRail (40 platforms, Index Ratings, demo jitter) | PlaygroundWorkspace (Call 1→2→3 flow)                                | PipelineXRay (Glass Case: Decoder, Switchboard, Alignment) | **No**         |
-| `/providers/[id]`    | Provider detail + standard builder      | Exchange rails                                             | PromptBuilder (One Brain)                                            | Exchange rails                                             | **No**         |
-| `/world-context`     | Old homepage relocated — financial data | Exchange rails                                             | ProvidersTable                                                       | Exchange rails                                             | **Yes**        |
-| `/pro-promagen`      | Pro tier purchase page                  | —                                                          | Feature comparison, tier showcase                                    | —                                                          | **No**         |
-| `/studio/library`    | Saved prompts                           | —                                                          | SavedPromptsLibrary                                                  | —                                                          | **No**         |
-| `/leaderboard`       | Full-page AI leaderboard                | —                                                          | ProvidersTable (expanded)                                            | —                                                          | **No**         |
-| `/admin/*`           | Admin pages (7 pages)                   | —                                                          | Builder quality, exchanges, providers, scoring health, vocab, scenes | —                                                          | **No**         |
+| Route                | Purpose                                          | Left Rail                                                  | Centre                                                               | Right Rail                                                 | Finance Ribbon |
+| -------------------- | ------------------------------------------------ | ---------------------------------------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------- | -------------- |
+| `/`                  | **Homepage** — Sentinel-led commercial shell wrapping Inspire grid | SceneStartersPreview                                       | Sentinel hero + pillars + proof + intelligence band + PromptShowcase + ProvidersTable + authority band + CTA | CommunityPulse                                             | **No**         |
+| `/sentinel`          | **Sentinel product page** — public landing       | —                                                          | Hero + pillars + proof + offer stack + deliverables + CTA            | —                                                          | **No**         |
+| `/admin/sentinel`    | Sentinel weekly digest dashboard (internal)      | —                                                          | SentinelDashboard                                                    | —                                                          | **No**         |
+| `/prompt-lab`        | **The Lab** — supporting role (was core product) | LeaderboardRail (40 platforms, Index Ratings, demo jitter) | PlaygroundWorkspace (Call 1→2→3 flow)                                | PipelineXRay (Glass Case: Decoder, Switchboard, Alignment) | **No**         |
+| `/providers/[id]`    | Provider detail + standard builder               | Exchange rails                                             | PromptBuilder (One Brain)                                            | Exchange rails                                             | **No**         |
+| `/world-context`     | Old homepage relocated — financial data          | Exchange rails                                             | ProvidersTable                                                       | Exchange rails                                             | **Yes**        |
+| `/pro-promagen`      | Pro tier purchase page                           | —                                                          | Feature comparison, tier showcase                                    | —                                                          | **No**         |
+| `/studio/library`    | Saved prompts                                    | —                                                          | SavedPromptsLibrary                                                  | —                                                          | **No**         |
+| `/providers/leaderboard` | Full-page AI leaderboard                     | —                                                          | ProvidersTable (expanded)                                            | —                                                          | **No**         |
+| `/admin/*`           | Admin pages                                      | —                                                          | Sentinel digest, Builder quality, exchanges, providers, scoring health, vocab, scenes | —                                                          | **No**         |
 
 The finance ribbon (FX pairs) only shows on `/world-context`. All other pages set `showFinanceRibbon={false}`.
 

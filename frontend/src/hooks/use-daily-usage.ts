@@ -23,6 +23,7 @@ import { useState, useCallback, useEffect } from 'react';
 import {
   FREE_DAILY_LIMIT,
   ANONYMOUS_FREE_LIMIT,
+  BUILDER_FREE_FOR_EVERYONE,
   getAnonymousUsageState,
   incrementAnonymousCount,
   isAnonymousAtLimit,
@@ -86,6 +87,20 @@ function getTimezone(): string {
  * Create initial state based on authentication status.
  */
 function createInitialState(isAuthenticated: boolean, userTier: 'free' | 'paid'): DailyUsageState {
+  // v10.1.0: builder is free for everyone — short-circuit to unlimited state.
+  if (BUILDER_FREE_FOR_EVERYONE) {
+    return {
+      count: 0,
+      limit: null,
+      remaining: null,
+      isAtLimit: false,
+      resetTime: null,
+      isLoading: false,
+      error: null,
+      isAnonymous: !isAuthenticated,
+    };
+  }
+
   if (!isAuthenticated) {
     // Anonymous user - get from localStorage
     if (typeof window !== 'undefined') {
@@ -174,6 +189,9 @@ export function useDailyUsage(options: UseDailyUsageOptions): UseDailyUsageRetur
    * Returns true if allowed, false if at limit.
    */
   const trackAnonymousUsage = useCallback(async (): Promise<boolean> => {
+    // v10.1.0: builder is free for everyone — always allow.
+    if (BUILDER_FREE_FOR_EVERYONE) return true;
+
     // Check limit before incrementing
     if (isAnonymousAtLimit()) {
       // Update state to reflect limit
@@ -214,8 +232,9 @@ export function useDailyUsage(options: UseDailyUsageOptions): UseDailyUsageRetur
       return;
     }
 
-    // Paid users don't need to fetch
-    if (userTier === 'paid') {
+    // v10.1.0: builder is free for everyone — skip the server fetch and
+    // present an unlimited state, identical to the paid branch below.
+    if (BUILDER_FREE_FOR_EVERYONE || userTier === 'paid') {
       setState((prev) => ({
         ...prev,
         limit: null,
@@ -275,6 +294,9 @@ export function useDailyUsage(options: UseDailyUsageOptions): UseDailyUsageRetur
    */
   const trackAuthenticatedUsage = useCallback(
     async (providerId?: string): Promise<boolean> => {
+      // v10.1.0: builder is free for everyone — always allow.
+      if (BUILDER_FREE_FOR_EVERYONE) return true;
+
       // Paid users don't need tracking - always allow
       if (userTier === 'paid') {
         return true;

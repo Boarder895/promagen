@@ -2,66 +2,25 @@
 
 // src/app/admin/page.tsx
 // ============================================================================
-// ADMIN DASHBOARD — Quick-access hub for all admin tools
+// ADMIN DASHBOARD — Internal control panel hub
 // ============================================================================
 //
-// Replaces the old placeholder page with a clean dashboard showing
-// quick-access cards for each admin section.
-//
-// Version: 7.0.0 — Part 8a (add Builder Quality card)
-// Created: 2026-02-27
-//
-// Existing features preserved: Yes.
+// Reduced in Pass 6f to a single card pointing at /admin/sentinel. The
+// previous admin tools (builder-quality, scoring-health, vocab-submissions,
+// scene-candidates, providers-admin, exchanges-admin) were tied to the dead
+// prompt-builder + learning + vocabulary subsystems and have been retired.
 // ============================================================================
 
 import Link from 'next/link';
 
-import { TemporalFreshnessBadge } from '@/components/admin/temporal-freshness-badge';
-import { CompressionDashboard } from '@/components/admin/compression-dashboard';
-import { FeedbackPulseDashboard } from '@/components/admin/feedback-pulse-dashboard';
-
 const TOOLS = [
   {
-    href: '/admin/builder-quality',
-    label: 'Builder Quality',
-    description: 'Platform scores, anchor audits, regression tracking across 40 platforms. Call 3 builder intelligence.',
-    icon: '🔬',
-    colour: 'bg-red-500/15 ring-red-500/30 hover:bg-red-500/25',
-  },
-  {
-    href: '/admin/scoring-health',
-    label: 'Scoring Health',
-    description: 'Comprehensive dashboard: correlation metrics, weight drift, term quality, A/B tests, pipeline uptime.',
-    icon: '🩺',
-    colour: 'bg-emerald-500/15 ring-emerald-500/30 hover:bg-emerald-500/25',
-  },
-  {
-    href: '/admin/vocab-submissions',
-    label: 'Vocab Queue',
-    description: 'Review user-submitted custom vocabulary terms. Scan, reject, accept in batch.',
-    icon: '📝',
-    colour: 'bg-violet-500/15 ring-violet-500/30 hover:bg-violet-500/25',
-  },
-  {
-    href: '/admin/scene-candidates',
-    label: 'Scene Candidates',
-    description: 'Auto-generated scene proposals from nightly telemetry clustering.',
-    icon: '🎬',
-    colour: 'bg-emerald-500/15 ring-emerald-500/30 hover:bg-emerald-500/25',
-  },
-  {
-    href: '/admin/providers',
-    label: 'Providers',
-    description: 'Browse and inspect all AI image providers with Promagen Users data.',
-    icon: '🤖',
+    href: '/admin/sentinel',
+    label: 'Sentinel',
+    description:
+      'Weekly digest dashboard for the Sentinel monitoring system: page health, regressions, AI crawler activity, citation tracking.',
+    icon: '✦',
     colour: 'bg-sky-500/15 ring-sky-500/30 hover:bg-sky-500/25',
-  },
-  {
-    href: '/admin/exchanges',
-    label: 'Exchanges',
-    description: 'Exchange configuration editor for market data sources.',
-    icon: '📊',
-    colour: 'bg-amber-500/15 ring-amber-500/30 hover:bg-amber-500/25',
   },
 ] as const;
 
@@ -78,23 +37,9 @@ export default function AdminDashboard() {
         style={{ fontSize: 'clamp(12px, 1.2vw, 15px)' }}
         className="mb-8 text-white/50"
       >
-        Internal control panel for Promagen data sources and intelligence pipelines.
+        Internal control panel for Promagen.
       </p>
 
-      {/* ── Pipeline Health ─────────────────────────────────────────── */}
-      <h2
-        className="mb-3 font-semibold text-white/60"
-        style={{ fontSize: 'clamp(12px, 1.1vw, 14px)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}
-      >
-        Pipeline Health
-      </h2>
-      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <TemporalFreshnessBadge />
-        <CompressionDashboard />
-        <FeedbackPulseDashboard />
-      </div>
-
-      {/* ── Tools ───────────────────────────────────────────────────── */}
       <h2
         className="mb-3 font-semibold text-white/60"
         style={{ fontSize: 'clamp(12px, 1.1vw, 14px)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}

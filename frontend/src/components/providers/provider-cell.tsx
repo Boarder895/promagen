@@ -32,23 +32,19 @@ import { Flag } from '@/components/ui/flag';
 import Tooltip from '@/components/ui/tooltip';
 import { RankUpArrow } from './index-rating-cell';
 
-// Exchange weather tooltip — the same proven component exchange cards use
-import { WeatherPromptTooltip } from '@/components/exchanges/weather/weather-prompt-tooltip';
-
 // Provider weather emoji tooltip — enhanced conditions + TTS
 import { ProviderWeatherEmojiTooltip } from './provider-weather-emoji-tooltip';
 
 // Shared day/night detection + moon phase
 import { resolveIsNight } from '@/lib/weather/day-night';
-import { getMoonPhase } from '@/lib/weather/weather-prompt-generator';
+import { getMoonPhase } from '@/lib/weather/moon-phase';
 
 // Provider → weather mapping (resolves provider ID to weather city + coords)
 import { getProviderWeatherMapping } from '@/data/providers/provider-weather-map';
 
-// Global prompt tier — user's Pro selection controls ALL flag tooltips
-import { useGlobalPromptTier } from '@/hooks/use-global-prompt-tier';
-// Platform tier lookup — resolves provider ID → native tier (1-4)
-import { getPlatformTierId } from '@/data/platform-tiers';
+// v10.5.0 — WeatherPromptTooltip wrap and prompt-tier hook chain removed.
+// The prompt builder is dead; the flag-hover prompt feature retired with it.
+// Flag now renders bare; weather emoji + clock retain their own tooltips.
 
 // Types
 import type { WeatherData } from '@/hooks/use-weather';
@@ -60,10 +56,8 @@ export type ProviderCellProps = {
   rank?: number;
   /** Whether this provider climbed in rank position within last 24h */
   hasRankUp?: boolean;
-  /** Weather data map from useWeather() — enables provider flag weather tooltips */
+  /** Weather data map from useWeather() — drives the weather-emoji tooltip */
   weatherMap?: Record<string, WeatherData>;
-  /** Whether user is Pro (for tooltip badge) */
-  isPro?: boolean;
 };
 
 /** Fallback icon path if provider icon fails to load */
@@ -351,14 +345,16 @@ function ApiAffiliateEmojis({ provider }: { provider: Provider }) {
           </Tooltip>
         ))}
 
-      {/* Affiliate emoji - links to program if URL available */}
+      {/* Affiliate emoji — routed through /go/[id] for click tracking and
+          attribution. Direct affiliateUrl links bypass the partner sub-id
+          plumbing in app/go/[providerId]/route.ts and lose the click_id. */}
       {hasAffiliate &&
         (affiliateUrl ? (
           <Tooltip text="Affiliate programme">
             <a
-              href={affiliateUrl}
+              href={`/go/${encodeURIComponent(provider.id)}?src=leaderboard_affiliate_emoji`}
               target="_blank"
-              rel="noopener noreferrer"
+              rel="sponsored noopener noreferrer"
               className="provider-affiliate-link"
               aria-label={`${provider.name} affiliate programme (opens in new tab)`}
             >
@@ -385,7 +381,6 @@ export function ProviderCell({
   rank,
   hasRankUp = false,
   weatherMap,
-  isPro = false,
 }: ProviderCellProps) {
   // Check if this provider should use emoji fallback
   const useEmojiIcon = EMOJI_FALLBACK_PROVIDERS.includes(provider.id);
@@ -407,9 +402,6 @@ export function ProviderCell({
   const demoDisplay =
     mapping && !liveDisplay ? generateDemoWeather(mapping.lat, mapping.lon) : null;
   const weatherDisplay = liveDisplay ?? demoDisplay;
-  const { tier: providerTier, isPro: hookIsPro, saveTier } = useGlobalPromptTier('leaderboard', getPlatformTierId(provider.id));
-  // Prefer prop isPro (passed from parent) but fall back to hook
-  const resolvedIsPro = isPro || hookIsPro;
 
   // ── Resolve day/night + display emoji ─────────────────────────────────
   // Uses the same 3-tier cascade as exchange cards (shared utility).
@@ -505,39 +497,46 @@ export function ProviderCell({
 
         {/* Green rank-up arrow — shows when provider climbed in rankings (24h) */}
         <RankUpArrow show={hasRankUp} className="rank-up-arrow" />
+
+        {/* Try button — prominent affiliate CTA per row.
+            Routes through /go/[id] for click attribution and partner sub-id.
+            rel="sponsored" is FTC-compliant and required by Google for paid links. */}
+        <a
+          href={`/go/${encodeURIComponent(provider.id)}?src=leaderboard_try`}
+          target="_blank"
+          rel="sponsored noopener noreferrer"
+          aria-label={`Try ${provider.name} (opens in new tab)`}
+          className="provider-try-button"
+          style={{
+            marginLeft: 'auto',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '4px',
+            padding: 'clamp(3px, 0.4vw, 5px) clamp(8px, 0.9vw, 12px)',
+            fontSize: 'clamp(0.65rem, 0.75vw, 0.78rem)',
+            fontWeight: 600,
+            color: '#bae6fd',
+            background:
+              'linear-gradient(90deg, rgba(56,189,248,0.18), rgba(110,231,183,0.14), rgba(129,140,248,0.18))',
+            border: '1px solid rgba(56,189,248,0.45)',
+            borderRadius: '999px',
+            textDecoration: 'none',
+            whiteSpace: 'nowrap',
+            transition: 'all 150ms ease',
+            cursor: 'pointer',
+          }}
+        >
+          <span style={{ color: '#e0f2fe' }}>Try</span>
+          <span aria-hidden="true" style={{ color: '#bae6fd' }}>→</span>
+        </a>
       </div>
 
       {/* Line 2 & 3: Location block — Flag + City, then Time below */}
       {provider.countryCode && provider.hqCity && provider.timezone ? (
         <div className="provider-location">
-          {/* Flag + City */}
+          {/* Flag + City — bare Flag (prompt-tier hover tooltip retired in v10.5.0) */}
           <div className="provider-city-line">
-            {weatherDisplay && mapping ? (
-              <WeatherPromptTooltip
-                city={mapping.tooltipCity ?? mapping.vibesCity}
-                tz={provider.timezone}
-                weather={weatherDisplay}
-                tier={providerTier}
-                isPro={resolvedIsPro}
-                onTierChange={saveTier}
-                tooltipPosition="left"
-                verticalPosition="above"
-                latitude={mapping.lat}
-                longitude={mapping.lon}
-              >
-                {/* title="" suppresses native "United States flag" browser tooltip */}
-                <span title="">
-                  <Flag
-                    countryCode={provider.countryCode}
-                    size={20}
-                    decorative={false}
-                    className="shrink-0 cursor-pointer"
-                  />
-                </span>
-              </WeatherPromptTooltip>
-            ) : (
-              <Flag countryCode={provider.countryCode} size={20} decorative />
-            )}
+            <Flag countryCode={provider.countryCode} size={20} decorative />
             <span className="provider-city">
               {provider.hqCity}
               {mapping?.tooltipCity && mapping.tooltipCity !== provider.hqCity && (

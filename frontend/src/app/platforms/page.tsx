@@ -32,7 +32,6 @@ import {
   TIER_CARD_BG,
   NEG_SUPPORT_COLOR,
   NEG_SUPPORT_LABEL,
-  DIVIDER,
   CARD_BG,
   CARD_BORDER,
 } from '@/lib/authority/presentation';
@@ -40,6 +39,7 @@ import { env } from '@/lib/env';
 import PlatformHubTable from '@/components/authority/platform-hub-table';
 import { FaqItem } from '@/components/authority/shared';
 import { Breadcrumb } from '@/components/authority/breadcrumb';
+import Footer from '@/components/layout/footer';
 
 // ISR: rebuild once per day
 export const revalidate = 86400;
@@ -407,39 +407,51 @@ export default function PlatformsHubPage() {
         </section>
 
         {/* ── CTA ─────────────────────────────────────────────────── */}
-        <section style={{ marginBottom: 'clamp(40px, 5vw, 72px)', textAlign: 'center' }}>
+        <section
+          className="flex flex-col items-center"
+          style={{
+            marginBottom: 'clamp(40px, 5vw, 72px)',
+            textAlign: 'center',
+            gap: 'clamp(10px, 1vw, 14px)',
+          }}
+        >
           <Link
-            href="/prompt-lab"
-            className="inline-block rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold cursor-pointer transition-colors"
+            href="/guides/best-generator-for"
+            className="inline-flex items-center gap-2 rounded-2xl border border-sky-400/60 bg-gradient-to-r from-sky-400/40 via-emerald-300/40 to-indigo-400/40 font-semibold text-white no-underline shadow-sm transition-all hover:border-sky-300 hover:from-sky-400/55 hover:via-emerald-300/55 hover:to-indigo-400/55 cursor-pointer"
             style={{
               fontSize: 'clamp(14px, 1.1vw, 18px)',
               padding: `clamp(12px, 1.3vw, 18px) clamp(24px, 3vw, 40px)`,
             }}
           >
-            Try Prompt Lab — Write prompts for any platform →
+            <span className="text-white">Find the best generator for your use case</span>
+            <span className="text-white" aria-hidden="true">→</span>
           </Link>
+          <p
+            className="text-white"
+            style={{ fontSize: 'clamp(11px, 0.8vw, 13px)' }}
+          >
+            Photorealism · Illustration · Product mockups · Concept art
+          </p>
         </section>
 
-        {/* ── Footer ──────────────────────────────────────────────── */}
-        <footer
+        {/* ── Page footnote ───────────────────────────────────────── */}
+        <p
           className="text-white"
           style={{
-            borderTop: DIVIDER,
-            paddingTop: 'clamp(16px, 2vw, 28px)',
-            paddingBottom: 'clamp(24px, 3vw, 48px)',
+            paddingTop: 'clamp(12px, 1.4vw, 20px)',
+            paddingBottom: 'clamp(16px, 2vw, 28px)',
             fontSize: 'clamp(11px, 0.8vw, 13px)',
+            borderTop: '1px solid rgba(255,255,255,0.06)',
           }}
         >
-          <p style={{ marginBottom: 'clamp(4px, 0.5vw, 8px)' }}>
-            Data sourced from Promagen&apos;s platform intelligence database. Last verified:{' '}
-            <span className="text-amber-400">{lastUpdated}</span>.
-          </p>
-          <p>
-            Platform capabilities verified against live UI and API documentation.
-            All counts are dynamically derived and update automatically when platforms change.
-          </p>
-        </footer>
+          Data sourced from Promagen&apos;s platform intelligence database. Last verified:{' '}
+          <span className="text-amber-400">{lastUpdated}</span>. Platform capabilities verified
+          against live UI and API documentation. All counts are dynamically derived from SSOT.
+        </p>
       </main>
+
+      {/* ── Global Footer (Resources / About / disclosure) ─────────── */}
+      <Footer />
     </>
   );
 }

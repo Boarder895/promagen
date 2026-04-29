@@ -1,16 +1,19 @@
 // src/app/studio/playground/page.tsx
 // ============================================================================
-// PROMPT LAB REDIRECT — Routes /studio/playground to /prompt-lab
+// STUDIO PLAYGROUND — Permanent redirect to /platforms (v10.3.0)
 // ============================================================================
-// The Prompt Lab moved from /studio/playground → / (v8.0.0) → /prompt-lab
-// (v9.0.0). This redirect catches existing bookmarks, search engine links,
-// and any internal references that haven't been updated yet.
+// The Playground was the prompt builder's interactive surface. With the
+// prompt builder retired (commercial-strategy.md §2.1), the route redirects
+// to the 40-platform leaderboard.
 //
-// v9.0.0: Prompt Lab demoted from / to /prompt-lab; Inspire promoted to /.
+// History:
+//   v8.0.0  /studio/playground → /
+//   v9.0.0  /studio/playground → /prompt-lab
+//   v10.3.0 /studio/playground → /platforms (current; /prompt-lab also retired)
 // ============================================================================
 
 import { redirect } from 'next/navigation';
 
-export default function PlaygroundRedirect() {
-  redirect('/prompt-lab');
+export default function PlaygroundRedirect(): never {
+  redirect('/platforms');
 }

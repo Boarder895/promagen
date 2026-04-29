@@ -1,20 +1,19 @@
 // src/components/layout/mobile-bottom-nav.tsx
 // ============================================================================
-// MOBILE BOTTOM NAV — Persistent navigation for <768px screens (Part 1)
+// MOBILE BOTTOM NAV (v4.0.0)
 // ============================================================================
-// Solves the "trapped on one page" problem: mobile users can now reach
-// every key section of Promagen from any page.
+// Items (v4.0.0 — strict commercial-strategy.md):
+//   Home | Sentinel | Audit | Contact
+//
+// Pure Sentinel funnel on mobile. No Platforms, no Lab, no Inspire, no Saved.
+// Audit is a deep link to the offer stack at /sentinel#sentinel-offer.
+// Contact is a deep link to /sentinel#contact (the SentinelCta block).
 //
 // Shows on ALL pages below md breakpoint (768px).
 // Hidden on tablet+ via md:hidden — desktop/laptop completely untouched.
 //
-// Design: Glass-dark bottom bar, 4 navigation items.
-// Active state: sky-400 with gradient accent bar above icon.
-// Safe area: Accounts for iPhone home indicator via env(safe-area-inset-bottom).
-//
-// Items: Home | Pro | Lab (Desktop badge) | Saved
-//
-// Existing features preserved: Yes — zero changes to tablet/desktop rendering
+// Authority: docs/authority/commercial-strategy.md §4
+// Existing features preserved: Yes — zero changes to tablet/desktop rendering.
 // ============================================================================
 
 'use client';
@@ -24,7 +23,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 // ============================================================================
-// NAV ICONS — Inline SVGs, sized with clamp() per code-standard.md
+// NAV ICONS — Inline SVGs, sized with clamp() per code-standard
 // ============================================================================
 
 const ICON_STYLE: React.CSSProperties = {
@@ -50,7 +49,8 @@ function HomeIcon({ active }: { active: boolean }) {
   );
 }
 
-function ProIcon({ active }: { active: boolean }) {
+function SentinelIcon({ active }: { active: boolean }) {
+  // Radar/eye motif — Sentinel watches.
   return (
     <svg
       viewBox="0 0 24 24"
@@ -62,13 +62,16 @@ function ProIcon({ active }: { active: boolean }) {
       aria-hidden="true"
       style={ICON_STYLE}
     >
-      <path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-      <path d="M18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="5" />
+      <circle cx="12" cy="12" r="1.6" fill="currentColor" />
+      <path d="M12 3v3M12 18v3M3 12h3M18 12h3" />
     </svg>
   );
 }
 
-function LabIcon({ active }: { active: boolean }) {
+function AuditIcon({ active }: { active: boolean }) {
+  // Clipboard with check — pricing / offer stack
   return (
     <svg
       viewBox="0 0 24 24"
@@ -80,12 +83,15 @@ function LabIcon({ active }: { active: boolean }) {
       aria-hidden="true"
       style={ICON_STYLE}
     >
-      <path d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 00.659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082M5 14.5l-1.456 1.455A2.25 2.25 0 005.13 20h13.74a2.25 2.25 0 001.586-3.845L19 14.5M5 14.5h14" />
+      <rect x="6" y="4" width="12" height="17" rx="2" />
+      <path d="M9 4h6v3H9z" />
+      <path d="M9 13l2 2 4-4" />
     </svg>
   );
 }
 
-function SavedIcon({ active }: { active: boolean }) {
+function ContactIcon({ active }: { active: boolean }) {
+  // Envelope
   return (
     <svg
       viewBox="0 0 24 24"
@@ -97,7 +103,8 @@ function SavedIcon({ active }: { active: boolean }) {
       aria-hidden="true"
       style={ICON_STYLE}
     >
-      <path d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+      <rect x="3" y="6" width="18" height="13" rx="2" />
+      <path d="M3 8l9 6 9-6" />
     </svg>
   );
 }
@@ -110,15 +117,13 @@ type NavItem = {
   href: string;
   label: string;
   icon: React.FC<{ active: boolean }>;
-  /** Small badge shown below label (e.g. "Desktop") */
-  badge?: string;
 };
 
 const NAV_ITEMS: NavItem[] = [
   { href: '/', label: 'Home', icon: HomeIcon },
-  { href: '/pro-promagen', label: 'Pro', icon: ProIcon },
-  { href: '/prompt-lab', label: 'Prompt Lab', icon: LabIcon },
-  { href: '/studio/library', label: 'Saved', icon: SavedIcon },
+  { href: '/sentinel', label: 'Sentinel', icon: SentinelIcon },
+  { href: '/sentinel#sentinel-offer', label: 'Audit', icon: AuditIcon },
+  { href: '/sentinel#contact', label: 'Contact', icon: ContactIcon },
 ];
 
 // ============================================================================
@@ -127,7 +132,10 @@ const NAV_ITEMS: NavItem[] = [
 
 function isActive(pathname: string, href: string): boolean {
   if (href === '/') return pathname === '/';
-  return pathname.startsWith(href);
+  // For anchor links, treat the underlying path as the active match.
+  const path = href.split('#')[0];
+  if (!path) return false;
+  return pathname.startsWith(path);
 }
 
 // ============================================================================
@@ -170,7 +178,6 @@ export default function MobileBottomNav() {
               }}
               aria-current={active ? 'page' : undefined}
             >
-              {/* Active indicator — gradient bar above icon */}
               {active && (
                 <span
                   className="absolute top-0 rounded-full"
@@ -183,33 +190,14 @@ export default function MobileBottomNav() {
                 />
               )}
 
-              {/* Icon */}
               <Icon active={active} />
 
-              {/* Label */}
               <span
                 className="font-medium leading-none"
                 style={{ fontSize: 'clamp(0.5rem, 2vw, 0.6rem)' }}
               >
                 {item.label}
               </span>
-
-              {/* Optional badge (e.g. "Desktop" on Lab) */}
-              {item.badge && (
-                <span
-                  className="rounded-full border font-medium leading-none"
-                  style={{
-                    fontSize: 'clamp(0.4rem, 1.5vw, 0.45rem)',
-                    padding: '1px 4px',
-                    borderColor: active
-                      ? 'rgba(56, 189, 248, 0.4)'
-                      : 'rgba(255, 255, 255, 0.15)',
-                    color: active ? '#38bdf8' : 'rgba(255, 255, 255, 0.5)',
-                  }}
-                >
-                  {item.badge}
-                </span>
-              )}
             </Link>
           );
         })}

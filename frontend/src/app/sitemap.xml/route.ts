@@ -111,7 +111,8 @@ export async function GET() {
 
     const staticRoutes: SitemapEntry[] = [
       { path: '/', priority: 1.0, changeFrequency: 'daily' },
-      { path: '/pro-promagen', priority: 0.9, changeFrequency: 'weekly' },
+      { path: '/sentinel', priority: 1.0, changeFrequency: 'weekly' },
+      { path: '/inspire', priority: 0.9, changeFrequency: 'daily' },
       { path: '/platforms', priority: 0.9, changeFrequency: 'weekly' },
       { path: '/platforms/negative-prompts', priority: 0.7, changeFrequency: 'monthly' },
       { path: '/guides/prompt-formats', priority: 0.7, changeFrequency: 'monthly' },
@@ -123,11 +124,11 @@ export async function GET() {
       { path: '/providers/compare', priority: 0.8, changeFrequency: 'daily' },
       { path: '/prompt-lab', priority: 0.9, changeFrequency: 'daily' },
       { path: '/studio/library', priority: 0.7, changeFrequency: 'weekly' },
-      { path: '/world-context', priority: 0.7, changeFrequency: 'daily' },
       { path: '/macro', priority: 0.6, changeFrequency: 'daily' },
       { path: '/status', priority: 0.6, changeFrequency: 'daily' },
       { path: '/providers/leaderboard', priority: 0.5, changeFrequency: 'daily' },
     ];
+    // Removed (v10.0.0): /world-context — page deleted; /pro-promagen — demoted from sitemap pending full removal.
 
     const profileRoutes: SitemapEntry[] = platformIds.map((id: string) => ({
       path: `/platforms/${id}`,

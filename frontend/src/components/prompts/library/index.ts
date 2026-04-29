@@ -2,25 +2,20 @@
 // ============================================================================
 // LIBRARY COMPONENTS INDEX
 // ============================================================================
+// Pass 5d-ii (28 Apr 2026) — Library cluster reduced to the live SaveIcon
+// + QuickSaveToast pair. The orphan library UI components (SavedPromptCard,
+// PromptLibraryGrid, LibraryLeftRail/RightRail, ReformatPreview, PromptDiff,
+// KeyboardShortcutsOverlay) were deleted alongside their consumer
+// LibraryClient (/studio/library now redirects to /platforms).
+//
+// SaveIcon stays: it's used by weather-prompt-tooltip, commodity-prompt-
+// tooltip, pro-promagen-client, community-pulse, prompt-showcase.
+// QuickSaveToastGlobal stays: it's mounted in app/layout.tsx.
+// ============================================================================
 
-export { SavedPromptCard } from './saved-prompt-card';
-export { PromptLibraryGrid } from './prompt-library-grid';
-export { default as LibraryClient } from './library-client';
 export { QuickSaveToast, triggerQuickSaveToast } from './quick-save-toast';
 export { QuickSaveToastGlobal } from './quick-save-toast-global';
 export { SaveIcon } from './save-icon';
-export { LibraryLeftRail } from './library-left-rail';
-export { LibraryRightRail } from './library-right-rail';
-export { ReformatPreview } from './reformat-preview';
-export { PromptDiff } from './prompt-diff';
-export { KeyboardShortcutsOverlay } from './keyboard-shortcuts-overlay';
 
-export type { SavedPromptCardProps } from './saved-prompt-card';
-export type { PromptLibraryGridProps } from './prompt-library-grid';
-export type { LibraryClientProps } from './library-client';
 export type { QuickSaveToastData, QuickSaveToastProps } from './quick-save-toast';
 export type { SaveIconProps } from './save-icon';
-export type { LibraryLeftRailProps } from './library-left-rail';
-export type { LibraryRightRailProps } from './library-right-rail';
-export type { ReformatPreviewProps } from './reformat-preview';
-export type { PromptDiffProps } from './prompt-diff';
