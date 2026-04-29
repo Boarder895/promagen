@@ -1,19 +1,20 @@
 // src/app/providers/[id]/prompt-builder/page.tsx
-//
-// DEPRECATED: This route has been merged into /providers/[id].
-// This file exists only to redirect old links.
-//
-// Authority: docs/authority/prompt-builder-page.md
+// ============================================================================
+// PROVIDER PROMPT-BUILDER REDIRECT (v10.4.0)
+// ============================================================================
+// Was redirecting to /providers/[id], which itself now redirects to
+// /platforms/[id]. Skip the chain — go directly to the platform profile.
+// ============================================================================
 
 import { redirect } from 'next/navigation';
 
-interface PageParams {
-  params: {
-    id: string;
-  };
-}
+type Params = { id: string };
 
-export default function PromptBuilderRedirect({ params }: PageParams) {
-  // Permanent redirect to the new location
-  redirect(`/providers/${encodeURIComponent(params.id)}`);
+export default async function PromptBuilderRedirect({
+  params,
+}: {
+  params: Promise<Params>;
+}): Promise<never> {
+  const { id } = await params;
+  redirect(`/platforms/${encodeURIComponent(id)}`);
 }

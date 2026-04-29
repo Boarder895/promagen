@@ -1,51 +1,19 @@
 // src/app/studio/library/page.tsx
 // ============================================================================
-// PROMPT LIBRARY PAGE - Server Component
+// STUDIO LIBRARY — Permanent redirect to /platforms (v10.3.0)
 // ============================================================================
-// Your saved prompts. Save, organise, and reload favourites.
+// The saved-prompts library was tied to the prompt builder's "save" action.
+// With the prompt builder retired (commercial-strategy.md §2.1), saved
+// prompts no longer have a creation surface. Inbound links redirect to the
+// 40-platform leaderboard.
 //
-// UPDATED v3.0.0 (9 March 2026): Simplified for new library design.
-//   - Exchange and weather fetches REMOVED (library page no longer has
-//     exchange rails — replaced by library-specific left/right rails)
-//   - Only fetches providers (for Engine Bay icon grid)
-//   - No longer force-dynamic (providers are static catalog data)
-//
-// Server responsibilities:
-//   - Load all providers from catalog
-//   - SEO metadata
-//
-// Client responsibilities (LibraryClient):
-//   - Manage saved prompts (localStorage)
-//   - Filter, sort, folder operations
-//   - Card grid with selection state
-//   - Preview panel with actions
-//   - Import/export functionality
-//
-// Authority: docs/authority/saved-page.md §14
-// Existing features preserved: Yes
+// User data (existing saved prompts in localStorage) is not deleted —
+// only the public route is retired. Restoration would be a code change in a
+// future PR if the product direction reverses.
 // ============================================================================
 
-import React from 'react';
-import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 
-import LibraryClient from '@/components/prompts/library/library-client';
-import { getProviders } from '@/lib/providers/api';
-
-// ============================================================================
-// METADATA (SEO)
-// ============================================================================
-
-export const metadata: Metadata = {
-  title: 'My Prompts — Promagen',
-  description: 'Your saved prompts. Save, organise, and reload your favourite AI image prompts.',
-};
-
-// ============================================================================
-// PAGE COMPONENT
-// ============================================================================
-
-export default async function LibraryPage() {
-  const providers = await Promise.resolve(getProviders());
-
-  return <LibraryClient providers={providers} />;
+export default function LibraryRedirect(): never {
+  redirect('/platforms');
 }

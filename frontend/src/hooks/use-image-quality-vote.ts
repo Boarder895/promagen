@@ -26,7 +26,9 @@ import {
   getVotedProviderIds,
   getRemainingVotes,
 } from '@/lib/vote-storage';
-import { sendFeedbackDirect } from '@/lib/feedback/feedback-client';
+// sendFeedbackDirect dual-write removed in Pass 6f — feedback-events table and
+// the learning pipeline that consumed it have been retired alongside the
+// prompt builder. The vote still records to /api/providers/vote.
 
 // ============================================================================
 // TYPES
@@ -206,20 +208,12 @@ export function useImageQualityVote(
 
       if (response.ok) {
         const data = await response.json();
-        
+
         // Update rank if returned
         if (data.vote?.rank) {
           setCurrentRank(data.vote.rank);
         }
-
-        // Dual-write: also log to feedback_events for unified learning pipeline
-        void sendFeedbackDirect({
-          promptEventId: `iq:${providerId}`,
-          rating: 'positive',
-          platform: providerId,
-          tier: 1, // Image quality votes are cross-tier — tier 1 as default
-          source: 'image-quality-vote',
-        });
+        // Dual-write to feedback_events removed in Pass 6f (learning pipeline retired).
       } else {
         // API failed but local vote is already recorded
         // Log for debugging but don't disrupt UX

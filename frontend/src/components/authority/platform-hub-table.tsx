@@ -205,14 +205,38 @@ export default function PlatformHubTable({ platforms, tierMeta }: PlatformHubTab
                   <td className="text-white tabular-nums" style={{ padding: TABLE_CELL_PAD, textAlign: 'right' }}>{p.maxChars ? `${p.maxChars}` : '—'}</td>
 
                   <td style={{ padding: TABLE_CELL_PAD, textAlign: 'right' }}>
-                    <Link
-                      href={`/studio/playground?provider=${p.id}`}
-                      className="text-amber-400 hover:text-amber-300 cursor-pointer transition-colors"
-                      title={`Try ${p.name} in Prompt Lab`}
-                      style={{ fontSize: 'clamp(14px, 1.1vw, 18px)' }}
+                    {/* Try button — routes through /go/[id] for affiliate
+                        attribution + click_id. rel="sponsored" is FTC-compliant
+                        and required by Google for paid links. Replaces the
+                        previous /studio/playground link, which now redirects
+                        back to /platforms (broken loop). */}
+                    <a
+                      href={`/go/${encodeURIComponent(p.id)}?src=platform_hub_try`}
+                      target="_blank"
+                      rel="sponsored noopener noreferrer"
+                      aria-label={`Try ${p.name} (opens in new tab)`}
+                      title={`Try ${p.name}`}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        padding: 'clamp(3px, 0.4vw, 5px) clamp(8px, 0.9vw, 12px)',
+                        fontSize: 'clamp(0.7rem, 0.8vw, 0.82rem)',
+                        fontWeight: 600,
+                        color: '#bae6fd',
+                        background:
+                          'linear-gradient(90deg, rgba(56,189,248,0.18), rgba(110,231,183,0.14), rgba(129,140,248,0.18))',
+                        border: '1px solid rgba(56,189,248,0.45)',
+                        borderRadius: '999px',
+                        textDecoration: 'none',
+                        whiteSpace: 'nowrap',
+                        transition: 'all 150ms ease',
+                        cursor: 'pointer',
+                      }}
                     >
-                      →
-                    </Link>
+                      <span style={{ color: '#e0f2fe' }}>Try</span>
+                      <span aria-hidden="true" style={{ color: '#bae6fd' }}>→</span>
+                    </a>
                   </td>
                 </tr>
               );

@@ -1,17 +1,13 @@
-export default function BulkLeaderboardPage() {
-  return (
-    <main style={{ padding: 24 }}>
-      <h1 style={{ marginTop: 0 }}>Bulk Leaderboard (UI)</h1>
-      <p>This page lives outside <code>/app/api</code> to avoid Next.js routing conflicts.</p>
-    </main>
-  )
+// src/app/providers/leaderboard/bulk/page.tsx
+// ============================================================================
+// BULK LEADERBOARD REDIRECT (v10.4.0)
+// ============================================================================
+// Previously a placeholder stub. Bulk variant collapsed into the main
+// leaderboard at /providers/leaderboard.
+// ============================================================================
+
+import { redirect } from 'next/navigation';
+
+export default function BulkLeaderboardRedirect(): never {
+  redirect('/providers/leaderboard');
 }
-
-
-
-
-
-
-
-
-

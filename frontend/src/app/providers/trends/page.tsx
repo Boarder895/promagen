@@ -1,16 +1,14 @@
-import ProvidersTabList from "@/components/nav/tab-list";
+// src/app/providers/trends/page.tsx
+// ============================================================================
+// PROVIDERS TRENDS REDIRECT (v10.4.0)
+// ============================================================================
+// Previously a placeholder stub ("Provider trends content goes here").
+// Trend signals (rank movement, Index Rating deltas) live on the styled
+// leaderboard at /providers/leaderboard.
+// ============================================================================
 
-export default function ProvidersTrendsPage() {
-  return (
-    <section className="space-y-6">
-      <ProvidersTabList />
-      <div className="rounded-2xl border border-neutral-200 p-6 dark:border-neutral-800">
-        <h1 className="text-xl font-semibold">Trends</h1>
-        <p className="text-sm text-neutral-600 dark:text-neutral-400">
-          Provider trends content goes here.
-        </p>
-      </div>
-    </section>
-  );
+import { redirect } from 'next/navigation';
+
+export default function ProvidersTrendsRedirect(): never {
+  redirect('/providers/leaderboard');
 }
-

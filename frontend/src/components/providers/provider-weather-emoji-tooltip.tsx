@@ -35,7 +35,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { getTemperatureColor } from '@/lib/weather/weather-types';
 import { getNextSunEvent, getLunarPosition } from '@/lib/weather/sun-calculator';
-import { getMoonPhase } from '@/lib/weather/weather-prompt-generator';
+import { getMoonPhase } from '@/lib/weather/moon-phase';
 import { speakText, stopSpeaking, isSpeechSupported } from '@/lib/speech';
 
 // ============================================================================

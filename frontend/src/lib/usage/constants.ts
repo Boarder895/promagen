@@ -22,21 +22,41 @@ import type { CompressionTier } from '@/types/compression';
 // ============================================================================
 
 /**
- * Maximum prompt copies for anonymous users per day.
- * Just enough to experience the quality, tight enough to drive sign-ups.
+ * v10.1.0 — Builder is free for everyone.
+ *
+ * The prompt builder no longer has a daily cap; the Pro page is being
+ * demoted as part of the commercial repositioning (Sentinel + affiliate
+ * leaderboard are the monetisation layers, not the consumer subscription).
+ *
+ * This flag is the single switch. Flip to `false` to restore the old
+ * 3/anon, 5/free-authed daily limits. The limits below derive from it,
+ * so server (api/usage/track), client hook (use-daily-usage), and
+ * localStorage tracking (lib/usage/storage) all stay in sync.
+ *
+ * The lifetime prompt counter (incrementLifetimePrompts) is unrelated
+ * to this and continues to fire — it's telemetry, not a gate.
+ */
+export const BUILDER_FREE_FOR_EVERYONE = true;
+
+/**
+ * Maximum prompt copies for anonymous users.
+ * v10.1.0: effectively unlimited when BUILDER_FREE_FOR_EVERYONE is true.
  *
  * Security note: This is enforced client-side via localStorage.
  * Users can bypass by clearing storage or using incognito.
  * This is acceptable - it's a soft conversion gate, not a paywall.
  */
-export const ANONYMOUS_FREE_LIMIT = 3;
+export const ANONYMOUS_FREE_LIMIT = BUILDER_FREE_FOR_EVERYONE
+  ? Number.MAX_SAFE_INTEGER
+  : 3;
 
 /**
  * Maximum prompt copies per day for free authenticated users.
- * Enough to love the product, tight enough to drive upgrades.
- * Tier progression: Anonymous 3/day → Free 5/day → Paid unlimited
+ * v10.1.0: effectively unlimited when BUILDER_FREE_FOR_EVERYONE is true.
  */
-export const FREE_DAILY_LIMIT = 5;
+export const FREE_DAILY_LIMIT = BUILDER_FREE_FOR_EVERYONE
+  ? Number.MAX_SAFE_INTEGER
+  : 5;
 
 /**
  * Paid users have unlimited daily prompt copies.
