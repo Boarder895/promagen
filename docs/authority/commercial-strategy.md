@@ -1,7 +1,7 @@
 # commercial-strategy.md — Promagen Commercial Strategy
 
 **Last updated:** 29 April 2026
-**Version:** 2.1.0
+**Version:** 2.2.0
 **Status:** AUTHORITATIVE. Supersedes `commercial-positioning.md` v1.0.0.
 **Owner:** Promagen Ltd
 **Authority:** This document defines what Promagen sells, to whom, on which surfaces, and the route map of the site. Code is the source of truth for current state; this doc is the source of truth for the destination.
@@ -120,13 +120,16 @@ This is the case study. It IS the bridge between Sentinel and the leaderboard.
 
 **Decision (29 Apr 2026):** Sentinel and the leaderboard are NOT one brand. They serve different buyers and must keep distinct identities.
 
-| Layer | Canonical name | Job |
-|-------|----------------|-----|
-| Umbrella company | **Promagen** | The company / domain |
-| B2B service | **Sentinel by Promagen** | AI visibility audits, fix sprints, monitoring |
-| Consumer / proof asset | **Promagen AI Image Platform Leaderboard** | 40-platform comparison, affiliate traffic, proof exhibit |
-| Category language for Sentinel | **AI Visibility Intelligence** | What Sentinel does |
-| Category language for the leaderboard | **AI Platform Intelligence** | What the leaderboard proves |
+| Layer | Canonical name | Canonical URL | Job |
+|-------|----------------|---------------|-----|
+| Umbrella company | **Promagen** | `/` (and `promagen.com`) | The company / domain |
+| B2B service | **Sentinel by Promagen** | `/sentinel` | AI visibility audits, fix sprints, monitoring |
+| Consumer / proof asset | **Promagen AI Image Platform Leaderboard** | `/providers/leaderboard` | 40-platform ranked leaderboard, Sentinel's live proof exhibit, affiliate engine |
+| Platform catalog (separate surface) | **Platforms** | `/platforms` | Directory / index of the 40 platform profile pages — **NOT** the ranked leaderboard |
+| Category language for Sentinel | **AI Visibility Intelligence** | n/a | What Sentinel does |
+| Category language for the leaderboard | **AI Platform Intelligence** | n/a | What the leaderboard proves |
+
+> The leaderboard and the platform catalog are two different surfaces. There is exactly one ranked leaderboard, and it lives at `/providers/leaderboard`. Do not call `/platforms` "the leaderboard" in copy, nav labels, schema, or sales narrative.
 
 **Public wording — Sentinel:**
 
@@ -162,11 +165,11 @@ These blur the offer. A Sentinel buyer wants visibility monitoring. A leaderboar
 | `/` | Sentinel commercial homepage | Hero / Pillars / Demo / Proof / CTA / Footer |
 | `/sentinel` | Sentinel deep page + bridge case study | Hero / Pillars / Demo / **Proof case study** (anchor `#proof`) / Offer stack / Deliverables / CTA |
 | `/admin/sentinel` | Internal Sentinel weekly digest dashboard | Untouched, admin-only, noindex |
-| `/platforms` | **Consumer hero** — 40-platform AI image generator leaderboard | Pending Pass 4 cost-data + filtering upgrade |
+| `/platforms` | **Platform catalog** — directory / index of the 40 platform profile pages. NOT the ranked leaderboard. | Identity + presentation work pending (separate scope) |
 | `/platforms/[platformId]` | 40 platform profile pages | Authority content, affiliate CTAs |
 | `/platforms/compare/[slug]` | 8 pre-rendered comparison pairs | Authority content |
 | `/platforms/negative-prompts` | Negative prompt support audit | Authority content |
-| `/providers/leaderboard` | Alternate leaderboard view | Authority content |
+| `/providers/leaderboard` | **The Promagen AI Image Platform Leaderboard** — canonical ranked leaderboard, Sentinel's live proof exhibit | Live |
 | `/providers/compare`, `/providers/trends` | Comparison/trend views | Authority content |
 | `/guides/best-generator-for/*` | 4 use-case guides | Authority content |
 | `/guides/prompt-formats` | Prompt format guide | Authority content |
@@ -269,6 +272,7 @@ For the **Promagen AI Image Platform Leaderboard**:
 
 ## 9. Changelog
 
+- **29 Apr 2026 (v2.2.0):** Anchored the canonical brand "Promagen AI Image Platform Leaderboard" to `/providers/leaderboard` (was previously unanchored). Corrected drift in §3 route map: `/providers/leaderboard` is the canonical ranked leaderboard; `/platforms` is a separate platform catalog / directory surface, not "the leaderboard". Added a clarifying note under the §2.5 table.
 - **29 Apr 2026 (v2.1.0):** Added §2.5 "Brand architecture and canonical naming" locking in the Sentinel-vs-leaderboard brand split. Added non-regression rule (§7) banning merged brand forms ("Sentinel Leaderboard", "Promagen Sentinel Leaderboard", "AI Visibility Leaderboard", "Sentinel Platform Rankings"). Updated §1 and §8 to use canonical names. Decision: Sentinel and the leaderboard are not one brand — different buyers, different category language, different commercial purpose.
 - **28 Apr 2026 (v2.0.0):** Major revision. Captures the kill-the-prompt-builder decision, the leaderboard-as-consumer-hero decision, the bridge case study format, the strict top-nav (Sentinel / About / Contact only), the mobile-nav (Home / Sentinel / Audit / Contact), and the full pass plan. Supersedes v1.0.0.
 - **28 Apr 2026 (v1.0.0):** Initial commercial repositioning doc (was `commercial-positioning.md`). Established Sentinel-led hierarchy, demoted Lab to supporting role, defined homepage section order. Some content from v1.0.0 has been clarified or sharpened in v2.0.0 — particularly the kill call on the prompt builder (v1.0.0 said "demoted", v2.0.0 says "dead").
