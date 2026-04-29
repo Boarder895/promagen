@@ -5,6 +5,8 @@ on:
     types: [opened, synchronize, reopened]
   push:
     branches: [main]
+  schedule:
+    - cron: '15 2 * * *'
 
 permissions:
   contents: write          # needed to commit lint summaries to lint-data branch
@@ -187,10 +189,8 @@ This comment updates on every push. See workflow run: ${{ github.server_url }}/$
 
   # Optional nightly job to snapshot totals (feeds dashboard trends)
   nightly:
-    if: github.repository == '${{ github.repository }}'
+    if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
-    schedule:
-      - cron: '15 2 * * *'
     steps:
       - name: No-op placeholder
         run: echo "Nightly placeholder – your dashboard can read lint-data branch JSONs."
