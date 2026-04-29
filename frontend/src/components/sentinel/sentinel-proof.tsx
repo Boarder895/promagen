@@ -83,6 +83,24 @@ export default function SentinelProof() {
                 today, it is because Sentinel is doing its job. That is the standard we
                 bring to client work.
               </p>
+
+              <p
+                className="text-slate-400"
+                style={{ fontSize: 'clamp(0.85rem, 1vw, 0.95rem)', lineHeight: 1.6 }}
+              >
+                <strong className="text-white">Verify it yourself.</strong> Open ChatGPT, Claude, or Perplexity and ask:{' '}
+                <em className="text-slate-200">
+                  &ldquo;What&rsquo;s the best AI image generator for [your use case]?&rdquo;
+                </em>{' '}
+                Compare the answer with our{' '}
+                <Link
+                  href="/providers/leaderboard"
+                  className="underline decoration-sky-400/40 underline-offset-2 hover:decoration-sky-300"
+                >
+                  <span className="text-sky-300 hover:text-sky-200">live leaderboard</span>
+                </Link>
+                .
+              </p>
             </div>
 
             {/* Right — stat grid */}
@@ -120,52 +138,6 @@ export default function SentinelProof() {
             </ul>
           </div>
 
-          {/* ── Verify it yourself — the deliberate proof link ──────────
-              The single, contextual link on the homepage to the leaderboard.
-              Sits below the proof narrative so it reads as supporting
-              evidence rather than a competing CTA. */}
-          <div
-            className="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/[0.08] bg-slate-950/60"
-            style={{ padding: 'clamp(16px, 1.6vw, 24px) clamp(18px, 1.8vw, 28px)' }}
-          >
-            <div className="flex-1" style={{ minWidth: 240 }}>
-              <h3
-                className="font-semibold text-white"
-                style={{ fontSize: 'clamp(0.95rem, 1.05vw, 1.1rem)' }}
-              >
-                Verify it yourself
-              </h3>
-              <p
-                className="mt-1 text-slate-300"
-                style={{ fontSize: 'clamp(0.8rem, 0.9vw, 0.9rem)', lineHeight: 1.55 }}
-              >
-                Open ChatGPT, Claude or Perplexity and ask:{' '}
-                <em className="text-white">&ldquo;What&rsquo;s the best AI image generator for [your use case]?&rdquo;</em>{' '}
-                Compare the answer with our live 40-platform leaderboard.
-              </p>
-            </div>
-            <Link
-              href="/platforms"
-              className="group inline-flex items-center gap-2 rounded-full border border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 font-medium no-underline shadow-sm transition-all hover:border-purple-400 hover:from-purple-600/30 hover:to-pink-600/30 cursor-pointer"
-              style={{
-                padding: 'clamp(10px, 1vw, 14px) clamp(16px, 1.6vw, 22px)',
-                fontSize: 'clamp(0.85rem, 0.95vw, 0.95rem)',
-              }}
-            >
-              <span className="text-purple-100">View the live leaderboard</span>
-              <svg
-                className="shrink-0 text-purple-100 transition-transform group-hover:translate-x-1"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-                style={{ width: 'clamp(14px, 1vw, 18px)', height: 'clamp(14px, 1vw, 18px)' }}
-                aria-hidden="true"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </Link>
-          </div>
         </div>
       </div>
     </section>

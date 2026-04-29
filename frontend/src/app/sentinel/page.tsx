@@ -6,18 +6,19 @@
 // (the internal weekly digest dashboard). This page sells the offering;
 // /admin/sentinel runs it.
 //
-// Section order (Stage 2b — qualify, explain, set expectation, prove, sell):
-//   1. SentinelHero       (variant="product")
-//   2. SentinelWho        — qualification: who this is for / not for
-//   3. SentinelWhy        — urgency: why AI visibility matters now
-//   4. SentinelPillars    — WHAT: Watch / Detect / Cite / Report
-//   5. SentinelDemo       — HOW: page audit + Monday report (concrete artefact)
-//   6. SentinelIntake     — WHAT WE NEED: domain / competitors / queries / pages
-//   7. SentinelProof      — Promagen as live case study
-//   8. SentinelCaseStudy  — applied case study
-//   9. SentinelOfferStack — Snapshot / Audit / Fix Sprint / Monitor
-//  10. SentinelDeliverables
-//  11. SentinelCta
+// Section order (Stage 2c — qualify → explain → set expectation → prove → show value → price → de-risk → CTA):
+//   1. SentinelHero        (variant="product")
+//   2. SentinelWho         — qualification: who this is for / not for
+//   3. SentinelWhy         — urgency: why AI visibility matters now
+//   4. SentinelPillars     — WHAT: Watch / Detect / Cite / Report
+//   5. SentinelDemo        — HOW: page audit + Monday report (concrete artefact)
+//   6. SentinelIntake      — WHAT WE NEED: domain / competitors / queries / pages
+//   7. SentinelProof       — Promagen as live case study (verify-yourself inline)
+//   8. SentinelCaseStudy   — applied case study
+//   9. SentinelDeliverables — what you receive in the box
+//  10. SentinelOfferStack  — Snapshot / Audit / Fix Sprint / Monitor
+//  11. SentinelAfter       — onboarding cadence + refund commitment
+//  12. SentinelCta         — book / contact
 //
 // Public, indexable. ISR daily — content here changes slowly.
 //
@@ -39,6 +40,7 @@ import SentinelProof from '@/components/sentinel/sentinel-proof';
 import SentinelCaseStudy from '@/components/sentinel/sentinel-case-study';
 import SentinelOfferStack from '@/components/sentinel/sentinel-offer-stack';
 import SentinelDeliverables from '@/components/sentinel/sentinel-deliverables';
+import SentinelAfter from '@/components/sentinel/sentinel-after';
 import SentinelCta from '@/components/sentinel/sentinel-cta';
 
 export const revalidate = 86400; // 24h ISR — sales content, not live data
@@ -78,8 +80,9 @@ export default function SentinelPage() {
       <SentinelIntake />
       <SentinelProof />
       <SentinelCaseStudy />
-      <SentinelOfferStack />
       <SentinelDeliverables />
+      <SentinelOfferStack />
+      <SentinelAfter />
       <SentinelCta />
     </main>
   );
