@@ -82,21 +82,25 @@ export default function SentinelHero({ variant = 'homepage' }: SentinelHeroProps
           content — then tells you exactly what to fix next, every week.
         </p>
 
-        {/* Supporting line — proof first */}
-        <p
-          className="max-w-3xl text-slate-400"
-          style={{ fontSize: 'clamp(0.85rem, 1vw, 1rem)', lineHeight: 1.6 }}
-        >
-          Built and battle-tested on Promagen itself: 57 authority pages, 40-platform
-          intelligence, and a weekly report that turns crawl data, AI citation tracking,
-          and machine-readability checks into one prioritised action list.
-        </p>
+        {/* Supporting line — product variant only.
+            Homepage hero stays short so the click to /sentinel feels like a real
+            navigation; the deeper narrative lives on the deep page. */}
+        {isProduct && (
+          <p
+            className="max-w-3xl text-slate-400"
+            style={{ fontSize: 'clamp(0.85rem, 1vw, 1rem)', lineHeight: 1.6 }}
+          >
+            Built and battle-tested on Promagen itself: 57 authority pages, 40-platform
+            intelligence, and a weekly report that turns crawl data, AI citation tracking,
+            and machine-readability checks into one prioritised action list.
+          </p>
+        )}
 
         {/* CTA row */}
         <div className="flex flex-wrap items-center" style={{ gap: 'clamp(10px, 1vw, 16px)' }}>
           {/* Primary — engine bay style (sky/emerald/indigo) */}
           <Link
-            href={isProduct ? '#sentinel-offer' : '/sentinel'}
+            href={isProduct ? '#how-sentinel-works' : '/sentinel'}
             className="group inline-flex items-center gap-2 rounded-2xl border border-sky-400/60 bg-gradient-to-r from-sky-400/40 via-emerald-300/40 to-indigo-400/40 font-semibold text-white no-underline shadow-sm transition-all hover:border-sky-300 hover:from-sky-400/55 hover:via-emerald-300/55 hover:to-indigo-400/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/80 cursor-pointer"
             style={{
               padding: 'clamp(12px, 1.2vw, 16px) clamp(20px, 2vw, 28px)',
@@ -105,7 +109,7 @@ export default function SentinelHero({ variant = 'homepage' }: SentinelHeroProps
           >
             <span className="text-white" aria-hidden="true">✦</span>
             <span className="text-white">
-              {isProduct ? 'See packages and pricing' : 'See Sentinel'}
+              {isProduct ? 'How Sentinel works' : 'See Sentinel'}
             </span>
             <svg
               className="shrink-0 text-white transition-transform group-hover:translate-x-1"
@@ -120,48 +124,28 @@ export default function SentinelHero({ variant = 'homepage' }: SentinelHeroProps
             </svg>
           </Link>
 
-          {/* Secondary — purple gradient canonical */}
-          <Link
-            href="/platforms"
-            className="inline-flex items-center gap-2 rounded-full border border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 font-medium no-underline shadow-sm transition-all hover:border-purple-400 hover:from-purple-600/30 hover:to-pink-600/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/70 cursor-pointer"
-            style={{
-              padding: 'clamp(10px, 1vw, 14px) clamp(16px, 1.6vw, 24px)',
-              fontSize: 'clamp(0.85rem, 0.95vw, 1rem)',
-            }}
-          >
-            <span className="text-purple-100">Browse 40-platform intelligence</span>
-            <svg
-              className="shrink-0 text-purple-100"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-              style={{ width: 'clamp(14px, 1vw, 18px)', height: 'clamp(14px, 1vw, 18px)' }}
-              aria-hidden="true"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-          </Link>
         </div>
 
-        {/* Bullet strip (small reassurance bar) */}
-        <ul
-          className="mt-2 flex flex-wrap items-center text-slate-400"
-          style={{ gap: 'clamp(12px, 1.4vw, 24px)', fontSize: 'clamp(0.75rem, 0.85vw, 0.9rem)' }}
-        >
-          <li className="inline-flex items-center gap-2">
-            <span aria-hidden="true" className="text-emerald-400">✓</span>
-            Weekly action report
-          </li>
-          <li className="inline-flex items-center gap-2">
-            <span aria-hidden="true" className="text-emerald-400">✓</span>
-            ChatGPT · Claude · Perplexity · Gemini citation tracking
-          </li>
-          <li className="inline-flex items-center gap-2">
-            <span aria-hidden="true" className="text-emerald-400">✓</span>
-            Live on Promagen as proof
-          </li>
-        </ul>
+        {/* Bullet strip — product variant only. Homepage stays minimal. */}
+        {isProduct && (
+          <ul
+            className="mt-2 flex flex-wrap items-center text-slate-400"
+            style={{ gap: 'clamp(12px, 1.4vw, 24px)', fontSize: 'clamp(0.75rem, 0.85vw, 0.9rem)' }}
+          >
+            <li className="inline-flex items-center gap-2">
+              <span aria-hidden="true" className="text-emerald-400">✓</span>
+              Weekly action report
+            </li>
+            <li className="inline-flex items-center gap-2">
+              <span aria-hidden="true" className="text-emerald-400">✓</span>
+              ChatGPT · Claude · Perplexity · Gemini citation tracking
+            </li>
+            <li className="inline-flex items-center gap-2">
+              <span aria-hidden="true" className="text-emerald-400">✓</span>
+              Live on Promagen as proof
+            </li>
+          </ul>
+        )}
       </div>
     </section>
   );

@@ -6,13 +6,17 @@
 // (the internal weekly digest dashboard). This page sells the offering;
 // /admin/sentinel runs it.
 //
-// Section order:
-//   1. SentinelHero (variant="product")
-//   2. SentinelPillars
-//   3. SentinelProof
-//   4. SentinelOfferStack
-//   5. SentinelDeliverables
-//   6. SentinelCta
+// Section order (Stage 2a — pivot to qualify-then-explain-then-price):
+//   1. SentinelHero       (variant="product")
+//   2. SentinelWho        — qualification: who this is for / not for
+//   3. SentinelWhy        — urgency: why AI visibility matters now
+//   4. SentinelPillars    — Watch / Detect / Cite / Report
+//   5. SentinelDemo       — (Stage 2b will repurpose into HOW)
+//   6. SentinelProof      — Promagen as live case study
+//   7. SentinelCaseStudy  — applied case study
+//   8. SentinelOfferStack — Snapshot / Audit / Fix Sprint / Monitor
+//   9. SentinelDeliverables
+//  10. SentinelCta
 //
 // Public, indexable. ISR daily — content here changes slowly.
 //
@@ -25,6 +29,8 @@ import React from 'react';
 import type { Metadata } from 'next';
 
 import SentinelHero from '@/components/sentinel/sentinel-hero';
+import SentinelWho from '@/components/sentinel/sentinel-who';
+import SentinelWhy from '@/components/sentinel/sentinel-why';
 import SentinelPillars from '@/components/sentinel/sentinel-pillars';
 import SentinelDemo from '@/components/sentinel/sentinel-demo';
 import SentinelProof from '@/components/sentinel/sentinel-proof';
@@ -63,6 +69,8 @@ export default function SentinelPage() {
       data-testid="sentinel-product-page"
     >
       <SentinelHero variant="product" />
+      <SentinelWho />
+      <SentinelWhy />
       <SentinelPillars />
       <SentinelDemo />
       <SentinelProof />
