@@ -6,17 +6,18 @@
 // (the internal weekly digest dashboard). This page sells the offering;
 // /admin/sentinel runs it.
 //
-// Section order (Stage 2a — pivot to qualify-then-explain-then-price):
+// Section order (Stage 2b — qualify, explain, set expectation, prove, sell):
 //   1. SentinelHero       (variant="product")
 //   2. SentinelWho        — qualification: who this is for / not for
 //   3. SentinelWhy        — urgency: why AI visibility matters now
-//   4. SentinelPillars    — Watch / Detect / Cite / Report
-//   5. SentinelDemo       — (Stage 2b will repurpose into HOW)
-//   6. SentinelProof      — Promagen as live case study
-//   7. SentinelCaseStudy  — applied case study
-//   8. SentinelOfferStack — Snapshot / Audit / Fix Sprint / Monitor
-//   9. SentinelDeliverables
-//  10. SentinelCta
+//   4. SentinelPillars    — WHAT: Watch / Detect / Cite / Report
+//   5. SentinelDemo       — HOW: page audit + Monday report (concrete artefact)
+//   6. SentinelIntake     — WHAT WE NEED: domain / competitors / queries / pages
+//   7. SentinelProof      — Promagen as live case study
+//   8. SentinelCaseStudy  — applied case study
+//   9. SentinelOfferStack — Snapshot / Audit / Fix Sprint / Monitor
+//  10. SentinelDeliverables
+//  11. SentinelCta
 //
 // Public, indexable. ISR daily — content here changes slowly.
 //
@@ -33,6 +34,7 @@ import SentinelWho from '@/components/sentinel/sentinel-who';
 import SentinelWhy from '@/components/sentinel/sentinel-why';
 import SentinelPillars from '@/components/sentinel/sentinel-pillars';
 import SentinelDemo from '@/components/sentinel/sentinel-demo';
+import SentinelIntake from '@/components/sentinel/sentinel-intake';
 import SentinelProof from '@/components/sentinel/sentinel-proof';
 import SentinelCaseStudy from '@/components/sentinel/sentinel-case-study';
 import SentinelOfferStack from '@/components/sentinel/sentinel-offer-stack';
@@ -73,6 +75,7 @@ export default function SentinelPage() {
       <SentinelWhy />
       <SentinelPillars />
       <SentinelDemo />
+      <SentinelIntake />
       <SentinelProof />
       <SentinelCaseStudy />
       <SentinelOfferStack />
